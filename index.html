@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Brainy 오늘">
+<meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151514" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Brainy 오늘</title>
+<style>
+:root{
+  --bg:#f6f5f1;--card:#ffffff;--fg:#1c1b19;--mut:#77736b;--line:#e6e3dc;--acc:#3f6b4f;--acc-fg:#fff;
+  --ok:#2f7a4b;--warn:#a86a12;--bad:#b23b3b;--chip:#efede7;--in:#fbfaf7;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#151514;--card:#1e1e1c;--fg:#ecebe6;--mut:#9a968d;--line:#32312d;--acc:#7fb38f;--acc-fg:#10130f;
+  --ok:#6fc28c;--warn:#e0a54a;--bad:#ec7b7b;--chip:#2a2926;--in:#191917;}}
+:root[data-theme="dark"]{
+  --bg:#151514;--card:#1e1e1c;--fg:#ecebe6;--mut:#9a968d;--line:#32312d;--acc:#7fb38f;--acc-fg:#10130f;
+  --ok:#6fc28c;--warn:#e0a54a;--bad:#ec7b7b;--chip:#2a2926;--in:#191917;}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font:16px/1.55 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:12px 16px calc(96px + env(safe-area-inset-bottom))}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(8px + env(safe-area-inset-top)) 0 8px;display:flex;align-items:center;gap:8px}
+header.top h1{font-size:17px;margin:0;flex:1;font-weight:650}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mut);display:inline-block}
+.dot.on{background:var(--ok)}.dot.off{background:var(--bad)}
+.daynav{display:flex;align-items:center;gap:6px}
+button{white-space:nowrap;font:inherit;color:inherit;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:7px 12px;cursor:pointer}
+button.pri{background:var(--acc);color:var(--acc-fg);border-color:var(--acc);font-weight:600}
+button:disabled{opacity:.45;cursor:default}
+button.ghost{background:transparent;border-color:transparent;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.card h2 .sub{font-weight:400;color:var(--mut);font-size:13px;margin-left:auto}
+label.q{display:block;font-size:14px;color:var(--mut);margin:12px 0 4px}
+label.q:first-of-type{margin-top:0}
+textarea,input,select{font:inherit;color:var(--fg);background:var(--in);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+textarea{resize:none;min-height:44px;overflow:hidden;display:block}
+textarea:focus,input:focus,select:focus{outline:2px solid color-mix(in srgb,var(--acc) 45%,transparent);outline-offset:0;border-color:var(--acc)}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{min-width:0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.st{font-size:12px;color:var(--mut);margin-top:3px;min-height:16px}
+.st.ok{color:var(--ok)}.st.warn{color:var(--warn)}.st.bad{color:var(--bad)}
+.mut{color:var(--mut)}.small{font-size:13px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{flex:1;max-width:240px;background:none;border:0;border-radius:0;padding:12px 0 10px;color:var(--mut);font-size:14px}
+.tabs button.on{color:var(--acc);font-weight:650}
+ul.plain{list-style:none;padding:0;margin:0}
+ul.plain li{padding:6px 0;border-bottom:1px solid var(--line)}
+ul.plain li:last-child{border-bottom:0}
+.chip{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--chip);color:var(--mut);white-space:nowrap}
+.chip.ok{color:var(--ok)}.chip.warn{color:var(--warn)}.chip.bad{color:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}
+th{color:var(--mut);font-weight:500}
+.md h1,.md h2,.md h3,.md h4{font-size:16px;margin:16px 0 6px}
+.md h1{font-size:19px}.md h2{font-size:17px}
+.md p{margin:4px 0}.md li{margin:2px 0}
+.md blockquote{margin:6px 0;padding:4px 10px;border-left:3px solid var(--line);color:var(--mut)}
+.md code{background:var(--chip);padding:0 4px;border-radius:4px;font-size:.9em}
+.md .tblw{overflow-x:auto}
+a,.wl{color:var(--acc);text-decoration:none;cursor:pointer}
+.wl:hover{text-decoration:underline}
+.banner{font-size:13px;padding:8px 12px;border-radius:10px;background:var(--chip);margin:8px 0}
+.banner.warn{color:var(--warn)}
+.center{max-width:380px;margin:12vh auto 0;padding:0 16px}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin-top:8px}
+.hide{display:none!important}
+.loglines li{font-size:14px}
+.pill{display:flex;gap:6px;flex-wrap:wrap}
+.pill button{padding:4px 12px;font-size:14px}
+.pill button.on{background:var(--acc);color:var(--acc-fg);border-color:var(--acc)}
+.res{cursor:pointer}
+.res .snip{font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+details>summary{cursor:pointer;color:var(--mut);font-size:14px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function () {
+"use strict";
+var SB_URL = "https://ttvslsnnkwzfpvswxowe.supabase.co";
+var SB_KEY = "sb_publishable_MQ2J5s-lyDG9ftsZpWMZuQ_jPuCC31q"; // 공개용 키 — 데이터는 로그인 + RLS(주인만)로 지킨다
+var app = document.getElementById("app");
+if (!window.supabase) { app.innerHTML = '<div class="center"><p>라이브러리를 못 불러왔어요. 새로고침해 주세요.</p></div>'; return; }
+var sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+
+/* ---------- 작은 도구 ---------- */
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function $(sel, root) { return (root || document).querySelector(sel); }
+function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+var seoulFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" });
+function seoulToday() { return seoulFmt.format(new Date()); }
+function addDays(d, n) { var t = new Date(d + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
+var WD = ["일", "월", "화", "수", "목", "금", "토"];
+function dayLabel(d) { var t = new Date(d + "T12:00:00Z"); return (t.getUTCMonth() + 1) + "/" + t.getUTCDate() + " (" + WD[t.getUTCDay()] + ")"; }
+function hm(iso) { try { return new Date(iso).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Seoul" }); } catch (e) { return ""; } }
+function grow(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight + 2, 1200) + "px"; }
+function norm(s) { return String(s || "").replace(/\s+/g, " ").trim(); }
+
+/* ---------- 볼트 노트 경로 (app_writeback.py 와 같다) ---------- */
+var PATHS = {
+  qna: "0_Calendar/QnA/{d} QnA.md",
+  journal: "0_Calendar/저널/{d} 저널.md",
+  worship: "0_Calendar/경건생활/{d} 경건생활.md",
+  daily: "0_Calendar/Notes/{d}.md",
+  health: "0_Calendar/건강/일일/{d} 건강.md"
+};
+function pathOf(k, d) { return PATHS[k].replace("{d}", d); }
+
+/* ---------- 노트에서 칸 읽기 ---------- */
+function block(lines, startRe, endRe) {
+  var s = -1;
+  for (var i = 0; i < lines.length; i++) if (startRe.test(lines[i])) { s = i; break; }
+  if (s < 0) return null;
+  var e = lines.length;
+  for (var j = s + 1; j < lines.length; j++) if (endRe.test(lines[j])) { e = j; break; }
+  return { s: s, e: e, text: lines.slice(s + 1, e).join("\n").trim() };
+}
+function stripFm(t) { return String(t || "").replace(/^---\n[\s\S]*?\n---\n?/, ""); }
+function linesOf(body) { return String(body || "").split("\n"); }
+
+function parseQna(body) {
+  var L = linesOf(body), out = [];
+  for (var n = 1; n <= 7; n++) {
+    var b = block(L, new RegExp("^###\\s*" + n + "\\."), /^#{1,3}\s/);
+    if (!b) continue;
+    out.push({ field: "a" + n, q: L[b.s].replace(/^###\s*/, ""), v: b.text });
+  }
+  return out;
+}
+function parseJournal(body) {
+  var L = linesOf(body), b = block(L, /^##\s*🙏/, /^#{1,2}\s/);
+  return b ? b.text : null;
+}
+function parseWorship(body) {
+  var L = linesOf(body), w = { qs: [] }, b, m;
+  b = block(L, /^●\s*7up/, /^●/);
+  if (b) {
+    var br = null;
+    for (var i = b.s + 1; i < b.e; i++) { m = L[i].match(/^\s*\[(.*)\]\s*$/); if (m) { br = m[1].trim(); break; } }
+    w.verse = br != null ? br : b.text;
+  }
+  b = block(L, /^●\s*묵상 본문/, /^●/);
+  if (b) { w.passageRef = (L[b.s].match(/\[(.*?)\]/) || [])[1] || ""; w.passage = b.text; }
+  b = block(L, /^●\s*묵상 제목/, /^●/);
+  if (b) w.title = ((L[b.s].match(/\[(.*?)\]/) || [])[1] || "").trim();
+  for (var n = 1; n <= 5; n++) {
+    b = block(L, new RegExp("^" + n + "\\.\\s"), /^(\d\.\s|●)/);
+    if (!b) continue;
+    var s = b.s, q = L[s].replace(/^\d\.\s*/, "");
+    while (s + 1 < b.e && /^ {3}/.test(L[s + 1]) && L[s + 1].trim() && L[s + 1].indexOf("?") >= 0) { s++; q += " " + L[s].trim(); }
+    w.qs.push({ field: "q" + n, q: q, v: L.slice(s + 1, b.e).join("\n").trim() });
+  }
+  b = block(L, /^●\s*기도하기/, /^●/);
+  if (b) {
+    w.prayGoal = ((L[b.s].match(/\[(.*?)\]/) || [])[1] || "").trim();
+    for (var k = b.s + 1; k < b.e; k++) { m = L[k].match(/^- \[[ xX]\]\s*(.*)$/); if (m) { w.pray = m[1].replace(/분\s*$/, "").trim(); break; } }
+  }
+  b = block(L, /^●\s*성경읽기/, /^●/);
+  if (b) w.bible = ((L[b.s].match(/<(.*?)>/) || [])[1] || "").trim();
+  return w;
+}
+function parseTable(L, startRe) {
+  var b = block(L, startRe, /^##\s/);
+  if (!b) return null;
+  var rows = [];
+  for (var i = b.s + 1; i < b.e; i++) {
+    if (L[i].indexOf("|") !== 0) continue;
+    if (/^\|\s*-/.test(L[i])) continue;
+    rows.push(L[i].trim().replace(/^\||\|$/g, "").split("|").map(function (c) { return c.trim(); }));
+  }
+  return rows;
+}
+
+/* ---------- 상태 ---------- */
+var S = {
+  user: null, owner: null, tab: "today", day: seoulToday(),
+  notes: {},            // path -> {body, mtime}
+  writes: [],           // 최근 app_writes
+  rt: "connecting",     // realtime 상태
+  lastSent: {},         // "note:field" -> 값
+  timers: {},
+  dirty: {},            // 아직 안 보낸 입력
+  search: { q: "", res: null, recent: null, open: null, openBody: "" }
+};
+
+/* ---------- 로그인 ---------- */
+function renderLogin(msg) {
+  app.innerHTML =
+    '<div class="center"><h1 style="font-size:22px;margin:0 0 4px">Brainy 오늘</h1>' +
+    '<p class="mut small" style="margin:0 0 18px">볼트와 바로 이어지는 하루 기록</p>' +
+    '<label class="q" for="em">이메일</label><input id="em" type="email" autocomplete="username" inputmode="email">' +
+    '<label class="q" for="pw">비밀번호</label><input id="pw" type="password" autocomplete="current-password">' +
+    '<div class="row" style="margin-top:14px"><button class="pri" id="login" style="flex:1">로그인</button><button id="signup">처음이면 가입</button></div>' +
+    '<div class="err" id="lerr">' + esc(msg || "") + "</div></div>";
+  function creds() { return { email: $("#em").value.trim(), password: $("#pw").value }; }
+  $("#login").onclick = async function () {
+    var c = creds(); if (!c.email || !c.password) { $("#lerr").textContent = "이메일과 비밀번호를 넣어 주세요."; return; }
+    this.disabled = true; $("#lerr").textContent = "";
+    var r = await sb.auth.signInWithPassword(c);
+    this.disabled = false;
+    if (r.error) $("#lerr").textContent = /confirm/i.test(r.error.message) ? "가입 확인이 아직이에요. Claude에게 '가입했어'라고 말해 주세요." : "로그인 실패: " + r.error.message;
+  };
+  $("#signup").onclick = async function () {
+    var c = creds(); if (!c.email || c.password.length < 8) { $("#lerr").textContent = "이메일과 8자 이상 비밀번호를 넣어 주세요."; return; }
+    this.disabled = true;
+    var r = await sb.auth.signUp({ email: c.email, password: c.password, options: { emailRedirectTo: location.origin + location.pathname } });
+    this.disabled = false;
+    $("#lerr").textContent = r.error ? "가입 실패: " + r.error.message : "가입했어요. Claude에게 '가입했어'라고 말하면 주인으로 등록해 줘요. 그다음 로그인하세요.";
+  };
+  $("#pw").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.isComposing) $("#login").click(); });
+}
+
+function renderNotOwner() {
+  app.innerHTML = '<div class="center"><h1 style="font-size:20px">주인 등록 대기</h1>' +
+    '<p class="small">로그인은 됐지만 아직 이 계정이 주인으로 등록되지 않았어요. Claude에게 <b>“가입했어”</b>라고 말해 주세요.</p>' +
+    '<p class="small mut">계정: ' + esc(S.user.email) + '</p>' +
+    '<div class="row"><button id="re">다시 확인</button><button class="ghost" id="out">로그아웃</button></div></div>';
+  $("#re").onclick = boot; $("#out").onclick = function () { sb.auth.signOut(); };
+}
+
+/* ---------- 데이터 ---------- */
+var chan = null;
+async function loadDay() {
+  var paths = Object.keys(PATHS).map(function (k) { return pathOf(k, S.day); });
+  var r = await sb.from("notes").select("path,body,mtime").in("path", paths);
+  if (r.error) { toast("노트를 못 불러왔어요: " + r.error.message); return; }
+  paths.forEach(function (p) { delete S.notes[p]; });
+  (r.data || []).forEach(function (n) { S.notes[n.path] = n; });
+}
+async function loadWrites() {
+  var r = await sb.from("app_writes").select("*").order("created_at", { ascending: false }).limit(60);
+  if (!r.error) S.writes = r.data || [];
+}
+function subscribe() {
+  if (chan) sb.removeChannel(chan);
+  chan = sb.channel("brainy-today")
+    .on("postgres_changes", { event: "*", schema: "public", table: "notes" }, function (p) {
+      var n = p.new && p.new.path ? p.new : null, old = p.old && p.old.path;
+      if (n && isDayPath(n.path)) { S.notes[n.path] = n; refreshFromNotes(); }
+      else if (!n && old && isDayPath(old)) { delete S.notes[old]; refreshFromNotes(); }
+      if (S.search.open && n && n.path === S.search.open) { S.search.openBody = n.body; if (S.tab === "notes") renderNotes(); }
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "app_writes" }, function (p) {
+      var w = p.new; if (!w || !w.id) return;
+      var i = S.writes.findIndex(function (x) { return x.id === w.id; });
+      if (i >= 0) S.writes[i] = w; else S.writes.unshift(w);
+      refreshStatus();
+    })
+    .subscribe(function (st) {
+      S.rt = st === "SUBSCRIBED" ? "on" : (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") ? "off" : "connecting";
+      var d = $("#rtdot"); if (d) { d.className = "dot " + (S.rt === "on" ? "on" : S.rt === "off" ? "off" : ""); d.title = S.rt === "on" ? "실시간 연결됨" : "연결 중…"; }
+      if (st === "SUBSCRIBED") { loadDay().then(refreshFromNotes); loadWrites().then(refreshStatus); }
+    });
+}
+function isDayPath(p) { return Object.keys(PATHS).some(function (k) { return pathOf(k, S.day) === p; }); }
+function noteBody(k) { var n = S.notes[pathOf(k, S.day)]; return n ? n.body : null; }
+
+async function send(kind, payload) {
+  var r = await sb.from("app_writes").insert({ kind: kind, day: S.day, payload: payload }).select().single();
+  if (r.error) { toast("저장 실패: " + r.error.message); return null; }
+  if (!S.writes.some(function (x) { return x.id === r.data.id; })) S.writes.unshift(r.data);
+  refreshStatus();
+  return r.data;
+}
+
+/* ---------- 상태 표시 ---------- */
+function stInfo(w) {
+  if (!w) return null;
+  if (w.status === "applied") return { cls: "ok", t: "✓ 볼트 반영 " + hm(w.applied_at || w.created_at) };
+  if (w.status === "review") return { cls: "warn", t: "⚠ 검토 필요 — " + (w.result || "") };
+  if (w.status === "error") return { cls: "bad", t: "✕ 오류 — " + (w.result || "") };
+  return { cls: "", t: "⏳ 볼트 반영 대기" + (w.result ? " — " + w.result : "") };
+}
+function latestField(note, field) {
+  for (var i = 0; i < S.writes.length; i++) {
+    var w = S.writes[i];
+    if (w.kind === "field" && w.day === S.day && w.payload && w.payload.note === note && w.payload.field === field) return w;
+  }
+  return null;
+}
+function refreshStatus() {
+  $all("[data-st]").forEach(function (el) {
+    var k = el.getAttribute("data-st").split(":"), info = stInfo(latestField(k[0], k[1]));
+    if (S.dirty[k[0] + ":" + k[1]]) { el.className = "st"; el.textContent = "입력 중…"; return; }
+    el.className = "st " + (info ? info.cls : ""); el.textContent = info ? info.t : "";
+  });
+  var pend = S.writes.filter(function (w) { return w.status === "pending" && Date.now() - new Date(w.created_at).getTime() > 20000; });
+  var b = $("#pendbanner");
+  if (b) {
+    b.className = "banner warn" + (pend.length ? "" : " hide");
+    b.textContent = "볼트 반영 대기 " + pend.length + "개 — 맥이 꺼져 있거나 그날 노트가 아직 없으면 생기면 바로 들어가요.";
+  }
+  if (S.tab === "log") renderLog();
+  renderQuickLists();
+}
+
+/* ---------- 화면: 오늘 ---------- */
+function shell() {
+  app.innerHTML =
+    '<div class="wrap"><header class="top"><span class="dot" id="rtdot"></span><h1 id="ttl">Brainy 오늘</h1>' +
+    '<div class="daynav" id="daynav"><button class="ghost" id="prev" aria-label="전날">◀</button><button id="todaybtn"></button><button class="ghost" id="next" aria-label="다음날">▶</button></div></header>' +
+    '<div id="pendbanner" class="banner warn hide"></div><div id="view"></div></div>' +
+    '<nav class="tabs"><button data-tab="today">오늘</button><button data-tab="notes">노트</button><button data-tab="log">기록</button></nav>';
+  $("#prev").onclick = function () { setDay(addDays(S.day, -1)); };
+  $("#next").onclick = function () { setDay(addDays(S.day, 1)); };
+  $("#todaybtn").onclick = function () { setDay(seoulToday()); };
+  $all(".tabs button").forEach(function (b) { b.onclick = function () { S.tab = b.getAttribute("data-tab"); renderTab(); window.scrollTo(0, 0); }; });
+}
+async function setDay(d) { S.day = d; S.lastSent = {}; S.dirty = {}; renderTab(); await loadDay(); renderTab(); }
+function renderTab() {
+  $all(".tabs button").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-tab") === S.tab); });
+  $("#daynav").classList.toggle("hide", S.tab === "notes");
+  $("#todaybtn").textContent = (S.day === seoulToday() ? "오늘 · " : "") + dayLabel(S.day);
+  if (S.tab === "today") renderToday(); else if (S.tab === "notes") renderNotes(); else renderLog();
+  refreshStatus();
+}
+
+function fieldHtml(note, field, label, value, opts) {
+  opts = opts || {};
+  var id = "f-" + note + "-" + field;
+  var lw = latestField(note, field);
+  if (lw && lw.status === "pending" && lw.payload) value = lw.payload.value; // 아직 볼트에 안 들어간 앱 값이 먼저
+  var input = opts.input
+    ? '<input id="' + id + '" data-note="' + note + '" data-field="' + field + '" inputmode="' + (opts.numeric ? "numeric" : "text") + '" value="' + esc(value || "") + '" placeholder="' + esc(opts.ph || "") + '">'
+    : '<textarea id="' + id + '" data-note="' + note + '" data-field="' + field + '" rows="1" placeholder="' + esc(opts.ph || "") + '">' + esc(value || "") + "</textarea>";
+  return '<label class="q" for="' + id + '">' + esc(label) + "</label>" + input + '<div class="st" data-st="' + note + ":" + field + '"></div>';
+}
+function missing(k, what) {
+  return '<p class="small mut">' + what + ' 노트(' + esc(pathOf(k, S.day).split("/").pop()) + ')가 아직 볼트에 없어요. 옵시디언에서 만들어지면 바로 여기 나타나요.</p>';
+}
+
+function renderToday() {
+  var v = $("#view"), h = "";
+  var daily = noteBody("daily"), health = noteBody("health"), wsh = noteBody("worship"), qna = noteBody("qna"), jr = noteBody("journal");
+
+  // 빠른 기록
+  h += '<div class="card"><h2>📝 오늘 한 일</h2><div class="row"><input id="logtext" placeholder="방금 한 일 한 줄 — Enter"><button class="pri" id="logbtn">기록</button></div>' +
+       '<div class="st" id="logst"></div><ul class="plain loglines" id="loglist" style="margin-top:6px"></ul></div>';
+
+  // 계획
+  if (daily) {
+    var L = linesOf(daily), pb = block(L, /^##\s*오늘의 계획/, /^##\s/);
+    if (pb && pb.text) h += '<div class="card"><h2>🗓 오늘의 계획</h2><div class="md">' + md(pb.text) + "</div></div>";
+  }
+
+  // 건강
+  h += '<div class="card"><h2>🍽 식단 · 🏋️ 운동</h2>';
+  if (health == null) h += missing("health", "건강");
+  else {
+    var HL = linesOf(health);
+    var meals = parseTable(HL, /^##\s*🍽/) || [], wo = parseTable(HL, /^##\s*🏋/) || [];
+    h += tableHtml(meals, function (r) { return r.slice(1).some(Boolean) || /합계/.test(r[0]); });
+    h += '<div class="pill" id="mealwhen" style="margin:10px 0 6px">' + ["아침", "점심", "저녁", "간식"].map(function (w) { return '<button data-w="' + w + '">' + w + "</button>"; }).join("") + "</div>" +
+         '<div class="row"><input id="m-food" placeholder="먹은 것"><button class="pri" id="mealbtn">추가</button></div>' +
+         '<details style="margin-top:6px"><summary>칼로리·영양 (알면)</summary><div class="grid" style="margin-top:6px"><input id="m-kcal" inputmode="numeric" placeholder="kcal"><input id="m-carb" inputmode="numeric" placeholder="탄 g"><input id="m-protein" inputmode="numeric" placeholder="단 g"></div><div class="grid" style="margin-top:6px"><input id="m-fat" inputmode="numeric" placeholder="지 g"></div></details>' +
+         '<div class="st" id="mealst"></div>';
+    h += '<div style="height:10px"></div>' + tableHtml(wo, function (r) { return r.some(Boolean); });
+    h += '<div class="row" style="margin-top:8px"><input id="w-name" placeholder="운동 종목"><button class="pri" id="wobtn">추가</button></div>' +
+         '<div class="grid" style="margin-top:6px"><input id="w-sets" placeholder="세트×횟수"><input id="w-weight" placeholder="무게"><input id="w-min" inputmode="numeric" placeholder="분"></div>' +
+         '<div class="grid" style="margin-top:6px"><input id="w-kcal" inputmode="numeric" placeholder="kcal"><input id="w-memo" placeholder="메모" style="grid-column:span 2"></div>' +
+         '<div class="st" id="wost"></div>';
+  }
+  h += "</div>";
+
+  // 경건생활
+  h += '<div class="card"><h2>🙏 경건생활</h2>';
+  if (wsh == null) h += missing("worship", "경건생활");
+  else {
+    var w = parseWorship(wsh);
+    if (w.passageRef || w.passage) h += '<details><summary>묵상 본문 ' + esc(w.passageRef || "") + "</summary><p class=\"small\" style=\"white-space:pre-wrap\">" + esc(w.passage || "") + "</p></details>";
+    h += fieldHtml("worship", "verse", "7up — 주시는 말씀", w.verse);
+    h += fieldHtml("worship", "title", "묵상 제목", w.title, { input: true });
+    w.qs.forEach(function (q) { h += fieldHtml("worship", q.field, q.field.slice(1) + ". " + q.q, q.v); });
+    h += '<div class="row" style="gap:10px;align-items:flex-start"><div style="flex:1">' + fieldHtml("worship", "pray", "기도 (분)" + (w.prayGoal ? " · 목표 " + w.prayGoal : ""), w.pray, { input: true, numeric: true, ph: "60" }) +
+         '</div><div style="flex:2">' + fieldHtml("worship", "bible", "성경읽기", w.bible, { input: true, ph: "예: 시 57편" }) + "</div></div>";
+  }
+  h += "</div>";
+
+  // QnA
+  h += '<div class="card"><h2>💬 QnA</h2>';
+  if (qna == null) h += missing("qna", "QnA");
+  else parseQna(qna).forEach(function (q) { h += fieldHtml("qna", q.field, q.q, q.v); });
+  h += "</div>";
+
+  // 저널
+  h += '<div class="card"><h2>📔 기도일기</h2>';
+  if (jr == null) h += missing("journal", "저널");
+  else { var jv = parseJournal(jr); h += jv == null ? '<p class="small mut">저널 노트에 「## 🙏 기도일기」 칸이 없어요.</p>' : fieldHtml("journal", "text", "오늘의 기도일기", jv); }
+  h += "</div>";
+
+  v.innerHTML = h;
+  $all("textarea", v).forEach(grow);
+  $all("[data-field]", v).forEach(function (el) { S.lastSent[el.getAttribute("data-note") + ":" + el.getAttribute("data-field")] = el.value; });
+  bindToday();
+  renderQuickLists();
+}
+function tableHtml(rows, keep) {
+  if (!rows || !rows.length) return "";
+  var head = rows[0], body = rows.slice(1).filter(keep);
+  if (!body.length) return '<p class="small mut" style="margin:0">아직 없음</p>';
+  return '<div class="md"><div class="tblw"><table><tr>' + head.map(function (c) { return "<th>" + inl(c) + "</th>"; }).join("") + "</tr>" +
+    body.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + inl(c) + "</td>"; }).join("") + "</tr>"; }).join("") + "</table></div></div>";
+}
+function renderQuickLists() {
+  var ul = $("#loglist"); if (!ul) return;
+  var daily = noteBody("daily"), items = [];
+  if (daily) { var b = block(linesOf(daily), /^##\s*오늘 한 일/, /^##\s/); if (b) items = b.text.split("\n").filter(function (l) { return /^- /.test(l); }); }
+  var pend = S.writes.filter(function (w) { return w.kind === "log" && w.day === S.day && w.status !== "applied"; });
+  var last = items.slice(-3).reverse();
+  ul.innerHTML = pend.map(function (w) { var i = stInfo(w); return '<li><span class="chip ' + i.cls + '">' + esc(i.t.split(" — ")[0]) + "</span> " + esc(w.payload.text) + "</li>"; }).join("") +
+    last.map(function (l) { return '<li class="md">' + inl(l.replace(/^- /, "")) + "</li>"; }).join("") +
+    (items.length > 3 ? '<li class="small mut">… 외 ' + (items.length - 3) + "개 (노트 탭에서 데일리 노트 보기)</li>" : "");
+}
+
+function bindToday() {
+  var v = $("#view");
+  $all("[data-field]", v).forEach(function (el) {
+    var key = el.getAttribute("data-note") + ":" + el.getAttribute("data-field");
+    el.addEventListener("input", function () {
+      if (el.tagName === "TEXTAREA") grow(el);
+      S.dirty[key] = true; refreshStatus();
+      clearTimeout(S.timers[key]);
+      S.timers[key] = setTimeout(function () { flush(el); }, 1500);
+    });
+    el.addEventListener("blur", function () { clearTimeout(S.timers[key]); flush(el); });
+  });
+  // 로그
+  var lt = $("#logtext");
+  if (lt) {
+    var go = async function () {
+      var t = lt.value.trim(); if (!t) return;
+      $("#logbtn").disabled = true;
+      var w = await send("log", { text: t });
+      $("#logbtn").disabled = false;
+      if (w) { lt.value = ""; $("#logst").textContent = ""; }
+    };
+    $("#logbtn").onclick = go;
+    lt.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); go(); } });
+  }
+  // 식단
+  var mw = $("#mealwhen");
+  if (mw) {
+    var hr = Number(new Date().toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone: "Asia/Seoul" }));
+    var def = hr < 10 ? "아침" : hr < 15 ? "점심" : hr < 21 ? "저녁" : "간식";
+    S.mealWhen = S.mealWhen || def;
+    var setW = function () { $all("button", mw).forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-w") === S.mealWhen); }); };
+    $all("button", mw).forEach(function (b) { b.onclick = function () { S.mealWhen = b.getAttribute("data-w"); setW(); }; });
+    setW();
+    var addMeal = async function () {
+      var f = $("#m-food").value.trim(); if (!f) { $("#mealst").textContent = "먹은 것을 적어 주세요."; return; }
+      var pl = { when: S.mealWhen, food: f };
+      ["kcal", "carb", "protein", "fat"].forEach(function (k) { var x = $("#m-" + k).value.trim(); if (x) pl[k] = x; });
+      $("#mealbtn").disabled = true;
+      var w = await send("meal", pl);
+      $("#mealbtn").disabled = false;
+      if (w) { ["food", "kcal", "carb", "protein", "fat"].forEach(function (k) { $("#m-" + k).value = ""; }); $("#mealst").className = "st"; $("#mealst").textContent = "⏳ " + pl.when + " · " + f + " — 볼트 반영 대기"; }
+    };
+    $("#mealbtn").onclick = addMeal;
+    $("#m-food").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); addMeal(); } });
+    $("#wobtn").onclick = async function () {
+      var n = $("#w-name").value.trim(); if (!n) { $("#wost").textContent = "종목을 적어 주세요."; return; }
+      var pl = { name: n };
+      ["sets", "weight", "min", "kcal", "memo"].forEach(function (k) { var x = $("#w-" + k).value.trim(); if (x) pl[k] = x; });
+      this.disabled = true;
+      var w = await send("workout", pl);
+      this.disabled = false;
+      if (w) { ["name", "sets", "weight", "min", "kcal", "memo"].forEach(function (k) { $("#w-" + k).value = ""; }); $("#wost").className = "st"; $("#wost").textContent = "⏳ " + n + " — 볼트 반영 대기"; }
+    };
+  }
+}
+async function flush(el) {
+  var note = el.getAttribute("data-note"), field = el.getAttribute("data-field"), key = note + ":" + field;
+  if (!S.dirty[key]) return;
+  var val = el.value;
+  if (field === "pray") val = val.replace(/[^\d]/g, "");
+  delete S.dirty[key];
+  if (norm(val) === norm(S.lastSent[key])) { refreshStatus(); return; }
+  S.lastSent[key] = val;
+  await send("field", { note: note, field: field, value: val });
+}
+// 볼트에서 노트가 바뀌면: 지금 입력 중이 아닌 칸만 새 값으로
+function refreshFromNotes() {
+  if (S.tab !== "today") return;
+  var v = $("#view"); if (!v) return;
+  var active = document.activeElement, anyDirty = Object.keys(S.dirty).length > 0;
+  var needFull = false;
+  // 노트가 새로 생겼거나 사라졌으면 통째로 다시 그린다 (입력 중이 아닐 때만)
+  ["health", "worship", "qna", "journal", "daily"].forEach(function (k) {
+    var has = noteBody(k) != null, shown = v.getAttribute("data-has-" + k);
+    if (shown != null && String(has) !== shown) needFull = true;
+  });
+  if (needFull && !anyDirty && !(active && active.getAttribute && active.getAttribute("data-field"))) { renderToday(); markHas(); return; }
+  var vals = {};
+  var w = noteBody("worship"); if (w) { var p = parseWorship(w); vals["worship:verse"] = p.verse; vals["worship:title"] = p.title; vals["worship:pray"] = p.pray; vals["worship:bible"] = p.bible; p.qs.forEach(function (q) { vals["worship:" + q.field] = q.v; }); }
+  var q = noteBody("qna"); if (q) parseQna(q).forEach(function (x) { vals["qna:" + x.field] = x.v; });
+  var j = noteBody("journal"); if (j) vals["journal:text"] = parseJournal(j);
+  $all("[data-field]", v).forEach(function (el) {
+    var key = el.getAttribute("data-note") + ":" + el.getAttribute("data-field");
+    if (el === active || S.dirty[key] || !(key in vals) || vals[key] == null) return;
+    var lw = latestField(el.getAttribute("data-note"), el.getAttribute("data-field"));
+    if (lw && lw.status === "pending") return; // 앱에서 보낸 값이 아직 볼트에 안 들어감 — 옛 값으로 되돌리지 않는다
+    if (el.value !== vals[key]) { el.value = vals[key]; if (el.tagName === "TEXTAREA") grow(el); }
+    S.lastSent[key] = vals[key];
+  });
+  // 표·계획은 입력칸이 없으니 바로 바꿔 그린다
+  if (!anyDirty && !(active && active.getAttribute && active.getAttribute("data-field")) && !(active && /^(m|w)-|logtext/.test(active.id || ""))) {
+    var y = window.scrollY; renderToday(); markHas(); window.scrollTo(0, y);
+  } else renderQuickLists();
+}
+function markHas() { var v = $("#view"); if (!v) return; ["health", "worship", "qna", "journal", "daily"].forEach(function (k) { v.setAttribute("data-has-" + k, String(noteBody(k) != null)); }); }
+
+/* ---------- 화면: 노트 ---------- */
+function renderNotes() {
+  var v = $("#view"), s = S.search;
+  if (s.open) {
+    v.innerHTML = '<div class="row" style="margin:6px 0"><button id="back">← 목록</button><span class="small mut" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(s.open) + "</span></div>" +
+      '<div class="card md">' + md(stripFm(s.openBody)) + "</div>";
+    $("#back").onclick = function () { s.open = null; renderNotes(); };
+    bindWikilinks(v);
+    return;
+  }
+  v.innerHTML = '<div class="card"><input id="sq" type="search" placeholder="볼트 노트 검색 (제목·본문)" value="' + esc(s.q) + '"><ul class="plain" id="sres" style="margin-top:8px"></ul></div>';
+  var sq = $("#sq"), t;
+  sq.addEventListener("input", function () { clearTimeout(t); s.q = sq.value; t = setTimeout(runSearch, 250); });
+  drawResults();
+  if (!s.q && !s.recent) loadRecent();
+}
+async function runSearch() {
+  var s = S.search, q = s.q.trim();
+  if (!q) { s.res = null; drawResults(); return; }
+  var r = await sb.rpc("search_notes", { q: q, lim: 30 });
+  if (q !== s.q.trim()) return;
+  s.res = r.error ? [] : r.data; drawResults();
+}
+async function loadRecent() {
+  var r = await sb.from("notes").select("path,title,folder,mtime").order("mtime", { ascending: false }).limit(25);
+  S.search.recent = r.error ? [] : r.data; drawResults();
+}
+function drawResults() {
+  var ul = $("#sres"); if (!ul) return;
+  var s = S.search, list = s.q.trim() ? s.res : s.recent;
+  if (!list) { ul.innerHTML = '<li class="small mut">불러오는 중…</li>'; return; }
+  if (!list.length) { ul.innerHTML = '<li class="small mut">' + (s.q.trim() ? "찾은 노트가 없어요" : "노트가 없어요") + "</li>"; return; }
+  ul.innerHTML = (s.q.trim() ? "" : '<li class="small mut">최근 바뀐 노트</li>') + list.map(function (n) {
+    return '<li class="res" data-path="' + esc(n.path) + '"><div>' + esc(n.title) + ' <span class="chip">' + esc(n.folder || "루트") + "</span></div>" +
+      (n.snippet ? '<div class="snip">' + esc(n.snippet.replace(/\s+/g, " ")) + "</div>" : n.mtime ? '<div class="snip">' + esc(new Date(n.mtime).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })) + "</div>" : "") + "</li>";
+  }).join("");
+  $all(".res", ul).forEach(function (li) { li.onclick = function () { openNote(li.getAttribute("data-path")); }; });
+}
+async function openNote(path) {
+  var r = await sb.from("notes").select("path,body").eq("path", path).maybeSingle();
+  if (r.error || !r.data) { toast("노트를 못 열었어요"); return; }
+  S.tab = "notes"; S.search.open = r.data.path; S.search.openBody = r.data.body; renderTab(); window.scrollTo(0, 0);
+}
+async function openByTitle(title) {
+  var t = title.split("/").pop();
+  var r = await sb.from("notes").select("path").eq("title", t).limit(1);
+  if (r.data && r.data.length) openNote(r.data[0].path); else toast("「" + t + "」 노트가 없어요");
+}
+function bindWikilinks(root) { $all(".wl", root).forEach(function (a) { a.onclick = function (e) { e.preventDefault(); openByTitle(a.getAttribute("data-t")); }; }); }
+
+/* ---------- 화면: 기록 (앱 → 볼트) ---------- */
+var KIND = { field: "칸", log: "한 일", meal: "식단", workout: "운동" };
+function renderLog() {
+  var v = $("#view");
+  var rows = S.writes.slice(0, 60);
+  v.innerHTML = '<div class="card"><h2>앱 → 볼트 반영 기록<span class="sub">최근 60개</span></h2>' +
+    (rows.length ? '<ul class="plain">' + rows.map(function (w) {
+      var i = stInfo(w), p = w.payload || {};
+      var what = w.kind === "field" ? (p.note + " · " + p.field + " = " + String(p.value || "").slice(0, 40)) : w.kind === "log" ? p.text : w.kind === "meal" ? (p.when + " · " + p.food) : w.kind === "workout" ? p.name : JSON.stringify(p).slice(0, 60);
+      return '<li><div class="small"><span class="chip ' + i.cls + '">' + esc(i.t.split(" — ")[0]) + "</span> " + esc(KIND[w.kind] || w.kind) + " · " + esc(w.day) + " " + esc(hm(w.created_at)) + "</div>" +
+        "<div>" + esc(what) + "</div>" + (w.result ? '<div class="small mut">' + esc(w.result) + "</div>" : "") + "</li>";
+    }).join("") + "</ul>" : '<p class="small mut">아직 없어요</p>') +
+    '</div><div class="card small mut">⚠ 검토 필요는 옵시디언에서 직접 쓴 내용이 있어 덮어쓰지 않은 것이에요. 볼트가 정본이라 앱이 이기지 않아요.<div style="margin-top:10px"><button class="ghost" id="logout">로그아웃 (' + esc(S.user.email) + ")</button></div></div>";
+  $("#logout").onclick = function () { sb.auth.signOut(); };
+}
+
+/* ---------- 마크다운 (가볍게) ---------- */
+function inl(s) {
+  var t = esc(s);
+  t = t.replace(/!\[\[([^\]|]+?)(?:\|[^\]]*)?\]\]/g, function (_, a) { return '<span class="wl" data-t="' + a.replace(/#.*$/, "") + '">📎 ' + a + "</span>"; });
+  t = t.replace(/\[\[([^\]|]+?)(?:\|([^\]]*))?\]\]/g, function (_, a, b) { return '<span class="wl" data-t="' + a.replace(/#.*$/, "") + '">' + (b || a) + "</span>"; });
+  t = t.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  t = t.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+  t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
+  return t;
+}
+function md(src) {
+  var L = String(src || "").split("\n"), out = [], tbl = [];
+  function flushT() {
+    if (!tbl.length) return;
+    out.push('<div class="tblw"><table>' + tbl.map(function (r, i) { var tag = i === 0 ? "th" : "td"; return "<tr>" + r.map(function (c) { return "<" + tag + ">" + inl(c) + "</" + tag + ">"; }).join("") + "</tr>"; }).join("") + "</table></div>");
+    tbl = [];
+  }
+  L.forEach(function (l) {
+    var m;
+    if (/^\s*\|/.test(l)) { if (!/^\s*\|\s*:?-/.test(l)) tbl.push(l.trim().replace(/^\||\|$/g, "").split("|").map(function (c) { return c.trim(); })); return; }
+    flushT();
+    if ((m = l.match(/^(#{1,6})\s+(.*)$/))) { var n = Math.min(m[1].length, 4); out.push("<h" + n + ">" + inl(m[2]) + "</h" + n + ">"); }
+    else if ((m = l.match(/^>\s?(.*)$/))) { out.push("<blockquote>" + inl(m[1].replace(/^\[!\w+\]\s*/, "")) + "</blockquote>"); }
+    else if ((m = l.match(/^(\s*)[-*]\s+\[([ xX])\]\s*(.*)$/))) { out.push('<div style="padding-left:' + (m[1].length * 8) + 'px">' + (m[2] === " " ? "☐ " : "☑ ") + inl(m[3]) + "</div>"); }
+    else if ((m = l.match(/^(\s*)(?:[-*]|\d+\.)\s+(.*)$/))) { out.push('<div style="padding-left:' + (m[1].length * 8 + 4) + 'px">• ' + inl(m[2]) + "</div>"); }
+    else if (!l.trim()) out.push('<div style="height:6px"></div>');
+    else out.push("<p>" + inl(l) + "</p>");
+  });
+  flushT();
+  return out.join("");
+}
+
+/* ---------- 알림 ---------- */
+var toastT;
+function toast(m) {
+  var t = $("#toast");
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:calc(70px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;z-index:9;max-width:90vw"; document.body.appendChild(t); }
+  t.textContent = m; t.style.display = "block"; clearTimeout(toastT); toastT = setTimeout(function () { t.style.display = "none"; }, 3500);
+}
+
+/* ---------- 시작 ---------- */
+async function boot() {
+  var ses = (await sb.auth.getSession()).data.session;
+  if (!ses) { S.user = null; if (chan) { sb.removeChannel(chan); chan = null; } renderLogin(); return; }
+  S.user = ses.user;
+  var o = await sb.from("owners").select("user_id").eq("user_id", ses.user.id).maybeSingle();
+  if (!o.data) { renderNotOwner(); return; }
+  shell();
+  S.day = seoulToday();
+  await Promise.all([loadDay(), loadWrites()]);
+  renderTab(); markHas();
+  subscribe();
+}
+var booted; // 처음엔 undefined — 로그아웃 상태(null)도 한 번은 그려야 한다
+sb.auth.onAuthStateChange(function (ev, ses) {
+  var uid = ses ? ses.user.id : null;
+  if (ev === "TOKEN_REFRESHED" || uid === booted) return;
+  booted = uid; boot();
+});
+// 자정이 지나거나 다시 열었을 때 오늘로
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "visible" && S.user && S.tab !== "notes") {
+    var t = seoulToday(); if (S.lastToday && S.lastToday !== t && S.day === S.lastToday) setDay(t); S.lastToday = t;
+    loadDay().then(refreshFromNotes); loadWrites().then(refreshStatus);
+  }
+});
+S.lastToday = seoulToday();
+})();
+</script>
+</body>
+</html>
