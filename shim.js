@@ -5,7 +5,12 @@
   "use strict";
   var SB_URL = "https://ttvslsnnkwzfpvswxowe.supabase.co";
   var SB_KEY = "sb_publishable_MQ2J5s-lyDG9ftsZpWMZuQ_jPuCC31q"; // 공개용 키
-  var CACHE_KEY = "brainy-docs-v1";
+  // 같은 주소 아래 앱 셋(Brainy 홈 · 맥 단축키 · 체화 단어장)이 이 받침을 같이 쓴다. 앱마다 자기 컬렉션만 읽는다.
+  var APP = window.BRAINY_APP || { key: "home", name: "Brainy 홈", icon: "icon.svg" };
+  var OTHER = ["ai", "ai_out", "sc.data", "sc.marks", "additions", "requests", "vo.data", "vo.ids", "progress", "ctx"]; // 홈이 안 읽는 것
+  function mine(coll) { return APP.colls ? APP.colls.indexOf(coll) >= 0 : OTHER.indexOf(coll) < 0; }
+  function inList(a) { return "(" + a.map(function (x) { return '"' + x + '"'; }).join(",") + ")"; }
+  var CACHE_KEY = "brainy-docs-v1" + (APP.key === "home" ? "" : ":" + APP.key);
   var OLD_APP = "https://claude.ai/artifact/KNwrPxJ79E83vgSTL3447n";
   var sb = window.supabase && window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
 
@@ -91,7 +96,9 @@
   var db = { doc: ref, collection: function (c) { return query(c); } };
 
   function loadAll() {
-    return sb.from("docs").select("path,data").not("coll", "in", "(ai,ai_out)").then(function (r) {
+    var q = sb.from("docs").select("path,data");
+    q = APP.colls ? q.filter("coll", "in", inList(APP.colls)) : q.not("coll", "in", inList(OTHER));
+    return q.then(function (r) {
       if (r.error) throw r.error;
       var next = {};
       (r.data || []).forEach(function (x) { next[x.path] = x.data; });
@@ -106,7 +113,7 @@
     chan = sb.channel("brainy-docs").on("postgres_changes", { event: "*", schema: "public", table: "docs" }, function (p) {
       var path = (p.new && p.new.path) || (p.old && p.old.path); if (!path) return;
       if (path.indexOf("ai_out/") === 0) { if (p.new && p.new.data) aiOut(path.slice(7), p.new.data); else aiPoll(path.slice(7)); return; }
-      if (path.indexOf("ai/") === 0) return;      // 내가 보낸 질문 — 화면 데이터가 아니다
+      if (!mine(collOf(path))) return;            // 다른 앱 것·내가 보낸 질문 — 이 화면 데이터가 아니다
       if (pending[path] > 0) return;             // 내가 방금 쓴 것의 메아리 — 화면 값이 더 새롭다
       if (p.eventType === "DELETE") { if (docs[path] === undefined) return; delete docs[path]; }
       else if (p.new.data === undefined || (p.errors && p.errors.length)) {   // 문서가 커서 실시간 알림에 본문이 빠짐 — 따로 읽는다
@@ -239,11 +246,11 @@
   function showGate(mode, msg) {
     if (!gate) { gate = document.createElement("div"); gate.id = "gate"; document.body.appendChild(gate); }
     gate.hidden = false;
-    var h = '<div class="gbox"><img src="icon.svg" alt="" width="56" height="56"><h1>Brainy 홈</h1>';
+    var h = '<div class="gbox"><img src="' + APP.icon + '" alt="" width="56" height="56"><h1>' + APP.name + '</h1>';
     if (mode === "wait") h += '<p class="gsub">' + (msg || "불러오는 중…") + "</p>";
     else if (mode === "owner") h += '<p class="gsub">이 계정은 주인으로 등록되지 않았어요.</p><button class="btn" id="g-out">로그아웃</button>';
     // 진짜 <form> 으로 내야 브라우저·아이폰 키체인이 비밀번호를 저장하고 다음에 알아서 채워 준다
-    else h += '<p class="gsub">볼트와 바로 이어지는 내 하루</p><form id="g-form" method="post" action="#" autocomplete="on" style="display:grid;gap:10px">' +
+    else h += '<p class="gsub">' + (APP.sub || "볼트와 바로 이어지는 내 하루") + '</p><form id="g-form" method="post" action="#" autocomplete="on" style="display:grid;gap:10px">' +
       '<label for="g-em">이메일</label><input id="g-em" name="username" type="email" autocomplete="username" inputmode="email" autocapitalize="off" required>' +
       '<label for="g-pw">비밀번호</label><input id="g-pw" name="password" type="password" autocomplete="current-password" required>' +
       '<button class="btn primary" id="g-go" type="submit">로그인</button></form><p class="gerr" id="g-err">' + (msg || "") + '</p>' +

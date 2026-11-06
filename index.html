@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Brainy 홈">
+<meta name="application-name" content="Brainy 홈">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#eef0ec" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#101513" media="(prefers-color-scheme: dark)">
@@ -16,28 +17,30 @@
 <style>
 :root{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
-.app{padding-top:calc(20px + env(safe-area-inset-top,0px))!important}
 /* 폰: 입력칸 글자가 16px보다 작으면 아이폰이 칸을 누를 때 화면을 확대해 버린다 → 왼쪽이 잘리고 아래 탭이 밀림 */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{max-width:100%;overflow-x:clip}
 @media (pointer:coarse){input,textarea,select{font-size:16px!important}}
-#gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:24px}
+:root{--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)}
+#gate{position:fixed;inset:0;z-index:50;background:var(--g-bg);color:var(--g-fg);display:grid;place-items:center;padding:24px;font-family:inherit}
 #gate .gbox{width:100%;max-width:340px;display:grid;gap:10px;justify-items:stretch}
 #gate img{border-radius:14px;justify-self:start}
-#gate h1{font-size:24px}#gate .gsub{color:var(--muted);margin-bottom:8px}
-#gate label{font-size:13px;color:var(--muted);margin-top:4px}
-#gate input{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%}
-#gate .btn{justify-content:center;margin-top:8px;padding:11px 14px}
-#gate .gerr{color:var(--warn);font-size:13px;min-height:18px}
-#rtdot{position:fixed;z-index:11;top:calc(8px + env(safe-area-inset-top,0px));right:10px;width:7px;height:7px;border-radius:50%;background:var(--line)}
-#rtdot.on{background:var(--good)}#rtdot.off{background:var(--warn)}
+#gate h1{font-size:24px;margin:0}#gate .gsub{color:var(--g-mut);margin:0 0 8px}
+#gate label{font-size:13px;color:var(--g-mut);margin-top:4px}
+#gate input{font:inherit;font-size:16px;color:var(--g-fg);background:var(--g-card);border:1px solid var(--g-line);border-radius:10px;padding:11px 12px;width:100%}
+#gate button{font:inherit;font-weight:600;cursor:pointer;margin-top:8px;padding:11px 14px;border-radius:999px;border:1px solid var(--g-line);background:var(--g-card);color:var(--g-fg)}
+#gate button[type=submit]{background:var(--g-acc);border-color:var(--g-acc);color:var(--g-acc-ink)}
+#gate .gerr{color:var(--g-warn);font-size:13px;min-height:18px}
+#rtdot{position:fixed;z-index:11;top:calc(8px + env(safe-area-inset-top,0px));right:10px;width:7px;height:7px;border-radius:50%;background:var(--g-line)}
+#rtdot.on{background:var(--g-ok)}#rtdot.off{background:var(--g-warn)}
+.app{padding-top:calc(20px + env(safe-area-inset-top,0px))!important}
 </style>
 </head>
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "e32f400c4b";</script>
-<script src="shim.js?v=e32f400c4b"></script>
+<script>window.BRAINY_VERSION = "2dae441870"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="shim.js?v=2dae441870"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1012,7 +1015,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var cats = []; terms.forEach(function (t) { if (cats.indexOf(t.c) < 0) cats.push(t.c); });
     var c = { 1: 0, 2: 0, 3: 0, 4: 0 }; terms.forEach(function (t) { c[t.lv || 1]++; });
     var h = '<div class="chips" role="group" aria-label="단어장">' + ["학습 단어장", "외국어 단어장"].map(function (d) { return '<button class="chip" data-act="vdom" data-v="' + d + '" aria-pressed="' + (dom === d) + '">' + d + " " + v.terms.filter(function (t) { return t.dom === d; }).length + "</button>"; }).join("") + "</div>";
-    h += '<section class="card"><div class="progress-row"><h2>단어 이해도</h2><a class="btn primary" href="' + esc(v.url) + '" target="_blank" rel="noopener">단어장에서 학습하기 →</a></div><div class="dbar" style="height:12px">' + [1, 2, 3, 4].map(function (L) { return c[L] ? '<i style="width:' + (c[L] / terms.length * 100) + "%;background:var(--d" + (L + 1) + ')"></i>' : ""; }).join("") + '</div><div class="legend">' + [1, 2, 3, 4].map(function (L) { return '<span><i style="background:var(--d' + (L + 1) + ')"></i>' + L + " " + VLV[L] + " " + c[L] + "</span>"; }).join("") + '</div><p class="small muted">설명하기·실행하기로 단계를 올리는 건 체화 단어장에서 해요. 여기 숫자는 ' + esc(v.copiedAt) + " 기준이에요.</p></section>";
+    h += '<section class="card"><div class="progress-row"><h2>단어 이해도</h2><a class="btn primary" href="vocab/">단어장에서 학습하기 →</a></div><div class="dbar" style="height:12px">' + [1, 2, 3, 4].map(function (L) { return c[L] ? '<i style="width:' + (c[L] / terms.length * 100) + "%;background:var(--d" + (L + 1) + ')"></i>' : ""; }).join("") + '</div><div class="legend">' + [1, 2, 3, 4].map(function (L) { return '<span><i style="background:var(--d' + (L + 1) + ')"></i>' + L + " " + VLV[L] + " " + c[L] + "</span>"; }).join("") + '</div><p class="small muted">설명하기·실행하기로 단계를 올리는 건 체화 단어장에서 해요. 여기 숫자는 ' + esc(v.copiedAt) + " 기준이에요.</p></section>";
     // flash review
     var pool = terms.filter(function (t) { return (t.lv || 1) < 3; }); if (!pool.length) pool = terms;
     var seed = TODAY.replace(/-/g, "") | 0; pool = pool.slice().sort(function (a, b) { return ((a.id.length * 31 + seed + a.t.length) % 97) - ((b.id.length * 31 + seed + b.t.length) % 97); });
@@ -1032,7 +1035,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var core = v.terms.filter(function (t) { return t.core; }).length;
     var pool = v.terms.filter(function (t) { return (t.lv || 1) < 3; }); if (!pool.length) pool = v.terms;
     var ft = pool[(S.vIdx || 0) % pool.length];
-    var h = '<section class="card"><div class="progress-row"><div><h2>체화 단어장</h2><p class="small muted">' + v.terms.length + "개 · 체화할 단어 " + core + "개 · 소화 이상 " + (c[3] + c[4]) + '개</p></div><a class="btn primary" href="' + esc(v.url) + '" target="_blank" rel="noopener">학습하기 →</a></div>';
+    var h = '<section class="card"><div class="progress-row"><div><h2>체화 단어장</h2><p class="small muted">' + v.terms.length + "개 · 체화할 단어 " + core + "개 · 소화 이상 " + (c[3] + c[4]) + '개</p></div><a class="btn primary" href="vocab/">학습하기 →</a></div>';
     h += '<div class="dbar" style="height:10px">' + [1, 2, 3, 4].map(function (L) { return c[L] ? '<i style="width:' + (c[L] / v.terms.length * 100) + "%;background:var(--d" + (L + 1) + ')"></i>' : ""; }).join("") + "</div>";
     if (ft) h += '<button class="chk" data-act="vflip" style="grid-template-columns:1fr;text-align:center;justify-items:center;min-height:84px;align-content:center"><span style="font-size:19px;font-weight:700">' + esc(ft.t) + '</span><span class="small ' + (S.vFlip ? "" : "muted") + '">' + (S.vFlip ? esc(ft.d) : esc(ft.c) + " · 눌러서 뜻 보기") + "</span></button>";
     h += '<div class="row end"><button class="btn quiet" data-act="vnext">다음 단어</button><button class="btn" data-act="wview" data-v="vocab">단어장 전체 보기</button></div></section>';
@@ -2163,7 +2166,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function render() {
     var a = document.activeElement, fid = a && a.id, s0 = a && a.selectionStart, s1 = a && a.selectionEnd;
     var v = S.tab === "notes" ? viewNotes() : S.tab === "work" ? viewWork() : S.tab === "body" ? viewBody() : S.tab === "wiki" ? viewWiki() : viewToday();
-    var foot = '<p class="foot">' + (S.main ? "옵시디언 " + md(S.main.date) + " " + S.main.generatedAt.slice(11, 16) + " 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';
+    var foot = '<p class="foot">' + (S.main ? "옵시디언 " + md(S.main.date) + " " + S.main.generatedAt.slice(11, 16) + " 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <a class="more" href="shortcuts/" style="display:inline">맥 단축키</a> · <a class="more" href="vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';
     app.innerHTML = v + foot;
     app.querySelectorAll("textarea.grow").forEach(grow);
     document.querySelectorAll(".tab").forEach(function (b) { b.setAttribute("aria-selected", String(b.getAttribute("data-tab") === S.tab)); });
