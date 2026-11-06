@@ -144,8 +144,15 @@ patch('''"3. 옵시디언 볼트·Todoist·캘린더에 반영할 일(결산, �
 patch('''"5. 볼트(옵시디언)는 여기서 직접 바꾸지 않는다. 체크·로그·산출물은 앱에 저장되고 1~2분 안에 맥의 Brainy가 태스크 노트로 자동 반영한다.",''',
       '''"5. 체크·로그·산출물·다음 한 걸음은 도구로 앱에 저장하면 잠시 뒤 맥의 Brainy가 태스크 노트로 자동 반영한다. 동욱이 기한·상태·완료 기준 문구·본문처럼 도구로 안 되는 걸 고치라고 분명히 시키면, 태스크 노트(3_Action/32_태스크/T-<태스크 이름>.md)를 action-update 규칙대로 직접 고치고 무엇을 고쳤는지 한 줄로 알린다.",''')
 patch("생각하는 중… (처음 한 번은 Claude 사용 허락을 물어요)", "맥의 Brainy가 생각하는 중… (보통 5~15초)", 2)
+# 5) 태스크 작업실·태스크 기록 → 노트: 맥 동기화(task_sync.py)가 규칙대로 몇 초 안에 한다. Claude 를 깨우던 명령은 뺀다
+#    (예전엔 명령마다 Claude 실행이라 3~4분 · 사용량도 들었다)
 patch('''autoSync("tw:" + title, "태스크 기록 반영: " + title + " (자동 — 작업실 체크·로그·산출물)", 90000);''',
-      '''autoSync("tw:" + title, "태스크 기록 반영: " + title + " (자동 — 작업실 체크·로그·산출물)", 15000);''')
+      '''/* 노트 반영: 맥 동기화(task_sync.py)가 몇 초 안에 */''')
+patch('''      if (!send || !S.mcp || !cmdTriggerId()) { S.tlBusy[title] = false; S.tlMsg[title] = { t: "저장 — 맥이 연결되면 태스크 노트로 들어가요" }; render(); return; }
+      return sendCommand("태스크 기록 반영: " + title + "\\n" + tx + "\\n(tasklog id: " + id + ")").then(function () {
+        S.tlBusy[title] = false; S.tlMsg[title] = { t: "보냄 — 몇 분 뒤 태스크 노트에 반영돼요" }; return S.db.collection("tasklog").doc(id).update({ status: "보냄" });
+      }, function (e) { S.tlBusy[title] = false; S.tlMsg[title] = { t: "기록은 저장됐고, 반영 명령은 못 보냈어요 — " + e.message, err: true }; render(); });''',
+      '''      S.tlBusy[title] = false; S.tlMsg[title] = { t: "저장 — 몇 초 안에 태스크 노트 「로그」에 들어가요 (맥이 켜져 있을 때)" }; render();''')
 
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
@@ -184,9 +191,9 @@ patch('''<p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>
   <p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''')
 emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a1f"),
      "--g-bg:var(--bg);--g-fg:var(--fg);--g-mut:var(--dim);--g-card:var(--surface);--g-line:var(--rule);--g-acc:var(--accent);--g-acc-ink:var(--bg);--g-warn:var(--accent);--g-ok:var(--ok)",
-     '<link rel="apple-touch-icon" href="web-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="web-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="web-icon-64.png">',
-     '{key: "shortcuts", name: "맥 단축키", icon: "web-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests"]}',
-     '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"web-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"web-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
+     '<link rel="apple-touch-icon" href="sc-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="sc-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="sc-icon-64.png">',
+     '{key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests"]}',
+     '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"sc-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"sc-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
 
 # ═════════════════════════ 체화 단어장 ═════════════════════════
 load("vocab.html")
@@ -217,9 +224,9 @@ patch('''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연�
       '''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small><small class="muted" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></small></div>''')
 emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--l4)",
-     '<link rel="apple-touch-icon" href="vocab-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="vocab-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="vocab-icon-64.png">',
-     '{key: "vocab", name: "체화 단어장", icon: "vocab-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "progress", "ctx"]}',
-     '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vocab-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vocab-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
+     '<link rel="apple-touch-icon" href="vo-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="vo-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="vo-icon-64.png">',
+     '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "progress", "ctx"]}',
+     '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vo-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vo-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
 
 # ═════════════════════════ 옛 주소 /brainy-today/ → home/ ═════════════════════════
 # 예전엔 Brainy 홈이 맨 위 주소에 있어서 그 앱 범위가 단축키·단어장까지 덮었다 (같은 앱 창으로 열림).

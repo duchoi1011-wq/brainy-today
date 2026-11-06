@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "b4c153c0ed"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=b4c153c0ed"></script>
+<script>window.BRAINY_VERSION = "6c100b0218"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=6c100b0218"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1262,7 +1262,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function twSave(title, mutate) {
     var id = twSlug(title), cur = JSON.parse(JSON.stringify(twGet(title)));
     mutate(cur); cur.task = title; cur.updatedAt = new Date().toISOString(); cur.synced = false;
-    autoSync("tw:" + title, "태스크 기록 반영: " + title + " (자동 — 작업실 체크·로그·산출물)", 15000);
+    /* 노트 반영: 맥 동기화(task_sync.py)가 몇 초 안에 */
     S.tw[id] = cur; softRender();
     if (!S.db) return Promise.resolve();
     twQueue[id] = (twQueue[id] || Promise.resolve()).then(function () { return S.db.collection("taskwork").doc(id).set(JSON.parse(JSON.stringify(S.tw[id]))); }).catch(function () { S.twMsg = "작업 내용을 저장하지 못했어요. 잠시 뒤 다시 해 주세요."; render(); });
@@ -1648,10 +1648,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     S.tlBusy[title] = true; render();
     S.db.collection("tasklog").doc(id).set({ task: title, text: tx, date: TODAY, createdAt: new Date().toISOString(), status: "대기" }).then(function () {
       S.tlDraft[title] = "";
-      if (!send || !S.mcp || !cmdTriggerId()) { S.tlBusy[title] = false; S.tlMsg[title] = { t: "저장 — 맥이 연결되면 태스크 노트로 들어가요" }; render(); return; }
-      return sendCommand("태스크 기록 반영: " + title + "\n" + tx + "\n(tasklog id: " + id + ")").then(function () {
-        S.tlBusy[title] = false; S.tlMsg[title] = { t: "보냄 — 몇 분 뒤 태스크 노트에 반영돼요" }; return S.db.collection("tasklog").doc(id).update({ status: "보냄" });
-      }, function (e) { S.tlBusy[title] = false; S.tlMsg[title] = { t: "기록은 저장됐고, 반영 명령은 못 보냈어요 — " + e.message, err: true }; render(); });
+      S.tlBusy[title] = false; S.tlMsg[title] = { t: "저장 — 몇 초 안에 태스크 노트 「로그」에 들어가요 (맥이 켜져 있을 때)" }; render();
     }).catch(function () { S.tlBusy[title] = false; S.tlMsg[title] = { t: "저장하지 못했어요", err: true }; render(); });
   }
   function viewTodayTasks() {

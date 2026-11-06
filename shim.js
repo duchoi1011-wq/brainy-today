@@ -95,15 +95,30 @@
   }
   var db = { doc: ref, collection: function (c) { return query(c); } };
 
+  // 통째로 받기는 처음과 10분에 한 번(지워진 문서까지 맞추려고). 그 사이 다시 볼 때는 바뀐 것만 받는다.
+  var lastAt = "", lastFull = 0, FULL_EVERY = 10 * 60 * 1000;
+  function bump(at) { if (at && at > lastAt) lastAt = at; }
+  function scoped(q) { return APP.colls ? q.filter("coll", "in", inList(APP.colls)) : q.not("coll", "in", inList(OTHER)); }
   function loadAll() {
-    var q = sb.from("docs").select("path,data");
-    q = APP.colls ? q.filter("coll", "in", inList(APP.colls)) : q.not("coll", "in", inList(OTHER));
-    return q.then(function (r) {
+    return scoped(sb.from("docs").select("path,data,updated_at")).then(function (r) {
       if (r.error) throw r.error;
       var next = {};
-      (r.data || []).forEach(function (x) { next[x.path] = x.data; });
+      (r.data || []).forEach(function (x) { next[x.path] = x.data; bump(x.updated_at); });
       Object.keys(pending).forEach(function (p) { if (pending[p] > 0 && docs[p] !== undefined) next[p] = docs[p]; });
-      docs = next; state.live = true; saveCache(); notifyAll(false);
+      docs = next; state.live = true; lastFull = Date.now(); saveCache(); notifyAll(false);
+    });
+  }
+  function loadDelta() {
+    if (!lastAt || Date.now() - lastFull > FULL_EVERY) return loadAll();
+    return scoped(sb.from("docs").select("path,data,updated_at").gt("updated_at", lastAt)).then(function (r) {
+      if (r.error) throw r.error;
+      var changed = [];
+      (r.data || []).forEach(function (x) {
+        bump(x.updated_at);
+        if (pending[x.path] > 0 || JSON.stringify(docs[x.path]) === JSON.stringify(x.data)) return;
+        docs[x.path] = x.data; changed.push(x.path);
+      });
+      if (changed.length) { saveCache(); changed.forEach(notify); }
     });
   }
   var chan = null;
@@ -120,11 +135,11 @@
         sb.from("docs").select("data").eq("path", path).maybeSingle().then(function (r) { if (r.data && !(pending[path] > 0)) { docs[path] = r.data.data; saveCache(); notify(path); } });
         return;
       }
-      else { if (JSON.stringify(docs[path]) === JSON.stringify(p.new.data)) return; docs[path] = p.new.data; }
+      else { bump(p.new.updated_at); if (JSON.stringify(docs[path]) === JSON.stringify(p.new.data)) return; docs[path] = p.new.data; }
       saveCache(); notify(path);
     }).subscribe(function (st) {
       setDot(st === "SUBSCRIBED" ? "on" : (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") ? "off" : "");
-      if (st === "SUBSCRIBED") { if (!first) loadAll().catch(function () {}); first = false; }
+      if (st === "SUBSCRIBED") { if (!first) loadDelta().catch(function () {}); first = false; }
     });
   }
 
@@ -303,7 +318,7 @@
       if (document.visibilityState !== "visible") return;
       if (new Date().toDateString() !== loadedDay) { location.reload(); return; }   // 날짜가 바뀌면 오늘로
       checkVersion();
-      if (uid && state.live && Date.now() - lastFresh > 3000) { lastFresh = Date.now(); loadAll().catch(function () {}); }
+      if (uid && state.live && Date.now() - lastFresh > 3000) { lastFresh = Date.now(); loadDelta().catch(function () {}); }
     }
     function checkVersion() {
       var mine = window.BRAINY_VERSION; if (!mine) return;
@@ -330,5 +345,5 @@
       return Promise.resolve(null);
     }
   };
-  window.BRAINY = { signOut: function () { return sb.auth.signOut(); }, oldApp: OLD_APP, reload: loadAll };
+  window.BRAINY = { signOut: function () { return sb.auth.signOut(); }, oldApp: OLD_APP, reload: loadAll, delta: loadDelta };
 })();
