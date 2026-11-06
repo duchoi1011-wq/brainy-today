@@ -48,7 +48,19 @@ patch("이 화면에서는 저장소에 연결할 수 없어요. Claude 앱이�
 patch('''" 기준 · 체크와 답은 밤 점검 때 Brainy가 볼트로 옮겨요" : "Brainy 홈") + "</p>";''',
       '''" 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';''')
 patch('''h += '<p class="notice">이 화면에서는 Claude에게 물을 수 없어요. Claude 앱이나 claude.ai에서 열어 주세요.</p>';''',
-      '''h += '<p class="notice">Brainy와 대화하기는 아직 이 앱에 없어요. 지금은 claude.ai의 Brainy 홈에서 할 수 있어요.</p><a class="btn" href="' + window.BRAINY.oldApp + '" target="_blank" rel="noopener">claude.ai Brainy 홈 열기</a>';''')
+      '''h += '<p class="notice">지금은 Brainy와 대화할 수 없어요. 새로고침해 보고, 그래도 안 되면 맥이 켜져 있는지 확인해 주세요.</p>';''')
+
+# 4) Brainy 대화·태스크 작업실 — 이제 맥의 Claude(볼트를 열어 둔 채)가 답한다 (shim.js sample → ai_runner.py)
+#    읽기 도구(get_project 등)는 맥 Claude 가 볼트를 직접 읽는 걸로 대신하고, 볼트 반영도 시키면 바로 한다 (2026-11-06 동욱)
+patch('''" 프로젝트·태스크·카드 세부는 get_project, 위키는 search_wiki, 메모는 get_recent_notes, 다른 날 기록은 get_day를 먼저 불러 확인한다."''',
+      '''" 데이터에 없는 세부(프로젝트 허브·태스크 노트·카드·위키·다른 날 기록·메모)는 볼트 파일을 직접 읽어 확인한다."''')
+patch('''"3. 옵시디언 볼트·Todoist·캘린더에 반영할 일(결산, 🗳 결산 대기 답, 아침 계획 응, 태스크 고치기, /log 등)은 동욱이 분명히 시키면 run_command로 맥의 Brainy에게 보낸다. 직접 쓰는 척하지 않는다. 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다."''',
+      '''"3. 동욱이 분명히 시키면 볼트에 바로 반영한다. 태스크 고치기(기한·상태·완료 기준)·노트에 넣기처럼 금방 끝나는 건 네가 직접 고치고 어디를 고쳤는지 한 줄로 알린다. 결산·🗳 결산 대기 답·아침 계획 응·/log처럼 오래 걸리거나 캘린더가 필요한 일은 run_command로 맥의 Brainy에게 보낸다(몇 분 뒤 기록 탭 '명령'에 결과). 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다."''')
+patch('''"5. 볼트(옵시디언)는 여기서 직접 바꾸지 않는다. 체크·로그·산출물은 앱에 저장되고 1~2분 안에 맥의 Brainy가 태스크 노트로 자동 반영한다.",''',
+      '''"5. 체크·로그·산출물·다음 한 걸음은 도구로 앱에 저장하면 잠시 뒤 맥의 Brainy가 태스크 노트로 자동 반영한다. 동욱이 기한·상태·완료 기준 문구·본문처럼 도구로 안 되는 걸 고치라고 분명히 시키면, 태스크 노트(3_Action/32_태스크/T-<태스크 이름>.md)를 action-update 규칙대로 직접 고치고 무엇을 고쳤는지 한 줄로 알린다.",''')
+patch("생각하는 중… (처음 한 번은 Claude 사용 허락을 물어요)", "맥의 Brainy가 생각하는 중… (보통 5~15초)", 2)
+patch('''autoSync("tw:" + title, "태스크 기록 반영: " + title + " (자동 — 작업실 체크·로그·산출물)", 90000);''',
+      '''autoSync("tw:" + title, "태스크 기록 반영: " + title + " (자동 — 작업실 체크·로그·산출물)", 15000);''')
 
 head = '''<!doctype html>
 <html lang="ko">
@@ -88,9 +100,15 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="shim.js"></script>
+<script>window.BRAINY_VERSION = "__VERSION__";</script>
+<script src="shim.js?v=__VERSION__"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 '''
 body = body  # 공개 저장소에 올라가는 코드 — 실명은 원본에도 넣지 않는다
-(root / "index.html").write_text(head + body + "\n</body>\n</html>\n", encoding="utf-8")
-print("index.html", len(head + body) // 1024, "KB")
+# 판 번호: 화면·받침 코드가 바뀌면 달라진다. 앱은 볼 때마다 version.txt 와 견주어 새 판이면 스스로 새로 고친다.
+import hashlib
+page = head + body + "\n</body>\n</html>\n"
+ver = hashlib.sha1((page + (root / "shim.js").read_text(encoding="utf-8")).encode("utf-8")).hexdigest()[:10]
+(root / "index.html").write_text(page.replace("__VERSION__", ver), encoding="utf-8")
+(root / "version.txt").write_text(ver + "\n", encoding="utf-8")
+print("index.html", len(page) // 1024, "KB · 판", ver)

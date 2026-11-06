@@ -91,7 +91,7 @@
   var db = { doc: ref, collection: function (c) { return query(c); } };
 
   function loadAll() {
-    return sb.from("docs").select("path,data").then(function (r) {
+    return sb.from("docs").select("path,data").not("coll", "in", "(ai,ai_out)").then(function (r) {
       if (r.error) throw r.error;
       var next = {};
       (r.data || []).forEach(function (x) { next[x.path] = x.data; });
@@ -105,6 +105,8 @@
     var first = true;
     chan = sb.channel("brainy-docs").on("postgres_changes", { event: "*", schema: "public", table: "docs" }, function (p) {
       var path = (p.new && p.new.path) || (p.old && p.old.path); if (!path) return;
+      if (path.indexOf("ai_out/") === 0) { if (p.new && p.new.data) aiOut(path.slice(7), p.new.data); else aiPoll(path.slice(7)); return; }
+      if (path.indexOf("ai/") === 0) return;      // 내가 보낸 질문 — 화면 데이터가 아니다
       if (pending[path] > 0) return;             // 내가 방금 쓴 것의 메아리 — 화면 값이 더 새롭다
       if (p.eventType === "DELETE") { if (docs[path] === undefined) return; delete docs[path]; }
       else if (p.new.data === undefined || (p.errors && p.errors.length)) {   // 문서가 커서 실시간 알림에 본문이 빠짐 — 따로 읽는다
@@ -131,6 +133,95 @@
       return Promise.reject(err("not_in_manifest", "이 화면에서는 쓸 수 없는 기능이에요"));
     }
   };
+  /* ---------- Brainy 대화 (sample) — 질문을 Supabase 에 두면 맥의 Claude(구독)가 집어서 답을 흘려보낸다 ---------- */
+  var aiWait = {};   // id -> {opts, json, text, at, resolve, reject, timers}
+  var READ_TOOL = /^(get_|search_)/;  // 결과가 필요한 읽기 도구는 맥 Claude 가 볼트를 직접 읽는다
+  function toJpeg(blob) {
+    return new Promise(function (resolve) {
+      var url = URL.createObjectURL(blob), img = new Image();
+      img.onload = function () {
+        var s = Math.min(1, 1568 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        resolve(c.toDataURL("image/jpeg", 0.85));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function aiFail(id, code, msg, text) {
+    var w = aiWait[id]; if (!w) return;
+    delete aiWait[id]; w.timers.forEach(function (t) { clearTimeout(t); clearInterval(t); });
+    var e = err(code, msg); e.text = text != null ? text : w.text; w.reject(e);
+  }
+  function aiPoll(id) {
+    sb.from("docs").select("data").eq("path", "ai_out/" + id).maybeSingle().then(function (r) { if (r.data) aiOut(id, r.data.data); });
+  }
+  function aiOut(id, o) {
+    var w = aiWait[id]; if (!w || !o) return;
+    if (o.updatedAt && w.at && o.updatedAt <= w.at && o.status === w.status) return;
+    w.at = o.updatedAt; w.status = o.status; w.seen = true;
+    if ((o.status === "쓰는 중" || o.status === "끝") && typeof o.text === "string" && o.text !== w.text) {
+      var prev = w.text; w.text = o.text;
+      if (w.opts.onText && !w.json) { try { w.opts.onText({ text: o.text, delta: o.text.indexOf(prev) === 0 ? o.text.slice(prev.length) : o.text }); } catch (e) {} }
+    }
+    if (o.status === "오류") { aiFail(id, "unavailable", o.error || "맥에서 답하지 못했어요", (w.text ? w.text + "\n\n" : "") + "⚠ " + (o.error || "맥에서 답하지 못했어요")); return; }
+    if (o.status === "취소") { aiFail(id, "cancelled", "멈췄어요"); return; }
+    if (o.status !== "끝") return;
+    delete aiWait[id]; w.timers.forEach(function (t) { clearTimeout(t); clearInterval(t); });
+    sb.from("docs").delete().eq("path", "ai_out/" + id).then(function () {}, function () {});
+    // 앱 도구 실행 (체크·기록·식단·태스크 로그 …) — 페이지가 준 도구를 그대로 부른다
+    var tools = {}; (w.opts.tools || []).forEach(function (t) { tools[t.name] = t; });
+    var notes = [], chain = Promise.resolve();
+    (Array.isArray(o.actions) ? o.actions : []).forEach(function (a) {
+      chain = chain.then(function () {
+        var t = a && tools[a.name];
+        if (!t) { notes.push("모르는 도구: " + (a && a.name)); return; }
+        return Promise.resolve().then(function () { return t.execute(a.input || {}); }).catch(function (e) { notes.push((a.name) + " 실패 — " + (e && e.message || e)); });
+      });
+    });
+    if (o.actionError) notes.push(o.actionError);
+    chain.then(function () {
+      var text = o.text || "";
+      if (notes.length) text += "\n\n⚠ " + notes.join("\n⚠ ");
+      if (w.json) {
+        var s = text.trim(), m = s.match(/[\[{][\s\S]*[\]}]/);
+        try { w.resolve(JSON.parse(m ? m[0] : s)); } catch (e) { var x = err("invalid_json", "답을 읽지 못했어요"); x.text = text; w.reject(x); }
+      } else w.resolve({ text: text, truncated: false });
+    });
+  }
+  function ask(input, opts, json) {
+    opts = opts || {};
+    return ready.then(function () {
+      if (opts.signal && opts.signal.aborted) throw err("cancelled", "멈췄어요");
+      var imgs = (opts.images || []).slice(0, 5);
+      return Promise.all(imgs.map(toJpeg)).then(function (list) {
+        var id = "a" + Date.now().toString(36) + rid().slice(0, 6);
+        var req = {
+          status: "요청", input: input, json: !!json, tier: opts.modelTier || "default", createdAt: new Date().toISOString(),
+          tools: (opts.tools || []).filter(function (t) { return !READ_TOOL.test(t.name); }).map(function (t) { return { name: t.name, description: t.description || "", inputSchema: t.inputSchema || {} }; }),
+          images: list.filter(Boolean)
+        };
+        return new Promise(function (resolve, reject) {
+          var w = aiWait[id] = { opts: opts, json: !!json, text: "", at: "", resolve: resolve, reject: reject, timers: [], seen: false };
+          w.timers.push(setTimeout(function () { if (!w.seen) aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ 맥이 답하지 않아요 — 맥이 잠들었거나 꺼져 있으면 Brainy가 답할 수 없어요. 맥을 깨우고 다시 보내 주세요."); }, 25000));
+          w.timers.push(setTimeout(function () { aiFail(id, "unavailable", "너무 오래 걸려요", (w.text ? w.text + "\n\n" : "") + "⚠ 답이 너무 오래 걸려 멈췄어요. 다시 보내 주세요."); }, 9 * 60 * 1000));
+          w.timers.push(setInterval(function () { aiPoll(id); }, 1500));   // 실시간 알림을 놓쳐도 받도록
+          if (opts.signal) opts.signal.addEventListener("abort", function () {
+            sb.from("docs").upsert({ path: "ai/" + id, coll: "ai", id: id, data: { status: "취소" } }).then(function () {}, function () {});
+            aiFail(id, "cancelled", "멈췄어요");
+          });
+          sb.from("docs").upsert({ path: "ai/" + id, coll: "ai", id: id, data: req }).then(function (r) {
+            if (r.error) aiFail(id, "unavailable", r.error.message, "⚠ 질문을 보내지 못했어요 — 인터넷을 확인해 주세요.");
+          }, function () { aiFail(id, "unavailable", "보내지 못했어요", "⚠ 질문을 보내지 못했어요 — 인터넷을 확인해 주세요."); });
+        });
+      });
+    });
+  }
+  var sample = function (input, opts) { return ask(input, opts, false); };
+  sample.json = function (input, opts) { return ask(input, opts, true); };
+  sample.limits = function () { return Promise.resolve({ tools: true, images: { maxCount: 5 } }); };
+
   var downloads = {
     save: function (o) {
       var data = o.data, blob = data instanceof Blob ? data : new Blob([data], { type: o.mimeType || (typeof data === "string" ? "text/plain;charset=utf-8" : "application/octet-stream") });
@@ -196,12 +287,28 @@
   });
   if (sb) {
     sb.auth.onAuthStateChange(function (ev, ses) { if (ev !== "TOKEN_REFRESHED") setTimeout(function () { start(ses); }, 0); });
-    var loadedDay = new Date().toDateString(), hiddenAt = 0;
-    document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState !== "visible") { hiddenAt = Date.now(); return; }
+    // 볼 때마다 최신으로: 화면이 다시 보이면 앱이 새 버전인지, 날짜가 바뀌었는지 보고, 데이터는 Supabase 에서 통째로 다시 읽는다
+    var loadedDay = new Date().toDateString(), lastFresh = 0;
+    function fresh() {
+      if (document.visibilityState !== "visible") return;
       if (new Date().toDateString() !== loadedDay) { location.reload(); return; }   // 날짜가 바뀌면 오늘로
-      if (uid && state.live && Date.now() - hiddenAt > 20000) loadAll().catch(function () {});
-    });
+      checkVersion();
+      if (uid && state.live && Date.now() - lastFresh > 3000) { lastFresh = Date.now(); loadAll().catch(function () {}); }
+    }
+    function checkVersion() {
+      var mine = window.BRAINY_VERSION; if (!mine) return;
+      fetch("version.txt?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (v) {
+        v = String(v || "").trim(); if (!v || v === mine) return;
+        var tried = ""; try { tried = sessionStorage.getItem("brainy-ver") || ""; } catch (e) {}
+        if (tried === v) return;                                  // 한 번만 (캐시 때문에 같은 판이 오면 되풀이하지 않는다)
+        try { sessionStorage.setItem("brainy-ver", v); } catch (e) {}
+        location.replace(location.pathname + "?v=" + encodeURIComponent(v) + location.hash);
+      }).catch(function () {});
+    }
+    document.addEventListener("visibilitychange", fresh);
+    window.addEventListener("focus", fresh);
+    window.addEventListener("pageshow", function (e) { if (e.persisted) fresh(); });
+    setTimeout(checkVersion, 4000);
   } else document.addEventListener("DOMContentLoaded", function () { showGate("wait", "라이브러리를 못 불러왔어요 — 새로고침해 주세요."); });
 
   window.claude = {
@@ -209,7 +316,8 @@
       if (name === "db") return dbReady;
       if (name === "mcp") return dbReady.then(function (d) { return d ? mcp : null; });
       if (name === "downloads") return Promise.resolve(downloads);
-      return Promise.resolve(null); // sample 등 — 이 화면에는 없음
+      if (name === "sample") return dbReady.then(function (d) { return d ? sample : null; });
+      return Promise.resolve(null);
     }
   };
   window.BRAINY = { signOut: function () { return sb.auth.signOut(); }, oldApp: OLD_APP, reload: loadAll };
