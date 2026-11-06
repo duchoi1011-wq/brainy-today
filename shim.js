@@ -148,21 +148,23 @@
     var h = '<div class="gbox"><img src="icon.svg" alt="" width="56" height="56"><h1>Brainy 홈</h1>';
     if (mode === "wait") h += '<p class="gsub">' + (msg || "불러오는 중…") + "</p>";
     else if (mode === "owner") h += '<p class="gsub">이 계정은 주인으로 등록되지 않았어요.</p><button class="btn" id="g-out">로그아웃</button>';
-    else h += '<p class="gsub">볼트와 바로 이어지는 내 하루</p><label for="g-em">이메일</label><input id="g-em" type="email" autocomplete="username" inputmode="email">' +
-      '<label for="g-pw">비밀번호</label><input id="g-pw" type="password" autocomplete="current-password">' +
-      '<button class="btn primary" id="g-go">로그인</button><p class="gerr" id="g-err">' + (msg || "") + "</p>";
+    // 진짜 <form> 으로 내야 브라우저·아이폰 키체인이 비밀번호를 저장하고 다음에 알아서 채워 준다
+    else h += '<p class="gsub">볼트와 바로 이어지는 내 하루</p><form id="g-form" method="post" action="#" autocomplete="on" style="display:grid;gap:10px">' +
+      '<label for="g-em">이메일</label><input id="g-em" name="username" type="email" autocomplete="username" inputmode="email" autocapitalize="off" required>' +
+      '<label for="g-pw">비밀번호</label><input id="g-pw" name="password" type="password" autocomplete="current-password" required>' +
+      '<button class="btn primary" id="g-go" type="submit">로그인</button></form><p class="gerr" id="g-err">' + (msg || "") + '</p>' +
+      '<p class="gsub" style="font-size:12px;margin:0">한 번 로그인하면 이 기기에서는 계속 로그인돼 있어요.</p>';
     gate.innerHTML = h + "</div>";
     var out = document.getElementById("g-out"); if (out) out.onclick = function () { sb.auth.signOut(); };
-    var go = document.getElementById("g-go");
-    if (go) {
-      var run = function () {
+    var form = document.getElementById("g-form"), go = document.getElementById("g-go");
+    if (form) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
         var em = document.getElementById("g-em").value.trim(), pw = document.getElementById("g-pw").value, er = document.getElementById("g-err");
         if (!em || !pw) { er.textContent = "이메일과 비밀번호를 넣어 주세요."; return; }
         go.disabled = true; er.textContent = "";
         sb.auth.signInWithPassword({ email: em, password: pw }).then(function (r) { go.disabled = false; if (r.error) er.textContent = "로그인 실패 — 이메일이나 비밀번호를 확인해 주세요."; });
-      };
-      go.onclick = run;
-      document.getElementById("g-pw").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.isComposing) run(); });
+      });
     }
   }
   function hideGate() { if (gate) gate.hidden = true; }
