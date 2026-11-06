@@ -220,6 +220,15 @@ patch("기록 저장소에 연결되지 않아 이 기기에만 저장돼요. cl
       "기록 저장소에 연결되지 않아 이 기기에만 저장돼요. 인터넷을 확인하고 새로고침해 주세요.")
 patch("/memory-check로 단어를 넣으면 다음 업데이트 때 여기에도 들어와요.",
       "/memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때).")
+# 10분 복습(간격 반복) — 첫 화면. 카드 내용(ctx)은 맥이 미리 만들어 둔다(card_gen.py), 영어 결과는 볼트 표로(app_data.py)
+patch('''      <a href="#home" data-v="home">홈</a>''', '''      <a href="#review" data-v="review">복습</a>
+      <a href="#home" data-v="home">홈</a>''')
+patch('''const view = () => (location.hash || "#home").slice(1);''', '''const view = () => (location.hash || "#review").slice(1);''')
+patch('''main.innerHTML = v === "learn" ? renderLearn()''', '''main.innerHTML = v === "review" ? renderReview() : v === "learn" ? renderLearn()''')
+patch('''if (dm) { setDomain(dm.dataset.dom); location.hash = "home"; render(); return; }''', '''if (dm) { setDomain(dm.dataset.dom); if (view() !== "review") location.hash = "review"; render(); return; }''')
+patch("\ninit();\n", "\n" + (root / "src" / "vocab-review.js").read_text(encoding="utf-8") + "\ninit();\n")
+patch("<b>/log</b>를 돌리면 Claude가 이 기록을 읽어 위키 「이해도 기록」에 올릴 후보로 보여 드리고, 확인한 것만 반영돼요.",
+      "<b>/log</b>를 돌리면 Claude가 이 기록을 읽어 위키 「이해도 기록」에 올릴 후보로 보여 드리고, 확인한 것만 반영돼요. Brainy 대화·태스크 작업실에서 익힌 용어를 실제로 쓰면 ④ 실행으로 저절로 올라가요.")
 patch('''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small></div>''',
       '''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small><small class="muted" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></small></div>''')
 emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
