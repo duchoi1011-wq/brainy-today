@@ -161,6 +161,9 @@
     var w = aiWait[id]; if (!w || !o) return;
     if (o.updatedAt && w.at && o.updatedAt <= w.at && o.status === w.status) return;
     w.at = o.updatedAt; w.status = o.status; w.seen = true;
+    if (o.doing && !o.text && !w.text && o.doing !== w.doing && w.opts.onText && !w.json) {   // 글 쓰기 전 — 지금 하는 일을 잠깐 보여 준다
+      w.doing = o.doing; try { w.opts.onText({ text: "⋯ " + o.doing, delta: "" }); } catch (e) {}
+    }
     if ((o.status === "쓰는 중" || o.status === "끝") && typeof o.text === "string" && o.text !== w.text) {
       var prev = w.text; w.text = o.text;
       if (w.opts.onText && !w.json) { try { w.opts.onText({ text: o.text, delta: o.text.indexOf(prev) === 0 ? o.text.slice(prev.length) : o.text }); } catch (e) {} }
