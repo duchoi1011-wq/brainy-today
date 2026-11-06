@@ -1688,7 +1688,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     S.retrying[id] = true; render();
     var block = "\n\n[Brainy 홈 명령]\nid: " + id + "\n보낸 시각: " + TODAY + " " + pad(new Date().getHours()) + ":" + pad(new Date().getMinutes()) + " (Asia/Seoul) — 다시 보내기\n명령: " + c.text;
     S.mcp.callTool(CC_SERVER, "fire_trigger", { trigger_id: cmdTriggerId(), text: block }, { cache: false }).then(function () {
-      S.retrying[id] = false; return S.db.collection("cmd").doc(id).update({ status: "처리 중", result: "", sentAt: new Date().toISOString() });
+      S.retrying[id] = false; return S.db.collection("cmd").doc(id).update({ status: "보내는 중", result: "", sentAt: new Date().toISOString() });
     }).catch(function (e) { S.retrying[id] = false; S.cmdMsg = mcpErrText(e, "다시 못 보냈어요"); S.cmdErr = true; render(); });
   }
 
@@ -1862,7 +1862,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     return ref.set({ text: text, createdAt: at, status: "보내는 중", from: fromChat ? "chat" : "app" }).then(function () {
       var block = "\n\n[Brainy 홈 명령]\nid: " + id + "\n보낸 시각: " + TODAY + " " + pad(new Date().getHours()) + ":" + pad(new Date().getMinutes()) + " (Asia/Seoul)\n명령: " + text;
       return S.mcp.callTool(CC_SERVER, "fire_trigger", { trigger_id: tid, text: block }, { cache: false }).then(function () {
-        S.cmdBusy = false; S.cmdMsg = ""; return ref.update(window.BRAINY_FIRE ? { status: "처리 중", sentAt: new Date().toISOString() } : { status: "맥 대기", sentAt: new Date().toISOString(), result: "Brainy(Claude)에게 보낼 줄에 세워 뒀어요 — Claude 연결이 붙으면 처리돼요" }).then(function () { return window.BRAINY_FIRE ? "보냄 — 맥의 Brainy가 처리하면 결과가 기록 탭 '명령'에 떠요 (보통 몇 분)" : "줄에 세워 뒀어요 — Brainy(Claude) 연결이 붙으면 처리돼요"; });
+        S.cmdBusy = false; S.cmdMsg = ""; return ref.update({ status: "보내는 중", sentAt: new Date().toISOString(), result: "" }).then(function () { return "보냄 — 맥의 Brainy가 곧 집어서 처리해요. 결과는 기록 탭 '명령'에 떠요 (맥이 켜져 있을 때 · 보통 몇 분)"; });
       }, function (e) {
         var amb = e && (e.code === "server_unavailable" || e.code === "upstream_error");
         S.cmdBusy = false;

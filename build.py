@@ -36,9 +36,12 @@ patch('db.doc("config/main").onSnapshot(function (s) { S.cfg = s.exists ? s.data
       'db.doc("config/main").onSnapshot(function (s) { S.cfg = s.exists ? s.data() : {}; softRender(); }, fail);\n    db.doc("sync/" + TODAY).onSnapshot(function (s) { S.vsync = s.exists ? s.data() : null; softRender(); }, fail);')
 patch("앱에서 쓴 건 2분 안에 같은 노트로 들어가요", "앱에서 쓴 건 몇 초 안에 같은 노트로 들어가요")
 
-# 2) Claude 가 해야 하는 명령 — 이 화면에서는 큐에 "맥 대기"로 쌓는다 (Claude 연결 전)
+# 2) Claude 가 해야 하는 명령 — cmd 문서를 "보내는 중"으로 두면 맥 동기화(cmd_runner.py)가 몇 초 안에 이 맥의 Claude 를 깨운다.
+#    Claude 가 집으면 "처리 중" → "끝" 으로 바꾼다. ("처리 중"을 앱이 먼저 쓰면 30분 동안 안 집으므로 쓰지 않는다)
 patch('''return ref.update({ status: "처리 중", sentAt: new Date().toISOString() }).then(function () { return "보냄 — 맥의 Brainy가 처리하면 결과가 기록 탭 '명령'에 떠요 (보통 몇 분)"; });''',
-      '''return ref.update(window.BRAINY_FIRE ? { status: "처리 중", sentAt: new Date().toISOString() } : { status: "맥 대기", sentAt: new Date().toISOString(), result: "Brainy(Claude)에게 보낼 줄에 세워 뒀어요 — Claude 연결이 붙으면 처리돼요" }).then(function () { return window.BRAINY_FIRE ? "보냄 — 맥의 Brainy가 처리하면 결과가 기록 탭 '명령'에 떠요 (보통 몇 분)" : "줄에 세워 뒀어요 — Brainy(Claude) 연결이 붙으면 처리돼요"; });''')
+      '''return ref.update({ status: "보내는 중", sentAt: new Date().toISOString(), result: "" }).then(function () { return "보냄 — 맥의 Brainy가 곧 집어서 처리해요. 결과는 기록 탭 '명령'에 떠요 (맥이 켜져 있을 때 · 보통 몇 분)"; });''')
+patch('''S.retrying[id] = false; return S.db.collection("cmd").doc(id).update({ status: "처리 중", result: "", sentAt: new Date().toISOString() });''',
+      '''S.retrying[id] = false; return S.db.collection("cmd").doc(id).update({ status: "보내는 중", result: "", sentAt: new Date().toISOString() });''')
 
 # 3) 문구
 patch("이 화면에서는 저장소에 연결할 수 없어요. Claude 앱이나 claude.ai에서 열면 데이터와 체크가 나타나요.", "저장소에 연결하지 못했어요. 인터넷을 확인하고 새로고침해 주세요.")
