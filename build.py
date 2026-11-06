@@ -85,7 +85,7 @@ def emit(out_dir, title, short, theme, gate_vars, icons, app, manifest, css=""):
     global body
     d = root / out_dir
     d.mkdir(exist_ok=True)
-    up = "" if out_dir == "." else "../"
+    up = "../"
     page = HEAD.format(title=title, short=short, theme_light=theme[0], theme_dark=theme[1], icons=icons,
                        gate_vars=gate_vars, css=css, app=app, up=up)
     b = body  # 공개 저장소에 올라가는 코드 — 실명은 원본에도 넣지 않는다
@@ -129,11 +129,11 @@ patch('''S.retrying[id] = false; return S.db.collection("cmd").doc(id).update({ 
 # 3) 문구
 patch("이 화면에서는 저장소에 연결할 수 없어요. Claude 앱이나 claude.ai에서 열면 데이터와 체크가 나타나요.", "저장소에 연결하지 못했어요. 인터넷을 확인하고 새로고침해 주세요.")
 patch('''" 기준 · 체크와 답은 밤 점검 때 Brainy가 볼트로 옮겨요" : "Brainy 홈") + "</p>";''',
-      '''" 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <a class="more" href="shortcuts/" style="display:inline">맥 단축키</a> · <a class="more" href="vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';''')
+      '''" 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <a class="more" href="../shortcuts/" style="display:inline">맥 단축키</a> · <a class="more" href="../vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';''')
 patch('''h += '<p class="notice">이 화면에서는 Claude에게 물을 수 없어요. Claude 앱이나 claude.ai에서 열어 주세요.</p>';''',
       '''h += '<p class="notice">지금은 Brainy와 대화할 수 없어요. 새로고침해 보고, 그래도 안 되면 맥이 켜져 있는지 확인해 주세요.</p>';''')
 # 위키 탭의 '단어장에서 학습하기' → 새 체화 단어장 (같은 주소 아래)
-patch('''href="' + esc(v.url) + '" target="_blank" rel="noopener"''', '''href="vocab/"''', 2)
+patch('''href="' + esc(v.url) + '" target="_blank" rel="noopener"''', '''href="../vocab/"''', 2)
 
 # 4) Brainy 대화·태스크 작업실 — 이제 맥의 Claude(볼트를 열어 둔 채)가 답한다 (shim.js sample → ai_runner.py)
 #    읽기 도구(get_project 등)는 맥 Claude 가 볼트를 직접 읽는 걸로 대신하고, 볼트 반영도 시키면 바로 한다 (2026-11-06 동욱)
@@ -147,11 +147,11 @@ patch("생각하는 중… (처음 한 번은 Claude 사용 허락을 물어요)
 patch('''autoSync("tw:" + title, "태스크 기록 반영: " + title + " (자동 — 작업실 체크·로그·산출물)", 90000);''',
       '''autoSync("tw:" + title, "태스크 기록 반영: " + title + " (자동 — 작업실 체크·로그·산출물)", 15000);''')
 
-emit(".", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
+emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',
      '{key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"}',
-     '{"name":"Brainy 홈","short_name":"Brainy 홈","start_url":"./","scope":"./","display":"standalone","background_color":"#eef0ec","theme_color":"#1f5e52","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]}',
+     '{"id":"/brainy-today/home/","name":"Brainy 홈","short_name":"Brainy 홈","start_url":"./","scope":"./","display":"standalone","background_color":"#eef0ec","theme_color":"#1f5e52","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]}',
      ".app{padding-top:calc(20px + env(safe-area-inset-top,0px))!important}")
 
 # ═════════════════════════ 맥 단축키 ═════════════════════════
@@ -180,13 +180,13 @@ patch('''    if(marks[id]===kind) delete marks[id]; else marks[id]=kind;
     if(DB) DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){});''')
 patch('statusMsg("찾는 중… (처음 한 번은 허용할지 묻는다)");', 'statusMsg("맥의 Brainy가 찾는 중… (보통 10~20초)");')
 patch('''<p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''',
-      '''<p><a href="../" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></p>
+      '''<p><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></p>
   <p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''')
 emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a1f"),
      "--g-bg:var(--bg);--g-fg:var(--fg);--g-mut:var(--dim);--g-card:var(--surface);--g-line:var(--rule);--g-acc:var(--accent);--g-acc-ink:var(--bg);--g-warn:var(--accent);--g-ok:var(--ok)",
      '<link rel="apple-touch-icon" href="web-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="web-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="web-icon-64.png">',
      '{key: "shortcuts", name: "맥 단축키", icon: "web-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests"]}',
-     '{"name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"web-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"web-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
+     '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"web-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"web-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
 
 # ═════════════════════════ 체화 단어장 ═════════════════════════
 load("vocab.html")
@@ -214,9 +214,24 @@ patch("기록 저장소에 연결되지 않아 이 기기에만 저장돼요. cl
 patch("/memory-check로 단어를 넣으면 다음 업데이트 때 여기에도 들어와요.",
       "/memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때).")
 patch('''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small></div>''',
-      '''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small><small class="muted" style="font-size:12px;flex-basis:100%"><a href="../" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></small></div>''')
+      '''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small><small class="muted" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></small></div>''')
 emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--l4)",
      '<link rel="apple-touch-icon" href="vocab-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="vocab-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="vocab-icon-64.png">',
      '{key: "vocab", name: "체화 단어장", icon: "vocab-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "progress", "ctx"]}',
-     '{"name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vocab-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vocab-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
+     '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vocab-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vocab-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
+
+# ═════════════════════════ 옛 주소 /brainy-today/ → home/ ═════════════════════════
+# 예전엔 Brainy 홈이 맨 위 주소에 있어서 그 앱 범위가 단축키·단어장까지 덮었다 (같은 앱 창으로 열림).
+# 이제 세 앱은 home/ · shortcuts/ · vocab/ 로 나란히 서고, 맨 위 주소는 home/ 으로 넘기기만 한다.
+redirect = """<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brainy 홈</title><meta http-equiv="refresh" content="0; url=home/">
+<script>location.replace("home/" + location.search + location.hash);</script></head>
+<body style="font-family:-apple-system,sans-serif;padding:24px">
+<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a></p></body></html>
+"""
+(root / "index.html").write_text(redirect, encoding="utf-8")
+# 열려 있던 옛 화면이 version.txt 를 보고 스스로 새로 고치면 → 이 넘김 페이지 → home/
+(root / "version.txt").write_text(hashlib.sha1(redirect.encode()).hexdigest()[:10] + "\n", encoding="utf-8")
+print("index.html → home/ 넘김")
