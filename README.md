@@ -1,8 +1,7 @@
-# Brainy 오늘
+# Brainy 홈
 
-옵시디언 볼트와 바로 이어지는 하루 기록 웹앱 (개인용).
+옵시디언 볼트와 바로 이어지는 개인용 하루 대시보드.
 
-- 읽기: Supabase `notes` (맥의 supabase-sync.py 가 볼트에서 올린 사본)
-- 쓰기: Supabase `app_writes` → 맥의 app_writeback.py 가 볼트에 적용 (볼트가 정본)
-- 로그인: Supabase Auth, `owners` 표에 등록된 계정만 데이터 접근 (RLS)
-- 코드의 키는 공개용(publishable) 키라 노출돼도 괜찮다.
+- 화면: claude.ai artifact 로 만든 Brainy 홈을 그대로 옮김 (`build.py` 가 원본에 받침 `shim.js` 를 끼워 `index.html` 을 만든다)
+- 데이터: Supabase `docs` 표 (실시간) — 로그인한 주인 계정만 읽고 쓴다 (RLS). 코드의 키는 공개용 키.
+- 볼트 연결: 맥의 동기화 프로그램이 앱 기록을 볼트 노트에 넣고, 볼트 노트·태스크를 앱으로 올린다 (볼트가 정본).
