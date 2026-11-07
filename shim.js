@@ -272,6 +272,45 @@
     }
   };
 
+  /* ---------- 「로그」 — 세 앱(Brainy 홈·맥 단축키·체화 단어장)이 같이 보는 기록 (logs/<id>) ----------
+     Brainy 홈의 「로그」 버튼이 원래 저장과 함께 여기에도 한 줄 남기고, 어느 앱에서든 링크줄의 「로그」로 본다. */
+  var LOG_KEEP = 300, logBox = null;
+  function logPaths() {
+    return Object.keys(docs).filter(function (p) { return collOf(p) === "logs" && docs[p] && docs[p].at; })
+      .sort(function (a, b) { return docs[a].at < docs[b].at ? 1 : docs[a].at > docs[b].at ? -1 : 0; });
+  }
+  function logAdd(where, text) {
+    text = String(text || "").trim(); if (!text || !sb || !uid) return Promise.resolve();
+    var id = "l" + Date.now().toString(36) + rid().slice(0, 4);
+    var p = write("logs/" + id, { at: new Date().toISOString(), app: APP.key, appName: APP.name, where: String(where || ""), text: text.slice(0, 4000) }).catch(function () {});
+    logPaths().slice(LOG_KEEP).forEach(function (old) { ref(old).delete().catch(function () {}); });   // 오래된 것은 덜어 낸다 (원래 기록은 제자리에 그대로)
+    return p;
+  }
+  function escH(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function two(n) { return (n < 10 ? "0" : "") + n; }
+  function logRender() {
+    if (!logBox || logBox.hidden) return;
+    var list = logPaths(), h = "", day = "", today = new Date().toDateString();
+    list.slice(0, 150).forEach(function (p) {
+      var x = docs[p], d = new Date(x.at), dk = d.toDateString();
+      if (dk !== day) { day = dk; h += '<h3>' + (dk === today ? "오늘" : (d.getMonth() + 1) + "/" + d.getDate()) + "</h3>"; }
+      h += '<div class="bl-it"><div class="bl-m">' + two(d.getHours()) + ":" + two(d.getMinutes()) + " · " + escH(x.appName || x.app || "") + (x.where ? " · " + escH(x.where) : "") + '</div><div class="bl-t">' + escH(x.text) + "</div></div>";
+    });
+    logBox.querySelector(".bl-list").innerHTML = h || '<p class="bl-e">아직 남긴 로그가 없어요. Brainy 홈에서 「로그」를 누르면 여기와 다른 앱에도 같이 보여요.</p>';
+  }
+  function logOpen() {
+    if (!logBox) {
+      logBox = document.createElement("div"); logBox.id = "brlog"; logBox.hidden = true;
+      logBox.innerHTML = '<div class="bl-box" role="dialog" aria-modal="true" aria-label="로그"><div class="bl-h"><b>로그</b><span>세 앱 공통 · 최신순</span><button type="button" data-bl="x" aria-label="닫기">✕</button></div><div class="bl-list"></div></div>';
+      logBox.addEventListener("click", function (e) { if (e.target === logBox || (e.target.closest && e.target.closest("[data-bl=x]"))) logBox.hidden = true; });
+      document.body.appendChild(logBox);
+      listen({ kind: "coll", coll: "logs", cb: logRender });
+    }
+    logBox.hidden = false; logRender();
+  }
+  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=logs]"); if (b) { e.preventDefault(); logOpen(); } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && logBox && !logBox.hidden) logBox.hidden = true; });
+
   /* ---------- 로그인 화면 ---------- */
   var gate;
   function showGate(mode, msg) {
@@ -361,5 +400,5 @@
       return Promise.resolve(null);
     }
   };
-  window.BRAINY = { signOut: function () { return sb.auth.signOut(); }, oldApp: OLD_APP, reload: loadAll, delta: loadDelta };
+  window.BRAINY = { signOut: function () { return sb.auth.signOut(); }, oldApp: OLD_APP, reload: loadAll, delta: loadDelta, log: logAdd, openLog: logOpen };
 })();

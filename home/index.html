@@ -33,14 +33,21 @@ html,body{max-width:100%;overflow-x:clip}
 #gate .gerr{color:var(--g-warn);font-size:13px;min-height:18px}
 #rtdot{position:fixed;z-index:11;top:calc(8px + env(safe-area-inset-top,0px));right:10px;width:7px;height:7px;border-radius:50%;background:var(--g-line)}
 #rtdot.on{background:var(--g-ok)}#rtdot.off{background:var(--g-warn)}
+#brlog{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center}
+#brlog .bl-box{width:100%;max-width:560px;max-height:82vh;display:flex;flex-direction:column;background:var(--g-bg);color:var(--g-fg);border:1px solid var(--g-line);border-radius:16px 16px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));font-family:inherit}
+#brlog .bl-h{display:flex;align-items:baseline;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--g-line)}#brlog .bl-h b{font-size:17px}#brlog .bl-h span{flex:1;font-size:12px;color:var(--g-mut)}
+#brlog .bl-h button{font:inherit;color:var(--g-mut);background:none;border:0;font-size:16px;padding:4px 6px;cursor:pointer}
+#brlog .bl-list{overflow-y:auto;-webkit-overflow-scrolling:touch}#brlog h3{margin:14px 0 4px;font-size:12px;color:var(--g-mut);font-weight:600}
+#brlog .bl-it{padding:8px 0;border-bottom:1px solid var(--g-line)}#brlog .bl-m{font-size:12px;color:var(--g-mut)}#brlog .bl-t{font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:2px}
+#brlog .bl-e{color:var(--g-mut);font-size:13px;margin:16px 0}
 .app{padding-top:calc(20px + env(safe-area-inset-top,0px))!important}
 </style>
 </head>
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "dd35989931"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=dd35989931"></script>
+<script>window.BRAINY_VERSION = "26fe47f3e6"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=26fe47f3e6"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2137,6 +2144,31 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     return { t: t, d: d };
   }
   function stepHtml(s, cls) { var p = stepSplit(s); return '<b class="' + (cls || "") + '">' + esc(p.t) + "</b>" + (p.d ? '<span class="sd" title="' + esc(p.d) + '">' + esc(clip(p.d, 110)) + "</span>" : ""); }
+  /* ---------- 「로그」 버튼 → 세 앱(Brainy 홈·맥 단축키·체화 단어장)이 같이 보는 기록 (logs) 에도 한 줄 ----------
+     원래 저장(checks·inbox·tasklog·명령)은 그대로 하고, 같은 내용을 shim 의 BRAINY.log 로 한 번 더 남긴다. */
+  var LOG_ACT = { savenote: 1, answer: 1, tlsave: 1, mosend: 1, mofollow: 1, anssend: 1, lglog: 1, fdlog: 1 };
+  function logTap(t, act) {
+    if (!LOG_ACT[act] || !window.BRAINY || !window.BRAINY.log || !S.db || S.readOnly) return;
+    var where = "", tx = "";
+    if (act === "savenote") { where = "지금 떠오른 것"; tx = S.note; }
+    else if (act === "answer") { var q = t.getAttribute("data-q"), qp = t.closest(".q") && t.closest(".q").querySelector("p"); where = "Brainy 질문" + (qp ? " · " + clip(qp.textContent, 40) : ""); tx = S.drafts[q]; }
+    else if (act === "tlsave") { var tt = t.getAttribute("data-title"); where = "태스크 · " + tt; tx = S.tlDraft[tt]; }
+    else if (act === "mosend") { where = "아침 제안 · 고쳐 올리기"; tx = S.moDraft; }
+    else if (act === "mofollow") { where = "아침 제안"; tx = S.moDraft; }
+    else if (act === "lglog") { var ln = t.getAttribute("data-n"); where = "결산 대기 · " + ln; tx = S.lgQ[ln]; }
+    else if (act === "anssend") {
+      var sc = t.getAttribute("data-scope"), st = ansState(sc), rr = (S.reports || []).filter(function (x) { return "rp:" + x.id === sc; })[0];
+      where = "점검 결과" + (rr ? " · " + (rr.title || rr.kind) : "");
+      tx = ansPicked(sc).map(function (n) { var x = st.sel[n]; return n + " " + (x.v || "지시") + (String(x.note || "").trim() ? " — " + String(x.note).trim() : ""); }).concat(String(st.all || "").trim() ? [String(st.all).trim()] : []).join("\n");
+    }
+    else if (act === "fdlog") {
+      var fk = t.getAttribute("data-key"), it = todayList().filter(function (x) { return x.key === fk; })[0], parts = [];
+      document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { if (String(fe.value || "").trim()) parts.push(fe.value.trim()); });
+      where = "오늘 체크 · " + ((it && it.label) || fk); tx = parts.join("\n");
+    }
+    tx = String(tx || "").trim(); if (!tx) return;
+    window.BRAINY.log(where, tx);
+  }
   function ledgerChat() { if (S.chat && S.chat.busy) return; S.chat = { turns: [], busy: false, ctl: null, project: null }; }
   function ledgerAnswer(n, ans, note) {
     var it = ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === String(n); })[0];
@@ -2320,7 +2352,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function render() {
     var a = document.activeElement, fid = a && a.id, s0 = a && a.selectionStart, s1 = a && a.selectionEnd;
     var v = S.tab === "notes" ? viewNotes() : S.tab === "work" ? viewWork() : S.tab === "body" ? viewBody() : S.tab === "wiki" ? viewWiki() : viewToday();
-    var foot = '<p class="foot">' + (S.main ? "옵시디언 " + md(S.main.date) + " " + S.main.generatedAt.slice(11, 16) + " 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <a class="more" href="../shortcuts/" style="display:inline">맥 단축키</a> · <a class="more" href="../vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';
+    var foot = '<p class="foot">' + (S.main ? "옵시디언 " + md(S.main.date) + " " + S.main.generatedAt.slice(11, 16) + " 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <a class="more" href="../shortcuts/" style="display:inline">맥 단축키</a> · <a class="more" href="../vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="logs" style="display:inline">로그</button> · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';
     app.innerHTML = v + foot;
     app.querySelectorAll("textarea.grow").forEach(grow);
     document.querySelectorAll(".tab").forEach(function (b) { b.setAttribute("aria-selected", String(b.getAttribute("data-tab") === S.tab)); });
@@ -2330,6 +2362,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest("[data-act],[data-tab]"); if (!t) return;
     var act = t.getAttribute("data-act");
+    logTap(t, act);
     if (!act && t.classList.contains("tab")) act = "tab";
     if (act === "tab") { S.tab = t.getAttribute("data-tab"); try { localStorage.setItem("brainy-tab", S.tab); } catch (e) {} render(); window.scrollTo(0, 0); return; }
     if (act === "check") { var k = t.getAttribute("data-key"); saveDay(function (b) { if (b.items[k]) delete b.items[k]; else b.items[k] = true; }); return; }

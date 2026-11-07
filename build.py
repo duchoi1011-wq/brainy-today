@@ -80,6 +80,13 @@ html,body{{max-width:100%;overflow-x:clip}}
 #gate .gerr{{color:var(--g-warn);font-size:13px;min-height:18px}}
 #rtdot{{position:fixed;z-index:11;top:calc(8px + env(safe-area-inset-top,0px));right:10px;width:7px;height:7px;border-radius:50%;background:var(--g-line)}}
 #rtdot.on{{background:var(--g-ok)}}#rtdot.off{{background:var(--g-warn)}}
+#brlog{{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center}}
+#brlog .bl-box{{width:100%;max-width:560px;max-height:82vh;display:flex;flex-direction:column;background:var(--g-bg);color:var(--g-fg);border:1px solid var(--g-line);border-radius:16px 16px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));font-family:inherit}}
+#brlog .bl-h{{display:flex;align-items:baseline;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--g-line)}}#brlog .bl-h b{{font-size:17px}}#brlog .bl-h span{{flex:1;font-size:12px;color:var(--g-mut)}}
+#brlog .bl-h button{{font:inherit;color:var(--g-mut);background:none;border:0;font-size:16px;padding:4px 6px;cursor:pointer}}
+#brlog .bl-list{{overflow-y:auto;-webkit-overflow-scrolling:touch}}#brlog h3{{margin:14px 0 4px;font-size:12px;color:var(--g-mut);font-weight:600}}
+#brlog .bl-it{{padding:8px 0;border-bottom:1px solid var(--g-line)}}#brlog .bl-m{{font-size:12px;color:var(--g-mut)}}#brlog .bl-t{{font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:2px}}
+#brlog .bl-e{{color:var(--g-mut);font-size:13px;margin:16px 0}}
 {css}
 </style>
 </head>
@@ -525,6 +532,16 @@ patch("""/* 결산 대기 — 칸 안 대화 */""", """.sd { display: block; fon
 .now .sd { margin-top: 4px; }
 /* 결산 대기 — 칸 안 대화 */""")
 
+# 14) 「로그」로 남긴 기록은 세 앱 어디서나 (2026-11-07 동욱: "로그 버튼 기록이 모든 앱에도 보이게") — 원래 저장은 그대로,
+#     같은 내용을 logs 에도 한 줄 (shim.js BRAINY.log). 보기는 각 앱 위·아래 링크줄의 「로그」 (shim.js 가 띄운다)
+patch("  function ledgerChat() {", (root / "src" / "home-log.js").read_text(encoding="utf-8") + "  function ledgerChat() {")
+patch("""    var act = t.getAttribute("data-act");
+    if (!act && t.classList.contains("tab")) act = "tab";""", """    var act = t.getAttribute("data-act");
+    logTap(t, act);
+    if (!act && t.classList.contains("tab")) act = "tab";""")
+patch("""<a class="more" href="../vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="out\"""",
+      """<a class="more" href="../vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="logs" style="display:inline">로그</button> · <button class="more" data-brainy="out\"""")
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',
@@ -564,7 +581,7 @@ patch('''    if(marks[id]===kind) delete marks[id]; else marks[id]=kind;
     if(DB) DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){});''')
 patch('statusMsg("찾는 중… (처음 한 번은 허용할지 묻는다)");', 'statusMsg("맥의 Brainy가 찾는 중… (보통 10~20초)");')
 patch('''<p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''',
-      '''<p><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></p>
+      '''<p><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="logs" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그</button> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></p>
   <p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''')
 # ✓ 는 「외운 것」 — 탭 이름·안내도 그 말로 (2026-11-07 동욱). ★ 즐겨찾기에서 ✓ 누르면 외운 것으로 넘어간다(표시는 하나만)
 patch('''aria-controls="view-pass">패스</button>''', '''aria-controls="view-pass">외운 것</button>''')
@@ -651,7 +668,7 @@ SC_CSS += (".cs-addbtn{border-style:dashed!important;color:var(--accent)!importa
 emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a1f"),
      "--g-bg:var(--bg);--g-fg:var(--fg);--g-mut:var(--dim);--g-card:var(--surface);--g-line:var(--rule);--g-acc:var(--accent);--g-acc-ink:var(--bg);--g-warn:var(--accent);--g-ok:var(--ok)",
      '<link rel="apple-touch-icon" href="sc-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="sc-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="sc-icon-64.png">',
-     '{key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]}',
+     '{key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "logs"]}',
      '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"sc-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"sc-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', SC_CSS, SC_BRAINY + BRAINY_CHAT)
 
 # ═════════════════════════ 체화 단어장 ═════════════════════════
@@ -725,11 +742,11 @@ patch("</style>\n\n<div class=\"wrap\">", """.lc-pick{margin:4px 0 12px}.lc-pick
 patch("<b>/log</b>를 돌리면 Claude가 이 기록을 읽어 위키 「이해도 기록」에 올릴 후보로 보여 드리고, 확인한 것만 반영돼요.",
       "<b>/log</b>를 돌리면 Claude가 이 기록을 읽어 위키 「이해도 기록」에 올릴 후보로 보여 드리고, 확인한 것만 반영돼요. Brainy 대화·태스크 작업실에서 익힌 용어를 실제로 쓰면 ④ 실행으로 저절로 올라가요.")
 patch('''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small></div>''',
-      '''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small><small class="muted" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></small></div>''')
+      '''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small><small class="muted" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="logs" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그</button> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></small></div>''')
 emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--l4)",
      '<link rel="apple-touch-icon" href="vo-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="vo-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="vo-icon-64.png">',
-     '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]}',
+     '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "logs"]}',
      '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vo-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vo-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', "", VO_BRAINY + BRAINY_CHAT)
 
 # ═════════════════════════ 옛 주소 /brainy-today/ → home/ ═════════════════════════
