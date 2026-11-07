@@ -292,11 +292,65 @@ patch('statusMsg("찾는 중… (처음 한 번은 허용할지 묻는다)");', 
 patch('''<p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''',
       '''<p><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></p>
   <p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''')
+# 「강의」 탭: 강의 교안 순서대로 누르고 치는 것 — 볼트 `4_Outputs/단축키 앱/강의 순서.json` → sc.data/course, 진도 → sc.marks/course
+patch('''<button id="tab-now" role="tab" aria-selected="true" aria-controls="view-now">지금</button>''',
+      '''<button id="tab-now" role="tab" aria-selected="true" aria-controls="view-now">지금</button>
+        <button id="tab-course" role="tab" aria-selected="false" aria-controls="view-course">강의</button>''')
+patch('''  <div id="view-fav" role="tabpanel" aria-labelledby="tab-fav" hidden></div>''',
+      '''  <div id="view-course" role="tabpanel" aria-labelledby="tab-course" hidden></div>
+  <div id="view-fav" role="tabpanel" aria-labelledby="tab-fav" hidden></div>''')
+patch('''var VIEWS = {now:"view-now", home:"view-home", fav:"view-fav", pass:"view-pass"};''',
+      '''var VIEWS = {now:"view-now", course:"view-course", home:"view-home", fav:"view-fav", pass:"view-pass"};''')
+patch('''  if(name==="now") renderNow();''', '''  if(name==="now") renderNow();
+  if(name==="course") renderCourse();
+  save("sc.tab", name);''')
+patch('''document.addEventListener("click", function(e){
+  var mk = e.target.closest("[data-mark]");''', (root / "src" / "sc-course.js").read_text(encoding="utf-8") + '''
+document.addEventListener("click", function(e){
+  var mk = e.target.closest("[data-mark]");''')
+patch('''renderChips(); renderSections(); renderBoard(); renderNow();
+document.getElementById("chips").hidden = true;''', '''renderChips(); renderSections(); renderBoard(); renderNow();
+document.getElementById("chips").hidden = true;
+var lastTab = load("sc.tab", "now"); if(lastTab !== "now" && VIEWS[lastTab]) show(lastTab);   // 마지막에 보던 탭으로 연다''')
+patch('''    DB.doc("sc.marks/main").onSnapshot(function(s){''', '''    DB.doc("sc.data/course").onSnapshot(function(s){
+      var v = s.exists ? s.data() : null;
+      if(!v || !Array.isArray(v.courses) || !v.courses.length) return;
+      COURSE = v; save("sc.course.data", v);
+      if(current==="course") renderCourse();
+    }, function(){});
+    DB.doc("sc.marks/course").onSnapshot(function(s){
+      var v = s.exists ? s.data() : null;
+      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all }; save("sc.course", CPROG); if(current==="course") renderCourse(); }
+      else if(CPROG.cur || Object.keys(CPROG.at).length) csSave();
+    }, function(){});
+    DB.doc("sc.marks/main").onSnapshot(function(s){''')
+patch('''<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1''',
+      '''<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1''')
+SC_CSS = (".cs-pick{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.cs-pick .mode b{font-family:var(--f-mono);font-size:.72rem;color:var(--accent)}.cs-pick .mode[aria-pressed=true] b{color:inherit}.cs-pick .n{font-family:var(--f-mono);font-size:.68rem;opacity:.7;margin-left:3px}"
+  ".cs-now{scroll-margin-top:130px;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px 18px 14px;margin-bottom:34px}.cs-now .block-head h2{color:var(--accent)}"
+  ".cs-part-l{margin:10px 0 2px;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.06em;color:var(--faint)}.cs-h{margin:0 0 10px;font-family:var(--f-disp);font-size:1.08rem;letter-spacing:-.015em}"
+  ".cs-steps{list-style:none;margin:0;padding:0;display:grid;gap:2px}.cs-step{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:10px 4px;border-bottom:1px solid var(--hair)}.cs-step:last-child{border-bottom:0}"
+  ".cs-num{width:28px;height:28px;border-radius:50%;border:1px solid var(--cap-line);background:var(--raised);color:var(--dim);font:600 .75rem var(--f-mono);cursor:pointer;padding:0}.cs-step.ok .cs-num{background:var(--ok-dim);color:var(--ok);border-color:transparent}.cs-step.ok .cs-t{color:var(--faint)}"
+  ".cs-main{min-width:0;display:grid;gap:6px}.cs-t{font-size:.92rem;font-weight:500}.cs-kind{font-family:var(--f-mono);font-size:.62rem;font-weight:600;letter-spacing:.04em;color:var(--faint);margin-right:8px;white-space:nowrap}"
+  ".k-cmd .cs-kind,.k-slash .cs-kind{color:var(--ok)}.k-say .cs-kind{color:var(--accent)}.k-key .cs-kind{color:var(--fg)}"
+  ".cs-body{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.cs-body .combo{justify-content:flex-start}"
+  ".cs-code{font-family:var(--f-mono);font-size:.8rem;line-height:1.5;background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:7px 10px;flex:1 1 220px;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}.cs-code i{color:var(--faint);font-style:normal}"
+  ".k-say .cs-code{font-family:var(--f-body);font-size:.86rem;border-left:3px solid var(--accent)}.cs-path{font-size:.84rem;color:var(--dim);line-height:1.55}"
+  ".cs-copy{font:inherit;font-size:.74rem;color:var(--dim);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap}.cs-copy:hover{color:var(--fg);border-color:var(--cap-line)}"
+  ".cs-why{font-size:.78rem;color:var(--dim);line-height:1.5}.cs-empty{color:var(--faint);font-size:.86rem;margin:4px 0 10px}"
+  ".cs-nav{display:flex;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}.cs-src{display:block;margin-top:8px;font-size:.7rem;color:var(--faint)}"
+  ".cs-ch{border-bottom:1px solid var(--hair)}.cs-ch>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:10px 4px;font-size:.88rem}.cs-ch>summary::-webkit-details-marker{display:none}"
+  ".cs-ch.done .cs-title{color:var(--faint)}.cs-ch.here>summary{color:var(--accent);font-weight:600}.cs-mark{font-size:.75rem;color:var(--ok);text-align:center}.cs-ch.here .cs-mark{color:var(--accent)}"
+  ".cs-cnt{display:flex;gap:6px;font-family:var(--f-mono);font-size:.66rem;color:var(--faint)}.cs-cnt i{font-style:normal}.cs-in{padding:2px 0 14px 30px}"
+  ".cs-hit{display:grid;gap:5px;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-bottom:1px solid var(--hair);padding:10px 4px;cursor:pointer}.cs-hit:hover{background:var(--surface)}.cs-hit .combo{justify-content:flex-start}"
+  "@media (max-width:560px){.tabs{width:100%;overflow-x:auto}.cs-now{padding:14px 12px}.cs-in{padding-left:0}.cs-cnt{display:none}.cs-ch>summary{grid-template-columns:22px 1fr}}")
+
 emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a1f"),
      "--g-bg:var(--bg);--g-fg:var(--fg);--g-mut:var(--dim);--g-card:var(--surface);--g-line:var(--rule);--g-acc:var(--accent);--g-acc-ink:var(--bg);--g-warn:var(--accent);--g-ok:var(--ok)",
      '<link rel="apple-touch-icon" href="sc-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="sc-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="sc-icon-64.png">',
      '{key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests"]}',
-     '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"sc-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"sc-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
+     '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"sc-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"sc-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', SC_CSS)
 
 # ═════════════════════════ 체화 단어장 ═════════════════════════
 load("vocab.html")
