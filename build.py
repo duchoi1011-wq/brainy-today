@@ -298,6 +298,15 @@ patch('statusMsg("찾는 중… (처음 한 번은 허용할지 묻는다)");', 
 patch('''<p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''',
       '''<p><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></p>
   <p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''')
+# ✓ 는 「외운 것」 — 탭 이름·안내도 그 말로 (2026-11-07 동욱). ★ 즐겨찾기에서 ✓ 누르면 외운 것으로 넘어간다(표시는 하나만)
+patch('''aria-controls="view-pass">패스</button>''', '''aria-controls="view-pass">외운 것</button>''')
+patch('''<span><i class="dotp">✓</i> 패스 — 아는 것, 목록에서 빠진다</span>''', '''<span><i class="dotp">✓</i> 외운 것 — 목록에서 빠지고 「외운 것」 탭으로</span>''')
+patch('''var title = kind==="fav" ? "즐겨찾기" : "패스한 것";''', '''var title = kind==="fav" ? "즐겨찾기" : "외운 것";''')
+patch('''aria-label=\\""+s.t+" 패스\\" title=\\"패스 — 아는 것\\"''', '''aria-label=\\""+s.t+" 외웠어\\" title=\\"외웠어 — 「외운 것」 탭으로\\"''')
+patch('''(passed?" · 패스 "+passed:"")''', '''(passed?" · 외운 것 "+passed:"")''')
+patch('''다 패스했다 — 「패스」 탭에 있다.''', '''다 외웠다 — 「외운 것」 탭에 있다.''')
+patch('''btn.textContent = "패스한 " + n + "개 보기 →";''', '''btn.textContent = "외운 것 " + n + "개 보기 →";''')
+patch('''"<p class=\\"lead\\">패스한 "+hidden+"개는 뺐다 — 「패스」 탭에 있다.</p>"''', '''"<p class=\\"lead\\">외운 것 "+hidden+"개는 뺐다 — 「외운 것」 탭에 있다.</p>"''')
 # 「강의」 탭: 강의 교안 순서대로 누르고 치는 것 — 볼트 `4_Outputs/단축키 앱/강의 순서.json` → sc.data/course, 진도 → sc.marks/course
 patch('''<button id="tab-now" role="tab" aria-selected="true" aria-controls="view-now">지금</button>''',
       '''<button id="tab-now" role="tab" aria-selected="true" aria-controls="view-now">지금</button>

@@ -40,8 +40,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "544e30341e"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
-<script src="../shim.js?v=544e30341e"></script>
+<script>window.BRAINY_VERSION = "e114b7531d"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
+<script src="../shim.js?v=e114b7531d"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="web-icon-180.png">
@@ -283,7 +283,7 @@ footer kbd{font-size:.68rem;padding:3px 5px 2px}
         <button id="tab-course" role="tab" aria-selected="false" aria-controls="view-course">강의</button>
         <button id="tab-home" role="tab" aria-selected="false" aria-controls="view-home">목록</button>
         <button id="tab-fav" role="tab" aria-selected="false" aria-controls="view-fav">즐겨찾기</button>
-        <button id="tab-pass" role="tab" aria-selected="false" aria-controls="view-pass">패스</button>
+        <button id="tab-pass" role="tab" aria-selected="false" aria-controls="view-pass">외운 것</button>
       </div>
     </div>
     <div class="navrow" id="chips"></div>
@@ -310,7 +310,7 @@ footer kbd{font-size:.68rem;padding:3px 5px 2px}
   <div id="view-home" role="tabpanel" aria-labelledby="tab-home" hidden>
     <div class="toolbar">
       <div class="legend">
-        <span><i class="dotp">✓</i> 패스 — 아는 것, 목록에서 빠진다</span>
+        <span><i class="dotp">✓</i> 외운 것 — 목록에서 빠지고 「외운 것」 탭으로</span>
         <span><i class="dotf">★</i> 즐겨찾기 — 자주 볼 것</span>
       </div>
       <button class="ghost" id="goto-pass" type="button" hidden></button>
@@ -669,7 +669,7 @@ function row(s){
     (s.d?"<span class=\"desc\">"+s.d+"</span>":"")+"</div>"+
     combo(s.k)+
     "<div class=\"marks\">"+
-      "<button type=\"button\" class=\"mk pass\" data-mark=\"pass\" data-id=\""+s.id+"\" aria-pressed=\""+(m==="pass")+"\" aria-label=\""+s.t+" 패스\" title=\"패스 — 아는 것\">✓</button>"+
+      "<button type=\"button\" class=\"mk pass\" data-mark=\"pass\" data-id=\""+s.id+"\" aria-pressed=\""+(m==="pass")+"\" aria-label=\""+s.t+" 외웠어\" title=\"외웠어 — 「외운 것」 탭으로\">✓</button>"+
       "<button type=\"button\" class=\"mk fav\" data-mark=\"fav\" data-id=\""+s.id+"\" aria-pressed=\""+(m==="fav")+"\" aria-label=\""+s.t+" 즐겨찾기\" title=\"즐겨찾기\">★</button>"+
     "</div></div>";
 }
@@ -679,10 +679,10 @@ function block(title, list, opts){
   var shown = opts.showPassed ? list : list.filter(function(s){return marks[s.id]!=="pass"});
   return "<div class=\"block"+(opts.cls?" "+opts.cls:"")+"\">"+
     "<div class=\"block-head\"><h2>"+title+"</h2><i class=\"hr\"></i>"+
-    "<span class=\"meta\">"+shown.length+(passed?" · 패스 "+passed:"")+"</span></div>"+
+    "<span class=\"meta\">"+shown.length+(passed?" · 외운 것 "+passed:"")+"</span></div>"+
     (opts.lead||"")+
     (shown.length ? "<div class=\"grid\">"+shown.map(row).join("")+"</div>"
-                  : "<p class=\"empty\">다 패스했다 — 「패스」 탭에 있다.</p>")+
+                  : "<p class=\"empty\">다 외웠다 — 「외운 것」 탭에 있다.</p>")+
     "</div>";
 }
 
@@ -706,7 +706,7 @@ function renderSections(){
   var btn = document.getElementById("goto-pass");
   var n = Object.keys(marks).filter(function(k){return marks[k]==="pass"}).length;
   btn.hidden = !n;
-  btn.textContent = "패스한 " + n + "개 보기 →";
+  btn.textContent = "외운 것 " + n + "개 보기 →";
 }
 function renderChips(){
   var live = ITEMS.filter(function(s){return marks[s.id]!=="pass"});
@@ -728,7 +728,7 @@ function renderBoard(){
 function renderList(kind){
   var list = ITEMS.filter(function(s){return marks[s.id]===kind});
   var el = document.getElementById(kind==="fav"?"view-fav":"view-pass");
-  var title = kind==="fav" ? "즐겨찾기" : "패스한 것";
+  var title = kind==="fav" ? "즐겨찾기" : "외운 것";
   el.innerHTML = list.length
     ? block(title, list, {showPassed:true})
     : "<div class=\"block\"><div class=\"block-head\"><h2>"+title+"</h2><i class=\"hr\"></i></div><p class=\"empty\">"+
@@ -797,7 +797,7 @@ function runSearch(){
   var sv = document.getElementById("view-search");
   sv.hidden = false;
   sv.innerHTML = res.length ? block("‘"+t+"’ 검색", res, {
-      lead: hidden ? "<p class=\"lead\">패스한 "+hidden+"개는 뺐다 — 「패스」 탭에 있다.</p>" : ""})
+      lead: hidden ? "<p class=\"lead\">외운 것 "+hidden+"개는 뺐다 — 「외운 것」 탭에 있다.</p>" : ""})
     : "<div class=\"block\"><div class=\"block-head\"><h2>‘"+t+"’ — 없다</h2><i class=\"hr\"></i></div>"+
       "<p class=\"empty\">한글(복사·캡처·리플)이나 영문(cmd, finder, premiere)으로 다시 찾아보거나, "+
       "<b>정말 없으면 채워 넣는다.</b></p>"+
@@ -989,7 +989,7 @@ function csCrow(c, x, chT, withCourse){
   return "<div class=\"cs-crow k-" + x.kind + (ok ? " ok" : "") + "\"><div class=\"cs-cmain\"><div class=\"cs-t\">" + cx(x.t) + link + "</div>" +
     (x.why ? "<div class=\"cs-why\">" + cx(x.why) + "</div>" : "") + "</div>" +
     "<div class=\"cs-cbody\">" + body + (x.kind !== "key" ? "<button type=\"button\" class=\"cs-copy\" data-cscopy=\"" + cx(x.code) + "\">복사</button>" : "") +
-    "<div class=\"marks\"><button type=\"button\" class=\"mk pass\" data-cscp=\"" + cx(key) + "\" aria-pressed=\"" + ok + "\" title=\"패스 — 「패스」 탭으로\" aria-label=\"" + cx(x.t) + " 패스\">✓</button>" +
+    "<div class=\"marks\"><button type=\"button\" class=\"mk pass\" data-cscp=\"" + cx(key) + "\" aria-pressed=\"" + ok + "\" title=\"외웠어 — 「외운 것」 탭으로\" aria-label=\"" + cx(x.t) + " 패스\">✓</button>" +
     "<button type=\"button\" class=\"mk fav\" data-cscf=\"" + cx(key) + "\" aria-pressed=\"" + fv + "\" title=\"즐겨찾기\" aria-label=\"" + cx(x.t) + " 즐겨찾기\">★</button></div></div></div>";
 }
 function csCheat(c){
@@ -1005,13 +1005,13 @@ function csCheat(c){
   var h = (csSort === "order" ? csLPickRow(c) : "") + "<div class=\"modes\" style=\"margin:0 0 6px\">" + Object.keys(CS_FILT).filter(function(k){ return n[k] || k === "fav"; }).map(function(k){
     return "<button type=\"button\" class=\"mode\" data-csfilt=\"" + k + "\" aria-pressed=\"" + (csFilt === k) + "\">" + CS_FILT[k] + " <span class=\"n\">" + n[k] + "</span></button>"; }).join("") + "</div>";
   h += "<div class=\"cs-sort\"><span>보기</span><button type=\"button\" data-cssort=\"order\" aria-pressed=\"" + (csSort === "order") + "\">강의 순서</button><button type=\"button\" data-cssort=\"sec\" aria-pressed=\"" + (csSort !== "order") + "\">종류별</button></div>";
-  h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 패스 — 「패스」 탭으로 옮겨져요</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span>" + (known ? "<span>패스 " + known + "개</span>" : "") + "</div>";
+  h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 외운 것 — 「외운 것」 탭으로 옮겨져요</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span>" + (known ? "<span>외운 것 " + known + "개</span>" : "") + "</div>";
   if(csFilt === "fav"){   // ★ — 이 강의에서 즐겨찾기한 것 전부 (모음·강의 단계 어디서 눌렀든)
     var I = csIndex(c), favs = I.order.filter(function(k){ return CPROG.cf[k]; }).map(function(k){ return I.idx[k]; });
     return h + (favs.length ? "<div class=\"cs-cheat\">" + favs.map(function(x){ return csCrow(c, x, chT, false); }).join("") + "</div>" : "<p class=\"empty\">아직 없어요. 줄 옆 ★을 눌러 모아요.</p>");
   }
   var list = all.filter(function(x){ return !CPROG.cp[cpKey(c, x)] && (csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csIsCmd(x))); });
-  if(!list.length) return h + "<p class=\"empty\">남은 게 없어요 — 패스한 건 「패스」 탭에 있어요.</p>";
+  if(!list.length) return h + "<p class=\"empty\">남은 게 없어요 — 외운 건 「외운 것」 탭에 있어요.</p>";
   if(csSort === "order") return h + csByLecture(c, list, all);
   var secs = [], by = {};
   list.forEach(function(x){ var s = x.sec === "터미널 기본" ? "▶ 터미널 기본" : (x.kind === "key" ? "⌘ " : "$ ") + (x.sec || "기타"); if(!by[s]){ by[s] = []; secs.push(s); } by[s].push(x); });
@@ -1156,7 +1156,7 @@ document.addEventListener("click", function(e){
   if(b.hasAttribute("data-csfilt")){ csFilt = b.getAttribute("data-csfilt"); renderCourse(); return; }
   if(b.hasAttribute("data-cscp") || b.hasAttribute("data-cscf")){
     var isF = b.hasAttribute("data-cscf"), ck = b.getAttribute(isF ? "data-cscf" : "data-cscp"), m = isF ? CPROG.cf : CPROG.cp;
-    if(m[ck]) delete m[ck]; else m[ck] = 1;
+    if(m[ck]) delete m[ck]; else { m[ck] = 1; delete (isF ? CPROG.cp : CPROG.cf)[ck]; }   // ✓ 외운 것 ↔ ★ 즐겨찾기는 하나만 — 즐겨찾기에서 ✓ 누르면 「외운 것」으로 넘어간다
     csSave(); if(current === "fav" || current === "pass") renderList(current); else renderCourse(); return;
   }
   if(b.hasAttribute("data-cspick")){ CPROG.cur = b.getAttribute("data-cspick"); csOpen = {}; csSave(); renderCourse(); return; }
@@ -1431,8 +1431,8 @@ var lastTab = load("sc.tab", "now"); if(lastTab !== "now" && VIEWS[lastTab]) sho
       var favs = ITEMS.filter(function (s) { return marks[s.id] === "fav"; }).map(function (s) { return s.t; });
       var pass = ITEMS.filter(function (s) { return marks[s.id] === "pass"; }).length;
       var L = ["[지금 앱 상태 — 맥 단축키]",
-        "- 보고 있는 탭: " + current + " (now 지금 · course 강의 · home 목록 · fav 즐겨찾기 · pass 패스)",
-        "- 단축키 목록 " + ITEMS.length + "개 · ★ " + favs.length + "개" + (favs.length ? "(" + favs.slice(0, 25).join(", ") + ")" : "") + " · ✓패스 " + pass + "개",
+        "- 보고 있는 탭: " + current + " (now 지금 · course 강의 · home 목록 · fav 즐겨찾기 · pass 외운 것)",
+        "- 단축키 목록 " + ITEMS.length + "개 · ★ " + favs.length + "개" + (favs.length ? "(" + favs.slice(0, 25).join(", ") + ")" : "") + " · ✓외운 것 " + pass + "개",
         "- 강의들: " + csList().map(function (x) { return (x.tag ? x.tag + " " : "") + x.name + " [" + x.id + "]"; }).join(" / ")];
       if (c) {
         L.push("- 고른 강의: " + c.name + " · 지금 들을 강의(챕터): " + (here ? here.title : "-") + " · 그 강의 단축키·명령어 " + (c.cheat || []).length + "개");
@@ -1443,17 +1443,17 @@ var lastTab = load("sc.tab", "now"); if(lastTab !== "now" && VIEWS[lastTab]) sho
       return L.join("\n");
     },
     tools: [
-      { name: "shortcut_mark", description: "맥 단축키 목록의 단축키 하나에 ✓패스(pass)·★즐겨찾기(fav)를 붙이거나 뗀다(none). query 는 단축키 이름이나 id.",
+      { name: "shortcut_mark", description: "맥 단축키 목록의 단축키 하나에 ✓외운 것(pass)·★즐겨찾기(fav) — 둘 중 하나만를 붙이거나 뗀다(none). query 는 단축키 이름이나 id.",
         inputSchema: { type: "object", properties: { query: { type: "string" }, mark: { type: "string", enum: ["pass", "fav", "none"] } }, required: ["query", "mark"] },
         execute: function (i) { var s = findItem(i.query); if (!s) throw new Error("「" + i.query + "」 단축키를 못 찾았어요"); setMark(s.id, i.mark); return s.t + " → " + i.mark; } },
-      { name: "course_item_mark", description: "강의 탭의 단축키·명령어 하나에 외움(known)·★(fav)을 붙이거나 뗀다(none). course 는 강의 이름(비우면 지금 고른 강의), query 는 명령(code)이나 이름(t).",
+      { name: "course_item_mark", description: "강의 탭의 단축키·명령어 하나에 외운 것(known)·★(fav) 중 하나를 붙이거나 뗀다(none). course 는 강의 이름(비우면 지금 고른 강의), query 는 명령(code)이나 이름(t).",
         inputSchema: { type: "object", properties: { course: { type: "string" }, query: { type: "string" }, mark: { type: "string", enum: ["known", "fav", "none"] } }, required: ["query", "mark"] },
         execute: function (i) {
           var c = findCourse(i.course); if (!c) throw new Error("강의를 못 찾았어요");
           var n = norm(i.query), x = (c.cheat || []).filter(function (y) { return norm(y.code) === n || norm(y.t) === n; })[0] || (c.cheat || []).filter(function (y) { return norm(y.code).indexOf(n) >= 0 || norm(y.t).indexOf(n) >= 0; })[0];
           if (!x) throw new Error("「" + i.query + "」를 그 강의에서 못 찾았어요");
           var k = cpKey(c, x);
-          if (i.mark === "none") { delete CPROG.cp[k]; delete CPROG.cf[k]; } else (i.mark === "fav" ? CPROG.cf : CPROG.cp)[k] = 1;
+          delete CPROG.cp[k]; delete CPROG.cf[k]; if (i.mark !== "none") (i.mark === "fav" ? CPROG.cf : CPROG.cp)[k] = 1;   // 외운 것·즐겨찾기는 하나만
           csSave(); if (current === "course") renderCourse(); if (current === "fav") renderList("fav");
           return x.t + " → " + i.mark;
         } },
@@ -1464,7 +1464,7 @@ var lastTab = load("sc.tab", "now"); if(lastTab !== "now" && VIEWS[lastTab]) sho
           var ch = findChapter(c, i.chapter); if (!ch) throw new Error("「" + i.chapter + "」 챕터를 못 찾았어요");
           CPROG.cur = c.id; csGo(ch.id, true); show("course"); return c.name + " · " + ch.title;
         } },
-      { name: "open_view", description: "맥 단축키 앱의 탭을 연다: now(지금) · course(강의) · home(목록) · fav(즐겨찾기) · pass(패스).",
+      { name: "open_view", description: "맥 단축키 앱의 탭을 연다: now(지금) · course(강의) · home(목록) · fav(즐겨찾기) · pass(외운 것).",
         inputSchema: { type: "object", properties: { view: { type: "string", enum: ["now", "course", "home", "fav", "pass"] } }, required: ["view"] },
         execute: function (i) { show(i.view); return i.view; } }
     ]

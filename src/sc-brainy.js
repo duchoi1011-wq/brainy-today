@@ -31,8 +31,8 @@
       var favs = ITEMS.filter(function (s) { return marks[s.id] === "fav"; }).map(function (s) { return s.t; });
       var pass = ITEMS.filter(function (s) { return marks[s.id] === "pass"; }).length;
       var L = ["[지금 앱 상태 — 맥 단축키]",
-        "- 보고 있는 탭: " + current + " (now 지금 · course 강의 · home 목록 · fav 즐겨찾기 · pass 패스)",
-        "- 단축키 목록 " + ITEMS.length + "개 · ★ " + favs.length + "개" + (favs.length ? "(" + favs.slice(0, 25).join(", ") + ")" : "") + " · ✓패스 " + pass + "개",
+        "- 보고 있는 탭: " + current + " (now 지금 · course 강의 · home 목록 · fav 즐겨찾기 · pass 외운 것)",
+        "- 단축키 목록 " + ITEMS.length + "개 · ★ " + favs.length + "개" + (favs.length ? "(" + favs.slice(0, 25).join(", ") + ")" : "") + " · ✓외운 것 " + pass + "개",
         "- 강의들: " + csList().map(function (x) { return (x.tag ? x.tag + " " : "") + x.name + " [" + x.id + "]"; }).join(" / ")];
       if (c) {
         L.push("- 고른 강의: " + c.name + " · 지금 들을 강의(챕터): " + (here ? here.title : "-") + " · 그 강의 단축키·명령어 " + (c.cheat || []).length + "개");
@@ -43,17 +43,17 @@
       return L.join("\n");
     },
     tools: [
-      { name: "shortcut_mark", description: "맥 단축키 목록의 단축키 하나에 ✓패스(pass)·★즐겨찾기(fav)를 붙이거나 뗀다(none). query 는 단축키 이름이나 id.",
+      { name: "shortcut_mark", description: "맥 단축키 목록의 단축키 하나에 ✓외운 것(pass)·★즐겨찾기(fav) — 둘 중 하나만를 붙이거나 뗀다(none). query 는 단축키 이름이나 id.",
         inputSchema: { type: "object", properties: { query: { type: "string" }, mark: { type: "string", enum: ["pass", "fav", "none"] } }, required: ["query", "mark"] },
         execute: function (i) { var s = findItem(i.query); if (!s) throw new Error("「" + i.query + "」 단축키를 못 찾았어요"); setMark(s.id, i.mark); return s.t + " → " + i.mark; } },
-      { name: "course_item_mark", description: "강의 탭의 단축키·명령어 하나에 외움(known)·★(fav)을 붙이거나 뗀다(none). course 는 강의 이름(비우면 지금 고른 강의), query 는 명령(code)이나 이름(t).",
+      { name: "course_item_mark", description: "강의 탭의 단축키·명령어 하나에 외운 것(known)·★(fav) 중 하나를 붙이거나 뗀다(none). course 는 강의 이름(비우면 지금 고른 강의), query 는 명령(code)이나 이름(t).",
         inputSchema: { type: "object", properties: { course: { type: "string" }, query: { type: "string" }, mark: { type: "string", enum: ["known", "fav", "none"] } }, required: ["query", "mark"] },
         execute: function (i) {
           var c = findCourse(i.course); if (!c) throw new Error("강의를 못 찾았어요");
           var n = norm(i.query), x = (c.cheat || []).filter(function (y) { return norm(y.code) === n || norm(y.t) === n; })[0] || (c.cheat || []).filter(function (y) { return norm(y.code).indexOf(n) >= 0 || norm(y.t).indexOf(n) >= 0; })[0];
           if (!x) throw new Error("「" + i.query + "」를 그 강의에서 못 찾았어요");
           var k = cpKey(c, x);
-          if (i.mark === "none") { delete CPROG.cp[k]; delete CPROG.cf[k]; } else (i.mark === "fav" ? CPROG.cf : CPROG.cp)[k] = 1;
+          delete CPROG.cp[k]; delete CPROG.cf[k]; if (i.mark !== "none") (i.mark === "fav" ? CPROG.cf : CPROG.cp)[k] = 1;   // 외운 것·즐겨찾기는 하나만
           csSave(); if (current === "course") renderCourse(); if (current === "fav") renderList("fav");
           return x.t + " → " + i.mark;
         } },
@@ -64,7 +64,7 @@
           var ch = findChapter(c, i.chapter); if (!ch) throw new Error("「" + i.chapter + "」 챕터를 못 찾았어요");
           CPROG.cur = c.id; csGo(ch.id, true); show("course"); return c.name + " · " + ch.title;
         } },
-      { name: "open_view", description: "맥 단축키 앱의 탭을 연다: now(지금) · course(강의) · home(목록) · fav(즐겨찾기) · pass(패스).",
+      { name: "open_view", description: "맥 단축키 앱의 탭을 연다: now(지금) · course(강의) · home(목록) · fav(즐겨찾기) · pass(외운 것).",
         inputSchema: { type: "object", properties: { view: { type: "string", enum: ["now", "course", "home", "fav", "pass"] } }, required: ["view"] },
         execute: function (i) { show(i.view); return i.view; } }
     ]

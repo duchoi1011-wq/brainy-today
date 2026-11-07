@@ -175,7 +175,7 @@ function csCrow(c, x, chT, withCourse){
   return "<div class=\"cs-crow k-" + x.kind + (ok ? " ok" : "") + "\"><div class=\"cs-cmain\"><div class=\"cs-t\">" + cx(x.t) + link + "</div>" +
     (x.why ? "<div class=\"cs-why\">" + cx(x.why) + "</div>" : "") + "</div>" +
     "<div class=\"cs-cbody\">" + body + (x.kind !== "key" ? "<button type=\"button\" class=\"cs-copy\" data-cscopy=\"" + cx(x.code) + "\">복사</button>" : "") +
-    "<div class=\"marks\"><button type=\"button\" class=\"mk pass\" data-cscp=\"" + cx(key) + "\" aria-pressed=\"" + ok + "\" title=\"패스 — 「패스」 탭으로\" aria-label=\"" + cx(x.t) + " 패스\">✓</button>" +
+    "<div class=\"marks\"><button type=\"button\" class=\"mk pass\" data-cscp=\"" + cx(key) + "\" aria-pressed=\"" + ok + "\" title=\"외웠어 — 「외운 것」 탭으로\" aria-label=\"" + cx(x.t) + " 패스\">✓</button>" +
     "<button type=\"button\" class=\"mk fav\" data-cscf=\"" + cx(key) + "\" aria-pressed=\"" + fv + "\" title=\"즐겨찾기\" aria-label=\"" + cx(x.t) + " 즐겨찾기\">★</button></div></div></div>";
 }
 function csCheat(c){
@@ -191,13 +191,13 @@ function csCheat(c){
   var h = (csSort === "order" ? csLPickRow(c) : "") + "<div class=\"modes\" style=\"margin:0 0 6px\">" + Object.keys(CS_FILT).filter(function(k){ return n[k] || k === "fav"; }).map(function(k){
     return "<button type=\"button\" class=\"mode\" data-csfilt=\"" + k + "\" aria-pressed=\"" + (csFilt === k) + "\">" + CS_FILT[k] + " <span class=\"n\">" + n[k] + "</span></button>"; }).join("") + "</div>";
   h += "<div class=\"cs-sort\"><span>보기</span><button type=\"button\" data-cssort=\"order\" aria-pressed=\"" + (csSort === "order") + "\">강의 순서</button><button type=\"button\" data-cssort=\"sec\" aria-pressed=\"" + (csSort !== "order") + "\">종류별</button></div>";
-  h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 패스 — 「패스」 탭으로 옮겨져요</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span>" + (known ? "<span>패스 " + known + "개</span>" : "") + "</div>";
+  h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 외운 것 — 「외운 것」 탭으로 옮겨져요</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span>" + (known ? "<span>외운 것 " + known + "개</span>" : "") + "</div>";
   if(csFilt === "fav"){   // ★ — 이 강의에서 즐겨찾기한 것 전부 (모음·강의 단계 어디서 눌렀든)
     var I = csIndex(c), favs = I.order.filter(function(k){ return CPROG.cf[k]; }).map(function(k){ return I.idx[k]; });
     return h + (favs.length ? "<div class=\"cs-cheat\">" + favs.map(function(x){ return csCrow(c, x, chT, false); }).join("") + "</div>" : "<p class=\"empty\">아직 없어요. 줄 옆 ★을 눌러 모아요.</p>");
   }
   var list = all.filter(function(x){ return !CPROG.cp[cpKey(c, x)] && (csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csIsCmd(x))); });
-  if(!list.length) return h + "<p class=\"empty\">남은 게 없어요 — 패스한 건 「패스」 탭에 있어요.</p>";
+  if(!list.length) return h + "<p class=\"empty\">남은 게 없어요 — 외운 건 「외운 것」 탭에 있어요.</p>";
   if(csSort === "order") return h + csByLecture(c, list, all);
   var secs = [], by = {};
   list.forEach(function(x){ var s = x.sec === "터미널 기본" ? "▶ 터미널 기본" : (x.kind === "key" ? "⌘ " : "$ ") + (x.sec || "기타"); if(!by[s]){ by[s] = []; secs.push(s); } by[s].push(x); });
@@ -342,7 +342,7 @@ document.addEventListener("click", function(e){
   if(b.hasAttribute("data-csfilt")){ csFilt = b.getAttribute("data-csfilt"); renderCourse(); return; }
   if(b.hasAttribute("data-cscp") || b.hasAttribute("data-cscf")){
     var isF = b.hasAttribute("data-cscf"), ck = b.getAttribute(isF ? "data-cscf" : "data-cscp"), m = isF ? CPROG.cf : CPROG.cp;
-    if(m[ck]) delete m[ck]; else m[ck] = 1;
+    if(m[ck]) delete m[ck]; else { m[ck] = 1; delete (isF ? CPROG.cp : CPROG.cf)[ck]; }   // ✓ 외운 것 ↔ ★ 즐겨찾기는 하나만 — 즐겨찾기에서 ✓ 누르면 「외운 것」으로 넘어간다
     csSave(); if(current === "fav" || current === "pass") renderList(current); else renderCourse(); return;
   }
   if(b.hasAttribute("data-cspick")){ CPROG.cur = b.getAttribute("data-cspick"); csOpen = {}; csSave(); renderCourse(); return; }
