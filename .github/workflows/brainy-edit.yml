@@ -94,7 +94,7 @@ jobs:
           req = " ".join(os.environ["REQ_TEXT"].split())
           subject = "앱 고치기: " + (req[:50] + ("…" if len(req) > 50 else ""))
           open(sys.argv[2], "w", encoding="utf-8").write(
-              subject + "\n\n" + summary + "\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n")
+              subject + "\n\n" + summary + "\n\nCo-Authored-By: Claude (" + os.environ.get("MODEL", "") + ") <noreply@anthropic.com>\n")
           PY
           git config user.name "Brainy 앱 고치기"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
