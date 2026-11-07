@@ -316,11 +316,11 @@ patch('''    DB.doc("sc.marks/main").onSnapshot(function(s){''', '''    DB.doc("
       var v = s.exists ? s.data() : null;
       if(!v || !Array.isArray(v.courses) || !v.courses.length) return;
       COURSE = v; save("sc.course.data", v);
-      if(current==="course") renderCourse();
+      if(current==="course") renderCourse(); if(current==="fav") renderList("fav");
     }, function(){});
     DB.doc("sc.marks/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
-      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {} }; save("sc.course", CPROG); if(current==="course") renderCourse(); }
+      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {}, cf: v.cf || {} }; save("sc.course", CPROG); if(current==="course") renderCourse(); if(current==="fav") renderList("fav"); }
       else if(CPROG.cur || Object.keys(CPROG.at).length) csSave();
     }, function(){});
     DB.doc("sc.marks/main").onSnapshot(function(s){''')
@@ -347,6 +347,7 @@ SC_CSS = (".cs-pick{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.cs-p
   ".cs-seg{display:inline-flex;background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px;margin:0 0 14px}.cs-seg button{font:inherit;font-size:.84rem;color:var(--dim);background:none;border:0;border-radius:7px;padding:7px 13px;cursor:pointer;white-space:nowrap}.cs-seg button[aria-pressed=true]{background:var(--raised);color:var(--fg);font-weight:600;box-shadow:var(--shadow)}"
   ".cs-cheat{display:grid;margin-top:6px}.cs-crow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--hair)}.cs-crow:last-child{border-bottom:0}"
   ".cs-cbody{display:flex;gap:6px;align-items:center;justify-content:flex-end;min-width:0;flex-wrap:wrap}.cs-cbody .cs-code{flex:0 1 auto;max-width:420px;padding:5px 9px}.cs-crow.ok .cs-t,.cs-crow.ok .cs-code,.cs-crow.ok kbd{opacity:.45}"
+  ".cs-cbody .marks{margin-left:2px}.cs-legend{margin:6px 0 4px;font-size:.78rem;color:var(--dim)}"
   ".cs-chlink{font:inherit;font-size:.7rem;color:var(--faint);background:none;border:0;padding:0 0 0 6px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}.cs-chlink:hover{color:var(--accent)}"
   "@media (max-width:560px){.cs-crow{grid-template-columns:1fr}.cs-cbody{justify-content:flex-start}.cs-cbody .cs-code{flex:1 1 200px;max-width:none}.cs-seg{display:flex}.cs-seg button{flex:1}}"
   "@media (max-width:560px){.tabs{width:100%;overflow-x:auto}.cs-now{padding:14px 12px}.cs-in{padding-left:0}.cs-cnt{display:none}.cs-ch>summary{grid-template-columns:22px 1fr}}")
