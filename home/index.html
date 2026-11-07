@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "6c100b0218"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=6c100b0218"></script>
+<script>window.BRAINY_VERSION = "18d2836165"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=18d2836165"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -294,6 +294,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .bub.me { background: var(--accent); color: var(--accent-ink); justify-self: end; border-bottom-right-radius: 4px; }
 .bub.ai { background: var(--surface); border: 1px solid var(--line); justify-self: start; border-bottom-left-radius: 4px; }
 .bub.ai.wait { color: var(--muted); }
+.bub.clamp { max-height: 7.4em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+.bubx { justify-self: start; font: inherit; font-size: 13px; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0 6px; margin-top: -4px; cursor: pointer; }
+.bubx.me { justify-self: end; }
+.thr { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: grid; gap: 8px; padding: 10px 12px; }
+.thr > .h { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
 .acts2 { display: grid; gap: 4px; justify-self: start; }
 .acts2 span { font-size: 12px; color: var(--good); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; }
 .sheet .composer2 { border-top: 1px solid var(--line); background: var(--surface); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
@@ -1335,7 +1340,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (S.toolsOK) opts.tools = twTools(title);
     S.sample(input, opts).then(function (res) { ai.content = res.text; if (res.truncated) ai.err = "답이 길어서 끊겼어요."; })
       .catch(function (e) { var c = e && e.code; ai.content = (e && e.text) || ai.content; ai.err = c === "cancelled" ? "멈췄어요." : c === "rate_limited" ? "지금은 요청이 많아요. 잠시 뒤 다시." : c === "not_granted" ? "Claude 사용이 허락되지 않았어요." : "끝까지 받지 못했어요. 다시 보내 주세요."; if (c === "not_granted") S.sampleOff = true; })
-      .then(function () { ai.pending = false; r.busy = false; r.ctl = null; r.ai = null; render(); });
+      .then(function () { ai.pending = false; r.busy = false; r.ctl = null; r.ai = null; twChatSave(title, r); render(); });
   }
   function twLogOnly(title) {
     var tx = String(S.twDraft[title] || "").trim(); if (!tx) return;
@@ -1585,7 +1590,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (S.thOpen[key]) {
         h += '<div class="section" style="gap:8px">' + r.turns.map(function (t, i) {
           var isLastAi = t.role === "assistant" && i === r.turns.length - 1;
-          return '<div class="bub ' + (t.role === "user" ? "me" : "ai") + '" style="max-width:100%"' + (isLastAi ? ' id="twout-' + slug + '"' : "") + ">" + esc(t.content || (t.pending ? "생각하는 중…" : "")) + "</div>" + (t.acts && t.acts.length ? '<div class="acts2">' + t.acts.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>" : "") + (t.err ? '<p class="small" style="color:var(--warn)">' + esc(t.err) + "</p>" : "");
+          return (t.pending && !t.content ? '<div class="bub ai" style="max-width:100%" id="twout-' + slug + '">생각하는 중…</div>' : bubHtml("b:" + slug + ":" + t.role + ":" + (t.content || "").length + ":" + (t.content || "").slice(0, 12), t, t.role === "user" ? "me" : "ai", ' style="max-width:100%"' + (isLastAi ? ' id="twout-' + slug + '"' : ""), isLastAi)) + (t.acts && t.acts.length ? '<div class="acts2">' + t.acts.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>" : "") + (t.err ? '<p class="small" style="color:var(--warn)">' + esc(t.err) + "</p>" : "");
         }).join("") + "</div>";
         if (nO) h += w.outputs.slice(0, 3).map(function (o) { return '<p class="small">📄 ' + esc(o.title) + (o.v > 1 ? " · v" + o.v : "") + ' <span class="muted">' + esc(whenKo(o.at)) + "</span></p>"; }).join("");
         if (nL) h += '<div class="md"><ul>' + w.log.slice(-5).reverse().map(function (x) { return "<li>" + esc(whenKo(x.at)) + " — " + esc(x.text) + "</li>"; }).join("") + "</ul></div>";
@@ -1609,7 +1614,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var last = S.thOpen[tk2] ? r.turns.slice() : r.turns.slice(-2);
     if (last.length) h += '<div class="section" style="gap:8px">' + last.map(function (t, i) {
       var isLastAi = t.role === "assistant" && i === last.length - 1;
-      return '<div class="bub ' + (t.role === "user" ? "me" : "ai") + '" style="max-width:100%"' + (isLastAi ? ' id="twout-' + slug + '"' : "") + ">" + esc(t.content || (t.pending ? "생각하는 중…" : "")) + "</div>" + (t.acts && t.acts.length ? '<div class="acts2">' + t.acts.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>" : "") + (t.err ? '<p class="small" style="color:var(--warn)">' + esc(t.err) + "</p>" : "");
+      return (t.pending && !t.content ? '<div class="bub ai" style="max-width:100%" id="twout-' + slug + '">생각하는 중…</div>' : bubHtml("b:" + slug + ":" + t.role + ":" + (t.content || "").length + ":" + (t.content || "").slice(0, 12), t, t.role === "user" ? "me" : "ai", ' style="max-width:100%"' + (isLastAi ? ' id="twout-' + slug + '"' : ""), isLastAi)) + (t.acts && t.acts.length ? '<div class="acts2">' + t.acts.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>" : "") + (t.err ? '<p class="small" style="color:var(--warn)">' + esc(t.err) + "</p>" : "");
     }).join("") + "</div>";
     // input
     var chips = ["다음 한 걸음 같이 하자", "지금 단계 초안 만들어줘", "끝낸 것 체크해줘"];
@@ -2099,13 +2104,60 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function openChat(project, q) {
     if (!S.sample || S.sampleOff) { S.chatUnavailable = true; }
     if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }
+    if (!S.chat.turns.length && !S.chat.task && !q) { var rec = (S.threads || []).filter(function (x) { return (x.project || null) === (S.chat.project || null) && !x.task && (x.turns || []).length && Date.now() - Date.parse(x.updatedAt || 0) < 6 * 3600e3; })[0]; if (rec) resumeChat(rec); }
     sheet.hidden = false; document.getElementById("fab").hidden = true;
     document.getElementById("chat-ctx").textContent = S.chat.project ? "보고 있는 프로젝트: " + S.chat.project + " · 볼트 전체도 함께 봐요" : "내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요";
     renderChat();
     if (q) { chatInput.value = q; sendChat(); } else setTimeout(function () { try { chatInput.focus(); } catch (e) {} }, 50);
   }
   function closeChat() { sheet.hidden = true; document.getElementById("fab").hidden = false; render(); }
-  function renderChat() {
+  function bubHtml(key, t, cls, attrs, live) {
+    var txt = t.content || "", long = !live && txt.length > 260, open = !!S.exp[key];
+    var h = '<div class="bub ' + cls + (long && !open ? " clamp" : "") + '"' + (attrs || "") + ">" + esc(txt) + "</div>";
+    if (long) h += '<button class="bubx' + (t.role === "user" ? " me" : "") + '" data-act="bubx" data-k="' + esc(key) + '">' + (open ? "▴ 접기" : "▾ 펼치기") + "</button>";
+    return h;
+  }
+  function slimTurns(turns) { return turns.filter(function (t) { return t.content && !t.pending; }).slice(-30).map(function (t) { return { role: t.role, content: clip(t.content, 6000), acts: t.acts || [], err: t.err || "" }; }); }
+  function chatSlot() {
+    var have = {}; (S.threads || []).forEach(function (x) { have[x.id] = x; });
+    for (var i = 0; i < 12; i++) if (!have["s" + i]) return "s" + i;
+    return (S.threads || []).slice().sort(function (a, b) { return (a.updatedAt || "") < (b.updatedAt || "") ? -1 : 1; })[0].id;
+  }
+  function saveChat() {
+    var c = S.chat; if (!S.db || S.readOnly || !c.turns.length) return;
+    if (!c.id) { c.id = chatSlot(); c.at = new Date().toISOString(); }
+    var first = c.turns.filter(function (t) { return t.role === "user"; })[0];
+    c.savedAt = new Date().toISOString();
+    S.db.collection("chat").doc(c.id).set({ at: c.at, updatedAt: c.savedAt, project: c.project || null, task: c.task || null, title: clip(first ? first.content : "대화", 40), turns: slimTurns(c.turns) }).catch(function () {});
+  }
+  function twChatSave(title, r) {
+    if (!S.db || S.readOnly) return; r.at = new Date().toISOString();
+    S.db.collection("twchat").doc(twSlug(title)).set({ task: title, updatedAt: r.at, turns: slimTurns(r.turns) }).catch(function () {});
+  }
+  function resumeChat(x) {
+    S.chat = { id: x.id, at: x.at, turns: JSON.parse(JSON.stringify(x.turns || [])), busy: false, ctl: null, project: x.project || null, task: x.task || null };
+    S.thOpen.chat = false; S.thOpen.past = false;
+    document.getElementById("chat-ctx").textContent = S.chat.project ? "보고 있는 프로젝트: " + S.chat.project + " · 볼트 전체도 함께 봐요" : "내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요";
+  }
+  function pastThreads(open) {
+    var list = (S.threads || []).filter(function (x) { return x.id !== S.chat.id && (x.turns || []).length; }).slice(0, 11);
+    if (!list.length) return "";
+    var on = open || !!S.thOpen.past;
+    var h = open ? '<p class="small muted" style="margin-top:6px">지난 대화</p>' : '<button class="more" data-act="thtoggle" data-k="past">' + (on ? "▴ 지난 대화 숨기기" : "▾ 지난 대화 " + list.length + "개") + "</button>";
+    if (!on) return h;
+    return h + list.map(function (x) {
+      var k = "thr:" + x.id, op = !!S.thOpen[k], n = Math.ceil(x.turns.length / 2);
+      var s = '<div class="thr"><button class="h" data-act="thtoggle" data-k="' + esc(k) + '"><span>' + (op ? "▴ " : "▾ ") + esc(x.title || "대화") + (x.task ? ' <span class="small muted">· ' + esc(x.task) + "</span>" : x.project ? ' <span class="small muted">· ' + esc(x.project) + "</span>" : "") + '</span><span class="small muted" style="white-space:nowrap">' + esc(whenKo(x.updatedAt)) + " · " + n + "번</span></button>";
+      if (op) {
+        var last = x.turns.slice(-2), base = x.turns.length - last.length;
+        s += last.map(function (t, j) { return bubHtml("b:" + x.id + ":" + x.updatedAt + ":" + (base + j), t, t.role === "user" ? "me" : "ai", "", false); }).join("");
+        s += '<div class="row end"><button class="btn" data-act="chatresume" data-id="' + esc(x.id) + '">이어서 하기</button></div>';
+      }
+      return s + "</div>";
+    }).join("");
+  }
+  function renderChat(keep) {
+    var box0 = document.getElementById("msgs"), top0 = box0 ? box0.scrollTop : 0;
     var h = "";
     if (S.sampleOff || !S.sample) h += '<p class="notice">지금은 Brainy와 대화할 수 없어요. 새로고침해 보고, 그래도 안 되면 맥이 켜져 있는지 확인해 주세요.</p>';
     if (!S.chat.turns.length) {
@@ -2114,28 +2166,30 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         : ["오늘 뭐부터 해야 돼?", "이번 주 전체적으로 어때?", "점심에 해장국 먹었어, 기록해줘", "키워서보내다 매출 올리려면 이번 주에 뭘 해?"];
       h += '<p class="small muted">이렇게 물어보세요</p><div class="chips" style="flex-wrap:wrap">' + pre.map(function (p) { return '<button class="chip" data-act="chatq" data-q="' + esc(p) + '">' + esc(p) + "</button>"; }).join("") + "</div>";
       if (!S.toolsOK && S.sample) h += '<p class="small muted">이 기기에서는 Brainy가 앱에 직접 적는 기능이 꺼져 있어요. 묻고 답하기만 돼요.</p>';
-    }
+      h += pastThreads(true);
+    } else h += pastThreads(false);
     var cut = S.thOpen.chat ? 0 : Math.max(0, S.chat.turns.length - 2);
     if (S.chat.turns.length > 2) h += moreBtn("chat", Math.ceil(cut / 2) || Math.ceil((S.chat.turns.length - 2) / 2));
     S.chat.turns.forEach(function (t, i) {
       if (i < cut) return;
-      if (t.role === "user") h += '<div class="bub me">' + esc(t.content) + "</div>";
+      var bk = "b:" + (S.chat.id || "new") + ":" + (S.chat.at || "") + ":" + i, live = i >= S.chat.turns.length - 2;
+      if (t.role === "user") h += bubHtml(bk, t, "me", "", live);
       else {
         if (t.acts && t.acts.length) h += '<div class="acts2">' + t.acts.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") + "</div>";
-        h += '<div class="bub ai' + (t.content ? "" : " wait") + '" id="bub-' + i + '">' + (t.content ? esc(t.content) : "맥의 Brainy가 생각하는 중… (보통 5~15초)") + "</div>";
+        h += t.content ? bubHtml(bk, t, "ai", ' id="bub-' + i + '"', live) : '<div class="bub ai wait" id="bub-' + i + '">맥의 Brainy가 생각하는 중… (보통 5~15초)</div>';
         if (t.err) h += '<p class="small muted">' + esc(t.err) + "</p>";
         if (t.content && !t.pending && canSpeak) h += '<div class="row"><button class="btn quiet" data-act="chatsay" data-i="' + i + '">' + (S.speaking === "c" + i ? "멈추기" : "듣기") + '</button><button class="btn quiet" data-act="chatkeep" data-i="' + i + '"' + (t.kept ? " disabled" : "") + ">" + (t.kept ? "기록에 저장됨" : "기록으로 저장") + "</button></div>";
       }
     });
     msgsIn.innerHTML = h;
     var btn = document.getElementById("chat-send"); btn.textContent = S.chat.busy ? "멈추기" : "보내기"; btn.setAttribute("data-act", S.chat.busy ? "chatstop" : "chatsend");
-    var box = document.getElementById("msgs"); box.scrollTop = box.scrollHeight;
+    var box = document.getElementById("msgs"); box.scrollTop = keep ? top0 : box.scrollHeight;
   }
   function sendChat() {
     var q = (chatInput.value || "").trim(); if (!q || S.chat.busy || !S.sample || S.sampleOff) return;
     chatInput.value = ""; grow(chatInput);
     var history = S.chat.turns.filter(function (t) { return t.content && !t.err; }).slice(-12).map(function (t) { return { role: t.role, content: t.content }; });
-    S.chat.turns.push({ role: "user", content: q });
+    S.chat.turns.push({ role: "user", content: q }); S.thOpen.chat = false;
     var ai = { role: "assistant", content: "", acts: [], pending: true }; S.chat.turns.push(ai);
     var ctl = new AbortController(); S.chat.busy = true; S.chat.ctl = ctl; renderChat();
     var input = [{ role: "user", content: chatRules() }].concat(history).concat([{ role: "user", content: q }]);
@@ -2148,7 +2202,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (c === "not_granted" || c === "sampling_disabled" || c === "capability_disabled" || c === "capability_removed" || c === "not_declared") { S.sampleOff = true; ai.err = "Claude 사용이 허락되지 않았어요."; }
       else if (c === "tools_unavailable") { S.toolsOK = false; ai.err = "이 기기에서는 앱에 직접 적기가 안 돼요. 다시 보내면 묻고 답하기로 해요."; }
       else { if (c !== "refused") ai.content = (e && e.text) || ai.content; else ai.content = ""; ai.err = c === "cancelled" ? "멈췄어요." : c === "rate_limited" ? "지금은 요청이 많아요. 잠시 뒤 다시 보내 주세요." : c === "refused" ? "이 요청에는 답하지 못했어요." : c === "prompt_too_large" ? "데이터가 너무 많아요. 새 대화로 다시 물어봐 주세요." : "답을 끝까지 받지 못했어요. 다시 보내 주세요."; }
-    }).then(function () { S.chat.busy = false; S.chat.ctl = null; renderChat(); render(); });
+    }).then(function () { S.chat.busy = false; S.chat.ctl = null; saveChat(); renderChat(); render(); });
   }
   function keepChat(i) {
     var t = S.chat.turns[i], q = S.chat.turns[i - 1]; if (!t || !S.db) return;
@@ -2254,7 +2308,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "igretry") { var ird = t.getAttribute("data-id"); igCmd(ird, "📸 인스타 다시 준비: insta/" + ird, { status: "준비 요청" }); return; }
     if (act === "igfix") { igFix(t.getAttribute("data-id")); return; }
     if (act === "dlx") { doExport(t.getAttribute("data-title"), t.getAttribute("data-id"), t.getAttribute("data-f")); return; }
-    if (act === "thtoggle") { var tk = t.getAttribute("data-k"); S.thOpen[tk] = !S.thOpen[tk]; if (tk === "chat") renderChat(); else render(); return; }
+    if (act === "thtoggle") { var tk = t.getAttribute("data-k"); S.thOpen[tk] = !S.thOpen[tk]; if (tk === "chat" || tk === "past" || tk.indexOf("thr:") === 0) renderChat(tk !== "chat"); else render(); return; }
+    if (act === "bubx") { var bxk = t.getAttribute("data-k"); S.exp[bxk] = !S.exp[bxk]; if (!sheet.hidden) renderChat(true); else render(); return; }
+    if (act === "chatresume") { var rid0 = t.getAttribute("data-id"), th0 = (S.threads || []).filter(function (x) { return x.id === rid0; })[0]; if (th0 && !S.chat.busy) { resumeChat(th0); renderChat(); } return; }
     if (act === "mofollow") { var mf = String(S.moDraft || "").trim(); if (!mf) { var mfe = document.querySelector('textarea[data-mo]'); if (mfe) mfe.focus(); return; } moSend(MO_FOLLOW + mf); return; }
     if (act === "cmdretry") { retryCmd(t.getAttribute("data-id")); return; }
     if (act === "moyes") { var mt2 = String(S.moDraft || "").trim(); moSend(mt2 ? "아침 계획 고침: " + mt2 : "아침 계획 응"); return; }
@@ -2349,6 +2405,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     db.doc("morning/main").onSnapshot(function (s) { S.morning = s.exists ? s.data() : null; softRender(); }, fail);
     db.collection("cal").onSnapshot(function (q) { var o = {}; q.docs.forEach(function (d) { o[d.id] = d.data(); }); S.cal = o; softRender(); }, fail);
     db.collection("insta").orderBy("createdAt", "desc").limit(10).onSnapshot(function (q) { S.insta = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); S.igSig = S.igSig || {}; S.insta.forEach(function (d) { var sig = JSON.stringify([d.slides, d.foot]); if (S.igSig[d.id] && S.igSig[d.id] !== sig) delete S.igThumb["d:" + d.id]; S.igSig[d.id] = sig; }); softRender(); }, function () {});
+    db.collection("chat").onSnapshot(function (q) { S.threads = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }).sort(function (a, b) { return (b.updatedAt || "") < (a.updatedAt || "") ? -1 : 1; }); if (!sheet.hidden && !S.chat.busy) renderChat(true); }, fail);
+    db.collection("twchat").onSnapshot(function (q) { q.docs.forEach(function (d) { var x = d.data(), r = S.twRun[x.task]; if (!x.task || (r && (r.busy || (r.at || "") >= (x.updatedAt || "")))) return; S.twRun[x.task] = { turns: x.turns || [], at: x.updatedAt }; }); softRender(); }, fail);
     db.collection("taskwork").onSnapshot(function (q) { var o = {}; q.docs.forEach(function (d) { o[d.id] = d.data(); }); Object.keys(S.tw).forEach(function (k) { if (o[k] && (o[k].updatedAt || "") < (S.tw[k].updatedAt || "")) o[k] = S.tw[k]; }); S.tw = o; softRender(); }, fail);
     db.collection("tasklog").orderBy("createdAt", "desc").limit(60).onSnapshot(function (q) { S.tasklog = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);
     db.collection("reports").orderBy("createdAt", "desc").limit(12).onSnapshot(function (q) { S.reports = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);

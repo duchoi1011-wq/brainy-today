@@ -33,6 +33,19 @@ def patch(a, b, n=1):
     body = body.replace(a, b)
 
 
+def patch_between(a, z, b):
+    """a 로 시작해 그 뒤 처음 나오는 z 로 끝나는 덩어리를 b 로 바꾼다 (a 는 한 곳뿐이어야)."""
+    global body
+    c = body.count(a)
+    if c != 1:
+        sys.exit(f"패치 시작 자리 {c}곳 (기대 1): {a[:70]}")
+    i = body.index(a)
+    j = body.find(z, i + len(a))
+    if j < 0:
+        sys.exit(f"패치 끝 자리를 못 찾음: {z[:70]}")
+    body = body[:i] + b + body[j + len(z):]
+
+
 HEAD = '''<!doctype html>
 <html lang="ko">
 <head>
@@ -153,6 +166,96 @@ patch('''      if (!send || !S.mcp || !cmdTriggerId()) { S.tlBusy[title] = false
         S.tlBusy[title] = false; S.tlMsg[title] = { t: "보냄 — 몇 분 뒤 태스크 노트에 반영돼요" }; return S.db.collection("tasklog").doc(id).update({ status: "보냄" });
       }, function (e) { S.tlBusy[title] = false; S.tlMsg[title] = { t: "기록은 저장됐고, 반영 명령은 못 보냈어요 — " + e.message, err: true }; render(); });''',
       '''      S.tlBusy[title] = false; S.tlMsg[title] = { t: "저장 — 몇 초 안에 태스크 노트 「로그」에 들어가요 (맥이 켜져 있을 때)" }; render();''')
+# 6) 대화 저장 · 최근 것만 펼치기 (2026-11-07 동욱: "최근 채팅만 보고 채팅을 펼치기 접기")
+#    - Brainy 대화: chat/s0~s11 열두 칸에 돌려 쓴다 (지우지 않고 가장 오래된 칸을 덮어씀) → 앱을 다시 열어도 이어짐
+#    - 태스크 작업실 대화: twchat/<태스크> 에 최근 30개
+#    - 최근 주고받기 1번만 다 보이고, 이전 대화는 접힘 · 긴 말은 몇 줄만 보이고 「펼치기」
+patch('''.bub.ai.wait { color: var(--muted); }''', '''.bub.ai.wait { color: var(--muted); }
+.bub.clamp { max-height: 7.4em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+.bubx { justify-self: start; font: inherit; font-size: 13px; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0 6px; margin-top: -4px; cursor: pointer; }
+.bubx.me { justify-self: end; }
+.thr { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: grid; gap: 8px; padding: 10px 12px; }
+.thr > .h { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }''')
+patch('''  function renderChat() {''', '''  function bubHtml(key, t, cls, attrs, live) {
+    var txt = t.content || "", long = !live && txt.length > 260, open = !!S.exp[key];
+    var h = '<div class="bub ' + cls + (long && !open ? " clamp" : "") + '"' + (attrs || "") + ">" + esc(txt) + "</div>";
+    if (long) h += '<button class="bubx' + (t.role === "user" ? " me" : "") + '" data-act="bubx" data-k="' + esc(key) + '">' + (open ? "▴ 접기" : "▾ 펼치기") + "</button>";
+    return h;
+  }
+  function slimTurns(turns) { return turns.filter(function (t) { return t.content && !t.pending; }).slice(-30).map(function (t) { return { role: t.role, content: clip(t.content, 6000), acts: t.acts || [], err: t.err || "" }; }); }
+  function chatSlot() {
+    var have = {}; (S.threads || []).forEach(function (x) { have[x.id] = x; });
+    for (var i = 0; i < 12; i++) if (!have["s" + i]) return "s" + i;
+    return (S.threads || []).slice().sort(function (a, b) { return (a.updatedAt || "") < (b.updatedAt || "") ? -1 : 1; })[0].id;
+  }
+  function saveChat() {
+    var c = S.chat; if (!S.db || S.readOnly || !c.turns.length) return;
+    if (!c.id) { c.id = chatSlot(); c.at = new Date().toISOString(); }
+    var first = c.turns.filter(function (t) { return t.role === "user"; })[0];
+    c.savedAt = new Date().toISOString();
+    S.db.collection("chat").doc(c.id).set({ at: c.at, updatedAt: c.savedAt, project: c.project || null, task: c.task || null, title: clip(first ? first.content : "대화", 40), turns: slimTurns(c.turns) }).catch(function () {});
+  }
+  function twChatSave(title, r) {
+    if (!S.db || S.readOnly) return; r.at = new Date().toISOString();
+    S.db.collection("twchat").doc(twSlug(title)).set({ task: title, updatedAt: r.at, turns: slimTurns(r.turns) }).catch(function () {});
+  }
+  function resumeChat(x) {
+    S.chat = { id: x.id, at: x.at, turns: JSON.parse(JSON.stringify(x.turns || [])), busy: false, ctl: null, project: x.project || null, task: x.task || null };
+    S.thOpen.chat = false; S.thOpen.past = false;
+    document.getElementById("chat-ctx").textContent = S.chat.project ? "보고 있는 프로젝트: " + S.chat.project + " · 볼트 전체도 함께 봐요" : "내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요";
+  }
+  function pastThreads(open) {
+    var list = (S.threads || []).filter(function (x) { return x.id !== S.chat.id && (x.turns || []).length; }).slice(0, 11);
+    if (!list.length) return "";
+    var on = open || !!S.thOpen.past;
+    var h = open ? '<p class="small muted" style="margin-top:6px">지난 대화</p>' : '<button class="more" data-act="thtoggle" data-k="past">' + (on ? "▴ 지난 대화 숨기기" : "▾ 지난 대화 " + list.length + "개") + "</button>";
+    if (!on) return h;
+    return h + list.map(function (x) {
+      var k = "thr:" + x.id, op = !!S.thOpen[k], n = Math.ceil(x.turns.length / 2);
+      var s = '<div class="thr"><button class="h" data-act="thtoggle" data-k="' + esc(k) + '"><span>' + (op ? "▴ " : "▾ ") + esc(x.title || "대화") + (x.task ? ' <span class="small muted">· ' + esc(x.task) + "</span>" : x.project ? ' <span class="small muted">· ' + esc(x.project) + "</span>" : "") + '</span><span class="small muted" style="white-space:nowrap">' + esc(whenKo(x.updatedAt)) + " · " + n + "번</span></button>";
+      if (op) {
+        var last = x.turns.slice(-2), base = x.turns.length - last.length;
+        s += last.map(function (t, j) { return bubHtml("b:" + x.id + ":" + x.updatedAt + ":" + (base + j), t, t.role === "user" ? "me" : "ai", "", false); }).join("");
+        s += '<div class="row end"><button class="btn" data-act="chatresume" data-id="' + esc(x.id) + '">이어서 하기</button></div>';
+      }
+      return s + "</div>";
+    }).join("");
+  }
+  function renderChat(keep) {
+    var box0 = document.getElementById("msgs"), top0 = box0 ? box0.scrollTop : 0;''')
+patch('''      if (!S.toolsOK && S.sample) h += '<p class="small muted">이 기기에서는 Brainy가 앱에 직접 적는 기능이 꺼져 있어요. 묻고 답하기만 돼요.</p>';
+    }''', '''      if (!S.toolsOK && S.sample) h += '<p class="small muted">이 기기에서는 Brainy가 앱에 직접 적는 기능이 꺼져 있어요. 묻고 답하기만 돼요.</p>';
+      h += pastThreads(true);
+    } else h += pastThreads(false);''')
+patch('''      if (t.role === "user") h += '<div class="bub me">' + esc(t.content) + "</div>";''',
+      '''      var bk = "b:" + (S.chat.id || "new") + ":" + (S.chat.at || "") + ":" + i, live = i >= S.chat.turns.length - 2;
+      if (t.role === "user") h += bubHtml(bk, t, "me", "", live);''')
+patch('''        h += '<div class="bub ai' + (t.content ? "" : " wait") + '" id="bub-' + i + '">' + (t.content ? esc(t.content) : "맥의 Brainy가 생각하는 중… (보통 5~15초)") + "</div>";''',
+      '''        h += t.content ? bubHtml(bk, t, "ai", ' id="bub-' + i + '"', live) : '<div class="bub ai wait" id="bub-' + i + '">맥의 Brainy가 생각하는 중… (보통 5~15초)</div>';''')
+patch('''btn.setAttribute("data-act", S.chat.busy ? "chatstop" : "chatsend");
+    var box = document.getElementById("msgs"); box.scrollTop = box.scrollHeight;''',
+      '''btn.setAttribute("data-act", S.chat.busy ? "chatstop" : "chatsend");
+    var box = document.getElementById("msgs"); box.scrollTop = keep ? top0 : box.scrollHeight;''')
+# 열 때: 6시간 안에 하던 대화(같은 프로젝트)가 있으면 그대로 이어서 보여 준다
+patch('''    if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }''',
+      '''    if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }
+    if (!S.chat.turns.length && !S.chat.task && !q) { var rec = (S.threads || []).filter(function (x) { return (x.project || null) === (S.chat.project || null) && !x.task && (x.turns || []).length && Date.now() - Date.parse(x.updatedAt || 0) < 6 * 3600e3; })[0]; if (rec) resumeChat(rec); }''')
+patch('''    S.chat.turns.push({ role: "user", content: q });''',
+      '''    S.chat.turns.push({ role: "user", content: q }); S.thOpen.chat = false;''')
+patch('''    }).then(function () { S.chat.busy = false; S.chat.ctl = null; renderChat(); render(); });''',
+      '''    }).then(function () { S.chat.busy = false; S.chat.ctl = null; saveChat(); renderChat(); render(); });''')
+patch('''      .then(function () { ai.pending = false; r.busy = false; r.ctl = null; r.ai = null; render(); });''',
+      '''      .then(function () { ai.pending = false; r.busy = false; r.ctl = null; r.ai = null; twChatSave(title, r); render(); });''')
+# 작업실 말풍선도 길면 접기 (마지막 답은 다 보임)
+patch('''return '<div class="bub ' + (t.role === "user" ? "me" : "ai") + '" style="max-width:100%"' + (isLastAi ? ' id="twout-' + slug + '"' : "") + ">" + esc(t.content || (t.pending ? "생각하는 중…" : "")) + "</div>"''',
+      '''return (t.pending && !t.content ? '<div class="bub ai" style="max-width:100%" id="twout-' + slug + '">생각하는 중…</div>' : bubHtml("b:" + slug + ":" + t.role + ":" + (t.content || "").length + ":" + (t.content || "").slice(0, 12), t, t.role === "user" ? "me" : "ai", ' style="max-width:100%"' + (isLastAi ? ' id="twout-' + slug + '"' : ""), isLastAi))''', 2)
+patch('''    if (act === "thtoggle") { var tk = t.getAttribute("data-k"); S.thOpen[tk] = !S.thOpen[tk]; if (tk === "chat") renderChat(); else render(); return; }''',
+      '''    if (act === "thtoggle") { var tk = t.getAttribute("data-k"); S.thOpen[tk] = !S.thOpen[tk]; if (tk === "chat" || tk === "past" || tk.indexOf("thr:") === 0) renderChat(tk !== "chat"); else render(); return; }
+    if (act === "bubx") { var bxk = t.getAttribute("data-k"); S.exp[bxk] = !S.exp[bxk]; if (!sheet.hidden) renderChat(true); else render(); return; }
+    if (act === "chatresume") { var rid0 = t.getAttribute("data-id"), th0 = (S.threads || []).filter(function (x) { return x.id === rid0; })[0]; if (th0 && !S.chat.busy) { resumeChat(th0); renderChat(); } return; }''')
+patch('''    db.collection("taskwork").onSnapshot(''', '''    db.collection("chat").onSnapshot(function (q) { S.threads = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }).sort(function (a, b) { return (b.updatedAt || "") < (a.updatedAt || "") ? -1 : 1; }); if (!sheet.hidden && !S.chat.busy) renderChat(true); }, fail);
+    db.collection("twchat").onSnapshot(function (q) { q.docs.forEach(function (d) { var x = d.data(), r = S.twRun[x.task]; if (!x.task || (r && (r.busy || (r.at || "") >= (x.updatedAt || "")))) return; S.twRun[x.task] = { turns: x.turns || [], at: x.updatedAt }; }); softRender(); }, fail);
+    db.collection("taskwork").onSnapshot(''')
 
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
