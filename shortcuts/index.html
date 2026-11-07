@@ -40,8 +40,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "4336cf64d7"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
-<script src="../shim.js?v=4336cf64d7"></script>
+<script>window.BRAINY_VERSION = "544e30341e"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
+<script src="../shim.js?v=544e30341e"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="web-icon-180.png">
@@ -962,7 +962,7 @@ document.addEventListener("click", function(e){
 });
 // 「터미널 기본」 — cd·ls·Tab처럼 어느 챕터에서나 쓰는 것. 차례대로 맨 위에 접었다 폈다
 function csBasics(c){
-  var b = (c.cheat || []).filter(function(x){ return x.sec === "터미널 기본"; });
+  var b = (c.cheat || []).filter(function(x){ return x.sec === "터미널 기본" && !CPROG.cp[cpKey(c, x)]; });
   if(!b.length) return "";
   return "<details class=\"cs-ch cs-basics\"" + (csTB ? " open" : "") + " data-cstb=\"1\"><summary><span class=\"cs-mark\">$</span><span class=\"cs-title\">터미널 기본 — cd · ls · Tab처럼 늘 쓰는 것</span><span class=\"cs-cnt\"><i>" + b.length + "</i></span></summary>" +
     "<div class=\"cs-in\"><div class=\"cs-cheat\">" + b.map(function(x){ return csCrow(c, x, {}, false); }).join("") + "</div></div></details>";
@@ -989,7 +989,7 @@ function csCrow(c, x, chT, withCourse){
   return "<div class=\"cs-crow k-" + x.kind + (ok ? " ok" : "") + "\"><div class=\"cs-cmain\"><div class=\"cs-t\">" + cx(x.t) + link + "</div>" +
     (x.why ? "<div class=\"cs-why\">" + cx(x.why) + "</div>" : "") + "</div>" +
     "<div class=\"cs-cbody\">" + body + (x.kind !== "key" ? "<button type=\"button\" class=\"cs-copy\" data-cscopy=\"" + cx(x.code) + "\">복사</button>" : "") +
-    "<div class=\"marks\"><button type=\"button\" class=\"mk pass\" data-cscp=\"" + cx(key) + "\" aria-pressed=\"" + ok + "\" title=\"외웠어\" aria-label=\"" + cx(x.t) + " 외웠어\">✓</button>" +
+    "<div class=\"marks\"><button type=\"button\" class=\"mk pass\" data-cscp=\"" + cx(key) + "\" aria-pressed=\"" + ok + "\" title=\"패스 — 「패스」 탭으로\" aria-label=\"" + cx(x.t) + " 패스\">✓</button>" +
     "<button type=\"button\" class=\"mk fav\" data-cscf=\"" + cx(key) + "\" aria-pressed=\"" + fv + "\" title=\"즐겨찾기\" aria-label=\"" + cx(x.t) + " 즐겨찾기\">★</button></div></div></div>";
 }
 function csCheat(c){
@@ -997,15 +997,21 @@ function csCheat(c){
   c.chapters.forEach(function(ch){ chT[ch.id] = ch.title; });
   if(!all.length) return "<p class=\"empty\">이 강의 교안에는 따로 외울 단축키·명령어가 없어요 — 「차례대로」에서 Claude에게 할 말을 보세요.</p>";
   var n = { all: all.length, key: 0, cmd: 0, fav: 0 };
-  all.forEach(function(x){ if(x.kind === "key") n.key++; else n.cmd++; if(CPROG.cf[cpKey(c, x)]) n.fav++; });
+  all.forEach(function(x){ if(CPROG.cp[cpKey(c, x)]) return; if(x.kind === "key") n.key++; else n.cmd++; });
+  n.all = n.key + n.cmd;
+  n.fav = Object.keys(CPROG.cf).filter(function(k){ return k.indexOf(c.id + "|") === 0 || k.indexOf("tb|") === 0; }).length;
   if(!n[csFilt] && csFilt !== "all") csFilt = "all";
-  var known = all.filter(function(x){ return CPROG.cp[cpKey(c, x)]; }).length;
+  var known = Object.keys(CPROG.cp).filter(function(k){ return k.indexOf(c.id + "|") === 0 || k.indexOf("tb|") === 0; }).length;
   var h = (csSort === "order" ? csLPickRow(c) : "") + "<div class=\"modes\" style=\"margin:0 0 6px\">" + Object.keys(CS_FILT).filter(function(k){ return n[k] || k === "fav"; }).map(function(k){
     return "<button type=\"button\" class=\"mode\" data-csfilt=\"" + k + "\" aria-pressed=\"" + (csFilt === k) + "\">" + CS_FILT[k] + " <span class=\"n\">" + n[k] + "</span></button>"; }).join("") + "</div>";
   h += "<div class=\"cs-sort\"><span>보기</span><button type=\"button\" data-cssort=\"order\" aria-pressed=\"" + (csSort === "order") + "\">강의 순서</button><button type=\"button\" data-cssort=\"sec\" aria-pressed=\"" + (csSort !== "order") + "\">종류별</button></div>";
-  h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 외웠어 — 흐리게</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span><span>외운 것 " + known + "/" + all.length + "</span></div>";
-  var list = all.filter(function(x){ return csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csFilt === "cmd" ? csIsCmd(x) : CPROG.cf[cpKey(c, x)]); });
-  if(!list.length) return h + "<p class=\"empty\">아직 없어요. 줄 옆 ★을 눌러 모아요.</p>";
+  h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 패스 — 「패스」 탭으로 옮겨져요</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span>" + (known ? "<span>패스 " + known + "개</span>" : "") + "</div>";
+  if(csFilt === "fav"){   // ★ — 이 강의에서 즐겨찾기한 것 전부 (모음·강의 단계 어디서 눌렀든)
+    var I = csIndex(c), favs = I.order.filter(function(k){ return CPROG.cf[k]; }).map(function(k){ return I.idx[k]; });
+    return h + (favs.length ? "<div class=\"cs-cheat\">" + favs.map(function(x){ return csCrow(c, x, chT, false); }).join("") + "</div>" : "<p class=\"empty\">아직 없어요. 줄 옆 ★을 눌러 모아요.</p>");
+  }
+  var list = all.filter(function(x){ return !CPROG.cp[cpKey(c, x)] && (csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csIsCmd(x))); });
+  if(!list.length) return h + "<p class=\"empty\">남은 게 없어요 — 패스한 건 「패스」 탭에 있어요.</p>";
   if(csSort === "order") return h + csByLecture(c, list, all);
   var secs = [], by = {};
   list.forEach(function(x){ var s = x.sec === "터미널 기본" ? "▶ 터미널 기본" : (x.kind === "key" ? "⌘ " : "$ ") + (x.sec || "기타"); if(!by[s]){ by[s] = []; secs.push(s); } by[s].push(x); });
@@ -1035,7 +1041,7 @@ function csLPickRow(c){
   return h;
 }
 function csByLecture(c, list, all){
-  var keep = function(x){ return csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csFilt === "cmd" ? csIsCmd(x) : CPROG.cf[cpKey(c, x)]); };
+  var keep = function(x){ return !CPROG.cp[cpKey(c, x)] && (csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csFilt === "cmd" ? csIsCmd(x) : CPROG.cf[cpKey(c, x)])); };
   var lecs = c.chapters.filter(function(ch){ return csSteps(ch).length; }), here = csHere(c);
   var pick = (CPROG.pk || {})[c.id] || "", sel = lecs.filter(function(ch){ return ch.id === pick; })[0];
   var h = "";
@@ -1064,22 +1070,32 @@ function csByLecture(c, list, all){
   });
   return h;
 }
-// 「즐겨찾기」 탭 — 강의 단축키·명령어 중 ★ 한 것
-function csFavBlock(){
-  var h = "", tbSeen = {};
+// 강의 하나의 단축키·명령어 전부 (모음 + 챕터 단계) — key → 항목. ★·✓ 이 어느 화면에서 눌렸든 여기서 찾는다
+function csIndex(c){
+  var idx = {}, order = [];
+  (c.cheat || []).forEach(function(x){ var k = cpKey(c, x); if(!idx[k]){ idx[k] = x; order.push(k); } });
+  c.chapters.forEach(function(ch){ ch.steps.forEach(function(s){
+    if(!CS_SHOW[s.kind]) return;
+    var x = s.ch ? s : Object.assign({ ch: ch.id }, s), k = cpKey(c, x);
+    if(!idx[k]){ idx[k] = x; order.push(k); }
+  }); });
+  return { idx: idx, order: order };
+}
+// 「즐겨찾기」(★)·「패스」(✓) 탭 — 강의 단축키·명령어 중 표시한 것을 강의별로
+function csMarkedBlock(kind){
+  var m = kind === "fav" ? CPROG.cf : CPROG.cp, h = "", seenTb = {};
   (COURSE.courses || []).forEach(function(c){
-    // 터미널 기본은 강의마다 같으니 한 번만
-    var list = (c.cheat || []).filter(function(x){ var k = cpKey(c, x); if(!CPROG.cf[k] || tbSeen[k]) return false; if(x.sec === "터미널 기본") tbSeen[k] = 1; return true; });
+    var I = csIndex(c), list = I.order.filter(function(k){ if(!m[k] || seenTb[k]) return false; if(k.indexOf("tb|") === 0) seenTb[k] = 1; return true; }).map(function(k){ return I.idx[k]; });
     if(list.length) h += "<div class=\"block\"><div class=\"block-head\"><h2>강의 · " + cx(c.name) + "</h2><i class=\"hr\"></i><span class=\"meta\">" + list.length + "</span></div><div class=\"cs-cheat\">" +
       list.map(function(x){ return csCrow(c, x, {}, true); }).join("") + "</div></div>";
   });
   return h;
 }
+function csFavBlock(){ return csMarkedBlock("fav"); }
 var _renderList0 = renderList;
 renderList = function(kind){
   _renderList0(kind);
-  if(kind !== "fav") return;
-  var el = document.getElementById("view-fav"), extra = csFavBlock();
+  var el = document.getElementById(kind === "fav" ? "view-fav" : "view-pass"), extra = csMarkedBlock(kind);
   if(!extra) return;
   if(el.querySelector(".row")) el.insertAdjacentHTML("beforeend", extra); else el.innerHTML = extra;
 };
@@ -1141,7 +1157,7 @@ document.addEventListener("click", function(e){
   if(b.hasAttribute("data-cscp") || b.hasAttribute("data-cscf")){
     var isF = b.hasAttribute("data-cscf"), ck = b.getAttribute(isF ? "data-cscf" : "data-cscp"), m = isF ? CPROG.cf : CPROG.cp;
     if(m[ck]) delete m[ck]; else m[ck] = 1;
-    csSave(); if(current === "fav") renderList("fav"); else renderCourse(); return;
+    csSave(); if(current === "fav" || current === "pass") renderList(current); else renderCourse(); return;
   }
   if(b.hasAttribute("data-cspick")){ CPROG.cur = b.getAttribute("data-cspick"); csOpen = {}; csSave(); renderCourse(); return; }
   if(b.hasAttribute("data-cssd")){ var k = b.getAttribute("data-cssd"); if(CPROG.sd[k]) delete CPROG.sd[k]; else CPROG.sd[k] = 1; csSave(); renderCourse(); return; }
