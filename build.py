@@ -328,6 +328,86 @@ patch("""      { name: "run_command", description:""", """      { name: "ledger_
 patch("""    L.push("## 🗳 결산 대기 (결산 원장): " + JSON.stringify((S.ledger && S.ledger.items) || []));""",
       """    L.push("## 🗳 결산 대기 (결산 원장, 아직 안 보낸 것): " + JSON.stringify(ledgerOpen()) + " — 동욱과 정리할 때: 한 번에 한 항목, 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거를 짧게 말하고 묻는다. 동욱이 정하면 ledger_answer 로 바로 보내고 다음 항목으로. 자세한 사정은 볼트 「3_Action/결산 원장.md」를 읽어 확인한다.");""")
 
+# 9) 🗳 결산 대기: 항목마다 응·고쳐서·나중에·빼를 누르면 그 항목만 바로 보내고, 그 칸에서 바로 대화·피드백 (2026-11-07 동욱)
+#    - 누르면 그 줄 하나만 명령으로 맥에 → 칸 안에 「나: 응」 → Brainy 한 줄 확인(바로) → 맥의 처리 결과(명령 result)가 같은 칸에
+#    - 칸 안 입력으로 Brainy에게 그 항목을 바로 묻고, 정하면 Brainy가 ledger_answer 로 보낸다. 모아서 보내기·대화창 버튼은 뺀다
+patch("""    var id = "c" + Date.now().toString(36), at = new Date().toISOString();""", """    var id = "c" + Date.now().toString(36), at = new Date().toISOString(); S.lastCmdId = id;""")
+patch("""lgSel: {}, lgBusy: false,""", """lgSel: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false,""")
+patch_between("""    var lg = S.ledger, items = ledgerOpen(), nSent""", """      h += replyBox(lastCmd(function (t) { return /^🗳/.test(t); }));
+    }
+""", """    var lg = S.ledger, live = (lg && lg.items) || [];
+    h += '<section class="card"><div class="progress-row"><h2>🗳 결산 대기 ' + ledgerOpen().length + '</h2><span class="small muted">' + (lg && lg.updatedAt ? "원장 " + whenKo(lg.updatedAt) + " 기준" : "결산 원장") + "</span></div>";
+    if (!lg) h += '<p class="muted small">다음 결산이 끝나면 결산 원장의 🗳 목록이 여기 떠요.</p>';
+    else if (!live.length) h += '<p class="muted small">고를 게 없어요. 결산이 새 후보를 찾으면 여기 떠요.</p>';
+    else {
+      h += '<p class="small muted">항목마다 바로 골라요 — 누르면 그 항목만 바로 맥의 Brainy에게 가고, Brainy의 답과 처리 결과가 그 칸에 떠요. 궁금하면 칸에 바로 물어보세요.</p>';
+      h += live.map(ledgerItemHtml).join("");
+    }
+""")
+patch("""  function ledgerChat() {""", """  function lgCmdOf(n) { var id = S.lgCmdLocal[n] || ((S.ledger && S.ledger.cmds) || {})[n]; return id ? (S.cmds.filter(function (c) { return c.id === id; })[0] || { id: id, status: "보내는 중" }) : null; }
+  function ledgerItemHtml(it) {
+    var n = String(it.n), sel = S.lgSel[n] || {}, v = sel.v || "", th = S.lgT[n] || [], sent = ((S.ledger && S.ledger.sent) || {})[n], c = lgCmdOf(n), busy = !!S.lgAsk[n];
+    var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(it.text) + "</b>" + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";
+    if (!sent) h += '<div class="chips" style="flex-wrap:wrap" role="group" aria-label="' + esc(n) + '번 답">' + [["응", "응"], ["고쳐서", "고쳐서 응"], ["나중에", "나중에"], ["빼", "빼"]].map(function (o) {
+      return '<button class="chip" data-act="lgone" data-n="' + esc(n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>";
+    if (th.length || c) {
+      h += '<div class="lgthread">' + th.map(function (m) { return '<div class="lgm ' + m.r + '">' + (m.r === "me" ? "" : m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
+      if (c) { var st = c.status || "", done = st === "끝", bad = /못|멈춤|확인|오류/.test(st);
+        h += '<div class="lgm ' + (bad ? "warn" : done ? "ai" : "sys") + '">' + (done ? "<b>맥 Brainy</b> ✓ " + esc(clip(c.result || "반영했어요", 500)) : bad ? "⚠ " + esc(st) + (c.result ? " — " + esc(clip(c.result, 300)) : "") : "⏳ 맥의 Brainy가 원장에 반영하는 중… (보통 1~3분)") + "</div>"; }
+      h += "</div>";
+    }
+    h += '<div class="lgask"><textarea class="grow" data-lgq="' + esc(n) + '" rows="1" placeholder="' + (v === "고쳐서" ? "어떻게 고쳐서 할지 써 주세요" : "이 항목 Brainy에게 묻기 — 예: 이거 왜 올라왔어?") + '"' + (busy ? " disabled" : "") + ">" + esc(S.lgQ[n] || "") + '</textarea><button class="btn' + (v === "고쳐서" ? " primary" : "") + '" data-act="lgqsend" data-n="' + esc(n) + '"' + (busy ? " disabled" : "") + ">" + (v === "고쳐서" ? "고쳐서 보내기" : busy ? "…" : "묻기") + "</button></div>";
+    return h + "</div>";
+  }
+  function lgPush(n, m) { (S.lgT[n] = S.lgT[n] || []).push(m); return m; }
+  function lgItem(n) { return ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === String(n); })[0]; }
+  function lgSendOne(n, v, note) {
+    n = String(n); note = String(note || "").trim();
+    lgPush(n, { r: "me", t: (v === "고쳐서" ? "고쳐서 응" : v) + (note ? " — " + note : "") }); S.lgSel[n] = {}; S.lgQ[n] = ""; render();
+    var it = lgItem(n);
+    ledgerAnswer(n, v, note).then(function () {
+      var ai = lgPush(n, { r: "ai", t: "", pending: true }); render();
+      if (!S.sample || S.sampleOff || !it) { ai.pending = false; ai.t = "보냈어요."; render(); return; }
+      S.sample("결산 대기 " + n + "번 「" + it.text + "」에 동욱이 「" + v + (note ? " — " + note : "") + "」로 답했고, 맥의 Brainy에게 반영하라고 보냈다. 이제 무엇이 어떻게 반영되는지 동욱에게 한두 문장, 해요체로 짧게 알려 줘. 마크다운 기호 없이.", { modelTier: "quick", cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; render(); } })
+        .then(function (r) { ai.t = (r && r.text) || ai.t || "보냈어요."; }, function () { ai.t = ai.t || "보냈어요 — 처리 결과가 여기 떠요."; }).then(function () { ai.pending = false; render(); });
+    }, function (e) { lgPush(n, { r: "warn", t: "못 보냈어요 — " + e.message }); render(); });
+  }
+  function lgAskOne(n, q) {
+    n = String(n); var it = lgItem(n); if (!it || !q) return;
+    var hist = (S.lgT[n] || []).filter(function (m) { return (m.r === "me" || m.r === "ai") && m.t; }).slice(-8).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: m.t }; });
+    lgPush(n, { r: "me", t: q }); S.lgQ[n] = ""; var ai = lgPush(n, { r: "ai", t: "", pending: true }); S.lgAsk[n] = true; render();
+    var rules = chatRules() + "\\n\\n=== 지금 이 대화 ===\\n앱 「🗳 결산 대기」의 " + n + "번 칸 안에서 이 항목 하나만 동욱과 이야기한다: 「" + it.text + "」(" + (it.date || "") + "). 필요하면 볼트 「3_Action/결산 원장.md」를 읽어 사정을 확인한다. 답은 3~5줄, 마크다운 기호 없이. 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거. 동욱이 분명히 정하면 ledger_answer 로 이 항목(n=" + n + ")을 보낸다.";
+    var opts = { cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; var el = document.querySelector('[data-lgq="' + n + '"]'); render(); } };
+    if (S.toolsOK) opts.tools = chatTools();
+    S.sample([{ role: "user", content: rules }].concat(hist).concat([{ role: "user", content: q }]), opts)
+      .then(function (r) { ai.t = (r && r.text) || ai.t; }, function (e) { ai.t = (e && e.text) || "답을 받지 못했어요. 다시 물어봐 주세요."; })
+      .then(function () { ai.pending = false; S.lgAsk[n] = false; render(); });
+  }
+  function ledgerChat() {""")
+# ledger_answer 가 보낸 명령 id 를 그 칸에 잇고, 대화 칸에도 한 줄
+patch("""      var sn = Object.assign({}, S.ledger.sent || {}); sn[it.n] = new Date().toISOString(); S.ledger.sent = sn;
+      if (S.db) S.db.doc("ledger/main").update({ sent: sn }).catch(function () {});""",
+      """      var sn = Object.assign({}, S.ledger.sent || {}), cm = Object.assign({}, S.ledger.cmds || {}); sn[it.n] = new Date().toISOString(); cm[it.n] = S.lastCmdId; S.ledger.sent = sn; S.ledger.cmds = cm; S.lgCmdLocal[String(it.n)] = S.lastCmdId;
+      if (S.db) S.db.doc("ledger/main").update({ sent: sn, cmds: cm }).catch(function () {});""")
+patch("""/* Brainy chat sheet */""", """/* 결산 대기 — 칸 안 대화 */
+.lgitem.sent .t b { color: var(--muted); }
+.lgthread { display: grid; gap: 6px; margin: 8px 0 6px; }
+.lgm { font-size: 14px; line-height: 1.6; padding: 7px 11px; border-radius: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lgm.me { justify-self: end; background: var(--accent); color: var(--accent-ink); max-width: 85%; }
+.lgm.ai { background: var(--surface); border: 1px solid var(--line); }
+.lgm.sys { color: var(--muted); font-size: 13px; padding: 2px 4px; }
+.lgm.warn { color: var(--warn); font-size: 13px; padding: 2px 4px; }
+.lgask { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; margin-top: 6px; }
+/* Brainy chat sheet */""")
+
+patch("""    if (act === "lgsend") { lgSend(); return; }""", """    if (act === "lgsend") { lgSend(); return; }
+    if (act === "lgone") { var on1 = t.getAttribute("data-n"), ov = t.getAttribute("data-v"); if (ov === "고쳐서") { S.lgSel[on1] = (S.lgSel[on1] || {}).v === "고쳐서" ? {} : { v: "고쳐서" }; render(); var te1 = document.querySelector('[data-lgq="' + CSS.escape(on1) + '"]'); if (te1) te1.focus(); return; } lgSendOne(on1, ov, S.lgQ[on1]); return; }
+    if (act === "lgqsend") { var qn = t.getAttribute("data-n"), qt = String(S.lgQ[qn] || "").trim(); if ((S.lgSel[qn] || {}).v === "고쳐서") { if (!qt) { var te2 = document.querySelector('[data-lgq="' + CSS.escape(qn) + '"]'); if (te2) te2.focus(); return; } lgSendOne(qn, "고쳐서", qt); return; } if (qt) lgAskOne(qn, qt); return; }""")
+patch("""    if (el.getAttribute && el.getAttribute("data-tw")) {""", """    if (el.getAttribute && el.getAttribute("data-lgq")) { S.lgQ[el.getAttribute("data-lgq")] = el.value; if (el.classList.contains("grow")) grow(el); }
+    if (el.getAttribute && el.getAttribute("data-tw")) {""")
+
+patch('''a.getAttribute("data-tw") || a.getAttribute("data-lg") ||''', '''a.getAttribute("data-tw") || a.getAttribute("data-lg") || a.getAttribute("data-lgq") ||''')
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',
