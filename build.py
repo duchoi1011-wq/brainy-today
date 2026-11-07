@@ -318,6 +318,7 @@ patch('''    DB.doc("sc.marks/main").onSnapshot(function(s){''', '''    DB.doc("
       COURSE = v; save("sc.course.data", v);
       if(current==="course") renderCourse(); if(current==="fav") renderList("fav");
     }, function(){});
+    DB.collection("sc.creq").onSnapshot(function(q){ csSetReqs(q.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); })); }, function(){});
     DB.doc("sc.marks/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
       if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {}, cf: v.cf || {} }; save("sc.course", CPROG); if(current==="course") renderCourse(); if(current==="fav") renderList("fav"); }
@@ -356,10 +357,16 @@ SC_CSS = (".cs-pick{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.cs-p
   "@media (max-width:560px){.cs-crow{grid-template-columns:1fr}.cs-cbody{justify-content:flex-start}.cs-cbody .cs-code{flex:1 1 200px;max-width:none}.cs-seg{display:flex}.cs-seg button{flex:1}}"
   "@media (max-width:560px){.tabs{width:100%;overflow-x:auto}.cs-now{padding:14px 12px}.cs-in{padding-left:0}.cs-cnt{display:none}.cs-ch>summary{grid-template-columns:22px 1fr}}")
 
+SC_CSS += (".cs-addbtn{border-style:dashed!important;color:var(--accent)!important}"
+           ".cs-add{border:1px solid var(--rule);border-radius:12px;background:var(--surface);padding:12px 14px;margin:0 0 14px}"
+           ".cs-addf{display:flex;gap:8px}.cs-addf input{flex:1;min-width:0;font:inherit;font-size:.9rem;padding:9px 11px;border:1px solid var(--rule);border-radius:9px;background:var(--bg);color:var(--fg)}"
+           ".cs-sub{font-size:.74rem;color:var(--faint);margin:12px 0 6px}"
+           ".cs-req{font-size:.82rem;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cs-req span{color:var(--faint)}.cs-req.ok{color:var(--accent)}.cs-req.bad{color:#c0563b}.cs-x{padding:2px 8px}")
+
 emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a1f"),
      "--g-bg:var(--bg);--g-fg:var(--fg);--g-mut:var(--dim);--g-card:var(--surface);--g-line:var(--rule);--g-acc:var(--accent);--g-acc-ink:var(--bg);--g-warn:var(--accent);--g-ok:var(--ok)",
      '<link rel="apple-touch-icon" href="sc-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="sc-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="sc-icon-64.png">',
-     '{key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests"]}',
+     '{key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]}',
      '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"sc-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"sc-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', SC_CSS)
 
 # ═════════════════════════ 체화 단어장 ═════════════════════════

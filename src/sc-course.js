@@ -2,6 +2,7 @@
    데이터: 볼트 `4_Outputs/단축키 앱/강의 순서.json` → 맥 동기화(app_data.py) → sc.data/course
    진도(지금 챕터·끝낸 챕터·끝낸 단계): sc.marks/course — 모든 기기에서 같다 */
 var COURSE = load("sc.course.data", { courses: [] });
+var CREQ = [], csAdd = false;   // ＋ 강의: 동욱이 고른 강의 요청 (sc.creq) — 맥의 Brainy가 교안에서 뽑아 넣는다
 var CPROG = load("sc.course", null) || { cur: "", at: {}, done: {}, sd: {}, all: false };
 CPROG.cp = CPROG.cp || {}; CPROG.cf = CPROG.cf || {};   // cf: 강의 단축키·명령어 ★ 즐겨찾기                 // 단축키·명령어 모음에서 「외웠어」 ✓ 한 것
 var csView = load("sc.cview2", "cheat"), csFilt = "all", csSort = load("sc.csort", "order");   // 기본: 강의 순서대로 그 강의 단축키·명령어 (따라 하기는 나중에 — 2026-11-07 동욱)   // 강의 탭: 차례대로 / 단축키·명령어
@@ -58,13 +59,13 @@ function csCount(ch){
 }
 function renderCourse(){
   var el = document.getElementById("view-course"), list = csList();
-  if(!list.length){ el.innerHTML = "<p class=\"empty\">강의 순서를 불러오는 중… 맥이 켜져 있으면 몇 초 안에 떠요.</p>"; return; }
+  if(!list.length){ el.innerHTML = "<div class=\"cs-pick\"><button type=\"button\" class=\"mode cs-addbtn\" data-csadd=\"1\">＋ 강의</button></div>" + csAddPanel() + "<p class=\"empty\">강의 순서를 불러오는 중… 맥이 켜져 있으면 몇 초 안에 떠요.</p>"; return; }
   var c = csCourse(), here = csHere(c), vis = csVisible(c);
   var doneN = c.chapters.filter(function(ch){ return CPROG.done[c.id + "|" + ch.id]; }).length;
   var h = "<div class=\"cs-pick\">" + list.map(function(x){
     var dn = x.chapters.filter(function(ch){ return CPROG.done[x.id + "|" + ch.id]; }).length;
     return "<button type=\"button\" class=\"mode\" data-cspick=\"" + cx(x.id) + "\" aria-pressed=\"" + (x.id === c.id) + "\">" + (x.tag ? "<b>" + cx(x.tag) + "</b> " : "") + cx(x.name) + " <span class=\"n\">" + dn + "/" + x.chapters.length + "</span></button>";
-  }).join("") + "</div>";
+  }).join("") + "<button type=\"button\" class=\"mode cs-addbtn\" data-csadd=\"1\" aria-pressed=\"" + csAdd + "\">＋ 강의</button></div>" + csReqLines() + csAddPanel();
   var cheat = c.cheat || [];
   h += "<div class=\"cs-seg\" role=\"tablist\"><button type=\"button\" data-csview=\"cheat\" aria-pressed=\"" + (csView === "cheat") + "\">강의별 단축키·명령어 " + cheat.length + "</button>" +
     "<button type=\"button\" data-csview=\"seq\" aria-pressed=\"" + (csView !== "cheat") + "\">차례대로 따라 하기</button></div>";
@@ -87,6 +88,56 @@ function renderCourse(){
   });
   el.innerHTML = h + "</div>";
 }
+/* ── ＋ 강의: 내가 고른 강의 넣기 · 빼기 ── */
+function csReqLines(){
+  var day = Date.now() - 864e5;
+  return CREQ.filter(function(r){ return r.status && r.status !== "닫음" && !(r.status === "끝" && Date.parse(r.createdAt || 0) < day); }).map(function(r){
+    var nm = "「" + cx(r.text || r.course || "") + "」", x = " <button type=\"button\" class=\"ghost cs-x\" data-csx=\"" + cx(r.id) + "\" aria-label=\"닫기\">✕</button>";
+    if(r.status === "대기" || r.status === "만드는 중") return "<p class=\"cs-req\">⏳ " + nm + (r.action === "remove" ? " 빼는 중…" : " 교안에서 단축키·명령어 뽑는 중… <span>맥의 Brainy가 몇 분 안에 넣어요</span>") + "</p>";
+    if(r.status === "끝" && r.action === "remove") return "<p class=\"cs-req ok\">✓ " + nm + " 뺐어요" + x + "</p>";
+    if(r.status === "끝") return "<p class=\"cs-req ok\">✓ " + nm + " 넣었어요 <span>" + cx(r.msg || "") + "</span> <button type=\"button\" class=\"ghost\" data-csopen=\"" + cx(r.id) + "\">보기</button>" + x + "</p>";
+    return "<p class=\"cs-req bad\">" + (r.status === "못 찾음" ? "못 찾았어요 " : "안 됐어요 ") + nm + " <span>" + cx(r.msg || "") + "</span>" + x + "</p>";
+  }).join("");
+}
+function csAddPanel(){
+  if(!csAdd) return "";
+  var have = {}; CREQ.forEach(function(r){ if(r.status === "대기" || r.status === "만드는 중") have[r.text] = 1; });
+  var av = (COURSE.avail || []).filter(function(a){ return !have[a.name]; });
+  var mine = (COURSE.courses || []).filter(function(x){ return x.mine; });
+  var h = "<div class=\"cs-add\"><p class=\"why\" style=\"margin:0 0 8px\">들을 강의 이름을 쓰면 맥의 Brainy가 볼트 교안(<code>2_LLMWiki/raw</code>)에서 찾아 <b>단축키·명령어만</b> 뽑아 강의로 넣어요.</p>" +
+    "<form class=\"cs-addf\" data-csform=\"1\"><input id=\"cs-addin\" type=\"text\" placeholder=\"강의 이름 — 예: 클로드 코드 영상 자동화\" autocomplete=\"off\"><button type=\"submit\" class=\"btn\">넣기</button></form>";
+  if(av.length) h += "<p class=\"cs-sub\">볼트에 있는 교안</p><div class=\"cs-pick\" style=\"margin:0\">" + av.map(function(a){ return "<button type=\"button\" class=\"mode\" data-csreq=\"" + cx(a.name) + "\">＋ " + cx(a.name) + " <span class=\"n\">" + a.files + "개 파일</span></button>"; }).join("") + "</div>";
+  else h += "<p class=\"cs-sub\">볼트 교안은 다 들어와 있어요. 새 강의는 <code>/ingest</code>로 교안을 넣거나, 위에 이름을 써 보세요.</p>";
+  if(mine.length) h += "<p class=\"cs-sub\">내가 넣은 강의</p>" + mine.map(function(x){ return "<p class=\"cs-req\">" + cx(x.name) + " <button type=\"button\" class=\"ghost\" data-csrm=\"" + cx(x.id) + "\" data-csrmname=\"" + cx(x.name) + "\">빼기</button></p>"; }).join("");
+  return h + "</div>";
+}
+function csRequest(doc){
+  if(!DB){ alert("저장소에 연결되지 않았어요 — 새로고침해 주세요."); return; }
+  doc.status = "대기"; doc.createdAt = new Date().toISOString();
+  var tmp = Object.assign({ id: "tmp" + Date.now() }, doc); CREQ = [tmp].concat(CREQ); renderCourse();
+  DB.collection("sc.creq").doc().set(doc).catch(function(){ tmp.status = "오류"; tmp.msg = "저장하지 못했어요 — 다시 해 주세요"; renderCourse(); });
+}
+function csSetReqs(list){
+  CREQ = list.sort(function(a, b){ return (b.createdAt || "") < (a.createdAt || "") ? -1 : 1; });
+  if(current === "course") renderCourse();
+}
+document.addEventListener("submit", function(e){
+  if(!e.target.closest("[data-csform]")) return;
+  e.preventDefault();
+  var v = (document.getElementById("cs-addin").value || "").trim();
+  if(v){ csAdd = false; csRequest({ text: v.slice(0, 120) }); }
+});
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-csadd],[data-csreq],[data-csrm],[data-csx],[data-csopen]");
+  if(!b) return;
+  if(b.hasAttribute("data-csadd")){ csAdd = !csAdd; renderCourse(); if(csAdd){ var i = document.getElementById("cs-addin"); if(i) i.focus(); } return; }
+  if(b.hasAttribute("data-csreq")){ csAdd = false; csRequest({ text: b.getAttribute("data-csreq") }); return; }
+  if(b.hasAttribute("data-csrm")){ if(confirm("「" + b.getAttribute("data-csrmname") + "」을 강의 목록에서 뺄까요? (볼트 교안은 그대로예요)")){ csAdd = false; csRequest({ action: "remove", course: b.getAttribute("data-csrm"), text: b.getAttribute("data-csrmname") }); } return; }
+  var id = b.getAttribute("data-csx") || b.getAttribute("data-csopen"), r = CREQ.filter(function(x){ return x.id === id; })[0];
+  if(b.hasAttribute("data-csopen") && r && r.course){ CPROG.cur = r.course; csView = "cheat"; save("sc.cview2", csView); csSave(); }
+  if(r){ r.status = "닫음"; if(DB && id.indexOf("tmp") !== 0) DB.collection("sc.creq").doc(id).update({ status: "닫음" }).catch(function(){}); }
+  renderCourse();
+});
 // 「터미널 기본」 — cd·ls·Tab처럼 어느 챕터에서나 쓰는 것. 차례대로 맨 위에 접었다 폈다
 function csBasics(c){
   var b = (c.cheat || []).filter(function(x){ return x.sec === "터미널 기본"; });
