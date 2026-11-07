@@ -408,6 +408,35 @@ patch("""    if (el.getAttribute && el.getAttribute("data-tw")) {""", """    if 
 
 patch('''a.getAttribute("data-tw") || a.getAttribute("data-lg") ||''', '''a.getAttribute("data-tw") || a.getAttribute("data-lg") || a.getAttribute("data-lgq") ||''')
 
+# 10) 직접 쓰는 칸마다 「로그」 + 「💬 Brainy와 대화」 — 대화는 그 칸 바로 아래에서 이어진다 (2026-11-07 동욱: "직접 입력하는 부분은 다 브레이니와 대화할 수 있게, 로그와 브레이니와 대화 나누고")
+#     Brainy 질문 · 메모 · 태스크 기록 · 오늘 쓰기 칸(경건생활·QnA·저널 …) · 점검 결과. (결산 대기·태스크 작업실·아침 제안은 이미 대화형)
+patch("lgSel: {}, lgT: {},", "lgSel: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {},")
+patch("  function ledgerChat() {", (root / "src" / "home-ic.js").read_text(encoding="utf-8") + "  function ledgerChat() {")
+patch("""    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id]; });""",
+      """    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id] || (S.ic["q:" + q.id] || []).length; });""")
+patch("""+ ">보내기</button></div></div>";""",
+      """+ '>로그</button><button class="btn primary" data-act="ictalk" data-k="q:' + q.id + '" data-src="ans-' + q.id + '"' + (S.icBusy["q:" + q.id] ? " disabled" : "") + '>💬 Brainy와 대화</button></div>' + icHtml("q:" + q.id) + "</div>";""")
+patch("""    if (S.opt.state === "error") h += '<p class="notice warn">' + esc(S.opt.msg) + "</p>";
+    h += "</section>";""", """    h += '<div class="row end"><button class="btn quiet" data-act="ictalk" data-k="memo" data-src="note-input">💬 Brainy와 대화</button></div>' + icHtml("memo");
+    if (S.opt.state === "error") h += '<p class="notice warn">' + esc(S.opt.msg) + "</p>";
+    h += "</section>";""")
+patch("""'<button class="btn" data-act="tlsave" data-title="' + esc(title) + '"' + (w && !S.tlBusy[title] ? "" : " disabled") + '>기록만</button>""",
+      """'<button class="btn" data-act="tlsave" data-title="' + esc(title) + '"' + (w && !S.tlBusy[title] ? "" : " disabled") + '>로그</button><button class="btn" data-act="ictalk" data-k="tl:' + esc(title) + '" data-src="' + k + '">💬 Brainy와 대화</button>""")
+patch("""    if (logs.length) h += '<div class="entries">' + logs.slice(0, compact ? 3 : 10)""", """    h += icHtml("tl:" + title);
+    if (logs.length) h += '<div class="entries">' + logs.slice(0, compact ? 3 : 10)""")
+patch("""    if (S.ansMsg[scope] && S.ansMsg[scope].err) h += '<p class="small" style="color:var(--warn)">' + esc(S.ansMsg[scope].t) + "</p>";""",
+      """    h += icHtml("ans:" + scope, true);
+    if (S.ansMsg[scope] && S.ansMsg[scope].err) h += '<p class="small" style="color:var(--warn)">' + esc(S.ansMsg[scope].t) + "</p>";""")
+patch("""    if (act === "lgsend") { lgSend(); return; }""", """    if (act === "lgsend") { lgSend(); return; }
+    if (act === "ictalk") { var ik = t.getAttribute("data-k"), isrc = document.getElementById(t.getAttribute("data-src")), itx = isrc ? isrc.value : ""; if (!String(itx).trim()) { if (isrc) isrc.focus(); return; } if (ik.indexOf("q:") === 0) { var iq = ik.slice(2); saveDay(function (b) { b.answers[iq] = String(itx).trim(); }); S.drafts[iq] = String(itx).trim(); } icTalk(ik, itx); return; }
+    if (act === "icsend") { var sk = t.getAttribute("data-k"); icTalk(sk, S.icQ[sk]); return; }""")
+patch("""    if (el.getAttribute && el.getAttribute("data-lgq")) {""", """    if (el.getAttribute && el.getAttribute("data-icq")) { S.icQ[el.getAttribute("data-icq")] = el.value; if (el.classList.contains("grow")) grow(el); }
+    if (el.getAttribute && el.getAttribute("data-lgq")) {""")
+patch("""a.getAttribute("data-lgq") ||""", """a.getAttribute("data-lgq") || a.getAttribute("data-icq") ||""")
+patch(""".lgask { display: grid;""", """.ic { display: grid; gap: 6px; margin: 8px 0 4px; }
+.lgask { display: grid;""")
+patch("""DETAIL[x.key](day, w) + "</div>";""", """DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div>";""")
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',

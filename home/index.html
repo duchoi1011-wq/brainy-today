@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "92a91917c2"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=92a91917c2"></script>
+<script>window.BRAINY_VERSION = "0036e55333"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=0036e55333"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -288,6 +288,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .lgm.ai { background: var(--surface); border: 1px solid var(--line); }
 .lgm.sys { color: var(--muted); font-size: 13px; padding: 2px 4px; }
 .lgm.warn { color: var(--warn); font-size: 13px; padding: 2px 4px; }
+.ic { display: grid; gap: 6px; margin: 8px 0 4px; }
 .lgask { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; margin-top: 6px; }
 /* Brainy chat sheet */
 .fab { position: fixed; z-index: 6; right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 13px 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
@@ -376,7 +377,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     note: "", opt: { state: "idle", data: null, msg: "" }, confirmDel: null,
     ask: { state: "idle", q: "", text: "", msg: "", ctl: null },
     ledger: null, morning: null, cmds: [], cfg: {}, mcp: null, mcpOff: false,
-    cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
+    cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
     triggers: null, trigState: "idle", trigMsg: "", trigAt: 0, cmdText: "", autoState: {}, nrDraft: {}, moBusy: false, moMsg: null, retrying: {}, thOpen: {}, exp: {}, dl: null, insta: [], igThumb: {}, igCap: {}, igBusy: {}, igMsg: {}, igOpen: {}, igFix: {}, cmdBusy: false, cmdMsg: "", fireAsk: null, fired: {}
   };
   var CC_SERVER = "Claude Code Remote";
@@ -540,14 +541,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     }
 
     var ans = (S.checks[TODAY] && S.checks[TODAY].answers) || {}, qa = S.qa || (S.qa = {});
-    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id]; });
+    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id] || (S.ic["q:" + q.id] || []).length; });
     if (openQ.length) {
       h += '<section class="card"><h2>Brainy 질문</h2>';
       openQ.forEach(function (q) {
         if (qa[q.id]) { h += '<div class="q"><p>' + esc(q.text) + '</p><p class="small' + (qa[q.id].err ? '" style="color:var(--warn)">' : ' muted">') + (qa[q.id].busy ? "Brainy가 바로 반영하는 중…" : esc(qa[q.id].msg)) + "</p></div>"; return; }
         var draft = S.drafts[q.id] != null ? S.drafts[q.id] : (ans[q.id] || "");
         var savedNow = ans[q.id] && ans[q.id] === draft;
-        h += '<div class="q"><p>' + esc(q.text) + '</p><textarea id="ans-' + q.id + '" data-q="' + q.id + '" rows="1" placeholder="한 줄이면 돼요"' + (S.db && !S.readOnly ? "" : " disabled") + ">" + esc(draft) + '</textarea><div class="qrow">' + (savedNow ? '<span class="pill good">보냄</span>' : "") + '<button class="btn" data-act="answer" data-q="' + q.id + '"' + (S.db && !S.readOnly && draft.trim() && !savedNow ? "" : " disabled") + ">보내기</button></div></div>";
+        h += '<div class="q"><p>' + esc(q.text) + '</p><textarea id="ans-' + q.id + '" data-q="' + q.id + '" rows="1" placeholder="한 줄이면 돼요"' + (S.db && !S.readOnly ? "" : " disabled") + ">" + esc(draft) + '</textarea><div class="qrow">' + (savedNow ? '<span class="pill good">보냄</span>' : "") + '<button class="btn" data-act="answer" data-q="' + q.id + '"' + (S.db && !S.readOnly && draft.trim() && !savedNow ? "" : " disabled") + '>로그</button><button class="btn primary" data-act="ictalk" data-k="q:' + q.id + '" data-src="ans-' + q.id + '"' + (S.icBusy["q:" + q.id] ? " disabled" : "") + '>💬 Brainy와 대화</button></div>' + icHtml("q:" + q.id) + "</div>";
       });
       h += "</section>";
     }
@@ -562,7 +563,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       var vs_ = vsyncOf(day.date), syncedAt = (vs_ && vs_.synced && vs_.synced[x.key]) || (day.synced && day.synced[x.key]), vrev_ = vs_ && ((vs_.review && vs_.review[x.key]) || (vs_.later && vs_.later[x.key]));
       var right = writing ? (open ? "접기" : (DETAIL[x.key] ? "쓰기" : "")) : (DETAIL[x.key] ? "기록에서 쓰기 →" : "");
       h += '<div class="crow' + (on ? " on" : "") + '" id="row-' + x.key + '"><div class="head2"><button class="boxbtn" id="' + (writing ? "wchk-" : "chk-") + x.key + '" data-act="check" data-key="' + esc(x.key) + '" aria-pressed="' + on + '" aria-label="' + esc(x.label) + (on ? " 완료 취소" : " 완료") + '"' + (w ? "" : " disabled") + '><span class="box">' + CHECK_SVG + '</span></button><button class="lblbtn" data-act="' + (writing ? "openrow" : "gowrite") + '" data-key="' + esc(x.key) + '"' + (writing ? ' aria-expanded="' + open + '"' : "") + '><span class="lbl"><span>' + esc(x.label) + '</span><span class="open">' + (vrev_ ? '<span class="pill warn" title="' + esc(vrev_) + '">볼트 확인</span> ' : syncedAt ? '<span class="pill good">볼트 반영</span> ' : "") + right + "</span></span>" + (sum ? '<span class="sum">' + esc(sum) + "</span>" : '<span class="hint">' + esc(writing ? x.hint : "아직 안 씀") + "</span>") + "</button></div>";
-      if (open && DETAIL[x.key]) h += '<div class="detail">' + (vrev_ ? '<p class="notice warn">볼트에 못 넣은 칸이 있어요 — ' + esc(vrev_) + '</p>' : "") + vaultFold(x.key) + DETAIL[x.key](day, w) + "</div>";
+      if (open && DETAIL[x.key]) h += '<div class="detail">' + (vrev_ ? '<p class="notice warn">볼트에 못 넣은 칸이 있어요 — ' + esc(vrev_) + '</p>' : "") + vaultFold(x.key) + DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div>";
       h += "</div>";
     });
     return h;
@@ -1654,7 +1655,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function taskLogBox(title, compact) {
     var w = S.db && !S.readOnly, k = "tl-" + title.replace(/[^\w가-힣]/g, "_"), logs = logsFor(title);
     var h = '<div class="fields" style="margin-top:6px"><textarea id="' + k + '" class="grow" data-tl="' + esc(title) + '" rows="1" placeholder="이 태스크에 한 일 · 정한 것 · 막힌 것 — 예: 내레이션 1테이크 녹음, 톤이 빨라서 다시"' + (w ? "" : " disabled") + ">" + esc(S.tlDraft[title] || "") + "</textarea>";
-    h += '<div class="row end">' + (S.tlMsg[title] ? '<span class="small' + (S.tlMsg[title].err ? '" style="color:var(--warn)' : '" style="color:var(--good)') + '">' + esc(S.tlMsg[title].t) + "</span>" : "") + '<button class="btn" data-act="tlsave" data-title="' + esc(title) + '"' + (w && !S.tlBusy[title] ? "" : " disabled") + '>기록만</button><button class="btn primary" data-act="tlsend" data-title="' + esc(title) + '"' + (w && S.mcp && cmdTriggerId() && !S.tlBusy[title] ? "" : " disabled") + ">기록하고 태스크에 반영</button></div></div>";
+    h += '<div class="row end">' + (S.tlMsg[title] ? '<span class="small' + (S.tlMsg[title].err ? '" style="color:var(--warn)' : '" style="color:var(--good)') + '">' + esc(S.tlMsg[title].t) + "</span>" : "") + '<button class="btn" data-act="tlsave" data-title="' + esc(title) + '"' + (w && !S.tlBusy[title] ? "" : " disabled") + '>로그</button><button class="btn" data-act="ictalk" data-k="tl:' + esc(title) + '" data-src="' + k + '">💬 Brainy와 대화</button><button class="btn primary" data-act="tlsend" data-title="' + esc(title) + '"' + (w && S.mcp && cmdTriggerId() && !S.tlBusy[title] ? "" : " disabled") + ">기록하고 태스크에 반영</button></div></div>";
+    h += icHtml("tl:" + title);
     if (logs.length) h += '<div class="entries">' + logs.slice(0, compact ? 3 : 10).map(function (x) { return '<div class="entry" style="grid-template-columns:auto 1fr auto"><span class="tag">' + esc(md(x.date)) + '</span><span style="white-space:pre-wrap">' + esc(clip(x.text, 200)) + (x.result ? '<br><span class="small muted">→ ' + esc(x.result) + "</span>" : "") + "</span>" + '<span class="pill' + (x.status === "반영됨" ? " good" : x.status === "보냄" ? " accent" : "") + '">' + esc(x.status || "대기") + "</span></div>"; }).join("") + "</div>";
     return h;
   }
@@ -1761,6 +1763,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     h += '<textarea class="grow" data-ans="' + esc(scope) + '" data-ansn="__all" rows="2" placeholder="' + esc(allPh || "✍ 이 점검 전체에 Brainy에게 쓰기 — 예: 오늘은 캡처 정리부터 해줘") + '">' + esc(st.all || "") + "</textarea>";
     var n = ansPicked(scope).length;
     h += '<div class="row end"><button class="btn primary" data-act="anssend" data-scope="' + esc(scope) + '"' + (ansCanSend(scope) ? "" : " disabled") + ">" + (S.ansBusy[scope] ? "보내는 중…" : "Brainy에게 보내기" + (n ? " (" + n + ")" : "")) + "</button></div>";
+    h += icHtml("ans:" + scope, true);
     if (S.ansMsg[scope] && S.ansMsg[scope].err) h += '<p class="small" style="color:var(--warn)">' + esc(S.ansMsg[scope].t) + "</p>";
     return h;
   }
@@ -1974,6 +1977,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     h += '<section class="card composer"><label for="note-input"><h2>지금 떠오른 것</h2></label><textarea id="note-input" placeholder="생각 · 한 일 · 먹은 것 · 할 일 · 쓴 돈 — 무엇이든 한 덩어리로. 말로 하려면 키보드의 마이크(받아쓰기)를 누르세요."' + (canWrite ? "" : " disabled") + ">" + esc(S.note) + "</textarea>";
     if (S.justSaved && !S.note) h += '<p class="small" style="color:var(--good)">저장했어요. 아래 목록에 들어갔어요.</p>';
     h += '<div class="row end">' + (canAi ? '<button class="btn" data-act="optimize"' + (S.note.trim() && S.opt.state !== "busy" ? "" : " disabled") + ">" + (S.opt.state === "busy" ? "정리하는 중…" : "Brainy가 정리") + "</button>" : "") + '<button class="btn primary" data-act="savenote"' + (canWrite && S.note.trim() ? "" : " disabled") + ">" + (S.opt.data ? "원문만 저장" : "그대로 저장") + "</button></div>";
+    h += '<div class="row end"><button class="btn quiet" data-act="ictalk" data-k="memo" data-src="note-input">💬 Brainy와 대화</button></div>' + icHtml("memo");
     if (S.opt.state === "error") h += '<p class="notice warn">' + esc(S.opt.msg) + "</p>";
     h += "</section>";
     if (S.opt.data) {
@@ -2102,6 +2106,38 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     S.sample([{ role: "user", content: rules }].concat(hist).concat([{ role: "user", content: q }]), opts)
       .then(function (r) { ai.t = (r && r.text) || ai.t; }, function (e) { ai.t = (e && e.text) || "답을 받지 못했어요. 다시 물어봐 주세요."; })
       .then(function () { ai.pending = false; S.lgAsk[n] = false; render(); });
+  }
+  /* ── 칸 안 대화: 직접 쓰는 칸마다 「💬 Brainy와 대화」 — 그 칸 바로 아래에서 이어진다 (build.py 가 끼움) ── */
+  function icCtx(key) {
+    var k = key.split(":")[0], rest = key.slice(k.length + 1), d = curDay();
+    if (k === "q") { var q = (((S.main || {}).brainy || {}).questions || []).filter(function (x) { return x.id === rest; })[0]; return "오늘 탭 「Brainy 질문」 칸 — 결산 때 Brainy가 한 질문: 「" + (q ? q.text : rest) + "」. 동욱의 답을 듣고 필요하면 앱 도구로 바로 반영한다."; }
+    if (k === "memo") return "기록 탭 「지금 떠오른 것」 메모 칸 — 동욱이 쓰던 메모를 같이 다듬거나 정리한다. 남기라고 하면 add_note 로 남긴다.";
+    if (k === "tl") { var th = findTask(rest); return "태스크 「" + rest + "」 기록 칸 — 동욱이 이 태스크에 한 일·정한 것·막힌 것을 이야기한다. 태스크 노트: " + (th ? clip(th.task.body, 5000) : "(없음)"); }
+    if (k === "fd") return "오늘 쓰기 「" + labelOf(rest) + "」 칸 (key " + rest + ") — 지금 적힌 것: " + clip(JSON.stringify(((d.notes || {})[rest]) || {}), 4000) + ". 동욱이 이 칸 글을 같이 쓰거나 다듬자고 하면 write_today 로 그 칸에 바로 적는다.";
+    if (k === "ans") { var r = (S.reports || []).filter(function (x) { return x.id === rest; })[0]; return "기록 탭 「점검 결과」 칸 — " + (r ? (r.title || "") + " " + (r.date || "") + ": " + clip(JSON.stringify({ lines: r.lines, items: r.items }), 5000) : rest) + ". 항목을 어떻게 할지 동욱과 이야기하고, 정해지면 run_command 로 보낸다."; }
+    return "";
+  }
+  function icId(key, i) { return "icm-" + key.replace(/[^\w가-힣-]/g, "_") + "-" + i; }
+  function icHtml(key, own) {
+    var th = S.ic[key] || [], busy = !!S.icBusy[key];
+    if (!th.length && !own) return "";
+    var h = '<div class="ic">' + th.map(function (m, i) { return '<div class="lgm ' + m.r + '" id="' + esc(icId(key, i)) + '">' + (m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
+    h += '<div class="lgask"><textarea class="grow" data-icq="' + esc(key) + '" rows="1" placeholder="' + (th.length ? "이어서 Brainy에게…" : "💬 이 칸 Brainy와 이야기 — 예: 같이 정리해 줘") + '"' + (busy ? " disabled" : "") + ">" + esc(S.icQ[key] || "") + '</textarea><button class="btn" data-act="icsend" data-k="' + esc(key) + '"' + (busy ? " disabled" : "") + ">" + (busy ? "…" : th.length ? "보내기" : "💬 대화") + "</button></div>";
+    return h + "</div>";
+  }
+  function icTalk(key, text) {
+    text = String(text || "").trim(); if (!text || S.icBusy[key]) return;
+    var th = S.ic[key] = S.ic[key] || [];
+    if (!S.sample || S.sampleOff) { th.push({ r: "warn", t: "지금은 Brainy와 대화할 수 없어요." }); render(); return; }
+    var hist = th.filter(function (m) { return (m.r === "me" || m.r === "ai") && m.t; }).slice(-10).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: m.t }; });
+    th.push({ r: "me", t: text }); var ai = { r: "ai", t: "", pending: true }; th.push(ai); S.icQ[key] = ""; S.icBusy[key] = true; render();
+    var rules = chatRules() + "\n\n=== 지금 이 대화 ===\n" + icCtx(key) + "\n앱 화면의 그 칸 바로 아래에서 나누는 짧은 대화다. 3~5줄, 마크다운 기호 없이, 해요체. 기록·반영을 원하면 앱 도구로 바로 하고 무엇을 했는지 한 줄로 말한다.";
+    var elId = icId(key, th.length - 1);
+    var opts = { cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; var el = document.getElementById(elId); if (el) el.innerHTML = "<b>Brainy</b> " + esc(u.text); } };
+    if (S.toolsOK) opts.tools = chatTools();
+    S.sample([{ role: "user", content: rules }].concat(hist).concat([{ role: "user", content: text }]), opts)
+      .then(function (r) { ai.t = (r && r.text) || ai.t; }, function (e) { ai.t = (e && e.text) || "답을 받지 못했어요. 다시 보내 주세요."; })
+      .then(function () { ai.pending = false; S.icBusy[key] = false; render(); });
   }
   function ledgerChat() { if (S.chat && S.chat.busy) return; S.chat = { turns: [], busy: false, ctl: null, project: null }; }
   function ledgerAnswer(n, ans, note) {
@@ -2385,6 +2421,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "moyes") { var mt2 = String(S.moDraft || "").trim(); moSend(mt2 ? "아침 계획 고침: " + mt2 : "아침 계획 응"); return; }
     if (act === "lgclear") { S.lgSel = {}; S.lgAll = ""; render(); return; }
     if (act === "lgsend") { lgSend(); return; }
+    if (act === "ictalk") { var ik = t.getAttribute("data-k"), isrc = document.getElementById(t.getAttribute("data-src")), itx = isrc ? isrc.value : ""; if (!String(itx).trim()) { if (isrc) isrc.focus(); return; } if (ik.indexOf("q:") === 0) { var iq = ik.slice(2); saveDay(function (b) { b.answers[iq] = String(itx).trim(); }); S.drafts[iq] = String(itx).trim(); } icTalk(ik, itx); return; }
+    if (act === "icsend") { var sk = t.getAttribute("data-k"); icTalk(sk, S.icQ[sk]); return; }
     if (act === "lgone") { var on1 = t.getAttribute("data-n"), ov = t.getAttribute("data-v"); if (ov === "고쳐서") { S.lgSel[on1] = (S.lgSel[on1] || {}).v === "고쳐서" ? {} : { v: "고쳐서" }; render(); var te1 = document.querySelector('[data-lgq="' + CSS.escape(on1) + '"]'); if (te1) te1.focus(); return; } lgSendOne(on1, ov, S.lgQ[on1]); return; }
     if (act === "lgqsend") { var qn = t.getAttribute("data-n"), qt = String(S.lgQ[qn] || "").trim(); if ((S.lgSel[qn] || {}).v === "고쳐서") { if (!qt) { var te2 = document.querySelector('[data-lgq="' + CSS.escape(qn) + '"]'); if (te2) te2.focus(); return; } lgSendOne(qn, "고쳐서", qt); return; } if (qt) lgAskOne(qn, qt); return; }
     if (act === "lgask") { var ln2 = t.getAttribute("data-n"), it2 = ledgerOpen().filter(function (x) { return String(x.n) === ln2; })[0]; if (it2) { ledgerChat(); openChat(null, "🗳 결산 대기 " + it2.n + "번 「" + it2.text + "」 같이 정리하자. 이게 무슨 뜻이고 왜 올라왔는지, 응/고쳐서/나중에/빼 중 뭐가 나을지 근거와 함께 짧게 말해 줘."); } return; }
@@ -2432,6 +2470,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       var sb = document.querySelector('[data-act="lgsend"]');
       if (sb) { var pk = Object.keys(S.lgSel).filter(function (k) { return S.lgSel[k].v || String(S.lgSel[k].note || "").trim(); }); var bd = pk.filter(function (k) { return S.lgSel[k].v === "고쳐서" && !String(S.lgSel[k].note || "").trim(); }); sb.disabled = !((pk.length || String(S.lgAll || "").trim()) && !bd.length && !S.lgBusy && S.mcp && cmdTriggerId()); sb.textContent = "고른 대로 보내기" + (pk.length ? " (" + pk.length + ")" : ""); }
     }
+    if (el.getAttribute && el.getAttribute("data-icq")) { S.icQ[el.getAttribute("data-icq")] = el.value; if (el.classList.contains("grow")) grow(el); }
     if (el.getAttribute && el.getAttribute("data-lgq")) { S.lgQ[el.getAttribute("data-lgq")] = el.value; if (el.classList.contains("grow")) grow(el); }
     if (el.getAttribute && el.getAttribute("data-tw")) { S.twDraft[el.getAttribute("data-tw")] = el.value; if (el.classList.contains("grow")) grow(el); }
     if (el.getAttribute && el.getAttribute("data-tl")) { S.tlDraft[el.getAttribute("data-tl")] = el.value; if (el.classList.contains("grow")) grow(el); var tt0 = el.getAttribute("data-tl"); if (S.tlMsg[tt0]) delete S.tlMsg[tt0]; }
@@ -2439,7 +2478,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (el.getAttribute && el.getAttribute("data-fd")) { S.fd[el.id] = el.value; if (el.getAttribute("data-k")) scheduleAuto(el); if (el.classList.contains("grow")) grow(el); }
   });
   function grow(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight + 2, 900) + "px"; }
-  function typing() { var a = document.activeElement; return !!(a && a.getAttribute && (a.getAttribute("data-fd") || (/^(note|ask|cmd)-input$/.test(a.id) || a.getAttribute("data-tl") || a.getAttribute("data-tw") || a.getAttribute("data-lg") || a.getAttribute("data-lgq") || a.getAttribute("data-lgall") || a.getAttribute("data-ans") || a.getAttribute("data-mo") || a.getAttribute("data-igcap") || a.getAttribute("data-igfix") || a.getAttribute("data-nr")))); }
+  function typing() { var a = document.activeElement; return !!(a && a.getAttribute && (a.getAttribute("data-fd") || (/^(note|ask|cmd)-input$/.test(a.id) || a.getAttribute("data-tl") || a.getAttribute("data-tw") || a.getAttribute("data-lg") || a.getAttribute("data-lgq") || a.getAttribute("data-icq") || a.getAttribute("data-lgall") || a.getAttribute("data-ans") || a.getAttribute("data-mo") || a.getAttribute("data-igcap") || a.getAttribute("data-igfix") || a.getAttribute("data-nr")))); }
   function softRender() { if (typing()) { S.pendingRender = true; return; } render(); }
   document.addEventListener("focusout", function () { setTimeout(function () { if (S.pendingRender && !typing()) { S.pendingRender = false; render(); } }, 300); });
   document.addEventListener("change", function (ev) { if (ev.target && ev.target.id === "garmin-file") { uploadGarmin(ev.target.files); } });
