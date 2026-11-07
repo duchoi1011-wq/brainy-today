@@ -27,7 +27,11 @@
     "#bc .bc-chips{display:flex;flex-wrap:wrap;gap:6px}#bc .bc-hint{font-size:13px;color:var(--g-mut);margin:0}" +
     "#bc .bc-in{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--g-line);background:var(--g-card);align-items:end}" +
     "#bc textarea{font:inherit;font-size:16px;color:var(--g-fg);background:var(--g-bg);border:1px solid var(--g-line);border-radius:12px;padding:10px 12px;resize:none;height:46px;min-height:46px;max-height:140px;box-sizing:border-box}" +
-    "#bc .bc-send{height:46px;border:0;border-radius:12px;padding:0 16px;background:var(--g-acc);color:var(--g-acc-ink);font-weight:600}";
+    "#bc .bc-send{height:46px;border:0;border-radius:12px;padding:0 16px;background:var(--g-acc);color:var(--g-acc-ink);font-weight:600}" +
+    "#bc .bc-bar b{min-width:0;cursor:pointer}" +
+    "#bc.bc-fold{inset:auto max(12px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));max-width:720px;margin:0 auto;grid-template-rows:auto;padding-top:0;border:1px solid var(--g-line);border-radius:14px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.22)}" +
+    "#bc.bc-fold .bc-bar{border-bottom:0;padding:10px 12px}#bc.bc-fold .bc-bar small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+    "#bc.bc-fold .bc-msgs,#bc.bc-fold .bc-in,#bc.bc-fold [data-bc=new]{display:none}";
   document.head.appendChild(css);
 
   var fab = document.createElement("button");
@@ -35,7 +39,7 @@
   fab.setAttribute("aria-label", "Brainy에게 묻거나 이 앱 고쳐 달라기");
   var box = document.createElement("div");
   box.id = "bc"; box.hidden = true;
-  box.innerHTML = '<div class="bc-bar"><b>Brainy<small>' + esc(NAME) + ' — 묻기 · 이 앱 고쳐 달라기</small></b><button type="button" class="bc-q" data-bc="new">새 대화</button><button type="button" class="bc-q" data-bc="close">닫기</button></div>' +
+  box.innerHTML = '<div class="bc-bar"><b data-bc="fold">Brainy<small>' + esc(NAME) + ' — 묻기 · 이 앱 고쳐 달라기</small></b><button type="button" class="bc-q" data-bc="new">새 대화</button><button type="button" class="bc-q" data-bc="fold" id="bc-fold" aria-expanded="true">접기</button><button type="button" class="bc-q" data-bc="close">닫기</button></div>' +
     '<div class="bc-msgs" id="bc-msgs"></div>' +
     '<div class="bc-in"><textarea id="bc-text" rows="1" placeholder="예: 강의 탭 글씨를 더 크게 고쳐 줘"></textarea><button type="button" class="bc-send" id="bc-send">보내기</button></div>';
   document.body.appendChild(fab); document.body.appendChild(box);
@@ -85,13 +89,20 @@
       ai.content += (ai.content ? "\n\n" : "") + (e && e.code === "cancelled" ? "멈췄어요." : "⚠ " + ((e && e.message) || "답을 받지 못했어요"));
     }).then(function () { busy = false; ctl = null; keep(); render(); });
   }
-  fab.addEventListener("click", function () { box.hidden = false; fab.hidden = true; render(); setTimeout(function () { try { text.focus(); } catch (e) {} }, 50); });
+  // 접으면 제목 줄만 아래에 띄워 두고, 펼치면 대화가 다 보인다
+  function fold(on) {
+    box.classList.toggle("bc-fold", on);
+    var b = box.querySelector("#bc-fold"); b.textContent = on ? "펼치기" : "접기"; b.setAttribute("aria-expanded", String(!on));
+    if (!on) msgs.scrollTop = msgs.scrollHeight;
+  }
+  fab.addEventListener("click", function () { box.hidden = false; fab.hidden = true; fold(false); render(); setTimeout(function () { try { text.focus(); } catch (e) {} }, 50); });
   box.addEventListener("click", function (e) {
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");
     if (a === "close") { box.hidden = true; fab.hidden = false; return; }
     if (a === "new") { if (ctl) ctl.abort(); turns = []; keep(); render(); return; }
     if (a === "old") { openOld = !openOld; render(); return; }
+    if (a === "fold") { fold(!box.classList.contains("bc-fold")); return; }
     var c = b.getAttribute("data-bc-chip");
     if (c) { if (c.indexOf("○○") >= 0) { text.value = c.replace("○○ ", ""); text.focus(); } else go(c); }
   });

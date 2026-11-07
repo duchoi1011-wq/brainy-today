@@ -350,8 +350,9 @@ patch("""  function ledgerChat() {""", """  function lgCmdOf(n) { var id = S.lgC
     var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (stepSplit(it.text).d ? '<span class="sd">' + esc(clip(stepSplit(it.text).d, 160)) + "</span>" : "") + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";
     if (!sent) h += '<div class="chips" style="flex-wrap:wrap" role="group" aria-label="' + esc(n) + '번 답">' + [["응", "응"], ["고쳐서", "고쳐서 응"], ["나중에", "나중에"], ["빼", "빼"]].map(function (o) {
       return '<button class="chip" data-act="lgone" data-n="' + esc(n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>";
-    if (th.length || c) {
-      h += '<div class="lgthread">' + th.map(function (m) { return '<div class="lgm ' + m.r + '">' + (m.r === "me" ? "" : m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
+    if ((th.length || c) && S.thOpen["lgf:" + n]) h += '<div class="lgthread">' + icFold("lgf:" + n, th.length + (c ? 1 : 0)) + "</div>";
+    else if (th.length || c) {
+      h += '<div class="lgthread">' + icFold("lgf:" + n, th.length + (c ? 1 : 0)) + th.map(function (m) { return '<div class="lgm ' + m.r + '">' + (m.r === "me" ? "" : m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
       if (c) { var st = c.status || "", done = st === "끝", bad = /못|멈춤|확인|오류/.test(st);
         h += '<div class="lgm ' + (bad ? "warn" : done ? "ai" : "sys") + '">' + (done ? "<b>맥 Brainy</b> ✓ " + esc(clip(c.result || "반영했어요", 500)) : bad ? "⚠ " + esc(st) + (c.result ? " — " + esc(clip(c.result, 300)) : "") : "⏳ 맥의 Brainy가 원장에 반영하는 중… (보통 1~3분)") + "</div>"; }
       h += "</div>";
@@ -359,7 +360,7 @@ patch("""  function ledgerChat() {""", """  function lgCmdOf(n) { var id = S.lgC
     h += '<div class="lgask"><textarea class="grow" data-lgq="' + esc(n) + '" rows="1" placeholder="' + (v === "고쳐서" ? "어떻게 고쳐서 할지 써 주세요" : "이 항목 Brainy에게 묻기 — 예: 이거 왜 올라왔어?") + '"' + (busy ? " disabled" : "") + ">" + esc(S.lgQ[n] || "") + '</textarea><button class="btn' + (v === "고쳐서" ? " primary" : "") + '" data-act="lgqsend" data-n="' + esc(n) + '"' + (busy ? " disabled" : "") + ">" + (v === "고쳐서" ? "고쳐서 보내기" : busy ? "…" : "묻기") + "</button></div>";
     return h + "</div>";
   }
-  function lgPush(n, m) { (S.lgT[n] = S.lgT[n] || []).push(m); return m; }
+  function lgPush(n, m) { S.thOpen["lgf:" + n] = false; (S.lgT[n] = S.lgT[n] || []).push(m); return m; }
   function lgItem(n) { return ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === String(n); })[0]; }
   function lgSendOne(n, v, note) {
     n = String(n); note = String(note || "").trim();

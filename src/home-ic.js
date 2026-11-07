@@ -9,16 +9,19 @@
     return "";
   }
   function icId(key, i) { return "icm-" + key.replace(/[^\w가-힣-]/g, "_") + "-" + i; }
+  // 칸 안 대화 접기·펼치기 — 접으면 이 제목 줄만 남는다 (S.thOpen[fk] 가 참이면 접힘)
+  function icFold(fk, n) { var shut = !!S.thOpen[fk]; return '<button class="more" data-act="thtoggle" data-k="' + esc(fk) + '" aria-expanded="' + !shut + '">' + (shut ? "▸ 💬 Brainy와 대화 " + n + "개 · 펼치기" : "▾ 💬 Brainy와 대화 · 접기") + "</button>"; }
   function icHtml(key, own) {
     var th = S.ic[key] || [], busy = !!S.icBusy[key];
     if (!th.length && !own) return "";
-    var h = '<div class="ic">' + th.map(function (m, i) { return '<div class="lgm ' + m.r + '" id="' + esc(icId(key, i)) + '">' + (m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
+    if (th.length && S.thOpen["icf:" + key]) return '<div class="ic">' + icFold("icf:" + key, th.length) + "</div>";
+    var h = '<div class="ic">' + (th.length ? icFold("icf:" + key, th.length) : "") + th.map(function (m, i) { return '<div class="lgm ' + m.r + '" id="' + esc(icId(key, i)) + '">' + (m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
     h += '<div class="lgask"><textarea class="grow" data-icq="' + esc(key) + '" rows="1" placeholder="' + (th.length ? "이어서 Brainy에게…" : "💬 이 칸 Brainy와 이야기 — 예: 같이 정리해 줘") + '"' + (busy ? " disabled" : "") + ">" + esc(S.icQ[key] || "") + '</textarea><button class="btn" data-act="icsend" data-k="' + esc(key) + '"' + (busy ? " disabled" : "") + ">" + (busy ? "…" : th.length ? "보내기" : "💬 대화") + "</button></div>";
     return h + "</div>";
   }
   function icTalk(key, text) {
     text = String(text || "").trim(); if (!text || S.icBusy[key]) return;
-    var th = S.ic[key] = S.ic[key] || [];
+    var th = S.ic[key] = S.ic[key] || []; S.thOpen["icf:" + key] = false;
     if (!S.sample || S.sampleOff) { th.push({ r: "warn", t: "지금은 Brainy와 대화할 수 없어요." }); render(); return; }
     var hist = th.filter(function (m) { return (m.r === "me" || m.r === "ai") && m.t; }).slice(-10).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: m.t }; });
     th.push({ r: "me", t: text }); var ai = { r: "ai", t: "", pending: true }; th.push(ai); S.icQ[key] = ""; S.icBusy[key] = true; render();
