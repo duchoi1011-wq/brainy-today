@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "dd35989931"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=dd35989931"></script>
+<script>window.BRAINY_VERSION = "4d4c6d6956"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=4d4c6d6956"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -295,7 +295,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* Brainy chat sheet */
 .fab { position: fixed; z-index: 6; right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 13px 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
 .fab svg { width: 18px; height: 18px; }
-.sheet { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; grid-template-rows: auto 1fr auto; padding-top: env(safe-area-inset-top, 0px); }
+.sheet { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; grid-template-rows: auto auto 1fr auto; padding-top: env(safe-area-inset-top, 0px); }
+.sheet .chatfold { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); border: 0; border-bottom: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.sheet .chatfold .arr { width: 16px; color: var(--muted); }
+.sheet .chatfold .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.sheet .chatfold .dot[hidden] { display: none; }
+.sheet.folded { bottom: auto; grid-template-rows: auto auto; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+.sheet.folded .msgs, .sheet.folded .composer2 { display: none; }
 .sheet[hidden] { display: none !important; }
 .sheet .bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--line); background: var(--surface); }
 .sheet .bar .row { flex-wrap: nowrap; }
@@ -353,6 +359,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 <button class="fab" id="fab" data-act="chat" aria-label="Brainy에게 묻기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Brainy</button>
 <section class="sheet" id="sheet" hidden aria-label="Brainy 대화">
   <div class="bar"><div><h2>브레이니</h2><p class="ctxchip" id="chat-ctx">내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요</p></div><div class="row"><select id="chat-model" class="btn quiet" aria-label="답할 Claude 모델" title="답할 Claude 모델"><option value="auto">자동</option><option value="claude-haiku-5-5">Haiku 5.5 · 빠름</option><option value="claude-sonnet-5-5">Sonnet 5.5 · 기본</option><option value="claude-opus-5-5">Opus 5.5 · 깊게</option><option value="claude-fable-5-1">Fable 5.1 · 최고</option></select><button class="btn quiet" data-act="chatnew">새 대화</button><button class="btn" data-act="chatclose">닫기</button></div></div>
+  <button class="chatfold" id="chat-fold" data-act="chatfold" aria-expanded="true" aria-controls="msgs"><span class="arr" aria-hidden="true">▾</span><span>Brainy 대화</span><span class="dot" id="chat-dot" hidden aria-label="새 답"></span></button>
   <div class="msgs" id="msgs"><div class="in2" id="msgs-in"></div></div>
   <div class="composer2"><div class="in2"><textarea id="chat-input" rows="1" placeholder="무엇이든 물어보거나 시켜 보세요 — 예: 점심 해장국 먹었어 기록해줘"></textarea><button class="btn primary" id="chat-send" data-act="chatsend">보내기</button></div></div>
 </section>
@@ -2204,14 +2211,22 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function labelOf(k) { var t = todayList().filter(function (x) { return x.key === k; })[0]; return t ? t.label : k; }
 
   var sheet = document.getElementById("sheet"), msgsIn = document.getElementById("msgs-in"), chatInput = document.getElementById("chat-input");
+  try { S.chatFold = localStorage.getItem("brainy-chatfold") === "1"; } catch (e) {}
+  function chatFoldUI() {
+    if (!S.chatFold) S.chatDot = false;
+    sheet.classList.toggle("folded", !!S.chatFold);
+    var fb = document.getElementById("chat-fold"); fb.setAttribute("aria-expanded", S.chatFold ? "false" : "true"); fb.querySelector(".arr").textContent = S.chatFold ? "▸" : "▾";
+    document.getElementById("chat-dot").hidden = !S.chatDot;
+  }
+  chatFoldUI();
   function openChat(project, q) {
     if (!S.sample || S.sampleOff) { S.chatUnavailable = true; }
     if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }
     if (!S.chat.turns.length && !S.chat.task && !q) { var rec = (S.threads || []).filter(function (x) { return (x.project || null) === (S.chat.project || null) && !x.task && (x.turns || []).length && Date.now() - Date.parse(x.updatedAt || 0) < 6 * 3600e3; })[0]; if (rec) resumeChat(rec); }
     sheet.hidden = false; document.getElementById("fab").hidden = true;
     document.getElementById("chat-ctx").textContent = S.chat.project ? "보고 있는 프로젝트: " + S.chat.project + " · 볼트 전체도 함께 봐요" : "내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요";
-    renderChat();
-    if (q) { chatInput.value = q; sendChat(); } else setTimeout(function () { try { chatInput.focus(); } catch (e) {} }, 50);
+    renderChat(); chatFoldUI();
+    if (q) { chatInput.value = q; sendChat(); } else if (!S.chatFold) setTimeout(function () { try { chatInput.focus(); } catch (e) {} }, 50);
   }
   function closeChat() { sheet.hidden = true; document.getElementById("fab").hidden = false; render(); }
   function bubHtml(key, t, cls, attrs, live) {
@@ -2300,6 +2315,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (S.toolsOK) opts.tools = chatTools(); else opts.cache = false;
     S.sample(input, opts).then(function (r) {
       ai.content = r.text; ai.pending = false; if (r.truncated) ai.err = "답이 길어서 중간에 끊겼어요.";
+      if (S.chatFold) { S.chatDot = true; chatFoldUI(); }
     }).catch(function (e) {
       var c = e && e.code; ai.pending = false;
       if (c === "not_granted" || c === "sampling_disabled" || c === "capability_disabled" || c === "capability_removed" || c === "not_declared") { S.sampleOff = true; ai.err = "Claude 사용이 허락되지 않았어요."; }
@@ -2340,6 +2356,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "mark") { toggleMark(t.getAttribute("data-key")); return; }
     if (act === "chat") { openChat(S.tab === "work" && S.projOpen ? S.projOpen : (S.chat.project && S.tab === "work" ? S.chat.project : null)); return; }
     if (act === "chatclose") { closeChat(); return; }
+    if (act === "chatfold") { S.chatFold = !S.chatFold; try { localStorage.setItem("brainy-chatfold", S.chatFold ? "1" : "0"); } catch (e) {} chatFoldUI(); if (!S.chatFold) { var mb = document.getElementById("msgs"); mb.scrollTop = mb.scrollHeight; } return; }
     if (act === "chatnew") { if (S.chat.ctl) S.chat.ctl.abort(); S.chat = { turns: [], busy: false, ctl: null, project: S.chat.project }; renderChat(); return; }
     if (act === "chatsend") { sendChat(); return; }
     if (act === "chatstop") { if (S.chat.ctl) S.chat.ctl.abort(); return; }
