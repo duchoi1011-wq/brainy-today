@@ -320,7 +320,7 @@ patch('''    DB.doc("sc.marks/main").onSnapshot(function(s){''', '''    DB.doc("
     }, function(){});
     DB.doc("sc.marks/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
-      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all }; save("sc.course", CPROG); if(current==="course") renderCourse(); }
+      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {} }; save("sc.course", CPROG); if(current==="course") renderCourse(); }
       else if(CPROG.cur || Object.keys(CPROG.at).length) csSave();
     }, function(){});
     DB.doc("sc.marks/main").onSnapshot(function(s){''')
@@ -344,6 +344,11 @@ SC_CSS = (".cs-pick{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.cs-p
   ".cs-ch.done .cs-title{color:var(--faint)}.cs-ch.here>summary{color:var(--accent);font-weight:600}.cs-mark{font-size:.75rem;color:var(--ok);text-align:center}.cs-ch.here .cs-mark{color:var(--accent)}"
   ".cs-cnt{display:flex;gap:6px;font-family:var(--f-mono);font-size:.66rem;color:var(--faint)}.cs-cnt i{font-style:normal}.cs-in{padding:2px 0 14px 30px}"
   ".cs-hit{display:grid;gap:5px;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-bottom:1px solid var(--hair);padding:10px 4px;cursor:pointer}.cs-hit:hover{background:var(--surface)}.cs-hit .combo{justify-content:flex-start}"
+  ".cs-seg{display:inline-flex;background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px;margin:0 0 14px}.cs-seg button{font:inherit;font-size:.84rem;color:var(--dim);background:none;border:0;border-radius:7px;padding:7px 13px;cursor:pointer;white-space:nowrap}.cs-seg button[aria-pressed=true]{background:var(--raised);color:var(--fg);font-weight:600;box-shadow:var(--shadow)}"
+  ".cs-cheat{display:grid;margin-top:6px}.cs-crow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--hair)}.cs-crow:last-child{border-bottom:0}"
+  ".cs-cbody{display:flex;gap:6px;align-items:center;justify-content:flex-end;min-width:0;flex-wrap:wrap}.cs-cbody .cs-code{flex:0 1 auto;max-width:420px;padding:5px 9px}.cs-crow.ok .cs-t,.cs-crow.ok .cs-code,.cs-crow.ok kbd{opacity:.45}"
+  ".cs-chlink{font:inherit;font-size:.7rem;color:var(--faint);background:none;border:0;padding:0 0 0 6px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}.cs-chlink:hover{color:var(--accent)}"
+  "@media (max-width:560px){.cs-crow{grid-template-columns:1fr}.cs-cbody{justify-content:flex-start}.cs-cbody .cs-code{flex:1 1 200px;max-width:none}.cs-seg{display:flex}.cs-seg button{flex:1}}"
   "@media (max-width:560px){.tabs{width:100%;overflow-x:auto}.cs-now{padding:14px 12px}.cs-in{padding-left:0}.cs-cnt{display:none}.cs-ch>summary{grid-template-columns:22px 1fr}}")
 
 emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a1f"),
