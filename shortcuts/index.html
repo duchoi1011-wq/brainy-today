@@ -34,14 +34,14 @@ html,body{max-width:100%;overflow-x:clip}
 #gate .gerr{color:var(--g-warn);font-size:13px;min-height:18px}
 #rtdot{position:fixed;z-index:11;top:calc(8px + env(safe-area-inset-top,0px));right:10px;width:7px;height:7px;border-radius:50%;background:var(--g-line)}
 #rtdot.on{background:var(--g-ok)}#rtdot.off{background:var(--g-warn)}
-.cs-pick{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.cs-pick .mode b{font-family:var(--f-mono);font-size:.72rem;color:var(--accent)}.cs-pick .mode[aria-pressed=true] b{color:inherit}.cs-pick .n{font-family:var(--f-mono);font-size:.68rem;opacity:.7;margin-left:3px}.cs-now{scroll-margin-top:130px;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px 18px 14px;margin-bottom:34px}.cs-now .block-head h2{color:var(--accent)}.cs-part-l{margin:10px 0 2px;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.06em;color:var(--faint)}.cs-h{margin:0 0 10px;font-family:var(--f-disp);font-size:1.08rem;letter-spacing:-.015em}.cs-steps{list-style:none;margin:0;padding:0;display:grid;gap:2px}.cs-step{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:10px 4px;border-bottom:1px solid var(--hair)}.cs-step:last-child{border-bottom:0}.cs-num{width:28px;height:28px;border-radius:50%;border:1px solid var(--cap-line);background:var(--raised);color:var(--dim);font:600 .75rem var(--f-mono);cursor:pointer;padding:0}.cs-step.ok .cs-num{background:var(--ok-dim);color:var(--ok);border-color:transparent}.cs-step.ok .cs-t{color:var(--faint)}.cs-main{min-width:0;display:grid;gap:6px}.cs-t{font-size:.92rem;font-weight:500}.cs-kind{font-family:var(--f-mono);font-size:.62rem;font-weight:600;letter-spacing:.04em;color:var(--faint);margin-right:8px;white-space:nowrap}.k-cmd .cs-kind,.k-slash .cs-kind{color:var(--ok)}.k-say .cs-kind{color:var(--accent)}.k-key .cs-kind{color:var(--fg)}.cs-body{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.cs-body .combo{justify-content:flex-start}.cs-code{font-family:var(--f-mono);font-size:.8rem;line-height:1.5;background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:7px 10px;flex:1 1 220px;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}.cs-code i{color:var(--faint);font-style:normal}.k-say .cs-code{font-family:var(--f-body);font-size:.86rem;border-left:3px solid var(--accent)}.cs-path{font-size:.84rem;color:var(--dim);line-height:1.55}.cs-copy{font:inherit;font-size:.74rem;color:var(--dim);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap}.cs-copy:hover{color:var(--fg);border-color:var(--cap-line)}.cs-why{font-size:.78rem;color:var(--dim);line-height:1.5}.cs-empty{color:var(--faint);font-size:.86rem;margin:4px 0 10px}.cs-nav{display:flex;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}.cs-src{display:block;margin-top:8px;font-size:.7rem;color:var(--faint)}.cs-ch{border-bottom:1px solid var(--hair)}.cs-ch>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:10px 4px;font-size:.88rem}.cs-ch>summary::-webkit-details-marker{display:none}.cs-ch.done .cs-title{color:var(--faint)}.cs-ch.here>summary{color:var(--accent);font-weight:600}.cs-mark{font-size:.75rem;color:var(--ok);text-align:center}.cs-ch.here .cs-mark{color:var(--accent)}.cs-cnt{display:flex;gap:6px;font-family:var(--f-mono);font-size:.66rem;color:var(--faint)}.cs-cnt i{font-style:normal}.cs-in{padding:2px 0 14px 30px}.cs-hit{display:grid;gap:5px;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-bottom:1px solid var(--hair);padding:10px 4px;cursor:pointer}.cs-hit:hover{background:var(--surface)}.cs-hit .combo{justify-content:flex-start}.cs-seg{display:inline-flex;background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px;margin:0 0 14px}.cs-seg button{font:inherit;font-size:.84rem;color:var(--dim);background:none;border:0;border-radius:7px;padding:7px 13px;cursor:pointer;white-space:nowrap}.cs-seg button[aria-pressed=true]{background:var(--raised);color:var(--fg);font-weight:600;box-shadow:var(--shadow)}.cs-cheat{display:grid;margin-top:6px}.cs-crow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--hair)}.cs-crow:last-child{border-bottom:0}.cs-cbody{display:flex;gap:6px;align-items:center;justify-content:flex-end;min-width:0;flex-wrap:wrap}.cs-cbody .cs-code{flex:0 1 auto;max-width:420px;padding:5px 9px}.cs-crow.ok .cs-t,.cs-crow.ok .cs-code,.cs-crow.ok kbd{opacity:.45}.cs-basics{margin:-14px 0 30px;border:1px solid var(--rule);border-radius:12px;padding:0 12px;background:var(--surface)}.cs-basics>summary{font-weight:600}.cs-basics .cs-mark{color:var(--ok);font-family:var(--f-mono)}.cs-basics .cs-in{padding:0 0 10px}.cs-cbody .marks{margin-left:2px}.cs-legend{margin:6px 0 4px;font-size:.78rem;color:var(--dim)}.cs-chlink{font:inherit;font-size:.7rem;color:var(--faint);background:none;border:0;padding:0 0 0 6px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}.cs-chlink:hover{color:var(--accent)}@media (max-width:560px){.cs-crow{grid-template-columns:1fr}.cs-cbody{justify-content:flex-start}.cs-cbody .cs-code{flex:1 1 200px;max-width:none}.cs-seg{display:flex}.cs-seg button{flex:1}}@media (max-width:560px){.tabs{width:100%;overflow-x:auto}.cs-now{padding:14px 12px}.cs-in{padding-left:0}.cs-cnt{display:none}.cs-ch>summary{grid-template-columns:22px 1fr}}
+.cs-pick{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.cs-pick .mode b{font-family:var(--f-mono);font-size:.72rem;color:var(--accent)}.cs-pick .mode[aria-pressed=true] b{color:inherit}.cs-pick .n{font-family:var(--f-mono);font-size:.68rem;opacity:.7;margin-left:3px}.cs-now{scroll-margin-top:130px;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px 18px 14px;margin-bottom:34px}.cs-now .block-head h2{color:var(--accent)}.cs-part-l{margin:10px 0 2px;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.06em;color:var(--faint)}.cs-h{margin:0 0 10px;font-family:var(--f-disp);font-size:1.08rem;letter-spacing:-.015em}.cs-steps{list-style:none;margin:0;padding:0;display:grid;gap:2px}.cs-step{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:10px 4px;border-bottom:1px solid var(--hair)}.cs-step:last-child{border-bottom:0}.cs-num{width:28px;height:28px;border-radius:50%;border:1px solid var(--cap-line);background:var(--raised);color:var(--dim);font:600 .75rem var(--f-mono);cursor:pointer;padding:0}.cs-step.ok .cs-num{background:var(--ok-dim);color:var(--ok);border-color:transparent}.cs-step.ok .cs-t{color:var(--faint)}.cs-main{min-width:0;display:grid;gap:6px}.cs-t{font-size:.92rem;font-weight:500}.cs-kind{font-family:var(--f-mono);font-size:.62rem;font-weight:600;letter-spacing:.04em;color:var(--faint);margin-right:8px;white-space:nowrap}.k-cmd .cs-kind,.k-slash .cs-kind{color:var(--ok)}.k-say .cs-kind{color:var(--accent)}.k-key .cs-kind{color:var(--fg)}.cs-body{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.cs-body .combo{justify-content:flex-start}.cs-code{font-family:var(--f-mono);font-size:.8rem;line-height:1.5;background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:7px 10px;flex:1 1 220px;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}.cs-code i{color:var(--faint);font-style:normal}.k-say .cs-code{font-family:var(--f-body);font-size:.86rem;border-left:3px solid var(--accent)}.cs-path{font-size:.84rem;color:var(--dim);line-height:1.55}.cs-copy{font:inherit;font-size:.74rem;color:var(--dim);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap}.cs-copy:hover{color:var(--fg);border-color:var(--cap-line)}.cs-why{font-size:.78rem;color:var(--dim);line-height:1.5}.cs-empty{color:var(--faint);font-size:.86rem;margin:4px 0 10px}.cs-nav{display:flex;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}.cs-src{display:block;margin-top:8px;font-size:.7rem;color:var(--faint)}.cs-ch{border-bottom:1px solid var(--hair)}.cs-ch>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:10px 4px;font-size:.88rem}.cs-ch>summary::-webkit-details-marker{display:none}.cs-ch.done .cs-title{color:var(--faint)}.cs-ch.here>summary{color:var(--accent);font-weight:600}.cs-mark{font-size:.75rem;color:var(--ok);text-align:center}.cs-ch.here .cs-mark{color:var(--accent)}.cs-cnt{display:flex;gap:6px;font-family:var(--f-mono);font-size:.66rem;color:var(--faint)}.cs-cnt i{font-style:normal}.cs-in{padding:2px 0 14px 30px}.cs-hit{display:grid;gap:5px;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-bottom:1px solid var(--hair);padding:10px 4px;cursor:pointer}.cs-hit:hover{background:var(--surface)}.cs-hit .combo{justify-content:flex-start}.cs-seg{display:inline-flex;background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px;margin:0 0 14px}.cs-seg button{font:inherit;font-size:.84rem;color:var(--dim);background:none;border:0;border-radius:7px;padding:7px 13px;cursor:pointer;white-space:nowrap}.cs-seg button[aria-pressed=true]{background:var(--raised);color:var(--fg);font-weight:600;box-shadow:var(--shadow)}.cs-cheat{display:grid;margin-top:6px}.cs-crow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--hair)}.cs-crow:last-child{border-bottom:0}.cs-cbody{display:flex;gap:6px;align-items:center;justify-content:flex-end;min-width:0;flex-wrap:wrap}.cs-cbody .cs-code{flex:0 1 auto;max-width:420px;padding:5px 9px}.cs-crow.ok .cs-t,.cs-crow.ok .cs-code,.cs-crow.ok kbd{opacity:.45}.cs-sort{display:flex;gap:6px;align-items:center;margin:4px 0 8px;font-size:.78rem;color:var(--faint)}.cs-sort button{font:inherit;font-size:.78rem;color:var(--dim);background:none;border:1px solid var(--rule);border-radius:99px;padding:4px 11px;cursor:pointer}.cs-sort button[aria-pressed=true]{color:var(--bg);background:var(--fg);border-color:var(--fg)}.cs-goto{display:flex;gap:10px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--fg);background:var(--accent-dim);border:1px solid transparent;border-radius:12px;padding:12px 14px;margin:8px 0 26px;cursor:pointer}.cs-goto span:first-child{font-size:.74rem;font-weight:700;color:var(--accent);white-space:nowrap}.cs-goto b{flex:1;min-width:0;font-weight:600;font-size:.9rem}.cs-goto .n{font-family:var(--f-mono);font-size:.72rem;color:var(--dim);white-space:nowrap}.cs-lec{scroll-margin-top:130px}.cs-lec.here .block-head h2{color:var(--accent)}.cs-lec.done .block-head h2{color:var(--faint)}.cs-basics{margin:-14px 0 30px;border:1px solid var(--rule);border-radius:12px;padding:0 12px;background:var(--surface)}.cs-basics>summary{font-weight:600}.cs-basics .cs-mark{color:var(--ok);font-family:var(--f-mono)}.cs-basics .cs-in{padding:0 0 10px}.cs-cbody .marks{margin-left:2px}.cs-legend{margin:6px 0 4px;font-size:.78rem;color:var(--dim)}.cs-chlink{font:inherit;font-size:.7rem;color:var(--faint);background:none;border:0;padding:0 0 0 6px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}.cs-chlink:hover{color:var(--accent)}@media (max-width:560px){.cs-crow{grid-template-columns:1fr}.cs-cbody{justify-content:flex-start}.cs-cbody .cs-code{flex:1 1 200px;max-width:none}.cs-seg{display:flex}.cs-seg button{flex:1}}@media (max-width:560px){.tabs{width:100%;overflow-x:auto}.cs-now{padding:14px 12px}.cs-in{padding-left:0}.cs-cnt{display:none}.cs-ch>summary{grid-template-columns:22px 1fr}}
 </style>
 </head>
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "1ab19e0dbe"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests"]};</script>
-<script src="../shim.js?v=1ab19e0dbe"></script>
+<script>window.BRAINY_VERSION = "3ea62f0164"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests"]};</script>
+<script src="../shim.js?v=3ea62f0164"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="web-icon-180.png">
@@ -815,7 +815,7 @@ function refresh(){
 var COURSE = load("sc.course.data", { courses: [] });
 var CPROG = load("sc.course", null) || { cur: "", at: {}, done: {}, sd: {}, all: false };
 CPROG.cp = CPROG.cp || {}; CPROG.cf = CPROG.cf || {};   // cf: 강의 단축키·명령어 ★ 즐겨찾기                 // 단축키·명령어 모음에서 「외웠어」 ✓ 한 것
-var csView = load("sc.cview", "seq"), csFilt = "all";   // 강의 탭: 차례대로 / 단축키·명령어
+var csView = load("sc.cview2", "cheat"), csFilt = "all", csSort = load("sc.csort", "order");   // 기본: 강의 순서대로 그 강의 단축키·명령어 (따라 하기는 나중에 — 2026-11-07 동욱)   // 강의 탭: 차례대로 / 단축키·명령어
 var csOpen = {}, csTB = load("sc.tb", true);   // csTB: 「터미널 기본」 펼침
 var CS_SHOW = { key: 1, cmd: 1, slash: 1 };   // 「차례대로」엔 단축키·명령어만 (Claude에게 할 말·화면 조작은 뺀다 — 2026-11-07 동욱)
 function csSteps(ch){ var o = []; ch.steps.forEach(function(s, i){ if(CS_SHOW[s.kind]) o.push({ s: s, i: i }); }); return o; }
@@ -877,8 +877,8 @@ function renderCourse(){
     return "<button type=\"button\" class=\"mode\" data-cspick=\"" + cx(x.id) + "\" aria-pressed=\"" + (x.id === c.id) + "\">" + (x.tag ? "<b>" + cx(x.tag) + "</b> " : "") + cx(x.name) + " <span class=\"n\">" + dn + "/" + x.chapters.length + "</span></button>";
   }).join("") + "</div>";
   var cheat = c.cheat || [];
-  h += "<div class=\"cs-seg\" role=\"tablist\"><button type=\"button\" data-csview=\"seq\" aria-pressed=\"" + (csView !== "cheat") + "\">차례대로 따라 하기</button>" +
-    "<button type=\"button\" data-csview=\"cheat\" aria-pressed=\"" + (csView === "cheat") + "\">단축키·명령어 " + cheat.length + "</button></div>";
+  h += "<div class=\"cs-seg\" role=\"tablist\"><button type=\"button\" data-csview=\"cheat\" aria-pressed=\"" + (csView === "cheat") + "\">강의별 단축키·명령어 " + cheat.length + "</button>" +
+    "<button type=\"button\" data-csview=\"seq\" aria-pressed=\"" + (csView !== "cheat") + "\">차례대로 따라 하기</button></div>";
   if(csView === "cheat"){ el.innerHTML = h + csCheat(c); return; }
   h += "<p class=\"why\">강의 들으면서 <b>차례대로</b> — 그 챕터에 나온 단축키·명령어만. 번호를 누르면 체크, 다 하면 「다음 챕터」. " + (c.note ? cx(c.note) + " " : "") + "<span style=\"color:var(--faint)\">← → 키로 챕터 이동</span></p>";
   // 지금 여기
@@ -910,7 +910,7 @@ function cpKey(c, x){ return (x.sec === "터미널 기본" ? "tb" : c.id) + "|" 
 // 챕터 들여다보기 — 「지금 여기」는 그대로 두고 전체 순서에서 그 챕터만 펼친다
 function csPeek(chId){
   var c = csCourse(); if(!c) return;
-  csView = "seq"; save("sc.cview", csView);
+  csView = "seq"; save("sc.cview2", csView);
   var ch = c.chapters.filter(function(x){ return x.id === chId; })[0];
   if(ch && !csSteps(ch).length && !CPROG.all){ CPROG.all = true; }
   csOpen = {}; csOpen[chId] = true; renderCourse();
@@ -940,9 +940,11 @@ function csCheat(c){
   var known = all.filter(function(x){ return CPROG.cp[cpKey(c, x)]; }).length;
   var h = "<div class=\"modes\" style=\"margin:0 0 6px\">" + Object.keys(CS_FILT).filter(function(k){ return n[k] || k === "fav"; }).map(function(k){
     return "<button type=\"button\" class=\"mode\" data-csfilt=\"" + k + "\" aria-pressed=\"" + (csFilt === k) + "\">" + CS_FILT[k] + " <span class=\"n\">" + n[k] + "</span></button>"; }).join("") + "</div>";
+  h += "<div class=\"cs-sort\"><span>보기</span><button type=\"button\" data-cssort=\"order\" aria-pressed=\"" + (csSort === "order") + "\">강의 순서</button><button type=\"button\" data-cssort=\"sec\" aria-pressed=\"" + (csSort !== "order") + "\">종류별</button></div>";
   h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 외웠어 — 흐리게</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span><span>외운 것 " + known + "/" + all.length + "</span></div>";
   var list = all.filter(function(x){ return csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csFilt === "cmd" ? csIsCmd(x) : CPROG.cf[cpKey(c, x)]); });
   if(!list.length) return h + "<p class=\"empty\">아직 없어요. 줄 옆 ★을 눌러 모아요.</p>";
+  if(csSort === "order") return h + csByLecture(c, list);
   var secs = [], by = {};
   list.forEach(function(x){ var s = x.sec === "터미널 기본" ? "▶ 터미널 기본" : (x.kind === "key" ? "⌘ " : "$ ") + (x.sec || "기타"); if(!by[s]){ by[s] = []; secs.push(s); } by[s].push(x); });
   // 터미널 기본 → 단축키 묶음 → 명령어 묶음
@@ -952,6 +954,25 @@ function csCheat(c){
     return "<div class=\"block\"><div class=\"block-head\"><h2>" + cx(s) + "</h2><i class=\"hr\"></i><span class=\"meta\">" + by[s].length + "</span></div><div class=\"cs-cheat\">" +
       by[s].map(function(x){ return csCrow(c, x, chT, false); }).join("") + "</div></div>";
   }).join("");
+}
+// 강의 순서 — 챕터(강의)마다 거기서 배우는 단축키·명령어. 지금 들을 강의는 표시하고 바로 가기
+function csByLecture(c, list){
+  var here = csHere(c), hereIdx = c.chapters.indexOf(here), by = {}, basics = [];
+  list.forEach(function(x){ if(x.sec === "터미널 기본") basics.push(x); else (by[x.ch] = by[x.ch] || []).push(x); });
+  var chs = c.chapters.filter(function(ch){ return by[ch.id]; });
+  var target = chs.filter(function(ch){ return c.chapters.indexOf(ch) >= hereIdx; })[0];
+  var h = "";
+  if(target) h += "<button type=\"button\" class=\"cs-goto\" data-csscroll=\"" + cx(target.id) + "\"><span>▶ " + (target === here ? "지금 들을 강의" : "다음에 단축키 나오는 강의") + "</span><b>" + cx(target.title) + "</b><span class=\"n\">" + by[target.id].length + "개 →</span></button>";
+  if(basics.length) h += "<div class=\"block\"><div class=\"block-head\"><h2>$ 터미널 기본</h2><i class=\"hr\"></i><span class=\"meta\">어느 강의에서나 · " + basics.length + "</span></div><div class=\"cs-cheat\">" +
+    basics.map(function(x){ return csCrow(c, x, {}, false); }).join("") + "</div></div>";
+  var part = null;
+  chs.forEach(function(ch){
+    if(ch.part !== part){ part = ch.part; h += "<p class=\"cs-part-l\" style=\"margin:26px 0 4px\">" + cx(part) + "</p>"; }
+    var isHere = ch === target, dn = !!CPROG.done[c.id + "|" + ch.id];
+    h += "<div class=\"block cs-lec" + (isHere ? " here" : "") + (dn ? " done" : "") + "\" data-cslec=\"" + cx(ch.id) + "\"><div class=\"block-head\"><h2>" + (isHere ? "▶ " : dn ? "✓ " : "") + cx(ch.title) + "</h2><i class=\"hr\"></i><span class=\"meta\">" + by[ch.id].length + "</span></div><div class=\"cs-cheat\">" +
+      by[ch.id].map(function(x){ return csCrow(c, x, {}, false); }).join("") + "</div></div>";
+  });
+  return h;
 }
 // 「즐겨찾기」 탭 — 강의 단축키·명령어 중 ★ 한 것
 function csFavBlock(){
@@ -975,7 +996,7 @@ renderList = function(kind){
 function csGo(chId, markPrev){
   var c = csCourse(); if(!c) return;
   if(markPrev){ var past = true; c.chapters.forEach(function(ch){ if(ch.id === chId) past = false; if(past) CPROG.done[c.id + "|" + ch.id] = 1; else if(ch.id === chId) delete CPROG.done[c.id + "|" + ch.id]; }); }
-  CPROG.at[c.id] = chId; csOpen = {}; csView = "seq"; save("sc.cview", csView); csSave(); renderCourse();
+  CPROG.at[c.id] = chId; csOpen = {}; csView = "seq"; save("sc.cview2", csView); csSave(); renderCourse();
   var n = document.querySelector(".cs-now"); if(n) n.scrollIntoView({ block: "start", behavior: "instant" });
 }
 function csNext(dir){
@@ -1020,10 +1041,12 @@ document.addEventListener("toggle", function(e){
   else if(!d.open) csOpen[id] = false;
 }, true);
 document.addEventListener("click", function(e){
-  var b = e.target.closest("[data-csview],[data-csfilt],[data-cscp],[data-cscf],[data-cspick],[data-cssd],[data-csdone],[data-csgo],[data-cshere],[data-csall],[data-cscopy],[data-csjump]");
+  var b = e.target.closest("[data-csview],[data-csfilt],[data-cssort],[data-csscroll],[data-cscp],[data-cscf],[data-cspick],[data-cssd],[data-csdone],[data-csgo],[data-cshere],[data-csall],[data-cscopy],[data-csjump]");
   if(!b) return;
   var c = csCourse();
-  if(b.hasAttribute("data-csview")){ csView = b.getAttribute("data-csview"); save("sc.cview", csView); renderCourse(); return; }
+  if(b.hasAttribute("data-csview")){ csView = b.getAttribute("data-csview"); save("sc.cview2", csView); renderCourse(); return; }
+  if(b.hasAttribute("data-cssort")){ csSort = b.getAttribute("data-cssort"); save("sc.csort", csSort); renderCourse(); return; }
+  if(b.hasAttribute("data-csscroll")){ var tg = document.querySelector('[data-cslec="' + b.getAttribute("data-csscroll").replace(/"/g, "") + '"]'); if(tg) tg.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
   if(b.hasAttribute("data-csfilt")){ csFilt = b.getAttribute("data-csfilt"); renderCourse(); return; }
   if(b.hasAttribute("data-cscp") || b.hasAttribute("data-cscf")){
     var isF = b.hasAttribute("data-cscf"), ck = b.getAttribute(isF ? "data-cscf" : "data-cscp"), m = isF ? CPROG.cf : CPROG.cp;
@@ -1036,7 +1059,7 @@ document.addEventListener("click", function(e){
   if(b.hasAttribute("data-csgo")){ csGo(b.getAttribute("data-csgo")); return; }
   if(b.hasAttribute("data-cshere")){ csGo(b.getAttribute("data-cshere"), true); return; }
   if(b.hasAttribute("data-csall")){ CPROG.all = !CPROG.all; csSave(); renderCourse(); return; }
-  if(b.hasAttribute("data-csjump")){ var p = b.getAttribute("data-csjump").split("|"); CPROG.cur = p[0]; document.getElementById("q").value = ""; if(p[1]){ show("course"); csPeek(p[1]); } else { csView = "cheat"; save("sc.cview", csView); show("course"); } return; }
+  if(b.hasAttribute("data-csjump")){ var p = b.getAttribute("data-csjump").split("|"); CPROG.cur = p[0]; document.getElementById("q").value = ""; if(p[1]){ show("course"); csPeek(p[1]); } else { csView = "cheat"; save("sc.cview2", csView); show("course"); } return; }
   if(b.hasAttribute("data-cscopy")){
     var txt = b.getAttribute("data-cscopy"), done = function(){ b.textContent = "복사됨 ✓"; setTimeout(function(){ b.textContent = "복사"; }, 1400); };
     if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ b.textContent = "길게 눌러 복사"; });
