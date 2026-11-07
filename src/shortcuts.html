@@ -398,6 +398,8 @@ var D = [
  {id:"it-move",k:[["⌘","["],["⌘","]"]],t:"분할한 창 사이 이동",d:"",g:"iTerm2 · 클로드 코드",x:"iterm pane 이동"},
  {id:"it-hist",k:[["⌘",";"]],t:"이전 명령어 목록",d:"Shell Integration 설치 후",g:"iTerm2 · 클로드 코드",x:"iterm autocomplete 자동완성"},
  {id:"it-del",k:[["⌘","⌫"]],t:"입력한 줄 전체 삭제",d:"Natural Text Editing 설정 후",g:"iTerm2 · 클로드 코드",x:"iterm delete line 줄삭제"},
+ {id:"it-ls",k:[["ls"]],t:"지금 폴더의 파일 목록 보기",d:"이름만 짧게 늘어놓는다",g:"iTerm2 · 클로드 코드",x:"terminal ls list 목록 파일 폴더 명령어"},
+ {id:"it-lsl",k:[["ls -l"]],t:"파일 목록 자세히 보기",d:"크기·고친 날짜·권한까지 한 줄에 하나씩",g:"iTerm2 · 클로드 코드",x:"terminal ls -l long list 자세히 목록 명령어"},
  {id:"cc-cmds",k:[["/compact"],["/context"]],t:"컨텍스트 줄이기 / 사용량 보기",d:"/rewind 변경 되돌리기 · /model 모델 바꾸기",g:"iTerm2 · 클로드 코드",x:"claude code slash compact context 명령"},
 
  // 프리미어 프로
@@ -562,7 +564,7 @@ var MODES = [
   ids:["rec-new","rec-stop","shot5","pv-page","pv-fit","pv-bg","pv-del","apptab"]},
  {id:"term", name:"터미널·클로드 코드", why:"한 창에 claude, 한 창에 결과. 분할부터 깐다.",
   keys:["터미널","클로드","claude","코드","iterm","명령","스크립트","깃","git","개발","자동화"],
-  ids:["it-split","it-move","it-hist","it-del","cc-cmds","tile","apptab","spotlight"]},
+  ids:["it-split","it-move","it-hist","it-del","it-ls","it-lsl","cc-cmds","tile","apptab","spotlight"]},
  {id:"research", name:"자료 조사", why:"크롬에서 보고 볼트로 넘긴다 — 탭과 클립보드 싸움.",
   keys:["조사","검색","자료","크롬","리서치","레퍼런스","찾","공부","강의","수강","읽"],
   ids:["ch-url","ch-tab","ch-find","ch-num","shotclip","pastematch","ob-switch","tile"]},
