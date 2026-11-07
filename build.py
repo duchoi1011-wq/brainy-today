@@ -297,6 +297,37 @@ patch("""    sendCommand(tx).then(function (m) { S.lgBusy = false; S.lgSel = {};
       if (sentN.length && S.ledger) { var sn = Object.assign({}, S.ledger.sent || {}), at = new Date().toISOString(); sentN.forEach(function (k) { sn[k] = at; }); S.ledger.sent = sn; S.db.doc("ledger/main").update({ sent: sn }).catch(function () {}); }
       S.lgBusy = false; S.lgSel = {}; S.lgAll = ""; S.lgMsg = m; S.lgErr = false; render(); }""")
 
+# 8) 🗳 결산 대기를 Brainy와 대화로 정리 (2026-11-07 동욱: "바로 답할 수도 있지만 브레이니랑 바로 소통해서 정리하게")
+#    - 항목마다 「💬 Brainy와 정리」, 맨 위 「💬 Brainy와 하나씩 정리」 → 대화가 열리고 Brainy가 뜻·추천을 말한 뒤 동욱이 정하면
+#      ledger_answer 도구로 그 줄을 바로 보낸다(맥의 Brainy가 원장에 반영) — 보낸 줄은 목록에서 바로 빠진다
+patch("""opts.map(function (o) { return '<button class="chip" data-act="lgpick" data-n="' + esc(it.n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>\"""",
+      """opts.map(function (o) { return '<button class="chip" data-act="lgpick" data-n="' + esc(it.n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + '<button class="chip" data-act="lgask" data-n="' + esc(it.n) + '">💬 Brainy와 정리</button>' + "</div>\"""")
+patch("""      h += '<p class="small muted">버튼으로 고르거나, 칸에 Brainy에게 바로 시킬 말을 써요""",
+      """      h += '<div class="row" style="margin:2px 0 8px"><button class="btn primary" data-act="lgtalk">💬 Brainy와 하나씩 정리</button></div>';
+      h += '<p class="small muted">버튼으로 바로 고르거나, 「💬 Brainy와 정리」로 물어보고 정해요. 칸에 Brainy에게 바로 시킬 말을 써도 돼요""")
+patch("""if (act === "lgask") { var ln2 = t.getAttribute("data-n"), it2 = ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === ln2; })[0]; if (it2) openChat(null, "결산 대기 " + it2.n + "번 「" + it2.text + "」 — 이게 무슨 뜻이고, 응/고쳐서/빼 중 뭐가 나을지 근거와 함께 짧게 알려줘. 내가 고르면 run_command로 보내 줘."); return; }""",
+      """if (act === "lgask") { var ln2 = t.getAttribute("data-n"), it2 = ledgerOpen().filter(function (x) { return String(x.n) === ln2; })[0]; if (it2) { ledgerChat(); openChat(null, "🗳 결산 대기 " + it2.n + "번 「" + it2.text + "」 같이 정리하자. 이게 무슨 뜻이고 왜 올라왔는지, 응/고쳐서/나중에/빼 중 뭐가 나을지 근거와 함께 짧게 말해 줘."); } return; }
+    if (act === "lgtalk") { var op = ledgerOpen(); if (op.length) { ledgerChat(); openChat(null, "🗳 결산 대기 " + op.length + "개를 하나씩 정리하자. " + op[0].n + "번부터 — 뜻과 추천을 짧게 말하고 내 답을 기다려. 내가 정하면 바로 보내고 다음 번호로 넘어가."); } return; }""")
+patch("""  function ledgerOpen() {""", """  function ledgerChat() { if (S.chat && S.chat.busy) return; S.chat = { turns: [], busy: false, ctl: null, project: null }; }
+  function ledgerAnswer(n, ans, note) {
+    var it = ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === String(n); })[0];
+    if (!it) throw new Error("열린 결산 대기에 " + n + "번이 없어요");
+    if (["응", "고쳐서", "나중에", "빼"].indexOf(ans) < 0) throw new Error("answer 는 응·고쳐서·나중에·빼 중 하나");
+    if (ans === "고쳐서" && !String(note || "").trim()) throw new Error("고쳐서는 어떻게 고칠지 note 가 필요해요");
+    var tx = "🗳 결산 대기 답\\n" + it.n + " " + ans + " — 「" + clip(it.text, 60) + "」" + (String(note || "").trim() ? " — 추가: " + String(note).trim() : "");
+    return sendCommand(tx, true).then(function (m) {
+      var sn = Object.assign({}, S.ledger.sent || {}); sn[it.n] = new Date().toISOString(); S.ledger.sent = sn;
+      if (S.db) S.db.doc("ledger/main").update({ sent: sn }).catch(function () {});
+      act("🗳 " + it.n + "번 " + ans + " 보냄"); render(); return "보냈어요: " + it.n + "번 " + ans + ". 남은 열린 항목: " + ledgerOpen().map(function (x) { return x.n + "번 " + clip(x.text, 40); }).join(" / ");
+    });
+  }
+  function ledgerOpen() {""")
+patch("""      { name: "run_command", description:""", """      { name: "ledger_answer", description: "🗳 결산 대기 한 항목에 동욱이 정한 답을 보낸다 (맥의 Brainy가 결산 원장에 반영, 앱 목록에서 바로 빠짐). 동욱이 분명히 정했을 때만, 한 항목씩. answer: 응 | 고쳐서(note 필수: 어떻게) | 나중에(note: 언제) | 빼(note: 이유, 선택).", inputSchema: { type: "object", properties: { n: { type: "number" }, answer: { type: "string", enum: ["응", "고쳐서", "나중에", "빼"] }, note: { type: "string" } }, required: ["n", "answer"] },
+        execute: function (i) { return ledgerAnswer(i.n, String(i.answer || ""), i.note); } },
+      { name: "run_command", description:""")
+patch("""    L.push("## 🗳 결산 대기 (결산 원장): " + JSON.stringify((S.ledger && S.ledger.items) || []));""",
+      """    L.push("## 🗳 결산 대기 (결산 원장, 아직 안 보낸 것): " + JSON.stringify(ledgerOpen()) + " — 동욱과 정리할 때: 한 번에 한 항목, 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거를 짧게 말하고 묻는다. 동욱이 정하면 ledger_answer 로 바로 보내고 다음 항목으로. 자세한 사정은 볼트 「3_Action/결산 원장.md」를 읽어 확인한다.");""")
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',

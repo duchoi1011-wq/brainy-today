@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "6b12939c81"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=6b12939c81"></script>
+<script>window.BRAINY_VERSION = "fd2a23fc0a"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=fd2a23fc0a"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1923,12 +1923,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (nSent) h += '<p class="small muted">보낸 ' + nSent + '개는 맥의 Brainy가 처리하는 중이에요 — 끝나면 원장에서 닫혀요.</p>';
     if (!lg) {} else if (!items.length) h += nSent ? "" : '<p class="muted small">고를 게 없어요. 결산이 새 후보를 찾으면 여기 떠요.</p>';
     else {
-      h += '<p class="small muted">버튼으로 고르거나, 칸에 Brainy에게 바로 시킬 말을 써요 — 예: "화자 2는 김대표 맞아, 이름 지정하고 미팅 노트도 만들어"</p>';
+      h += '<div class="row" style="margin:2px 0 8px"><button class="btn primary" data-act="lgtalk">💬 Brainy와 하나씩 정리</button></div>';
+      h += '<p class="small muted">버튼으로 바로 고르거나, 「💬 Brainy와 정리」로 물어보고 정해요. 칸에 Brainy에게 바로 시킬 말을 써도 돼요 — 예: "화자 2는 김대표 맞아, 이름 지정하고 미팅 노트도 만들어"</p>';
       h += items.map(function (it) {
         var sel = S.lgSel[it.n] || {}, v = sel.v || "";
         var opts = [["응", "응"], ["고쳐서", "고쳐서 응"], ["나중에", "나중에"], ["빼", "빼"]];
         return '<div class="task"><div class="t"><b>' + esc(it.n) + ". " + esc(it.text) + "</b>" + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>" +
-          '<div class="chips" style="flex-wrap:wrap" role="group" aria-label="' + esc(it.n) + '번 답">' + opts.map(function (o) { return '<button class="chip" data-act="lgpick" data-n="' + esc(it.n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>" +
+          '<div class="chips" style="flex-wrap:wrap" role="group" aria-label="' + esc(it.n) + '번 답">' + opts.map(function (o) { return '<button class="chip" data-act="lgpick" data-n="' + esc(it.n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + '<button class="chip" data-act="lgask" data-n="' + esc(it.n) + '">💬 Brainy와 정리</button>' + "</div>" +
           '<textarea class="grow" data-lg="' + esc(it.n) + '" rows="2" placeholder="' + (v === "고쳐서" ? "어떻게 고쳐서 할지 (꼭 써 주세요)" : v === "빼" ? "왜 빼는지 (선택 — 같은 걸 다시 안 올려요)" : v === "나중에" ? "언제 다시 볼지 (선택 — 예: 다음 주 월요일)" : v === "응" ? "덧붙일 말 (선택 — 예: 기한은 11/9로)" : "✍ Brainy에게 바로 쓰기 — 이 항목을 어떻게 할지 마음대로") + '">' + esc(sel.note || "") + "</textarea></div>";
       }).join("");
       h += '<label class="small muted" for="lg-all">전체에 덧붙일 말 (선택)</label><textarea id="lg-all" class="grow" data-lgall="1" rows="2" placeholder="예: 오늘은 시간 없으니 태스크는 전부 다음 주로 · 녹음 관련은 한꺼번에 처리">' + esc(S.lgAll || "") + "</textarea>";
@@ -2041,7 +2042,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     L.push("## 프로젝트 요약: " + JSON.stringify((m.projects || []).map(function (p) { return { name: p.name, deliverable: p.deliverable, metrics: p.metrics, milestones: p.milestones }; })));
     L.push("## 열린 태스크: " + JSON.stringify(m.tasks || []));
     L.push("## 점검 결과 (예약): " + clip(JSON.stringify((S.reports || []).slice(0, 4).map(function (r) { return { kind: r.kind, date: r.date, title: r.title, lines: r.lines, items: r.items, status: r.status }; })), 6000));
-    L.push("## 🗳 결산 대기 (결산 원장): " + JSON.stringify((S.ledger && S.ledger.items) || []));
+    L.push("## 🗳 결산 대기 (결산 원장, 아직 안 보낸 것): " + JSON.stringify(ledgerOpen()) + " — 동욱과 정리할 때: 한 번에 한 항목, 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거를 짧게 말하고 묻는다. 동욱이 정하면 ledger_answer 로 바로 보내고 다음 항목으로. 자세한 사정은 볼트 「3_Action/결산 원장.md」를 읽어 확인한다.");
     if (S.morning && S.morning.date === TODAY) L.push("## 오늘 아침 제안 (" + (S.morning.status || "대기") + "): " + clip(JSON.stringify(S.morning), 3000));
     L.push("## 최근 앱 명령: " + JSON.stringify(S.cmds.slice(0, 5).map(function (c) { return { text: c.text, status: c.status, result: c.result }; })));
     L.push("## 예약: " + JSON.stringify(trigList().map(function (tr) { return { name: tr.name, schedule: cronKo(tr.cron_expression), next: whenKo(tr.next_run_at), last: runKo(tr.last_run).t }; })));
@@ -2068,6 +2069,19 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var input = [{ role: "user", content: chatRules() }, { role: "user", content: "결산 질문에 동욱이 앱에서 답했다.\n질문: 「" + (q ? q.text : qid) + "」\n답: 「" + txt + "」\n이 답을 지금 바로 반영한다 — 식단·운동·경건생활·지출·체크는 앱 도구로 적고, 일정·태스크·볼트에 넣을 일은 볼트에 바로 넣거나 run_command 로 보낸다. 반영할 게 없으면 아무것도 하지 않는다. 무엇을 했는지 40자 안팎 한 줄로만 답한다." }];
     var opts = { cache: false }; if (S.toolsOK) opts.tools = chatTools();
     S.sample(input, opts).then(function (r) { done("✓ " + clip(String((r && r.text) || "반영했어요").trim().split("\n")[0], 90)); }, function () { done("저장했어요 — 바로 반영은 못 했어요. 결산 때 반영돼요", true); });
+  }
+  function ledgerChat() { if (S.chat && S.chat.busy) return; S.chat = { turns: [], busy: false, ctl: null, project: null }; }
+  function ledgerAnswer(n, ans, note) {
+    var it = ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === String(n); })[0];
+    if (!it) throw new Error("열린 결산 대기에 " + n + "번이 없어요");
+    if (["응", "고쳐서", "나중에", "빼"].indexOf(ans) < 0) throw new Error("answer 는 응·고쳐서·나중에·빼 중 하나");
+    if (ans === "고쳐서" && !String(note || "").trim()) throw new Error("고쳐서는 어떻게 고칠지 note 가 필요해요");
+    var tx = "🗳 결산 대기 답\n" + it.n + " " + ans + " — 「" + clip(it.text, 60) + "」" + (String(note || "").trim() ? " — 추가: " + String(note).trim() : "");
+    return sendCommand(tx, true).then(function (m) {
+      var sn = Object.assign({}, S.ledger.sent || {}); sn[it.n] = new Date().toISOString(); S.ledger.sent = sn;
+      if (S.db) S.db.doc("ledger/main").update({ sent: sn }).catch(function () {});
+      act("🗳 " + it.n + "번 " + ans + " 보냄"); render(); return "보냈어요: " + it.n + "번 " + ans + ". 남은 열린 항목: " + ledgerOpen().map(function (x) { return x.n + "번 " + clip(x.text, 40); }).join(" / ");
+    });
   }
   function ledgerOpen() {
     var lg = S.ledger, sent = (lg && lg.sent) || {};
@@ -2112,6 +2126,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         execute: function (i) { var w2 = String(i.when || "식사"), f2 = String(i.food || "").trim(); if (!f2) throw new Error("food 비어 있음"); saveDay(function (b) { b.meals.push({ id: uid(), when: w2, food: f2 }); b.items.meal = true; delete b.est; }); act("✓ 식단 추가 · " + w2 + " " + clip(f2, 40)); return "ok (칼로리는 식단 칸의 '칼로리 추정' 버튼으로 계산)"; } },
       { name: "add_spend", description: "오늘 지출을 추가한다. book: 가계(개인) 또는 기업(사업). pay: 카드 또는 현금·이체.", inputSchema: { type: "object", properties: { item: { type: "string" }, amount: { type: "number" }, book: { type: "string", enum: ["가계", "기업"] }, pay: { type: "string", enum: ["카드", "현금·이체"] } }, required: ["item", "amount", "book", "pay"] },
         execute: function (i) { var a2 = Math.round(+i.amount || 0); if (!a2) throw new Error("금액이 없어요"); var s2 = { id: uid(), item: String(i.item || ""), amount: a2, book: i.book === "기업" ? "기업" : "가계", pay: i.pay === "현금·이체" ? "현금·이체" : "카드" }; saveDay(function (b) { b.spend.push(s2); b.items.spend = true; }); act("✓ 지출 추가 · " + s2.item + " " + a2.toLocaleString() + "원 (" + s2.book + ")"); return "ok"; } },
+      { name: "ledger_answer", description: "🗳 결산 대기 한 항목에 동욱이 정한 답을 보낸다 (맥의 Brainy가 결산 원장에 반영, 앱 목록에서 바로 빠짐). 동욱이 분명히 정했을 때만, 한 항목씩. answer: 응 | 고쳐서(note 필수: 어떻게) | 나중에(note: 언제) | 빼(note: 이유, 선택).", inputSchema: { type: "object", properties: { n: { type: "number" }, answer: { type: "string", enum: ["응", "고쳐서", "나중에", "빼"] }, note: { type: "string" } }, required: ["n", "answer"] },
+        execute: function (i) { return ledgerAnswer(i.n, String(i.answer || ""), i.note); } },
       { name: "run_command", description: "볼트·Todoist·캘린더에 실제로 반영해야 하는 동욱의 명령을 맥의 Brainy(명령 처리 예약)에게 보낸다. 예: '결산해줘', '🗳 1 응, 3 빼', '아침 계획 응', '/log …', 'EP3 태스크 기한 11/9로'. 동욱이 분명히 시켰을 때만, 동욱이 말한 그대로 보낸다. 보내고 나면 몇 분 뒤 기록 탭 '명령'에 결과가 뜬다고 알린다.", inputSchema: { type: "object", properties: { text: { type: "string" } }, required: ["text"] },
         execute: function (i) { var tx = String(i.text || "").trim(); return sendCommand(tx, true).then(function (m) { act("➤ 명령 보냄 · " + clip(tx, 40)); return m; }); } },
       { name: "add_note", description: "기록 탭에 메모를 남긴다 (맥의 Brainy가 바로 볼트에 반영). 생각·아이디어·할 일처럼 오늘 체크 칸에 맞지 않는 것.", inputSchema: { type: "object", properties: { text: { type: "string" } }, required: ["text"] },
@@ -2336,7 +2352,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "moyes") { var mt2 = String(S.moDraft || "").trim(); moSend(mt2 ? "아침 계획 고침: " + mt2 : "아침 계획 응"); return; }
     if (act === "lgclear") { S.lgSel = {}; S.lgAll = ""; render(); return; }
     if (act === "lgsend") { lgSend(); return; }
-    if (act === "lgask") { var ln2 = t.getAttribute("data-n"), it2 = ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === ln2; })[0]; if (it2) openChat(null, "결산 대기 " + it2.n + "번 「" + it2.text + "」 — 이게 무슨 뜻이고, 응/고쳐서/빼 중 뭐가 나을지 근거와 함께 짧게 알려줘. 내가 고르면 run_command로 보내 줘."); return; }
+    if (act === "lgask") { var ln2 = t.getAttribute("data-n"), it2 = ledgerOpen().filter(function (x) { return String(x.n) === ln2; })[0]; if (it2) { ledgerChat(); openChat(null, "🗳 결산 대기 " + it2.n + "번 「" + it2.text + "」 같이 정리하자. 이게 무슨 뜻이고 왜 올라왔는지, 응/고쳐서/나중에/빼 중 뭐가 나을지 근거와 함께 짧게 말해 줘."); } return; }
+    if (act === "lgtalk") { var op = ledgerOpen(); if (op.length) { ledgerChat(); openChat(null, "🗳 결산 대기 " + op.length + "개를 하나씩 정리하자. " + op[0].n + "번부터 — 뜻과 추천을 짧게 말하고 내 답을 기다려. 내가 정하면 바로 보내고 다음 번호로 넘어가."); } return; }
     if (act === "cmdgo") { submitCmd(); return; }
     if (act === "cmdsend") { S.cmdText = t.getAttribute("data-v"); submitCmd(); return; }
     if (act === "trigload") { loadTriggersOnce(); return; }
