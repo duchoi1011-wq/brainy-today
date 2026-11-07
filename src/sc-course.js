@@ -186,7 +186,7 @@ function csCheat(c){
   all.forEach(function(x){ if(x.kind === "key") n.key++; else n.cmd++; if(CPROG.cf[cpKey(c, x)]) n.fav++; });
   if(!n[csFilt] && csFilt !== "all") csFilt = "all";
   var known = all.filter(function(x){ return CPROG.cp[cpKey(c, x)]; }).length;
-  var h = "<div class=\"modes\" style=\"margin:0 0 6px\">" + Object.keys(CS_FILT).filter(function(k){ return n[k] || k === "fav"; }).map(function(k){
+  var h = (csSort === "order" ? csLPickRow(c) : "") + "<div class=\"modes\" style=\"margin:0 0 6px\">" + Object.keys(CS_FILT).filter(function(k){ return n[k] || k === "fav"; }).map(function(k){
     return "<button type=\"button\" class=\"mode\" data-csfilt=\"" + k + "\" aria-pressed=\"" + (csFilt === k) + "\">" + CS_FILT[k] + " <span class=\"n\">" + n[k] + "</span></button>"; }).join("") + "</div>";
   h += "<div class=\"cs-sort\"><span>보기</span><button type=\"button\" data-cssort=\"order\" aria-pressed=\"" + (csSort === "order") + "\">강의 순서</button><button type=\"button\" data-cssort=\"sec\" aria-pressed=\"" + (csSort !== "order") + "\">종류별</button></div>";
   h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 외웠어 — 흐리게</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span><span>외운 것 " + known + "/" + all.length + "</span></div>";
@@ -210,8 +210,7 @@ function csLecSteps(ch, keep){   // 그 강의(챕터)에 나온 단축키·명�
     var k = s.kind === "key" ? JSON.stringify(s.k) : s.code; if(seen[k]) return false; seen[k] = 1; return keep(s);
   });
 }
-function csByLecture(c, list, all){
-  var keep = function(x){ return csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csFilt === "cmd" ? csIsCmd(x) : CPROG.cf[cpKey(c, x)]); };
+function csLPickRow(c){
   var lecs = c.chapters.filter(function(ch){ return csSteps(ch).length; }), here = csHere(c);
   var pick = (CPROG.pk || {})[c.id] || "", sel = lecs.filter(function(ch){ return ch.id === pick; })[0];
   // 강의 고르기 — 전체 / 강의 하나
@@ -219,6 +218,13 @@ function csByLecture(c, list, all){
     lecs.map(function(ch){ var dn = !!CPROG.done[c.id + "|" + ch.id];
       return "<option value=\"" + cx(ch.id) + "\"" + (sel === ch ? " selected" : "") + ">" + (ch === here ? "▶ " : dn ? "✓ " : "") + cx(ch.title) + " (" + csLecSteps(ch, function(){ return true; }).length + ")</option>"; }).join("") + "</select>" +
     (sel !== here && lecs.indexOf(here) > -1 ? "<button type=\"button\" class=\"ghost\" data-cslpick=\"" + cx(here.id) + "\">▶ 지금 들을 강의</button>" : "") + "</div>";
+  return h;
+}
+function csByLecture(c, list, all){
+  var keep = function(x){ return csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csFilt === "cmd" ? csIsCmd(x) : CPROG.cf[cpKey(c, x)]); };
+  var lecs = c.chapters.filter(function(ch){ return csSteps(ch).length; }), here = csHere(c);
+  var pick = (CPROG.pk || {})[c.id] || "", sel = lecs.filter(function(ch){ return ch.id === pick; })[0];
+  var h = "";
   if(sel){
     var i = lecs.indexOf(sel), rows = csLecSteps(sel, keep);
     h += "<div class=\"block cs-lec here\"><div class=\"block-head\"><h2>" + cx(sel.title) + "</h2><i class=\"hr\"></i><span class=\"meta\">" + cx(sel.part || "") + " · " + rows.length + "</span></div>" +
