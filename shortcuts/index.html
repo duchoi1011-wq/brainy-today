@@ -40,8 +40,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "3791d13056"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
-<script src="../shim.js?v=3791d13056"></script>
+<script>window.BRAINY_VERSION = "2a840d9428"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
+<script src="../shim.js?v=2a840d9428"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="web-icon-180.png">
@@ -441,7 +441,8 @@ var D = [
  {id:"ob-focus",k:[["⌃","⌥","F"]],t:"집중 모드 (Minimal)",d:"사이드바·탭을 숨기고 글만 — 초안 쓸 때",g:"옵시디언",tag:"내 설정",x:"obsidian focus mode minimal 집중"},
 
  // iTerm2 · 클로드 코드
- {id:"it-split",k:[["⌘","D"],["⌘","⇧","D"]],t:"창 좌우 / 위아래 분할",d:"왼쪽 claude, 오른쪽 결과",g:"iTerm2 · 클로드 코드",x:"iterm split 분할"},
+ {id:"it-split",k:[["⌘","D"]],t:"창 좌우 분할",d:"왼쪽 claude, 오른쪽 결과",g:"iTerm2 · 클로드 코드",x:"iterm split 분할 좌우 세로"},
+ {id:"it-vsplit",k:[["⌘","⇧","D"]],t:"창 위아래 분할",d:"위에 claude, 아래에 로그·결과",g:"iTerm2 · 클로드 코드",x:"iterm split horizontal 분할 위아래 가로"},
  {id:"it-move",k:[["⌘","["],["⌘","]"]],t:"분할한 창 사이 이동",d:"",g:"iTerm2 · 클로드 코드",x:"iterm pane 이동"},
  {id:"it-hist",k:[["⌘",";"]],t:"이전 명령어 목록",d:"Shell Integration 설치 후",g:"iTerm2 · 클로드 코드",x:"iterm autocomplete 자동완성"},
  {id:"it-del",k:[["⌘","⌫"]],t:"입력한 줄 전체 삭제",d:"Natural Text Editing 설정 후",g:"iTerm2 · 클로드 코드",x:"iterm delete line 줄삭제"},
@@ -611,7 +612,7 @@ var MODES = [
   ids:["rec-new","rec-stop","shot5","pv-page","pv-fit","pv-bg","pv-del","apptab"]},
  {id:"term", name:"터미널·클로드 코드", why:"한 창에 claude, 한 창에 결과. 분할부터 깐다.",
   keys:["터미널","클로드","claude","코드","iterm","명령","스크립트","깃","git","개발","자동화"],
-  ids:["it-split","it-move","it-hist","it-del","it-ls","it-lsl","cc-cmds","tile","apptab","spotlight"]},
+  ids:["it-split","it-vsplit","it-move","it-hist","it-del","it-ls","it-lsl","cc-cmds","tile","apptab","spotlight"]},
  {id:"research", name:"자료 조사", why:"크롬에서 보고 볼트로 넘긴다 — 탭과 클립보드 싸움.",
   keys:["조사","검색","자료","크롬","리서치","레퍼런스","찾","공부","강의","수강","읽"],
   ids:["ch-url","ch-tab","ch-find","ch-num","shotclip","pastematch","ob-switch","tile"]},
