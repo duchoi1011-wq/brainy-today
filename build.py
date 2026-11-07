@@ -277,20 +277,49 @@ patch('''    DB = d;
       var v = s.exists ? s.data() : null;
       if(!v || !Array.isArray(v.items) || !v.items.length) return;
       GROUPS = v.groups; D = v.items; MODES = v.modes; PROJECTS = v.projects;
+      // 코드에만 있는 것(앱 고치기로 더한 ls · ls -l · ⌘⇧D 등)은 볼트 목록에 없어도 빠지지 않게 — 코드 순서 바로 뒤에 끼운다
+      var have = {}; D.forEach(function(x){ have[x.id] = 1 });
+      CODE_D.forEach(function(x, j){
+        if(have[x.id]) return;
+        var at = -1, prev = j ? CODE_D[j-1].id : null;
+        D.forEach(function(y, i){ if(y.id === prev) at = i });
+        if(at < 0) D.forEach(function(y, i){ if(y.g === x.g) at = i });
+        if(at < 0) D.push(x); else D.splice(at + 1, 0, x);
+        have[x.id] = 1;
+      });
       STARTER = D.filter(function(x){ return x.starter });
       repaint(); renderBoard();
       if(current==="fav") renderList("fav"); if(current==="pass") renderList("pass");
     }, function(){});
     DB.doc("sc.marks/main").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
-      if(v && v.marks){ marks = v.marks; save("mk.marks", marks); repaint(); if(current==="fav") renderList("fav"); if(current==="pass") renderList("pass"); }
-      else if(Object.keys(marks).length){ DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){}); }
+      // 이 기기에서 누른 ★·✓ 가 아직 저장소에 안 닿았으면 이 기기 것이 더 새롭다 — 덮지 않고 다시 올린다
+      if(load("mk.dirty", 0)){ if(!v || JSON.stringify(v.marks) !== JSON.stringify(marks)) mkPush(); return; }
+      if(v && v.marks){
+        var add = 0;
+        if(!s.metadata.fromCache && !load("mk.restored", false)){   // 한 번만: 저장소에 못 올라가고 이 기기에만 남은 ★ 를 되살린다
+          var old = {}; Object.keys(marks).forEach(function(k){ if(marks[k]==="fav") old[k] = 1 });
+          (load("mk.favs", []) || []).forEach(function(k){ old[k] = 1 });
+          Object.keys(old).forEach(function(k){ if(!v.marks[k]){ v.marks[k] = "fav"; add++ } });
+          save("mk.restored", true);
+        }
+        marks = v.marks; save("mk.marks", marks); repaint(); if(current==="fav") renderList("fav"); if(current==="pass") renderList("pass");
+        if(add) mkPush();
+      }
+      else if(Object.keys(marks).length) mkPush();
     }, function(){});
 ''')
+patch('''var filter = "전체";''', '''var filter = "전체";
+function mkPush(){   // ★·✓ 저장 — 저장소에 닿을 때까지 mk.dirty 로 들고 있다 (닿지 못하면 다음에 열 때 다시 올린다)
+  var seq = (load("mk.dirty", 0) || 0) + 1; save("mk.dirty", seq);
+  if(!DB) return;
+  DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() })
+    .then(function(){ if(load("mk.dirty", 0) === seq) save("mk.dirty", 0); }, function(){});
+}''')
 patch('''    if(marks[id]===kind) delete marks[id]; else marks[id]=kind;
     save("mk.marks", marks);''', '''    if(marks[id]===kind) delete marks[id]; else marks[id]=kind;
     save("mk.marks", marks);
-    if(DB) DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){});''')
+    mkPush();''')
 patch('statusMsg("찾는 중… (처음 한 번은 허용할지 묻는다)");', 'statusMsg("맥의 Brainy가 찾는 중… (보통 10~20초)");')
 patch('''<p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''',
       '''<p><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></p>
@@ -324,6 +353,10 @@ patch('''    DB.doc("sc.marks/main").onSnapshot(function(s){''', '''    DB.doc("
     DB.collection("sc.creq").onSnapshot(function(q){ csSetReqs(q.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); })); }, function(){});
     DB.doc("sc.marks/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
+      if(load("sc.course.dirty", 0)){   // 이 기기에서 누른 ★·✓ 가 아직 저장소에 안 닿았다 — 덮지 않고 다시 올린다
+        if(!v || JSON.stringify(Object.assign({}, v, { updatedAt: 0 })) !== JSON.stringify(Object.assign({}, CPROG, { updatedAt: 0 }))) csSave();
+        return;
+      }
       if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {}, cf: v.cf || {}, pk: v.pk || {} }; save("sc.course", CPROG); if(current==="course") renderCourse(); if(current==="fav") renderList("fav"); }
       else if(CPROG.cur || Object.keys(CPROG.at).length) csSave();
     }, function(){});

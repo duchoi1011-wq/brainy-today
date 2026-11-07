@@ -40,8 +40,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "2a840d9428"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
-<script src="../shim.js?v=2a840d9428"></script>
+<script>window.BRAINY_VERSION = "0ad807b01c"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
+<script src="../shim.js?v=0ad807b01c"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="web-icon-180.png">
@@ -624,6 +624,7 @@ var MODES = [
   ids:["gd-paste","gd-head","gd-list","gd-comment","gd-find","wordmove","spotlight","lang","textrep"]}
 ];
 
+var CODE_D = D;            // 코드 안 목록 — 볼트 목록에 아직 없는 것(앱 고치기로 더한 것)을 채울 때
 var ADDED = [];            // 앱에서 채워 넣은 것 (db에 보관)
 var ITEMS = D;             // D + ADDED
 var BY_ID = {};
@@ -657,6 +658,12 @@ if(!marks){
 }
 Object.keys(marks).forEach(function(k){ if(marks[k]==="known") marks[k]="pass" });
 var filter = "전체";
+function mkPush(){   // ★·✓ 저장 — 저장소에 닿을 때까지 mk.dirty 로 들고 있다 (닿지 못하면 다음에 열 때 다시 올린다)
+  var seq = (load("mk.dirty", 0) || 0) + 1; save("mk.dirty", seq);
+  if(!DB) return;
+  DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() })
+    .then(function(){ if(load("mk.dirty", 0) === seq) save("mk.dirty", 0); }, function(){});
+}
 
 function cap(k){ return "<kbd"+(String(k).length>2?" class=\"wide\"":"")+">"+k+"</kbd>" }
 function combo(cs){
@@ -826,9 +833,11 @@ function csSteps(ch){ var o = []; ch.steps.forEach(function(s, i){ if(CS_SHOW[s.
 var CS_KIND = { key: "단축키", cmd: "터미널", slash: "클로드 코드", say: "Claude에게", click: "화면에서" };
 var CS_ICON = { key: "⌘", cmd: "$", slash: "/", say: "“", click: "◎" };
 function cx(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-function csSave(){
-  save("sc.course", CPROG);
-  if(DB) DB.doc("sc.marks/course").set(Object.assign({}, CPROG, { updatedAt: new Date().toISOString() })).catch(function(){});
+function csSave(){   // 저장소에 닿을 때까지 sc.course.dirty 로 들고 있다 — 그 사이 온 옛 값이 이 기기 것을 덮지 않게
+  var seq = (load("sc.course.dirty", 0) || 0) + 1;
+  save("sc.course", CPROG); save("sc.course.dirty", seq);
+  if(DB) DB.doc("sc.marks/course").set(Object.assign({}, CPROG, { updatedAt: new Date().toISOString() }))
+    .then(function(){ if(load("sc.course.dirty", 0) === seq) save("sc.course.dirty", 0); }, function(){});
 }
 function csList(){
   return (COURSE.courses || []).filter(function(c){ return (c.cheat || []).length || c.chapters.some(function(ch){ return csSteps(ch).length; }); });
@@ -1170,7 +1179,7 @@ document.addEventListener("click", function(e){
     var id = mk.getAttribute("data-id"), kind = mk.getAttribute("data-mark");
     if(marks[id]===kind) delete marks[id]; else marks[id]=kind;
     save("mk.marks", marks);
-    if(DB) DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){});
+    mkPush();
     refresh();
     return;
   }
@@ -1249,6 +1258,16 @@ var capReady;   // sample·db 준비가 끝나면 resolve
       var v = s.exists ? s.data() : null;
       if(!v || !Array.isArray(v.items) || !v.items.length) return;
       GROUPS = v.groups; D = v.items; MODES = v.modes; PROJECTS = v.projects;
+      // 코드에만 있는 것(앱 고치기로 더한 ls · ls -l · ⌘⇧D 등)은 볼트 목록에 없어도 빠지지 않게 — 코드 순서 바로 뒤에 끼운다
+      var have = {}; D.forEach(function(x){ have[x.id] = 1 });
+      CODE_D.forEach(function(x, j){
+        if(have[x.id]) return;
+        var at = -1, prev = j ? CODE_D[j-1].id : null;
+        D.forEach(function(y, i){ if(y.id === prev) at = i });
+        if(at < 0) D.forEach(function(y, i){ if(y.g === x.g) at = i });
+        if(at < 0) D.push(x); else D.splice(at + 1, 0, x);
+        have[x.id] = 1;
+      });
       STARTER = D.filter(function(x){ return x.starter });
       repaint(); renderBoard();
       if(current==="fav") renderList("fav"); if(current==="pass") renderList("pass");
@@ -1262,13 +1281,29 @@ var capReady;   // sample·db 준비가 끝나면 resolve
     DB.collection("sc.creq").onSnapshot(function(q){ csSetReqs(q.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); })); }, function(){});
     DB.doc("sc.marks/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
+      if(load("sc.course.dirty", 0)){   // 이 기기에서 누른 ★·✓ 가 아직 저장소에 안 닿았다 — 덮지 않고 다시 올린다
+        if(!v || JSON.stringify(Object.assign({}, v, { updatedAt: 0 })) !== JSON.stringify(Object.assign({}, CPROG, { updatedAt: 0 }))) csSave();
+        return;
+      }
       if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {}, cf: v.cf || {}, pk: v.pk || {} }; save("sc.course", CPROG); if(current==="course") renderCourse(); if(current==="fav") renderList("fav"); }
       else if(CPROG.cur || Object.keys(CPROG.at).length) csSave();
     }, function(){});
     DB.doc("sc.marks/main").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
-      if(v && v.marks){ marks = v.marks; save("mk.marks", marks); repaint(); if(current==="fav") renderList("fav"); if(current==="pass") renderList("pass"); }
-      else if(Object.keys(marks).length){ DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){}); }
+      // 이 기기에서 누른 ★·✓ 가 아직 저장소에 안 닿았으면 이 기기 것이 더 새롭다 — 덮지 않고 다시 올린다
+      if(load("mk.dirty", 0)){ if(!v || JSON.stringify(v.marks) !== JSON.stringify(marks)) mkPush(); return; }
+      if(v && v.marks){
+        var add = 0;
+        if(!s.metadata.fromCache && !load("mk.restored", false)){   // 한 번만: 저장소에 못 올라가고 이 기기에만 남은 ★ 를 되살린다
+          var old = {}; Object.keys(marks).forEach(function(k){ if(marks[k]==="fav") old[k] = 1 });
+          (load("mk.favs", []) || []).forEach(function(k){ old[k] = 1 });
+          Object.keys(old).forEach(function(k){ if(!v.marks[k]){ v.marks[k] = "fav"; add++ } });
+          save("mk.restored", true);
+        }
+        marks = v.marks; save("mk.marks", marks); repaint(); if(current==="fav") renderList("fav"); if(current==="pass") renderList("pass");
+        if(add) mkPush();
+      }
+      else if(Object.keys(marks).length) mkPush();
     }, function(){});
     try{
       DB.collection("additions").onSnapshot(function(snap){

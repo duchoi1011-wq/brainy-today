@@ -12,9 +12,11 @@ function csSteps(ch){ var o = []; ch.steps.forEach(function(s, i){ if(CS_SHOW[s.
 var CS_KIND = { key: "단축키", cmd: "터미널", slash: "클로드 코드", say: "Claude에게", click: "화면에서" };
 var CS_ICON = { key: "⌘", cmd: "$", slash: "/", say: "“", click: "◎" };
 function cx(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-function csSave(){
-  save("sc.course", CPROG);
-  if(DB) DB.doc("sc.marks/course").set(Object.assign({}, CPROG, { updatedAt: new Date().toISOString() })).catch(function(){});
+function csSave(){   // 저장소에 닿을 때까지 sc.course.dirty 로 들고 있다 — 그 사이 온 옛 값이 이 기기 것을 덮지 않게
+  var seq = (load("sc.course.dirty", 0) || 0) + 1;
+  save("sc.course", CPROG); save("sc.course.dirty", seq);
+  if(DB) DB.doc("sc.marks/course").set(Object.assign({}, CPROG, { updatedAt: new Date().toISOString() }))
+    .then(function(){ if(load("sc.course.dirty", 0) === seq) save("sc.course.dirty", 0); }, function(){});
 }
 function csList(){
   return (COURSE.courses || []).filter(function(c){ return (c.cheat || []).length || c.chapters.some(function(ch){ return csSteps(ch).length; }); });
