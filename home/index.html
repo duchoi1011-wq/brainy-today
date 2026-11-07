@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "82d5b1daa3"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=82d5b1daa3"></script>
+<script>window.BRAINY_VERSION = "703ea0257b"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=703ea0257b"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -340,7 +340,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 <button class="fab" id="fab" data-act="chat" aria-label="Brainy에게 묻기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Brainy</button>
 <section class="sheet" id="sheet" hidden aria-label="Brainy 대화">
-  <div class="bar"><div><h2>Brainy</h2><p class="ctxchip" id="chat-ctx">내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요</p></div><div class="row"><select id="chat-model" class="btn quiet" aria-label="답할 Claude 모델" title="답할 Claude 모델"><option value="auto">자동</option><option value="claude-haiku-5-5">Haiku 5.5 · 빠름</option><option value="claude-sonnet-5-5">Sonnet 5.5 · 기본</option><option value="claude-opus-5-5">Opus 5.5 · 깊게</option><option value="claude-fable-5-1">Fable 5.1 · 최고</option></select><button class="btn quiet" data-act="chatnew">새 대화</button><button class="btn" data-act="chatclose">닫기</button></div></div>
+  <div class="bar"><div><h2>브레이니</h2><p class="ctxchip" id="chat-ctx">내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요</p></div><div class="row"><select id="chat-model" class="btn quiet" aria-label="답할 Claude 모델" title="답할 Claude 모델"><option value="auto">자동</option><option value="claude-haiku-5-5">Haiku 5.5 · 빠름</option><option value="claude-sonnet-5-5">Sonnet 5.5 · 기본</option><option value="claude-opus-5-5">Opus 5.5 · 깊게</option><option value="claude-fable-5-1">Fable 5.1 · 최고</option></select><button class="btn quiet" data-act="chatnew">새 대화</button><button class="btn" data-act="chatclose">닫기</button></div></div>
   <div class="msgs" id="msgs"><div class="in2" id="msgs-in"></div></div>
   <div class="composer2"><div class="in2"><textarea id="chat-input" rows="1" placeholder="무엇이든 물어보거나 시켜 보세요 — 예: 점심 해장국 먹었어 기록해줘"></textarea><button class="btn primary" id="chat-send" data-act="chatsend">보내기</button></div></div>
 </section>
