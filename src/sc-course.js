@@ -1,0 +1,263 @@
+/* ── 강의 — 교안 순서대로 누르고 치는 것 (build.py 가 끼움) ──
+   데이터: 볼트 `4_Outputs/단축키 앱/강의 순서.json` → 맥 동기화(app_data.py) → sc.data/course
+   진도(지금 챕터·끝낸 챕터·끝낸 단계): sc.marks/course — 모든 기기에서 같다 */
+var COURSE = load("sc.course.data", { courses: [] });
+var CPROG = load("sc.course", null) || { cur: "", at: {}, done: {}, sd: {}, all: false };
+CPROG.cp = CPROG.cp || {}; CPROG.cf = CPROG.cf || {};   // cf: 강의 단축키·명령어 ★ 즐겨찾기                 // 단축키·명령어 모음에서 「외웠어」 ✓ 한 것
+var csView = load("sc.cview2", "cheat"), csFilt = "all", csSort = load("sc.csort", "order");   // 기본: 강의 순서대로 그 강의 단축키·명령어 (따라 하기는 나중에 — 2026-11-07 동욱)   // 강의 탭: 차례대로 / 단축키·명령어
+var csOpen = {}, csTB = load("sc.tb", true);   // csTB: 「터미널 기본」 펼침
+var CS_SHOW = { key: 1, cmd: 1, slash: 1 };   // 「차례대로」엔 단축키·명령어만 (Claude에게 할 말·화면 조작은 뺀다 — 2026-11-07 동욱)
+function csSteps(ch){ var o = []; ch.steps.forEach(function(s, i){ if(CS_SHOW[s.kind]) o.push({ s: s, i: i }); }); return o; }
+var CS_KIND = { key: "단축키", cmd: "터미널", slash: "클로드 코드", say: "Claude에게", click: "화면에서" };
+var CS_ICON = { key: "⌘", cmd: "$", slash: "/", say: "“", click: "◎" };
+function cx(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function csSave(){
+  save("sc.course", CPROG);
+  if(DB) DB.doc("sc.marks/course").set(Object.assign({}, CPROG, { updatedAt: new Date().toISOString() })).catch(function(){});
+}
+function csList(){
+  return (COURSE.courses || []).filter(function(c){ return (c.cheat || []).length || c.chapters.some(function(ch){ return csSteps(ch).length; }); });
+}
+function csCourse(){
+  var list = csList();
+  return list.filter(function(c){ return c.id === CPROG.cur; })[0] || list.filter(function(c){ return c.status === "진행"; })[0] || list[0] || null;
+}
+function csVisible(c){ return c.chapters.filter(function(ch){ return CPROG.all || csSteps(ch).length || ch.id === CPROG.at[c.id]; }); }
+function csHere(c){
+  var at = CPROG.at[c.id], hit = c.chapters.filter(function(ch){ return ch.id === at; })[0];
+  if(hit) return hit;
+  return c.chapters.filter(function(ch){ return csSteps(ch).length && !CPROG.done[c.id + "|" + ch.id]; })[0] || c.chapters[0];
+}
+function csStep(ch, s, i, j){
+  var key = ch.id + "#" + i, ok = !!CPROG.sd[key], body = "";
+  if(s.kind === "key") body = combo(s.k);
+  else if(s.kind === "click") body = "<span class=\"cs-path\">" + cx(s.code) + "</span>";
+  else body = "<code class=\"cs-code\">" + (s.kind === "cmd" ? "<i>$</i> " : "") + cx(s.code) + "</code>";
+  var ref = s.ref && BY_ID[s.ref] ? " <span class=\"tag\">목록에 있음</span>" : "";
+  var copy = (s.kind === "cmd" || s.kind === "slash" || s.kind === "say") ? "<button type=\"button\" class=\"cs-copy\" data-cscopy=\"" + cx(s.code) + "\">복사</button>" : "";
+  return "<li class=\"cs-step k-" + s.kind + (ok ? " ok" : "") + "\">" +
+    "<button type=\"button\" class=\"cs-num\" data-cssd=\"" + cx(key) + "\" aria-pressed=\"" + ok + "\" title=\"했으면 눌러 체크\">" + (ok ? "✓" : (j + 1)) + "</button>" +
+    "<div class=\"cs-main\"><div class=\"cs-t\"><span class=\"cs-kind\">" + CS_ICON[s.kind] + " " + CS_KIND[s.kind] + "</span>" + cx(s.t) + ref + "</div>" +
+    "<div class=\"cs-body\">" + body + copy + "</div>" + (s.why ? "<div class=\"cs-why\">" + cx(s.why) + "</div>" : "") + "</div></li>";
+}
+function csBody(c, ch, here){
+  var vis = csVisible(c), idx = vis.indexOf(ch);
+  var st = csSteps(ch);
+  var h = st.length ? "<ol class=\"cs-steps\">" + st.map(function(x, j){ return csStep(ch, x.s, x.i, j); }).join("") + "</ol>"
+                    : "<p class=\"cs-empty\">이 챕터엔 단축키·명령어가 없어요 — 듣기만 하면 돼요.</p>";
+  h += "<div class=\"cs-nav\">" +
+    (idx > 0 ? "<button type=\"button\" class=\"ghost\" data-csgo=\"" + cx(vis[idx - 1].id) + "\">◀ 이전</button>" : "<span></span>") +
+    (here ? "<button type=\"button\" class=\"btn\" data-csdone=\"" + cx(ch.id) + "\">" + (idx < vis.length - 1 ? "다 했어 — 다음 챕터 ▶" : "다 했어 ✓") + "</button>"
+          : "<button type=\"button\" class=\"ghost\" data-cshere=\"" + cx(ch.id) + "\">여기서부터 들을래</button>") +
+    "</div>" + (ch.src ? "<p class=\"cs-src\">교안 · " + cx(ch.src.replace(/\.md$/, "")) + "</p>" : "");
+  return h;
+}
+function csCount(ch){
+  var n = {}; csSteps(ch).forEach(function(x){ n[x.s.kind] = (n[x.s.kind] || 0) + 1; });
+  return Object.keys(CS_ICON).filter(function(k){ return n[k]; }).map(function(k){ return "<i title=\"" + CS_KIND[k] + "\">" + CS_ICON[k] + n[k] + "</i>"; }).join("");
+}
+function renderCourse(){
+  var el = document.getElementById("view-course"), list = csList();
+  if(!list.length){ el.innerHTML = "<p class=\"empty\">강의 순서를 불러오는 중… 맥이 켜져 있으면 몇 초 안에 떠요.</p>"; return; }
+  var c = csCourse(), here = csHere(c), vis = csVisible(c);
+  var doneN = c.chapters.filter(function(ch){ return CPROG.done[c.id + "|" + ch.id]; }).length;
+  var h = "<div class=\"cs-pick\">" + list.map(function(x){
+    var dn = x.chapters.filter(function(ch){ return CPROG.done[x.id + "|" + ch.id]; }).length;
+    return "<button type=\"button\" class=\"mode\" data-cspick=\"" + cx(x.id) + "\" aria-pressed=\"" + (x.id === c.id) + "\">" + (x.tag ? "<b>" + cx(x.tag) + "</b> " : "") + cx(x.name) + " <span class=\"n\">" + dn + "/" + x.chapters.length + "</span></button>";
+  }).join("") + "</div>";
+  var cheat = c.cheat || [];
+  h += "<div class=\"cs-seg\" role=\"tablist\"><button type=\"button\" data-csview=\"cheat\" aria-pressed=\"" + (csView === "cheat") + "\">강의별 단축키·명령어 " + cheat.length + "</button>" +
+    "<button type=\"button\" data-csview=\"seq\" aria-pressed=\"" + (csView !== "cheat") + "\">차례대로 따라 하기</button></div>";
+  if(csView === "cheat"){ el.innerHTML = h + csCheat(c); return; }
+  h += "<p class=\"why\">강의 들으면서 <b>차례대로</b> — 그 챕터에 나온 단축키·명령어만. 번호를 누르면 체크, 다 하면 「다음 챕터」. " + (c.note ? cx(c.note) + " " : "") + "<span style=\"color:var(--faint)\">← → 키로 챕터 이동</span></p>";
+  // 지금 여기
+  h += "<div class=\"cs-now\"><div class=\"block-head\"><h2>▶ 지금 여기</h2><i class=\"hr\"></i><span class=\"meta\">" + doneN + "/" + c.chapters.length + " 챕터 끝</span></div>" +
+    "<p class=\"cs-part-l\">" + cx(here.part) + "</p><h3 class=\"cs-h\">" + cx(here.title) + "</h3>" + csBody(c, here, true) + "</div>";
+  h += csBasics(c);
+  // 전체 순서
+  var empty = c.chapters.filter(function(ch){ return !csSteps(ch).length; }).length, part = null;
+  h += "<div class=\"block\"><div class=\"block-head\"><h2>전체 순서</h2><i class=\"hr\"></i>" +
+    (empty ? "<button type=\"button\" class=\"ghost\" data-csall=\"1\">" + (CPROG.all ? "단축키·명령어 없는 챕터 숨기기" : "단축키·명령어 없는 챕터 " + empty + "개도 보기") + "</button>" : "") + "</div>";
+  vis.forEach(function(ch){
+    if(ch.part !== part){ part = ch.part; h += "<p class=\"cs-part-l\" style=\"margin-top:18px\">" + cx(part) + "</p>"; }
+    var dn = !!CPROG.done[c.id + "|" + ch.id], isHere = ch.id === here.id;
+    h += "<details class=\"cs-ch" + (dn ? " done" : "") + (isHere ? " here" : "") + "\" data-csch=\"" + cx(ch.id) + "\"" + (csOpen[ch.id] ? " open" : "") + ">" +
+      "<summary><span class=\"cs-mark\">" + (isHere ? "▶" : dn ? "✓" : "") + "</span><span class=\"cs-title\">" + cx(ch.title) + "</span><span class=\"cs-cnt\">" + csCount(ch) + "</span></summary>" +
+      (csOpen[ch.id] ? "<div class=\"cs-in\">" + csBody(c, ch, isHere) + "</div>" : "") + "</details>";
+  });
+  el.innerHTML = h + "</div>";
+}
+// 「터미널 기본」 — cd·ls·Tab처럼 어느 챕터에서나 쓰는 것. 차례대로 맨 위에 접었다 폈다
+function csBasics(c){
+  var b = (c.cheat || []).filter(function(x){ return x.sec === "터미널 기본"; });
+  if(!b.length) return "";
+  return "<details class=\"cs-ch cs-basics\"" + (csTB ? " open" : "") + " data-cstb=\"1\"><summary><span class=\"cs-mark\">$</span><span class=\"cs-title\">터미널 기본 — cd · ls · Tab처럼 늘 쓰는 것</span><span class=\"cs-cnt\"><i>" + b.length + "</i></span></summary>" +
+    "<div class=\"cs-in\"><div class=\"cs-cheat\">" + b.map(function(x){ return csCrow(c, x, {}, false); }).join("") + "</div></div></details>";
+}
+/* 강의의 단축키·명령어 모음 — 교안의 치트시트·명령어 표 + 강의 중 나온 것 */
+function cpKey(c, x){ return (x.sec === "터미널 기본" ? "tb" : c.id) + "|" + (x.kind === "key" ? x.k.map(function(a){ return a.join("+"); }).join("/") + "|" + x.t : x.code); }
+// 챕터 들여다보기 — 「지금 여기」는 그대로 두고 전체 순서에서 그 챕터만 펼친다
+function csPeek(chId){
+  var c = csCourse(); if(!c) return;
+  csView = "seq"; save("sc.cview2", csView);
+  var ch = c.chapters.filter(function(x){ return x.id === chId; })[0];
+  if(ch && !csSteps(ch).length && !CPROG.all){ CPROG.all = true; }
+  csOpen = {}; csOpen[chId] = true; renderCourse();
+  var d = document.querySelector('[data-csch="' + chId.replace(/"/g, "") + '"]');
+  if(d){ d.style.scrollMarginTop = "130px"; d.scrollIntoView({ block: "start", behavior: "instant" }); }
+}
+var CS_FILT = { all: "전체", key: "⌘ 단축키", cmd: "$ 명령어", fav: "★ 즐겨찾기" };
+function csIsCmd(x){ return x.kind === "cmd" || x.kind === "slash"; }
+function csCrow(c, x, chT, withCourse){
+  var key = cpKey(c, x), ok = !!CPROG.cp[key], fv = !!CPROG.cf[key];
+  var body = x.kind === "key" ? combo(x.k) : "<code class=\"cs-code\">" + (x.kind === "cmd" ? "<i>$</i> " : "") + cx(x.code) + "</code>";
+  var link = withCourse ? " <button type=\"button\" class=\"cs-chlink\" data-csjump=\"" + cx(c.id + "|" + (x.ch || "")) + "\">" + cx(c.name) + "</button>"
+    : (x.ch && chT[x.ch] ? " <button type=\"button\" class=\"cs-chlink\" data-csjump=\"" + cx(c.id + "|" + x.ch) + "\">" + cx(chT[x.ch]) + "</button>" : "");
+  return "<div class=\"cs-crow k-" + x.kind + (ok ? " ok" : "") + "\"><div class=\"cs-cmain\"><div class=\"cs-t\">" + cx(x.t) + link + "</div>" +
+    (x.why ? "<div class=\"cs-why\">" + cx(x.why) + "</div>" : "") + "</div>" +
+    "<div class=\"cs-cbody\">" + body + (x.kind !== "key" ? "<button type=\"button\" class=\"cs-copy\" data-cscopy=\"" + cx(x.code) + "\">복사</button>" : "") +
+    "<div class=\"marks\"><button type=\"button\" class=\"mk pass\" data-cscp=\"" + cx(key) + "\" aria-pressed=\"" + ok + "\" title=\"외웠어\" aria-label=\"" + cx(x.t) + " 외웠어\">✓</button>" +
+    "<button type=\"button\" class=\"mk fav\" data-cscf=\"" + cx(key) + "\" aria-pressed=\"" + fv + "\" title=\"즐겨찾기\" aria-label=\"" + cx(x.t) + " 즐겨찾기\">★</button></div></div></div>";
+}
+function csCheat(c){
+  var all = c.cheat || [], chT = {};
+  c.chapters.forEach(function(ch){ chT[ch.id] = ch.title; });
+  if(!all.length) return "<p class=\"empty\">이 강의 교안에는 따로 외울 단축키·명령어가 없어요 — 「차례대로」에서 Claude에게 할 말을 보세요.</p>";
+  var n = { all: all.length, key: 0, cmd: 0, fav: 0 };
+  all.forEach(function(x){ if(x.kind === "key") n.key++; else n.cmd++; if(CPROG.cf[cpKey(c, x)]) n.fav++; });
+  if(!n[csFilt] && csFilt !== "all") csFilt = "all";
+  var known = all.filter(function(x){ return CPROG.cp[cpKey(c, x)]; }).length;
+  var h = "<div class=\"modes\" style=\"margin:0 0 6px\">" + Object.keys(CS_FILT).filter(function(k){ return n[k] || k === "fav"; }).map(function(k){
+    return "<button type=\"button\" class=\"mode\" data-csfilt=\"" + k + "\" aria-pressed=\"" + (csFilt === k) + "\">" + CS_FILT[k] + " <span class=\"n\">" + n[k] + "</span></button>"; }).join("") + "</div>";
+  h += "<div class=\"cs-sort\"><span>보기</span><button type=\"button\" data-cssort=\"order\" aria-pressed=\"" + (csSort === "order") + "\">강의 순서</button><button type=\"button\" data-cssort=\"sec\" aria-pressed=\"" + (csSort !== "order") + "\">종류별</button></div>";
+  h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 외웠어 — 흐리게</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span><span>외운 것 " + known + "/" + all.length + "</span></div>";
+  var list = all.filter(function(x){ return csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csFilt === "cmd" ? csIsCmd(x) : CPROG.cf[cpKey(c, x)]); });
+  if(!list.length) return h + "<p class=\"empty\">아직 없어요. 줄 옆 ★을 눌러 모아요.</p>";
+  if(csSort === "order") return h + csByLecture(c, list);
+  var secs = [], by = {};
+  list.forEach(function(x){ var s = x.sec === "터미널 기본" ? "▶ 터미널 기본" : (x.kind === "key" ? "⌘ " : "$ ") + (x.sec || "기타"); if(!by[s]){ by[s] = []; secs.push(s); } by[s].push(x); });
+  // 터미널 기본 → 단축키 묶음 → 명령어 묶음
+  var rank = function(a){ return a[0] === "▶" ? 0 : a[0] === "⌘" ? 1 : 2; };
+  secs.sort(function(a, b){ return rank(a) - rank(b); });
+  return h + secs.map(function(s){
+    return "<div class=\"block\"><div class=\"block-head\"><h2>" + cx(s) + "</h2><i class=\"hr\"></i><span class=\"meta\">" + by[s].length + "</span></div><div class=\"cs-cheat\">" +
+      by[s].map(function(x){ return csCrow(c, x, chT, false); }).join("") + "</div></div>";
+  }).join("");
+}
+// 강의 순서 — 챕터(강의)마다 거기서 배우는 단축키·명령어. 지금 들을 강의는 표시하고 바로 가기
+function csByLecture(c, list){
+  var here = csHere(c), hereIdx = c.chapters.indexOf(here), by = {}, basics = [];
+  list.forEach(function(x){ if(x.sec === "터미널 기본") basics.push(x); else (by[x.ch] = by[x.ch] || []).push(x); });
+  var chs = c.chapters.filter(function(ch){ return by[ch.id]; });
+  var target = chs.filter(function(ch){ return c.chapters.indexOf(ch) >= hereIdx; })[0];
+  var h = "";
+  if(target) h += "<button type=\"button\" class=\"cs-goto\" data-csscroll=\"" + cx(target.id) + "\"><span>▶ " + (target === here ? "지금 들을 강의" : "다음에 단축키 나오는 강의") + "</span><b>" + cx(target.title) + "</b><span class=\"n\">" + by[target.id].length + "개 →</span></button>";
+  if(basics.length) h += "<div class=\"block\"><div class=\"block-head\"><h2>$ 터미널 기본</h2><i class=\"hr\"></i><span class=\"meta\">어느 강의에서나 · " + basics.length + "</span></div><div class=\"cs-cheat\">" +
+    basics.map(function(x){ return csCrow(c, x, {}, false); }).join("") + "</div></div>";
+  var part = null;
+  chs.forEach(function(ch){
+    if(ch.part !== part){ part = ch.part; h += "<p class=\"cs-part-l\" style=\"margin:26px 0 4px\">" + cx(part) + "</p>"; }
+    var isHere = ch === target, dn = !!CPROG.done[c.id + "|" + ch.id];
+    h += "<div class=\"block cs-lec" + (isHere ? " here" : "") + (dn ? " done" : "") + "\" data-cslec=\"" + cx(ch.id) + "\"><div class=\"block-head\"><h2>" + (isHere ? "▶ " : dn ? "✓ " : "") + cx(ch.title) + "</h2><i class=\"hr\"></i><span class=\"meta\">" + by[ch.id].length + "</span></div><div class=\"cs-cheat\">" +
+      by[ch.id].map(function(x){ return csCrow(c, x, {}, false); }).join("") + "</div></div>";
+  });
+  return h;
+}
+// 「즐겨찾기」 탭 — 강의 단축키·명령어 중 ★ 한 것
+function csFavBlock(){
+  var h = "", tbSeen = {};
+  (COURSE.courses || []).forEach(function(c){
+    // 터미널 기본은 강의마다 같으니 한 번만
+    var list = (c.cheat || []).filter(function(x){ var k = cpKey(c, x); if(!CPROG.cf[k] || tbSeen[k]) return false; if(x.sec === "터미널 기본") tbSeen[k] = 1; return true; });
+    if(list.length) h += "<div class=\"block\"><div class=\"block-head\"><h2>강의 · " + cx(c.name) + "</h2><i class=\"hr\"></i><span class=\"meta\">" + list.length + "</span></div><div class=\"cs-cheat\">" +
+      list.map(function(x){ return csCrow(c, x, {}, true); }).join("") + "</div></div>";
+  });
+  return h;
+}
+var _renderList0 = renderList;
+renderList = function(kind){
+  _renderList0(kind);
+  if(kind !== "fav") return;
+  var el = document.getElementById("view-fav"), extra = csFavBlock();
+  if(!extra) return;
+  if(el.querySelector(".row")) el.insertAdjacentHTML("beforeend", extra); else el.innerHTML = extra;
+};
+function csGo(chId, markPrev){
+  var c = csCourse(); if(!c) return;
+  if(markPrev){ var past = true; c.chapters.forEach(function(ch){ if(ch.id === chId) past = false; if(past) CPROG.done[c.id + "|" + ch.id] = 1; else if(ch.id === chId) delete CPROG.done[c.id + "|" + ch.id]; }); }
+  CPROG.at[c.id] = chId; csOpen = {}; csView = "seq"; save("sc.cview2", csView); csSave(); renderCourse();
+  var n = document.querySelector(".cs-now"); if(n) n.scrollIntoView({ block: "start", behavior: "instant" });
+}
+function csNext(dir){
+  var c = csCourse(); if(!c) return;
+  var vis = csVisible(c), i = vis.indexOf(csHere(c)), j = i + dir;
+  if(j >= 0 && j < vis.length) csGo(vis[j].id);
+}
+function courseSearch(t){
+  var hits = [];
+  var tbHit = {};
+  (COURSE.courses || []).forEach(function(c){ var seen = {}; (c.cheat || []).forEach(function(s){
+    if(s.sec === "터미널 기본"){ if(tbHit[cpKey(c, s)]) return; }
+    var hay = (s.t + " " + (s.code || "") + " " + (s.why || "") + " " + (s.sec || "") + " " + (s.k ? s.k.map(function(x){ return x.join(""); }).join(" ") : "")).toLowerCase();
+    if(hay.indexOf(t) > -1 && hits.length < 16){ seen[cpKey(c, s)] = 1; if(s.sec === "터미널 기본") tbHit[cpKey(c, s)] = 1; hits.push([c, { id: s.ch || "", title: s.sec || "" }, s]); }
+  }); c.chapters.forEach(function(ch){ ch.steps.forEach(function(s){
+    if(!CS_SHOW[s.kind] || seen[cpKey(c, s)]) return;   // 단축키·명령어만
+    var hay = (s.t + " " + (s.code || "") + " " + (s.why || "") + " " + (s.k ? s.k.map(function(x){ return x.join(""); }).join(" ") : "")).toLowerCase();
+    if(hay.indexOf(t) > -1 && hits.length < 16) hits.push([c, ch, s]);
+  }); }); });
+  if(!hits.length) return "";
+  return "<div class=\"block\"><div class=\"block-head\"><h2>강의에서</h2><i class=\"hr\"></i><span class=\"meta\">" + hits.length + "</span></div>" +
+    hits.map(function(x){ var s = x[2];
+      return "<button type=\"button\" class=\"cs-hit\" data-csjump=\"" + cx(x[0].id + "|" + x[1].id) + "\"><span class=\"cs-kind\">" + CS_ICON[s.kind] + " " + CS_KIND[s.kind] + "</span> <b>" + cx(s.t) + "</b> " +
+        (s.kind === "key" ? combo(s.k) : "<code class=\"cs-code\">" + cx(s.code) + "</code>") + "<span class=\"cs-src\">" + cx(x[0].name) + " · " + cx(x[1].title) + "</span></button>";
+    }).join("") + "</div>";
+}
+var _runSearch0 = runSearch;
+runSearch = function(){
+  _runSearch0();
+  var t = document.getElementById("q").value.trim().toLowerCase();
+  if(!t) return;
+  var sv = document.getElementById("view-search"), ch = courseSearch(t);
+  if(!ch) return;
+  if(sv.querySelector(".row")) sv.insertAdjacentHTML("beforeend", ch);
+  else sv.insertAdjacentHTML("afterbegin", ch);   // 단축키 목록엔 없고 강의에만 있으면 강의 것을 먼저
+};
+document.addEventListener("toggle", function(e){
+  var d = e.target; if(d && d.getAttribute && d.getAttribute("data-cstb")){ csTB = d.open; save("sc.tb", csTB); return; }
+  if(!d || !d.getAttribute || !d.getAttribute("data-csch")) return;
+  var id = d.getAttribute("data-csch");
+  if(d.open && !csOpen[id]){ csOpen[id] = true; var c = csCourse(), ch = c && c.chapters.filter(function(x){ return x.id === id; })[0]; if(ch) d.insertAdjacentHTML("beforeend", "<div class=\"cs-in\">" + csBody(c, ch, ch.id === csHere(c).id) + "</div>"); }
+  else if(!d.open) csOpen[id] = false;
+}, true);
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-csview],[data-csfilt],[data-cssort],[data-csscroll],[data-cscp],[data-cscf],[data-cspick],[data-cssd],[data-csdone],[data-csgo],[data-cshere],[data-csall],[data-cscopy],[data-csjump]");
+  if(!b) return;
+  var c = csCourse();
+  if(b.hasAttribute("data-csview")){ csView = b.getAttribute("data-csview"); save("sc.cview2", csView); renderCourse(); return; }
+  if(b.hasAttribute("data-cssort")){ csSort = b.getAttribute("data-cssort"); save("sc.csort", csSort); renderCourse(); return; }
+  if(b.hasAttribute("data-csscroll")){ var tg = document.querySelector('[data-cslec="' + b.getAttribute("data-csscroll").replace(/"/g, "") + '"]'); if(tg) tg.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+  if(b.hasAttribute("data-csfilt")){ csFilt = b.getAttribute("data-csfilt"); renderCourse(); return; }
+  if(b.hasAttribute("data-cscp") || b.hasAttribute("data-cscf")){
+    var isF = b.hasAttribute("data-cscf"), ck = b.getAttribute(isF ? "data-cscf" : "data-cscp"), m = isF ? CPROG.cf : CPROG.cp;
+    if(m[ck]) delete m[ck]; else m[ck] = 1;
+    csSave(); if(current === "fav") renderList("fav"); else renderCourse(); return;
+  }
+  if(b.hasAttribute("data-cspick")){ CPROG.cur = b.getAttribute("data-cspick"); csOpen = {}; csSave(); renderCourse(); return; }
+  if(b.hasAttribute("data-cssd")){ var k = b.getAttribute("data-cssd"); if(CPROG.sd[k]) delete CPROG.sd[k]; else CPROG.sd[k] = 1; csSave(); renderCourse(); return; }
+  if(b.hasAttribute("data-csdone")){ CPROG.done[c.id + "|" + b.getAttribute("data-csdone")] = 1; var vis = csVisible(c), i = vis.indexOf(csHere(c)); csGo(i < vis.length - 1 ? vis[i + 1].id : csHere(c).id); return; }
+  if(b.hasAttribute("data-csgo")){ csGo(b.getAttribute("data-csgo")); return; }
+  if(b.hasAttribute("data-cshere")){ csGo(b.getAttribute("data-cshere"), true); return; }
+  if(b.hasAttribute("data-csall")){ CPROG.all = !CPROG.all; csSave(); renderCourse(); return; }
+  if(b.hasAttribute("data-csjump")){ var p = b.getAttribute("data-csjump").split("|"); CPROG.cur = p[0]; document.getElementById("q").value = ""; if(p[1]){ show("course"); csPeek(p[1]); } else { csView = "cheat"; save("sc.cview2", csView); show("course"); } return; }
+  if(b.hasAttribute("data-cscopy")){
+    var txt = b.getAttribute("data-cscopy"), done = function(){ b.textContent = "복사됨 ✓"; setTimeout(function(){ b.textContent = "복사"; }, 1400); };
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ b.textContent = "길게 눌러 복사"; });
+    else b.textContent = "길게 눌러 복사";
+  }
+});
+document.addEventListener("keydown", function(e){
+  if(current !== "course" || e.metaKey || e.ctrlKey || e.altKey) return;
+  var a = document.activeElement; if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  if(e.key === "ArrowRight"){ e.preventDefault(); csNext(1); }
+  if(e.key === "ArrowLeft"){ e.preventDefault(); csNext(-1); }
+});

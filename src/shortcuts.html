@@ -1,0 +1,955 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>맥 단축키 핸드북</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="apple-touch-icon" href="web-icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="web-icon-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="web-icon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="web-icon-192.png">
+<link rel="icon" type="image/png" sizes="64x64" href="web-icon-64.png">
+<meta name="apple-mobile-web-app-title" content="맥 단축키">
+<meta name="application-name" content="맥 단축키">
+<meta name="theme-color" content="#181a1f">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 다크 기본 — 검은 키캡에 새긴 각인. 라이트는 인쇄된 매뉴얼.
+   레이아웃: 맥 메뉴처럼 이름 왼쪽 / 키 오른쪽, 영역마다 가는 괘선 하나 */
+:root{
+  --bg:#121317; --surface:#181a1f; --raised:#1e2127;
+  --fg:#edecea; --dim:#989ca3; --faint:#676c74;
+  --rule:#2b2f36; --hair:#202329;
+  --cap-top:#343941; --cap-bot:#252931; --cap-edge:#0b0c0e; --cap-line:#454b55;
+  --cap-fg:#f1f0ee; --cap-gloss:rgba(255,255,255,.07);
+  --accent:#d9a44c; --accent-dim:#362b15;
+  --ok:#7cb79b; --ok-dim:#1c2d26;
+  --shadow:0 1px 2px rgba(0,0,0,.5);
+  --f-disp:"Gothic A1","Apple SD Gothic Neo",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#eceef1; --surface:#f8f9fa; --raised:#ffffff;
+  --fg:#16181c; --dim:#636971; --faint:#9aa0a7;
+  --rule:#d7dbe0; --hair:#e6e9ed;
+  --cap-top:#ffffff; --cap-bot:#eff1f4; --cap-edge:#c2c7ce; --cap-line:#d3d8de;
+  --cap-fg:#1b1e23; --cap-gloss:rgba(255,255,255,.9);
+  --accent:#8a5d12; --accent-dim:#f3e9d6;
+  --ok:#2e6b51; --ok-dim:#e1efe9;
+  --shadow:0 1px 2px rgba(20,25,35,.09);
+  color-scheme:light;
+}}
+:root[data-theme="light"]{
+  --bg:#eceef1; --surface:#f8f9fa; --raised:#ffffff;
+  --fg:#16181c; --dim:#636971; --faint:#9aa0a7;
+  --rule:#d7dbe0; --hair:#e6e9ed;
+  --cap-top:#ffffff; --cap-bot:#eff1f4; --cap-edge:#c2c7ce; --cap-line:#d3d8de;
+  --cap-fg:#1b1e23; --cap-gloss:rgba(255,255,255,.9);
+  --accent:#8a5d12; --accent-dim:#f3e9d6;
+  --ok:#2e6b51; --ok-dim:#e1efe9;
+  --shadow:0 1px 2px rgba(20,25,35,.09);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);line-height:1.5;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:11;background:var(--surface)}
+.wrap{max-width:1020px;margin:0 auto;
+  padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+
+/* ── 머리 ── */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--surface);
+  border-bottom:1px solid var(--rule)}
+.head-in{padding-block:13px 0;display:flex;flex-direction:column;gap:11px}
+.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+h1{margin:0;display:flex;align-items:center;gap:9px;font-family:var(--f-disp);font-weight:800;
+  font-size:1.08rem;letter-spacing:-.025em;white-space:nowrap}
+h1 .mark{font-family:var(--f-mono);font-size:.78rem;font-weight:600;color:var(--cap-fg);
+  width:26px;height:26px;display:grid;place-items:center;border-radius:7px;
+  background:linear-gradient(180deg,var(--cap-top),var(--cap-bot));
+  border:1px solid var(--cap-line);border-bottom:3px solid var(--cap-edge);
+  box-shadow:inset 0 1px 0 var(--cap-gloss)}
+.searchbox{position:relative;flex:1 1 210px;min-width:0}
+#q{width:100%;padding:9px 12px 9px 32px;font:inherit;font-size:.92rem;color:var(--fg);
+  background:var(--bg);border:1px solid transparent;border-radius:9px;transition:border-color .12s}
+#q::placeholder{color:var(--faint)}
+#q:focus{outline:none;border-color:var(--cap-line);background:var(--raised)}
+.mag{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:.95rem}
+.tabs{display:flex;gap:3px}
+.tabs button{font:inherit;font-size:.83rem;color:var(--dim);background:none;border:0;padding:6px 11px;
+  border-radius:7px;cursor:pointer;white-space:nowrap;transition:color .12s,background .12s}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{color:var(--fg);font-weight:600;background:var(--bg)}
+.tabs button:focus-visible,.chip:focus-visible,.mk:focus-visible,.ghost:focus-visible,
+.mode:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:7px}
+.navrow{display:flex;gap:17px;overflow-x:auto;scrollbar-width:none;margin:0 -1px}
+.navrow::-webkit-scrollbar{display:none}
+.chip{font:inherit;font-size:.85rem;color:var(--faint);background:none;border:0;
+  border-bottom:2px solid transparent;padding:7px 1px 10px;cursor:pointer;white-space:nowrap;
+  transition:color .12s,border-color .12s}
+.chip:hover{color:var(--dim)}
+.chip[aria-pressed="true"]{color:var(--fg);font-weight:600;border-bottom-color:var(--accent)}
+.chip .n{font-family:var(--f-mono);font-size:.67rem;color:var(--faint);margin-left:5px;
+  font-variant-numeric:tabular-nums}
+
+main{padding-block:26px 56px}
+
+/* ── 도구바 ── */
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin-bottom:22px;font-size:.8rem;color:var(--dim)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dotp,.dotf{width:16px;height:16px;border-radius:5px;display:inline-grid;place-items:center;
+  font-size:.62rem;font-weight:700;font-style:normal}
+.dotp{background:var(--ok-dim);color:var(--ok)}
+.dotf{background:var(--accent-dim);color:var(--accent)}
+.ghost{font:inherit;font-size:.79rem;color:var(--dim);background:none;border:1px solid var(--rule);
+  border-radius:99px;padding:5px 13px;cursor:pointer;transition:color .12s,border-color .12s}
+.ghost:hover{color:var(--fg);border-color:var(--cap-line)}
+
+/* ── 영역 ── */
+.block{margin-bottom:38px}
+.block-head{display:flex;align-items:center;gap:14px;margin-bottom:3px}
+h2{margin:0;font-family:var(--f-disp);font-size:1.02rem;font-weight:700;letter-spacing:-.018em;
+  white-space:nowrap}
+.block-head .hr{flex:1;height:1px;background:var(--rule);min-width:12px}
+.meta{font-family:var(--f-mono);font-size:.67rem;color:var(--faint);font-variant-numeric:tabular-nums;
+  letter-spacing:.04em;white-space:nowrap}
+.lead{margin:9px 0 2px;font-size:.82rem;color:var(--dim);line-height:1.65;max-width:62ch}
+.lead b{color:var(--fg);font-weight:600}
+.lead code,footer code{font-family:var(--f-mono);font-size:.76em;color:var(--dim)}
+.grid{display:grid;grid-template-columns:1fr;gap:0 38px;margin-top:10px}
+@media (min-width:860px){.grid{grid-template-columns:1fr 1fr}}
+
+/* ── 줄 ── */
+.row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;
+  padding:11px 10px;margin:0 -10px;border-radius:9px;border-bottom:1px solid var(--hair);min-width:0;
+  transition:background .12s}
+.row:hover{background:var(--surface)}
+.row:last-child{border-bottom:0}
+.name{font-size:.93rem;font-weight:500;min-width:0;letter-spacing:-.003em}
+.desc{display:block;font-size:.79rem;font-weight:400;color:var(--dim);margin-top:3px;line-height:1.45}
+.row.passed .name{color:var(--faint);font-weight:400}
+.row.passed kbd{opacity:.45}
+.marks{display:flex;gap:4px;flex:0 0 auto}
+.mk{width:28px;height:28px;display:grid;place-items:center;font-size:.74rem;font-weight:700;
+  cursor:pointer;border:1px solid transparent;border-radius:8px;background:var(--bg);
+  color:var(--faint);padding:0;line-height:1;transition:color .12s,background .12s,border-color .12s}
+.row:hover .mk{background:var(--raised)}
+.mk:hover{border-color:var(--cap-line);color:var(--fg)}
+.mk.pass[aria-pressed="true"]{background:var(--ok-dim);color:var(--ok);border-color:transparent}
+.mk.fav[aria-pressed="true"]{background:var(--accent-dim);color:var(--accent);border-color:transparent}
+
+/* ── 키캡 ── */
+.combo{display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.combo .sep{color:var(--faint);font-size:.74rem;padding:0 2px}
+kbd{font-family:var(--f-mono);font-size:.78rem;font-weight:600;line-height:1;
+  min-width:1.7em;padding:6px 7px 5px;text-align:center;color:var(--cap-fg);
+  background:linear-gradient(180deg,var(--cap-top),var(--cap-bot));
+  border:1px solid var(--cap-line);border-bottom:3px solid var(--cap-edge);
+  border-radius:6px;display:inline-block;box-shadow:inset 0 1px 0 var(--cap-gloss),var(--shadow);
+  transition:transform .08s,border-bottom-width .08s}
+.row:hover kbd{transform:translateY(-1px)}
+kbd.wide{min-width:auto;padding-left:9px;padding-right:9px;font-size:.71rem}
+
+/* ── 먼저 이것만 ── */
+.first .block-head .hr{background:linear-gradient(90deg,var(--accent),var(--rule) 70%)}
+.first h2{color:var(--accent)}
+
+/* ── 꼬리표 ── */
+.tag{font-family:var(--f-mono);font-size:.59rem;font-weight:600;letter-spacing:.05em;
+  vertical-align:2px;margin-left:7px;padding:2px 6px;border-radius:5px;
+  background:var(--bg);color:var(--faint);border:1px solid var(--rule)}
+.tag.unver{background:var(--accent-dim);color:var(--accent);border-color:transparent}
+.row.todo kbd{border-style:dashed;background:none;border-bottom-width:1px;box-shadow:none}
+
+/* ── 지금 ── */
+.ctxbox{margin-bottom:26px}
+.ctxbox label{display:block;font-family:var(--f-disp);font-weight:700;font-size:.88rem;
+  letter-spacing:-.01em;margin-bottom:9px}
+#ctx{width:100%;padding:13px 15px;font:inherit;font-size:1.02rem;color:var(--fg);
+  background:var(--surface);border:1px solid var(--rule);border-radius:11px;transition:border-color .12s}
+#ctx::placeholder{color:var(--faint)}
+#ctx:focus{outline:none;border-color:var(--accent)}
+.modes{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.mode{font:inherit;font-size:.8rem;color:var(--dim);background:var(--surface);border:1px solid var(--rule);
+  border-radius:99px;padding:6px 13px;cursor:pointer;transition:all .12s}
+.mode:hover{color:var(--fg);border-color:var(--cap-line)}
+.mode[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.why{margin:0 0 14px;font-size:.84rem;color:var(--dim);line-height:1.6}
+.why b{color:var(--fg);font-weight:600}
+
+/* ── 없어요 ── */
+.askbox{margin-top:34px;background:var(--surface);border:1px solid var(--rule);border-radius:13px;
+  padding:17px 18px}
+.askbox p{margin:0 0 11px;font-size:.82rem;color:var(--dim);line-height:1.6}
+.askbox p b{color:var(--fg);font-weight:600}
+.askrow{display:flex;gap:9px;flex-wrap:wrap}
+#ask{flex:1 1 210px;min-width:0;padding:10px 13px;font:inherit;font-size:.92rem;color:var(--fg);
+  background:var(--raised);border:1px solid var(--rule);border-radius:9px}
+#ask::placeholder{color:var(--faint)}
+#ask:focus{outline:none;border-color:var(--accent)}
+.btn{font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;background:var(--fg);color:var(--bg);
+  border:1px solid var(--fg);border-radius:9px;padding:10px 17px;white-space:nowrap;transition:opacity .12s}
+.btn:hover{opacity:.85}
+.btn[disabled]{opacity:.45;cursor:default}
+.status{margin:11px 0 0;font-size:.82rem;color:var(--dim)}
+.status.err{color:var(--accent)}
+
+/* ── 프로젝트 ── */
+details.proj-box{border-top:1px solid var(--rule);margin-top:14px}
+details.proj-box summary{cursor:pointer;padding:15px 0;font-size:.86rem;color:var(--dim);list-style:none}
+details.proj-box summary:hover{color:var(--fg)}
+details.proj-box summary::-webkit-details-marker{display:none}
+details.proj-box summary::before{content:"＋  "}
+details.proj-box[open] summary::before{content:"－  "}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(236px,1fr));gap:26px;padding-bottom:20px}
+.proj h3{margin:0 0 3px;font-family:var(--f-disp);font-size:.9rem;font-weight:700;letter-spacing:-.012em}
+.proj .role{font-family:var(--f-mono);font-size:.64rem;color:var(--faint);letter-spacing:.07em;
+  text-transform:uppercase}
+.proj ul{list-style:none;margin:11px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.proj li{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:.83rem;
+  color:var(--dim)}
+
+footer{border-top:1px solid var(--rule);padding-block:20px 36px;font-size:.76rem;color:var(--faint);
+  line-height:1.7}
+footer p{margin:0 0 5px}
+footer kbd{font-size:.68rem;padding:3px 5px 2px}
+.empty{padding:20px 0;color:var(--faint);font-size:.86rem}
+[hidden]{display:none!important}
+@media (max-width:560px){
+  .row{grid-template-columns:1fr auto;padding:12px 10px}
+  .row .combo{grid-column:1 / -1;justify-content:flex-start;margin-top:3px}
+  .top{gap:10px}
+  h1{font-size:1rem}
+  .block{margin-bottom:30px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header>
+  <div class="wrap head-in">
+    <div class="top">
+      <h1><span class="mark">⌘</span>맥 단축키</h1>
+      <div class="searchbox">
+        <span class="mag" aria-hidden="true">⌕</span>
+        <input id="q" type="search" placeholder="복사, 캡처, ripple, 프리미어…" autocomplete="off" aria-label="단축키 검색">
+      </div>
+      <div class="tabs" role="tablist" aria-label="보기">
+        <button id="tab-now" role="tab" aria-selected="true" aria-controls="view-now">지금</button>
+        <button id="tab-home" role="tab" aria-selected="false" aria-controls="view-home">목록</button>
+        <button id="tab-fav" role="tab" aria-selected="false" aria-controls="view-fav">즐겨찾기</button>
+        <button id="tab-pass" role="tab" aria-selected="false" aria-controls="view-pass">패스</button>
+      </div>
+    </div>
+    <div class="navrow" id="chips"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="view-now" role="tabpanel" aria-labelledby="tab-now">
+    <div class="ctxbox">
+      <label for="ctx">지금 무슨 일을 하는 중?</label>
+      <input id="ctx" type="text" placeholder="예: EP3 컷 편집 / 위키 ingest 정리 / 정육 견적 보내는 중" autocomplete="off">
+      <div class="modes" id="modes"></div>
+    </div>
+    <div id="now-out"></div>
+    <div class="askbox" id="askbox">
+      <p><b>여기 없어요?</b> 쓰려는 앱이나 하는 일을 적으면 바로 찾아 목록에 넣는다. 넣은 건 모든 기기에서 보인다.</p>
+      <div class="askrow">
+        <input id="ask" type="text" placeholder="예: 슬랙 / 피그마 / 줌 미팅 / 카카오톡 PC" autocomplete="off">
+        <button class="btn" id="ask-go" type="button">찾아서 넣기</button>
+      </div>
+      <p class="status" id="ask-status" hidden></p>
+    </div>
+  </div>
+  <div id="view-home" role="tabpanel" aria-labelledby="tab-home" hidden>
+    <div class="toolbar">
+      <div class="legend">
+        <span><i class="dotp">✓</i> 패스 — 아는 것, 목록에서 빠진다</span>
+        <span><i class="dotf">★</i> 즐겨찾기 — 자주 볼 것</span>
+      </div>
+      <button class="ghost" id="goto-pass" type="button" hidden></button>
+    </div>
+    <div id="sections"></div>
+    <details class="proj-box">
+      <summary>프로젝트별로 쓸 것</summary>
+      <div class="board" id="board"></div>
+    </details>
+  </div>
+  <div id="view-fav" role="tabpanel" aria-labelledby="tab-fav" hidden></div>
+  <div id="view-pass" role="tabpanel" aria-labelledby="tab-pass" hidden></div>
+  <div id="view-search" hidden></div>
+</main>
+
+<footer class="wrap">
+  <p>출처 — Apple Support 102650 · Adobe 프리미어 프로 기본 단축키 · Google 크롬 공식 문서. 창 타일링은 macOS Sequoia 이후, 옵시디언·프리미어는 설정에서 바뀔 수 있다.</p>
+  <p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code> · 앱 안에서 <kbd>/</kbd> 검색 · <kbd class="wide">esc</kbd> 지우기</p>
+</footer>
+
+<script>
+"use strict";
+var GROUPS = [
+  {g:"맥 공통", hint:"어느 앱에서나 같다. 여기부터 손에 붙는다."},
+  {g:"창·화면", hint:"두 개를 같이 보는 자세 — 클로드 코드와 볼트."},
+  {g:"캡처", hint:"캡처 → 00_Inbox → /capture-sort가 기록 루틴의 입구."},
+  {g:"글쓰기·편집", hint:"커서가 빨라지면 고치는 속도가 빨라진다."},
+  {g:"Finder", hint:"파일 정리는 마우스보다 키보드가 빠르다."},
+  {g:"옵시디언", lead:"<b>내 설정</b> 표시 8개는 2026-11-05에 <code>.obsidian/hotkeys.json</code>으로 실제로 걸었다 — <b>옵시디언을 ⌘Q로 끄고 다시 열어야</b> 먹는다. 나머지는 기본값이고, 공식 문서로 확인된 건 ⌘P 하나다."},
+  {g:"iTerm2 · 클로드 코드", hint:"볼트 위키에 이미 있는 것 — 여기선 참조용."},
+  {g:"프리미어 프로", hint:"어도비 기본 세트. 왼손이 키보드에서 안 떠나는 게 전부."},
+  {g:"크롬", hint:"자료 찾기 — 탭을 손으로 옮기지 않는다."},
+  {g:"노션", lead:"노션 공식 도움말 기준. 블록을 만드는 키(<code>⌘⌥</code>+숫자)와 슬래시 명령만 손에 붙으면 나머지는 마우스 없이 된다."},
+  {g:"Todoist", lead:"대부분 <b>조합키 없이 한 글자</b>다 — 작업에 커서를 올린 상태에서 누른다. <code>⌥Space</code>만 전역이라 다른 앱에서도 먹는다."},
+  {g:"구글 시트", lead:"구글 공식 맥 표 기준. 시트는 <code>⌃</code>(Control)를 쓰는 항목이 많다 — <code>⌘</code>로 바꿔 누르면 안 먹는다."},
+  {g:"구글 문서", lead:"제목 스타일(<code>⌘⌥</code>+숫자)과 서식 없이 붙여넣기만 붙어도 문서 쓰는 속도가 달라진다."},
+  {g:"Gmail", lead:"<b>먼저 켜야 쓴다.</b> 설정(톱니) › 모든 설정 보기 › 일반 › 키보드 단축키 <b>사용</b> › 맨 아래 변경사항 저장. 켠 뒤 Gmail에서 <code>?</code>를 누르면 전체 목록이 뜬다."},
+  {g:"녹화·미리보기", lead:"강의 녹화와 PDF·이미지 확인. 애플 공식 문서 기준이고, 널리 알려진 마크업 <code>⇧⌘A</code>·회전 <code>⌘L/⌘R</code>은 공식 문서에 없어 뺐다."},
+  {g:"캡컷", lead:"⚠️ 캡컷은 <b>공식 단축키 문서가 없다.</b> 자료 3곳을 교차해 <b>2곳 이상 일치한 것만</b> 넣었고, 어긋난 것(내보내기·인아웃·복제 등)은 뺐다. 버전마다 바뀌니 앱 단축키 설정에서 확인하는 게 확실하다."}
+];
+
+var D = [
+ // 맥 공통
+ {id:"spotlight",k:[["⌘","Space"]],t:"스포트라이트",d:"앱·파일 이름으로 바로 열기",g:"맥 공통",starter:"Dock·Finder를 헤매는 시간이 사라진다",x:"cmd space spotlight 검색 실행"},
+ {id:"copy",k:[["⌘","C"],["⌘","V"],["⌘","X"]],t:"복사 / 붙여넣기 / 잘라내기",d:"Finder에서 파일에도 똑같이",g:"맥 공통",x:"copy paste cut 복사"},
+ {id:"undo",k:[["⌘","Z"],["⇧","⌘","Z"]],t:"되돌리기 / 다시 실행",d:"",g:"맥 공통",x:"undo redo 되돌리기"},
+ {id:"selectall",k:[["⌘","A"]],t:"전체 선택",d:"",g:"맥 공통",x:"select all 전체선택"},
+ {id:"save",k:[["⌘","S"],["⇧","⌘","S"]],t:"저장 / 다른 이름으로",d:"",g:"맥 공통",x:"save as 저장"},
+ {id:"find",k:[["⌘","F"],["⌘","G"]],t:"찾기 / 다음 찾기",d:"⇧⌘G는 이전 것",g:"맥 공통",x:"find next 찾기 검색"},
+ {id:"new",k:[["⌘","N"],["⌘","T"],["⌘","O"]],t:"새로 만들기 / 새 탭 / 열기",d:"",g:"맥 공통",x:"new tab open 새창"},
+ {id:"close",k:[["⌘","W"],["⌥","⌘","W"]],t:"창 닫기 / 모든 창 닫기",d:"앱은 살아 있다",g:"맥 공통",x:"close window 닫기"},
+ {id:"quit",k:[["⌘","Q"]],t:"앱 종료",d:"창 닫기와 다르다 — 앱 자체가 꺼진다",g:"맥 공통",x:"quit 종료"},
+ {id:"prefs",k:[["⌘",","]],t:"그 앱의 설정",d:"어느 앱에서든 같다",g:"맥 공통",x:"preferences settings 설정"},
+ {id:"print",k:[["⌘","P"]],t:"인쇄",d:"",g:"맥 공통",x:"print 인쇄"},
+ {id:"lock",k:[["⌃","⌘","Q"]],t:"화면 잠금",d:"자리를 뜰 때 1초",g:"맥 공통",starter:"카페·사무실에서 자리 뜰 때 1초",x:"lock screen 잠금"},
+ {id:"lang",k:[["⌃","Space"]],t:"한 / 영 전환",d:"⌘Space가 아니다 — 그건 스포트라이트. ⌃⌥Space는 다음 입력 소스",g:"맥 공통",x:"input source korean english 한영 입력"},
+ {id:"emoji",k:[["⌃","⌘","Space"]],t:"이모지 · 기호",d:"fn-E 또는 🌐-E도 같다",g:"맥 공통",x:"emoji character viewer 이모지 기호"},
+ {id:"textrep",k:[["(설정)"]],t:"텍스트 대치",d:"시스템 설정 › 키보드 › 텍스트 대치 — 자주 쓰는 문구를 두 글자로",g:"맥 공통",tag:"설정",x:"text replacement snippet 텍스트대치 단축어"},
+
+ // 창·화면
+ {id:"apptab",k:[["⌘","Tab"]],t:"앱 전환",d:"누른 채 방향키로 고르기",g:"창·화면",starter:"볼트·터미널·브라우저 3개 왕복이 작업의 기본 동작",x:"cmd tab switch app 전환"},
+ {id:"tile",k:[["⌃","fn","←"],["⌃","fn","→"]],t:"창 좌우 반반",d:"Sequoia(15) 이후",g:"창·화면",starter:"왼쪽 클로드 코드, 오른쪽 볼트 — 기본 자세",x:"tile window split 분할 반반"},
+ {id:"tilev",k:[["⌃","fn","↑"],["⌃","fn","↓"]],t:"창 위·아래 반반",d:"",g:"창·화면",x:"tile vertical 위아래"},
+ {id:"tilefill",k:[["⌃","fn","F"],["⌃","fn","R"]],t:"화면 채우기 / 원래 크기로",d:"4분할은 기본 단축키 없음 — 시스템 설정 › 키보드 › 단축키 › 앱 단축키에서 직접",g:"창·화면",x:"fill restore 채우기"},
+ {id:"windowtab",k:[["⌘","`"]],t:"같은 앱의 창 전환",d:"옵시디언 창 두 개를 띄웠을 때",g:"창·화면",x:"grave window cycle 창전환"},
+ {id:"fullscreen",k:[["⌃","⌘","F"]],t:"전체화면 토글",d:"",g:"창·화면",x:"fullscreen 전체화면"},
+ {id:"minimize",k:[["⌘","M"],["⌥","⌘","M"]],t:"창 최소화 / 앱의 모든 창",d:"",g:"창·화면",x:"minimize 최소화"},
+ {id:"hide",k:[["⌘","H"],["⌥","⌘","H"]],t:"이 앱 숨기기 / 다른 앱 전부 숨기기",d:"집중할 때 ⌥⌘H 한 방",g:"창·화면",x:"hide others 숨기기 집중"},
+ {id:"mission",k:[["⌃","↑"],["⌃","↓"]],t:"미션 컨트롤 / 이 앱의 창 모두 보기",d:"",g:"창·화면",x:"mission control expose"},
+
+ // 캡처
+ {id:"shot4",k:[["⇧","⌘","4"]],t:"영역 캡처",d:"누른 뒤 Space를 누르면 창 하나만 깔끔하게",g:"캡처",starter:"캡처 → 00_Inbox → /capture-sort",x:"screenshot capture 캡처 스크린샷"},
+ {id:"shot3",k:[["⇧","⌘","3"]],t:"화면 전체 캡처",d:"",g:"캡처",x:"screenshot full 전체"},
+ {id:"shot5",k:[["⇧","⌘","5"]],t:"캡처·화면 녹화 도구",d:"범위·타이머·저장 위치. 화면 녹화도 여기",g:"캡처",x:"record screen 녹화"},
+ {id:"shotclip",k:[["⌃","⇧","⌘","4"]],t:"클립보드로 캡처",d:"파일로 저장하지 않고 바로 붙여넣기",g:"캡처",x:"clipboard screenshot 클립보드"},
+
+ // 글쓰기·편집
+ {id:"wordmove",k:[["⌥","←"],["⌥","→"]],t:"단어 단위 이동",d:"화살표 연타 대신 한 단어씩",g:"글쓰기·편집",starter:"글 고칠 때 커서 때문에 끊기지 않는다",x:"option arrow word 단어 커서"},
+ {id:"pastematch",k:[["⌥","⇧","⌘","V"]],t:"서식 없이 붙여넣기",d:"가져온 글꼴·색을 버리고 붙인다",g:"글쓰기·편집",starter:"글꼴 깨짐 고치는 일이 통째로 사라진다",x:"paste match style 서식"},
+ {id:"linemove",k:[["⌘","←"],["⌘","→"]],t:"줄 처음 / 끝",d:"",g:"글쓰기·편집",x:"line start end 줄"},
+ {id:"docmove",k:[["⌘","↑"],["⌘","↓"]],t:"문서 처음 / 끝",d:"",g:"글쓰기·편집",x:"document top bottom 문서"},
+ {id:"delword",k:[["⌥","⌫"]],t:"앞 단어 삭제",d:"오타 낸 단어를 한 번에",g:"글쓰기·편집",x:"delete word 삭제"},
+ {id:"selectword",k:[["⌥","⇧","→"]],t:"단어 단위 선택",d:"⇧ + 아무 이동키 = 그 범위만큼 선택",g:"글쓰기·편집",x:"select word 선택"},
+ {id:"page",k:[["fn","↑"],["fn","↓"]],t:"한 화면 위 / 아래",d:"",g:"글쓰기·편집",x:"page up down"},
+ {id:"bold",k:[["⌘","B"],["⌘","I"],["⌘","K"]],t:"굵게 / 기울임 / 링크",d:"옵시디언·문서·메일 공통",g:"글쓰기·편집",x:"bold italic link 굵게"},
+ {id:"fontsize",k:[["⇧","⌘","-"],["⇧","⌘","+"]],t:"글자 작게 / 크게",d:"",g:"글쓰기·편집",x:"font size 글자크기"},
+ {id:"copystyle",k:[["⌥","⌘","C"],["⌥","⌘","V"]],t:"서식 복사 / 서식 붙여넣기",d:"",g:"글쓰기·편집",x:"copy style 서식"},
+
+ // Finder
+ {id:"quicklook",k:[["Space"]],t:"빠른 보기",d:"열지 않고 내용 확인. ⌘Y도 같다",g:"Finder",x:"quick look 미리보기"},
+ {id:"info",k:[["⌘","I"]],t:"정보 보기",d:"용량·경로·여는 앱",g:"Finder",x:"get info 정보"},
+ {id:"dup",k:[["⌘","D"]],t:"복제",d:"템플릿을 복사해 채울 때",g:"Finder",x:"duplicate 복제 템플릿"},
+ {id:"trash",k:[["⌘","⌫"],["⇧","⌘","⌫"]],t:"휴지통으로 / 휴지통 비우기",d:"",g:"Finder",x:"trash delete 휴지통"},
+ {id:"updown",k:[["⌘","↑"],["⌘","↓"]],t:"상위 폴더 / 선택한 항목 열기",d:"",g:"Finder",x:"enclosing folder open 폴더"},
+ {id:"newfolder",k:[["⇧","⌘","N"],["⌃","⌘","N"]],t:"새 폴더 / 선택한 것들을 담은 새 폴더",d:"⌃⌘N이 정리할 때 훨씬 빠르다",g:"Finder",x:"new folder 폴더"},
+ {id:"views",k:[["⌘","1"],["⌘","4"]],t:"아이콘·목록·열·갤러리 보기",d:"⌘2 목록, ⌘3 열 — 사진 고를 땐 ⌘4",g:"Finder",x:"view icon list column gallery 보기"},
+ {id:"goto",k:[["⇧","⌘","G"]],t:"경로로 바로 이동",d:"볼트 경로를 붙여넣으면 바로 그 폴더",g:"Finder",x:"go to folder 경로"},
+ {id:"folders",k:[["⇧","⌘","H"],["⇧","⌘","D"],["⌥","⌘","L"]],t:"홈 / 데스크탑 / 다운로드",d:"",g:"Finder",x:"home desktop downloads 홈"},
+ {id:"pathbar",k:[["⌥","⌘","P"],["⌥","⌘","S"]],t:"경로 바 / 사이드바 토글",d:"경로 바를 켜 두면 지금 위치가 항상 보인다",g:"Finder",x:"path sidebar 경로바"},
+ {id:"alias",k:[["⌃","⌘","A"]],t:"별칭 만들기",d:"자주 쓰는 폴더를 데스크탑에",g:"Finder",x:"alias 별칭"},
+
+ // 옵시디언
+ {id:"ob-palette",k:[["⌘","P"]],t:"명령 팔레트",d:"모든 기능의 입구",g:"옵시디언",tag:"공식",x:"obsidian command palette 팔레트"},
+ {id:"ob-switch",k:[["⌘","O"]],t:"퀵 스위처",d:"노트 이름으로 바로 점프 — 위키 페이지 찾을 때",g:"옵시디언",x:"obsidian quick switcher 노트"},
+ {id:"ob-search",k:[["⇧","⌘","F"],["⌘","F"]],t:"볼트 전체 검색 / 이 문서에서 찾기",d:"",g:"옵시디언",x:"obsidian search 검색"},
+ {id:"ob-read",k:[["⌘","E"]],t:"편집 ↔ 읽기 모드",d:"",g:"옵시디언",x:"obsidian reading edit 모드"},
+ {id:"ob-new",k:[["⌘","N"],["⇧","⌘","N"]],t:"새 노트 / 새 탭에 새 노트",d:"",g:"옵시디언",x:"obsidian new note"},
+ {id:"ob-tab",k:[["⌘","T"],["⌘","W"]],t:"새 탭 / 탭 닫기",d:"",g:"옵시디언",x:"obsidian tab 탭"},
+ {id:"ob-tabnum",k:[["⌘","1"],["⌘","9"]],t:"그 탭으로 / 마지막 탭",d:"⌘1~⌘8이 순서대로",g:"옵시디언",x:"obsidian tab number"},
+ {id:"ob-nav",k:[["⌘","⌥","←"],["⌘","⌥","→"]],t:"뒤로 / 앞으로",d:"링크를 타고 들어간 길을 되짚는다",g:"옵시디언",x:"obsidian back forward 뒤로"},
+ {id:"ob-graph",k:[["⌘","G"]],t:"그래프 뷰",d:"",g:"옵시디언",x:"obsidian graph 그래프"},
+ {id:"ob-fmt",k:[["⌘","B"],["⌘","I"],["⌘","K"]],t:"굵게 / 기울임 / 링크",d:"",g:"옵시디언",x:"obsidian bold italic link"},
+ {id:"ob-check",k:[["⌘","↩"]],t:"체크박스 토글",d:"데일리 노트 계획 체크에",g:"옵시디언",x:"obsidian checkbox 체크박스"},
+ {id:"ob-comment",k:[["⌘","/"]],t:"주석 토글",d:"%% 안 보이는 메모 %%",g:"옵시디언",x:"obsidian comment 주석"},
+ {id:"ob-line",k:[["⌥","↑"],["⌥","↓"]],t:"줄 위로 / 아래로 옮기기",d:"목록 순서 바꿀 때",g:"옵시디언",x:"obsidian move line 줄이동"},
+ {id:"ob-indent",k:[["Tab"],["⇧","Tab"]],t:"들여쓰기 / 내어쓰기",d:"",g:"옵시디언",x:"obsidian indent 들여쓰기"},
+ {id:"ob-newtab",k:[["⌘","클릭"]],t:"링크를 새 탭에서 열기",d:"위키 링크를 따라가면서 지금 노트를 남겨둘 때",g:"옵시디언",x:"obsidian new tab"},
+ {id:"ob-set",k:[["⌘",","]],t:"설정",d:"단축키는 설정 › 단축키",g:"옵시디언",x:"obsidian settings 설정"},
+ // 지정 제안 — 아직 안 걸림
+ {id:"ob-daily",k:[["⌃","⌥","D"]],t:"오늘 데일리 노트 열기",d:"하루의 거울 — 매일 여러 번 연다",g:"옵시디언",tag:"내 설정",x:"obsidian daily note 데일리"},
+ {id:"ob-tmpl",k:[["⌃","⌥","T"]],t:"템플릿 삽입",d:"BRAIN Note·태스크·카드 만들 때마다",g:"옵시디언",tag:"내 설정",x:"obsidian template 템플릿"},
+ {id:"ob-split",k:[["⌃","⌥","S"]],t:"오른쪽으로 분할",d:"위키 페이지와 노트를 나란히",g:"옵시디언",tag:"내 설정",x:"obsidian split 분할"},
+ {id:"ob-outline",k:[["⌃","⌥","O"],["⌃","⌥","B"]],t:"아웃라인 / 백링크 열기",d:"긴 위키 페이지를 훑을 때",g:"옵시디언",tag:"내 설정",x:"obsidian outline backlink 아웃라인"},
+ {id:"ob-cal",k:[["⌃","⌥","C"]],t:"캘린더 열기",d:"지난 데일리로 건너뛸 때",g:"옵시디언",tag:"내 설정",x:"obsidian calendar 캘린더"},
+ {id:"ob-reveal",k:[["⌃","⌥","E"]],t:"파일 탐색기에서 현재 파일 보기",d:"이 노트가 어느 폴더에 있는지",g:"옵시디언",tag:"내 설정",x:"obsidian reveal file 탐색기"},
+ {id:"ob-focus",k:[["⌃","⌥","F"]],t:"집중 모드 (Minimal)",d:"사이드바·탭을 숨기고 글만 — 초안 쓸 때",g:"옵시디언",tag:"내 설정",x:"obsidian focus mode minimal 집중"},
+
+ // iTerm2 · 클로드 코드
+ {id:"it-split",k:[["⌘","D"],["⌘","⇧","D"]],t:"창 좌우 / 위아래 분할",d:"왼쪽 claude, 오른쪽 결과",g:"iTerm2 · 클로드 코드",x:"iterm split 분할"},
+ {id:"it-move",k:[["⌘","["],["⌘","]"]],t:"분할한 창 사이 이동",d:"",g:"iTerm2 · 클로드 코드",x:"iterm pane 이동"},
+ {id:"it-hist",k:[["⌘",";"]],t:"이전 명령어 목록",d:"Shell Integration 설치 후",g:"iTerm2 · 클로드 코드",x:"iterm autocomplete 자동완성"},
+ {id:"it-del",k:[["⌘","⌫"]],t:"입력한 줄 전체 삭제",d:"Natural Text Editing 설정 후",g:"iTerm2 · 클로드 코드",x:"iterm delete line 줄삭제"},
+ {id:"cc-cmds",k:[["/compact"],["/context"]],t:"컨텍스트 줄이기 / 사용량 보기",d:"/rewind 변경 되돌리기 · /model 모델 바꾸기",g:"iTerm2 · 클로드 코드",x:"claude code slash compact context 명령"},
+
+ // 프리미어 프로
+ {id:"pr-jkl",k:[["J"],["K"],["L"]],t:"뒤로 / 멈춤 / 앞으로",d:"누를수록 빨라진다. ⇧J·⇧L은 느리게",g:"프리미어 프로",x:"premiere jkl shuttle playback 재생"},
+ {id:"pr-frame",k:[["←"],["→"],["⇧","←"]],t:"1프레임 / 5프레임 이동",d:"⇧←·⇧→가 5프레임",g:"프리미어 프로",x:"premiere frame step 프레임"},
+ {id:"pr-inout",k:[["I"],["O"]],t:"인점 / 아웃점",d:"⌥I·⌥O 지우기, ⌥X 둘 다 지우기",g:"프리미어 프로",x:"premiere in out mark 인점 아웃점"},
+ {id:"pr-goinout",k:[["⇧","I"],["⇧","O"]],t:"인점 / 아웃점으로 이동",d:"⌥K 인-아웃 구간만 재생",g:"프리미어 프로",x:"premiere go to in out"},
+ {id:"pr-cut",k:[["⌘","K"],["⇧","⌘","K"]],t:"플레이헤드에서 자르기 / 모든 트랙",d:"Add Edit — 커터 도구보다 빠르다",g:"프리미어 프로",x:"premiere add edit razor cut 자르기"},
+ {id:"pr-ripple",k:[["⇧","fn","⌫"]],t:"리플 삭제",d:"지우고 빈칸까지 당긴다. 타임라인 패널에선 ⌥⌫",g:"프리미어 프로",x:"premiere ripple delete 리플 삭제"},
+ {id:"pr-lift",k:[[";"],["'"]],t:"리프트 / 익스트랙트",d:"빈칸 남김 / 당김",g:"프리미어 프로",x:"premiere lift extract"},
+ {id:"pr-trim",k:[["⌥","←"],["⌥","→"]],t:"편집점 트림",d:"⌥⇧←·⌥⇧→는 여러 프레임. E는 플레이헤드까지 늘리기",g:"프리미어 프로",x:"premiere trim 트림"},
+ {id:"pr-zoom",k:[["="],["-"]],t:"타임라인 확대 / 축소",d:"",g:"프리미어 프로",x:"premiere zoom timeline 확대"},
+ {id:"pr-marker",k:[["M"],["⇧","M"]],t:"마커 찍기 / 다음 마커",d:"⌥M 현재 마커 지우기, ⌥⌘M 전부",g:"프리미어 프로",x:"premiere marker 마커"},
+ {id:"pr-tools",k:[["V"],["C"],["B"]],t:"선택 / 자르기 / 리플 편집 도구",d:"A 트랙선택 · N 롤링 · Y 슬립 · U 슬라이드 · P 펜 · H 손 · Z 줌 · X 속도조절",g:"프리미어 프로",x:"premiere tools v c b razor 도구"},
+ {id:"pr-nudge",k:[["⌘","←"],["⌘","→"]],t:"선택한 클립 1프레임 밀기",d:"⇧⌘←·⇧⌘→는 5프레임",g:"프리미어 프로",x:"premiere nudge 밀기"},
+ {id:"pr-snap",k:[["S"]],t:"스냅 켜기/끄기",d:"",g:"프리미어 프로",x:"premiere snap 스냅"},
+ {id:"pr-match",k:[["F"]],t:"매치 프레임",d:"지금 화면의 원본 클립을 소스 창에",g:"프리미어 프로",x:"premiere match frame"},
+ {id:"pr-speed",k:[["⌘","R"]],t:"속도 · 길이",d:"",g:"프리미어 프로",x:"premiere speed duration 속도"},
+ {id:"pr-group",k:[["⌘","G"],["⇧","⌘","G"]],t:"그룹 / 그룹 해제",d:"",g:"프리미어 프로",x:"premiere group 그룹"},
+ {id:"pr-io",k:[["⌘","I"],["⌘","M"]],t:"가져오기 / 내보내기",d:"Export Media",g:"프리미어 프로",x:"premiere import export 내보내기"},
+ {id:"pr-render",k:[["Return"]],t:"작업 구간 렌더",d:"",g:"프리미어 프로",x:"premiere render 렌더"},
+
+ // 크롬
+ {id:"ch-tab",k:[["⌘","T"],["⌘","W"],["⇧","⌘","T"]],t:"새 탭 / 닫기 / 닫은 탭 되살리기",d:"⇧⌘T는 실수로 닫았을 때",g:"크롬",x:"chrome tab reopen 탭"},
+ {id:"ch-move",k:[["⌘","⌥","←"],["⌘","⌥","→"]],t:"이전 / 다음 탭",d:"",g:"크롬",x:"chrome next previous tab"},
+ {id:"ch-num",k:[["⌘","1"],["⌘","9"]],t:"그 탭으로 / 마지막 탭",d:"⌘1~⌘8이 순서대로",g:"크롬",x:"chrome jump tab 번호"},
+ {id:"ch-url",k:[["⌘","L"]],t:"주소창으로",d:"검색어를 바로 입력",g:"크롬",x:"chrome address bar url 주소창"},
+ {id:"ch-find",k:[["⌘","F"]],t:"페이지에서 찾기",d:"",g:"크롬",x:"chrome find 찾기"},
+ {id:"ch-reload",k:[["⇧","⌘","R"]],t:"캐시 무시하고 새로고침",d:"",g:"크롬",x:"chrome hard reload 새로고침"},
+ {id:"ch-bm",k:[["⌘","D"],["⇧","⌘","B"]],t:"북마크 추가 / 북마크바",d:"",g:"크롬",x:"chrome bookmark 북마크"},
+ {id:"ch-dl",k:[["⇧","⌘","J"],["⌘","Y"]],t:"다운로드 / 방문 기록",d:"",g:"크롬",x:"chrome downloads history 다운로드"},
+ {id:"ch-dev",k:[["⌥","⌘","I"]],t:"개발자 도구",d:"",g:"크롬",x:"chrome devtools 개발자"},
+ {id:"ch-zoom",k:[["⌘","+"],["⌘","-"],["⌘","0"]],t:"확대 / 축소 / 원래대로",d:"",g:"크롬",x:"chrome zoom 확대"},
+ {id:"ch-newtab",k:[["⌘","클릭"]],t:"링크를 새 탭에서 열기",d:"",g:"크롬",x:"chrome open link new tab"},
+
+ // 노션
+ {id:"no-search",k:[["⌘","P"],["⌘","K"]],t:"검색 / 최근 페이지로 이동",d:"노션 안에서 제일 많이 쓰는 키",g:"노션",x:"notion search 검색"},
+ {id:"no-new",k:[["⌘","N"]],t:"새 페이지",d:"",g:"노션",x:"notion new page 새페이지"},
+ {id:"no-slash",k:[["/"]],t:"슬래시 명령",d:"블록 종류 전체 — 표·토글·임베드",g:"노션",x:"notion slash command 슬래시"},
+ {id:"no-find",k:[["⌘","F"]],t:"이 페이지에서 찾기",d:"",g:"노션",x:"notion find 찾기"},
+ {id:"no-head",k:[["⌘","⌥","1"],["⌘","⌥","2"],["⌘","⌥","3"]],t:"제목 H1 / H2 / H3",d:"",g:"노션",x:"notion heading 제목"},
+ {id:"no-todo",k:[["⌘","⌥","4"]],t:"체크박스 블록",d:"",g:"노션",x:"notion todo checkbox 체크박스"},
+ {id:"no-code",k:[["⌘","⌥","8"]],t:"코드 블록",d:"",g:"노션",x:"notion code block 코드"},
+ {id:"no-link",k:[["⌘","K"]],t:"선택한 글자에 링크 걸기",d:"텍스트를 고른 상태에서",g:"노션",x:"notion link 링크"},
+ {id:"no-dup",k:[["⌘","D"]],t:"블록 복제",d:"⌘A로 블록을 먼저 고른다",g:"노션",x:"notion duplicate 복제"},
+ {id:"no-sel",k:[["⌘","A"]],t:"블록 선택",d:"한 번 더 누르면 범위가 넓어진다",g:"노션",x:"notion select block 선택"},
+ {id:"no-indent",k:[["Tab"],["⇧","Tab"]],t:"들여쓰기 / 내어쓰기",d:"하위 블록으로 중첩",g:"노션",x:"notion indent 들여쓰기"},
+ {id:"no-comment",k:[["⌘","⇧","M"]],t:"댓글 달기",d:"",g:"노션",x:"notion comment 댓글"},
+ {id:"no-dark",k:[["⌘","⇧","L"]],t:"다크 ↔ 라이트",d:"",g:"노션",x:"notion dark mode 다크"},
+
+ // Todoist
+ {id:"td-quick",k:[["⌥","Space"]],t:"전역 빠른 추가",d:"다른 앱에 있어도 바로 할 일 추가 — 맥 앱 기본값",g:"Todoist",tag:"전역",x:"todoist quick add 빠른추가"},
+ {id:"td-q",k:[["Q"]],t:"앱 안에서 빠른 추가",d:"추가창에서 #프로젝트, p1~p4로 우선순위",g:"Todoist",x:"todoist add task 추가"},
+ {id:"td-done",k:[["E"]],t:"작업 완료",d:"커서를 올린 작업에",g:"Todoist",x:"todoist complete done 완료"},
+ {id:"td-date",k:[["T"]],t:"날짜 지정",d:"",g:"Todoist",x:"todoist date due 날짜"},
+ {id:"td-pri",k:[["1"],["2"],["3"],["4"]],t:"우선순위 P1~P4",d:"",g:"Todoist",x:"todoist priority 우선순위"},
+ {id:"td-move",k:[["V"]],t:"다른 프로젝트·섹션으로 이동",d:"",g:"Todoist",x:"todoist move project 이동"},
+ {id:"td-edit",k:[["⌘","E"]],t:"작업 편집",d:"⌥ + 클릭도 같다",g:"Todoist",x:"todoist edit 편집"},
+ {id:"td-search",k:[["/"],["F"]],t:"검색",d:"",g:"Todoist",x:"todoist search 검색"},
+ {id:"td-view",k:[["⌘","2"],["⌘","3"]],t:"오늘 / 예정 보기",d:"",g:"Todoist",x:"todoist today upcoming 오늘"},
+ {id:"td-go",k:[["G","T"],["G","I"]],t:"오늘로 / 받은함으로 이동",d:"G 누르고 T·U·I",g:"Todoist",x:"todoist go inbox 이동"},
+ {id:"td-sub",k:[["⌃","]"]],t:"하위 작업으로 만들기",d:"위 작업 아래로 들여쓴다",g:"Todoist",x:"todoist subtask 하위작업"},
+ {id:"td-undo",k:[["⌘","Z"]],t:"실행취소",d:"화면에 Undo 버튼이 떠 있는 동안만",g:"Todoist",x:"todoist undo 실행취소"},
+
+ // 구글 시트
+ {id:"gs-paste",k:[["⌘","⇧","V"]],t:"값만 붙여넣기",d:"수식·서식 버리고 값만 — 제일 많이 쓴다",g:"구글 시트",x:"sheets paste values 값만"},
+ {id:"gs-rowcol",k:[["⌘","⌥","="],["⌘","⌥","-"]],t:"행·열 삽입 / 삭제",d:"행이나 열을 먼저 선택한 상태에서",g:"구글 시트",x:"sheets insert delete row column 행 열"},
+ {id:"gs-select",k:[["⌃","Space"],["⇧","Space"]],t:"열 전체 / 행 전체 선택",d:"",g:"구글 시트",x:"sheets select column row 선택"},
+ {id:"gs-end",k:[["⌘","fn","←"],["⌘","fn","→"]],t:"시트 맨 처음 / 맨 끝으로",d:"fn→ 만 누르면 그 행의 오른쪽 끝",g:"구글 시트",x:"sheets go start end 이동"},
+ {id:"gs-date",k:[["⌘",";"],["⌘","⇧",";"]],t:"오늘 날짜 / 현재 시간 입력",d:"매출·지출 기록할 때",g:"구글 시트",x:"sheets date time 날짜"},
+ {id:"gs-clear",k:[["⌘","\\"]],t:"서식 지우기",d:"붙여넣기로 딸려온 색·굵기 제거",g:"구글 시트",x:"sheets clear format 서식"},
+ {id:"gs-fill",k:[["⌘","D"],["⌘","R"]],t:"아래로 / 오른쪽으로 채우기",d:"수식 복사",g:"구글 시트",x:"sheets fill down right 채우기"},
+ {id:"gs-filter",k:[["⌃","⌘","R"]],t:"필터 드롭다운 열기",d:"필터가 걸린 셀에서",g:"구글 시트",x:"sheets filter 필터"},
+ {id:"gs-formula",k:[["⌃","~"]],t:"수식 표시 ↔ 값 표시",d:"어디가 수식인지 한눈에",g:"구글 시트",x:"sheets show formula 수식"},
+ {id:"gs-sheet",k:[["⌥","→"],["⌥","←"]],t:"다음 / 이전 시트",d:"맥북 기준. 외장 키보드는 ⌥↓·⌥↑",g:"구글 시트",x:"sheets next sheet 시트이동"},
+ {id:"gs-num",k:[["⌃","⇧","4"],["⌃","⇧","5"]],t:"통화 / 백분율 서식",d:"⌃⇧1 소수점 · ⌃⇧3 날짜",g:"구글 시트",x:"sheets currency percent 통화"},
+ {id:"gs-border",k:[["⌥","⇧","7"],["⌥","⇧","6"]],t:"외곽 테두리 / 테두리 제거",d:"",g:"구글 시트",x:"sheets border 테두리"},
+
+ // 구글 문서
+ {id:"gd-head",k:[["⌘","⌥","1"],["⌘","⌥","2"],["⌘","⌥","0"]],t:"제목 1 / 2 / 일반 텍스트",d:"1~6까지 같은 방식",g:"구글 문서",x:"docs heading 제목"},
+ {id:"gd-list",k:[["⌘","⇧","8"],["⌘","⇧","7"]],t:"글머리 기호 / 번호 목록",d:"",g:"구글 문서",x:"docs bullet number list 목록"},
+ {id:"gd-paste",k:[["⌘","⇧","V"]],t:"서식 없이 붙여넣기",d:"",g:"구글 문서",x:"docs paste plain 서식없이"},
+ {id:"gd-clear",k:[["⌘","\\"]],t:"텍스트 서식 지우기",d:"",g:"구글 문서",x:"docs clear formatting 서식"},
+ {id:"gd-comment",k:[["⌘","⌥","M"]],t:"댓글 삽입",d:"⌘⌥⇧A는 댓글 기록 전체 열기",g:"구글 문서",x:"docs comment 댓글"},
+ {id:"gd-find",k:[["⌘","F"],["⌘","⇧","H"]],t:"찾기 / 찾기·바꾸기",d:"",g:"구글 문서",x:"docs find replace 찾기"},
+ {id:"gd-link",k:[["⌘","K"]],t:"링크 삽입·편집",d:"",g:"구글 문서",x:"docs link 링크"},
+ {id:"gd-indent",k:[["⌘","["],["⌘","]"]],t:"들여쓰기 줄이기 / 늘리기",d:"",g:"구글 문서",x:"docs indent 들여쓰기"},
+ {id:"gd-outline",k:[["⌃","⌘","A","H"]],t:"문서 개요 표시",d:"⌃⌘ 누른 채 A 다음 H",g:"구글 문서",x:"docs outline 개요"},
+ {id:"gd-count",k:[["⌘","⇧","C"]],t:"단어 수 보기",d:"",g:"구글 문서",x:"docs word count 단어수"},
+ {id:"gd-menu",k:[["⌥","/"]],t:"도구 찾기 (메뉴 검색)",d:"메뉴를 뒤지지 않고 기능 이름으로",g:"구글 문서",x:"docs menu search 도구찾기"},
+
+ // Gmail
+ {id:"gm-compose",k:[["C"]],t:"새 메일 작성",d:"",g:"Gmail",x:"gmail compose 작성"},
+ {id:"gm-send",k:[["⌘","↩"]],t:"보내기",d:"",g:"Gmail",x:"gmail send 보내기"},
+ {id:"gm-reply",k:[["R"],["A"],["F"]],t:"답장 / 전체 답장 / 전달",d:"",g:"Gmail",x:"gmail reply forward 답장"},
+ {id:"gm-archive",k:[["E"]],t:"보관",d:"받은함에서 치우되 지우진 않는다",g:"Gmail",x:"gmail archive 보관"},
+ {id:"gm-nav",k:[["J"],["K"]],t:"이전 / 다음 대화",d:"",g:"Gmail",x:"gmail next previous 이동"},
+ {id:"gm-open",k:[["O"]],t:"대화 열기",d:"Enter도 같다",g:"Gmail",x:"gmail open 열기"},
+ {id:"gm-search",k:[["/"]],t:"검색창으로",d:"",g:"Gmail",x:"gmail search 검색"},
+ {id:"gm-read",k:[["⇧","I"],["⇧","U"]],t:"읽음 / 읽지 않음 표시",d:"",g:"Gmail",x:"gmail read unread 읽음"},
+ {id:"gm-star",k:[["S"]],t:"별표",d:"",g:"Gmail",x:"gmail star 별표"},
+ {id:"gm-select",k:[["X"]],t:"대화 선택(체크)",d:"여러 개 골라 한꺼번에 처리",g:"Gmail",x:"gmail select 선택"},
+ {id:"gm-del",k:[["#"]],t:"삭제",d:"",g:"Gmail",x:"gmail delete 삭제"},
+ {id:"gm-undo",k:[["Z"]],t:"마지막 작업 실행취소",d:"",g:"Gmail",x:"gmail undo 실행취소"},
+
+ // 녹화·미리보기
+ {id:"rec-new",k:[["⌃","⌘","N"]],t:"새 화면 기록 (QuickTime)",d:"QuickTime에서 파일 › 새로운 화면 기록",g:"녹화·미리보기",x:"quicktime screen recording 화면녹화"},
+ {id:"rec-stop",k:[["⌃","⌘","esc"]],t:"화면 기록 정지",d:"녹화 중 어디서나",g:"녹화·미리보기",x:"stop recording 정지 녹화"},
+ {id:"pv-page",k:[["⌥","↓"],["⌥","↑"]],t:"다음 / 이전 페이지 (미리보기)",d:"PDF 넘기기",g:"녹화·미리보기",x:"preview page pdf 페이지"},
+ {id:"pv-doc",k:[["⌥","fn","↓"],["⌥","fn","↑"]],t:"창 안의 다음 / 이전 문서",d:"",g:"녹화·미리보기",x:"preview document 문서"},
+ {id:"pv-zoom",k:[["⌥","⌘","+"],["⌥","⌘","-"]],t:"모든 이미지 확대 / 축소",d:"",g:"녹화·미리보기",x:"preview zoom 확대"},
+ {id:"pv-fit",k:[["⌥","⌘","9"],["⌥","⌘","0"]],t:"창에 맞춤 / 실제 크기",d:"",g:"녹화·미리보기",x:"preview fit actual size 맞춤"},
+ {id:"pv-bg",k:[["⇧","⌘","K"]],t:"배경 제거",d:"상품 사진 누끼 — 미리보기에서 바로",g:"녹화·미리보기",x:"preview remove background 배경제거 누끼"},
+ {id:"pv-del",k:[["⌫"]],t:"PDF 페이지 삭제",d:"축소판에서 페이지를 고른 뒤",g:"녹화·미리보기",x:"preview delete page pdf 페이지삭제"},
+ {id:"pv-tab",k:[["⌃","Tab"],["⌃","⇧","Tab"]],t:"다음 / 이전 탭",d:"",g:"녹화·미리보기",x:"preview tab 탭"},
+
+ // 캡컷
+ {id:"cc-play",k:[["Space"]],t:"재생 / 일시정지",d:"",g:"캡컷",x:"capcut play 재생"},
+ {id:"cc-split",k:[["⌘","B"],["⌘","⇧","B"]],t:"클립 분할 / 모든 트랙 분할",d:"플레이헤드 위치에서",g:"캡컷",x:"capcut split cut 분할 자르기"},
+ {id:"cc-frame",k:[["←"],["→"],["⇧","→"]],t:"1프레임 / 여러 프레임 이동",d:"⇧ 붙이면 5프레임",g:"캡컷",x:"capcut frame 프레임"},
+ {id:"cc-del",k:[["⌫"]],t:"선택한 클립 삭제",d:"",g:"캡컷",x:"capcut delete 삭제"},
+ {id:"cc-undo",k:[["⌘","Z"],["⌘","⇧","Z"]],t:"실행취소 / 다시 실행",d:"",g:"캡컷",x:"capcut undo 실행취소"},
+ {id:"cc-zoom",k:[["⌘","+"],["⌘","-"]],t:"타임라인 확대 / 축소",d:"",g:"캡컷",x:"capcut zoom timeline 확대"},
+ {id:"cc-clip",k:[["⌘","C"],["⌘","X"],["⌘","V"]],t:"복사 / 잘라내기 / 붙여넣기",d:"",g:"캡컷",x:"capcut copy paste 복사"},
+ {id:"cc-import",k:[["⌘","I"],["⌘","N"]],t:"미디어 가져오기 / 새 프로젝트",d:"",g:"캡컷",x:"capcut import new 가져오기"},
+ {id:"cc-speed",k:[["⌘","R"]],t:"속도 패널",d:"",g:"캡컷",x:"capcut speed 속도"}
+];
+
+var PROJECTS = [
+ {name:"AI 4강 실전 프로젝트", role:"LLM 위키 · AI활용자", ids:["ob-palette","ob-switch","ob-search","tile","it-split"]},
+ {name:"이벤트랩 콘텐츠 마케팅", role:"미디어크리에이터", ids:["pr-jkl","pr-inout","pr-cut","shot5","quicklook"]},
+ {name:"키워서보내다 매출 성장", role:"사업가", ids:["pastematch","wordmove","spotlight","goto"]},
+ {name:"턱걸이 20개", role:"신체 퍼포먼스", ids:["shot4","shotclip"]}
+];
+var MODES = [
+ {id:"wiki", name:"위키 정리", why:"두 창을 왕복한다 — 찾기·분할·붙여넣기가 전부다.",
+  keys:["위키","ingest","인제스트","정리","llm","목차","index","링크","지식","노트정리","브레인","컴파일"],
+  ids:["ob-switch","ob-search","ob-split","ob-outline","ob-newtab","ob-palette","tile","apptab","pastematch"]},
+ {id:"write", name:"노트 쓰기", why:"손이 키보드를 안 떠나는 게 전부. 집중 모드로 창부터 비운다.",
+  keys:["글","쓰기","노트","저널","brain","묵상","데일리","일기","초안","정제","기록","회고"],
+  ids:["ob-daily","ob-focus","ob-tmpl","ob-new","ob-check","ob-fmt","ob-line","wordmove","delword"]},
+ {id:"video", name:"영상 편집 (프리미어)", why:"왼손은 JKL, 오른손만 마우스. 컷은 ⌘K로 찍고 리플로 당긴다.",
+  keys:["프리미어","premiere","영상","편집","컷","ep","미드폼","숏폼","자막","렌더","이벤트랩","유튜브"],
+  ids:["pr-jkl","pr-inout","pr-cut","pr-ripple","pr-trim","pr-zoom","pr-marker","pr-tools","shot5"]},
+ {id:"capcut", name:"영상 편집 (캡컷)", why:"분할 ⌘B 하나와 프레임 이동만 붙으면 된다. 나머지는 마우스가 빠르다.",
+  keys:["캡컷","capcut","컷편집","릴스","쇼츠"],
+  ids:["cc-play","cc-split","cc-frame","cc-del","cc-undo","cc-zoom","cc-clip","cc-speed","shot5"]},
+ {id:"money", name:"재정·숫자", why:"시트는 ⌃(Control)를 쓰는 게 많다. 값만 붙여넣기와 오늘 날짜가 반이다.",
+  keys:["재정","예산","매출","지출","가계부","시트","sheet","숫자","정산","계산","단가"],
+  ids:["gs-paste","gs-date","gs-rowcol","gs-fill","gs-num","gs-formula","gs-select","spotlight","shot4"]},
+ {id:"mail", name:"메일·연락", why:"Gmail은 설정에서 단축키를 켜야 먹는다. 켜면 손이 마우스로 안 간다.",
+  keys:["메일","mail","gmail","지메일","답장","연락","발송","보내"],
+  ids:["gm-compose","gm-send","gm-reply","gm-archive","gm-nav","gm-search","gm-star","pastematch","lang"]},
+ {id:"task", name:"태스크·루틴", why:"⌥Space는 어느 앱에 있든 먹는다 — 떠오른 걸 그 자리에서 던진다.",
+  keys:["태스크","할일","투두","todoist","루틴","점검","계획","정리하자","데일리"],
+  ids:["td-quick","td-q","td-done","td-date","td-pri","td-view","ob-daily","ob-check"]},
+ {id:"notion", name:"노션 정리", why:"블록 만드는 키 세 개와 슬래시만 알면 마우스가 필요 없다.",
+  keys:["노션","notion","데이터베이스","페이지 정리","회의록"],
+  ids:["no-search","no-slash","no-new","no-head","no-todo","no-link","no-comment","no-indent"]},
+ {id:"record", name:"녹화·자료 보기", why:"강의 찍고 PDF 확인하는 자리. 정지 단축키를 모르면 녹화가 안 끊긴다.",
+  keys:["녹화","강의","화면","quicktime","pdf","미리보기","캡쳐본","자료보기","누끼","배경"],
+  ids:["rec-new","rec-stop","shot5","pv-page","pv-fit","pv-bg","pv-del","apptab"]},
+ {id:"term", name:"터미널·클로드 코드", why:"한 창에 claude, 한 창에 결과. 분할부터 깐다.",
+  keys:["터미널","클로드","claude","코드","iterm","명령","스크립트","깃","git","개발","자동화"],
+  ids:["it-split","it-move","it-hist","it-del","cc-cmds","tile","apptab","spotlight"]},
+ {id:"research", name:"자료 조사", why:"크롬에서 보고 볼트로 넘긴다 — 탭과 클립보드 싸움.",
+  keys:["조사","검색","자료","크롬","리서치","레퍼런스","찾","공부","강의","수강","읽"],
+  ids:["ch-url","ch-tab","ch-find","ch-num","shotclip","pastematch","ob-switch","tile"]},
+ {id:"files", name:"파일·캡처 정리", why:"인박스 비우기 — 열지 말고 훑고 옮긴다.",
+  keys:["파일","정리","캡처","인박스","폴더","사진","이미지","스크린샷","분류","옮기","지우"],
+  ids:["shot4","quicklook","views","newfolder","goto","trash","dup","pathbar"]},
+ {id:"sales", name:"영업·문서", why:"붙여넣기와 커서가 전부. 서식은 버리고 글만 옮긴다.",
+  keys:["영업","문서","견적","고객","정육","흑염소","제안서","발주","거래처","docs","보고서"],
+  ids:["gd-paste","gd-head","gd-list","gd-comment","gd-find","wordmove","spotlight","lang","textrep"]}
+];
+
+var ADDED = [];            // 앱에서 채워 넣은 것 (db에 보관)
+var ITEMS = D;             // D + ADDED
+var BY_ID = {};
+function reindex(){
+  ITEMS = D.concat(ADDED);
+  BY_ID = {}; ITEMS.forEach(function(s){BY_ID[s.id]=s});
+}
+reindex();
+var STARTER = D.filter(function(s){return s.starter});
+function areaList(){
+  var names = GROUPS.map(function(G){return G.g});
+  ADDED.forEach(function(s){ if(names.indexOf(s.g)<0) names.push(s.g) });
+  return names;
+}
+function areaLead(name){
+  var G = GROUPS.filter(function(g){return g.g===name})[0];
+  if(G && G.lead) return G.lead;
+  if(ADDED.some(function(s){return s.g===name}))
+    return "앱에서 채운 영역이다. <b>공식 문서로 검증한 값이 아니다</b> — 실제로 눌러 보고, 안 먹는 건 알려 주면 뺀다.";
+  return "";
+}
+
+function load(k,fb){ try{var v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch(e){return fb} }
+function save(k,v){ try{localStorage.setItem(k,JSON.stringify(v))}catch(e){} }
+var marks = load("mk.marks", null);
+if(!marks){
+  marks = {};
+  (load("mk.favs",[])||[]).forEach(function(id){marks[id]="fav"});
+  (load("mk.core",[])||[]).forEach(function(id){marks[id]="pass"});
+  save("mk.marks", marks);
+}
+Object.keys(marks).forEach(function(k){ if(marks[k]==="known") marks[k]="pass" });
+var filter = "전체";
+
+function cap(k){ return "<kbd"+(String(k).length>2?" class=\"wide\"":"")+">"+k+"</kbd>" }
+function combo(cs){
+  return "<span class=\"combo\">"+cs.map(function(c){return c.map(cap).join("")}).join("<span class=\"sep\">/</span>")+"</span>";
+}
+function row(s){
+  var m = marks[s.id] || "";
+  return "<div class=\"row"+(m==="pass"?" passed":"")+(s.todo?" todo":"")+"\">"+
+    "<div class=\"name\">"+s.t+(s.tag?"<span class=\"tag"+(s.unver?" unver":"")+"\">"+s.tag+"</span>":"")+
+    (s.d?"<span class=\"desc\">"+s.d+"</span>":"")+"</div>"+
+    combo(s.k)+
+    "<div class=\"marks\">"+
+      "<button type=\"button\" class=\"mk pass\" data-mark=\"pass\" data-id=\""+s.id+"\" aria-pressed=\""+(m==="pass")+"\" aria-label=\""+s.t+" 패스\" title=\"패스 — 아는 것\">✓</button>"+
+      "<button type=\"button\" class=\"mk fav\" data-mark=\"fav\" data-id=\""+s.id+"\" aria-pressed=\""+(m==="fav")+"\" aria-label=\""+s.t+" 즐겨찾기\" title=\"즐겨찾기\">★</button>"+
+    "</div></div>";
+}
+function block(title, list, opts){
+  opts = opts || {};
+  var passed = list.filter(function(s){return marks[s.id]==="pass"}).length;
+  var shown = opts.showPassed ? list : list.filter(function(s){return marks[s.id]!=="pass"});
+  return "<div class=\"block"+(opts.cls?" "+opts.cls:"")+"\">"+
+    "<div class=\"block-head\"><h2>"+title+"</h2><i class=\"hr\"></i>"+
+    "<span class=\"meta\">"+shown.length+(passed?" · 패스 "+passed:"")+"</span></div>"+
+    (opts.lead||"")+
+    (shown.length ? "<div class=\"grid\">"+shown.map(row).join("")+"</div>"
+                  : "<p class=\"empty\">다 패스했다 — 「패스」 탭에 있다.</p>")+
+    "</div>";
+}
+
+function renderSections(){
+  var html = "";
+  var first = filter==="전체" ? STARTER : STARTER.filter(function(s){return s.g===filter});
+  if(first.length){
+    var open = STARTER.filter(function(s){return marks[s.id]!=="pass"});
+    var pick = open.length ? open[Math.floor(Date.now()/86400000) % open.length] : null;
+    var lead = "<p class=\"lead\">하루 열 번 하는 동작부터. "+
+      (pick ? "오늘 하나 — <b>"+pick.t+"</b> " + combo(pick.k)
+            : "7개 다 붙였다.")+"</p>";
+    html += block("먼저 이것만"+(filter==="전체"?" 7개":""), first, {cls:"first", lead:lead});
+  }
+  html += areaList().filter(function(g){return filter==="전체"||filter===g}).map(function(g){
+    var lead = areaLead(g);
+    return block(g, ITEMS.filter(function(s){return s.g===g && !s.starter}),
+      lead ? {lead:"<p class=\"lead\">"+lead+"</p>"} : {});
+  }).join("");
+  document.getElementById("sections").innerHTML = html;
+  var btn = document.getElementById("goto-pass");
+  var n = Object.keys(marks).filter(function(k){return marks[k]==="pass"}).length;
+  btn.hidden = !n;
+  btn.textContent = "패스한 " + n + "개 보기 →";
+}
+function renderChips(){
+  var live = ITEMS.filter(function(s){return marks[s.id]!=="pass"});
+  var names = [{g:"전체",n:live.length}].concat(areaList().map(function(g){
+    return {g:g, n:live.filter(function(s){return s.g===g}).length};
+  }));
+  document.getElementById("chips").innerHTML = names.map(function(o){
+    return "<button type=\"button\" class=\"chip\" data-chip=\""+o.g+"\" aria-pressed=\""+(filter===o.g)+"\">"+
+      o.g+"<span class=\"n\">"+o.n+"</span></button>";
+  }).join("");
+}
+function renderBoard(){
+  document.getElementById("board").innerHTML = PROJECTS.map(function(p){
+    return "<div class=\"proj\"><h3>"+p.name+"</h3><span class=\"role\">"+p.role+"</span><ul>"+
+      p.ids.map(function(id){var s=BY_ID[id];
+        return "<li><span>"+s.t+"</span>"+combo(s.k)+"</li>"}).join("")+"</ul></div>";
+  }).join("");
+}
+function renderList(kind){
+  var list = ITEMS.filter(function(s){return marks[s.id]===kind});
+  var el = document.getElementById(kind==="fav"?"view-fav":"view-pass");
+  var title = kind==="fav" ? "즐겨찾기" : "패스한 것";
+  el.innerHTML = list.length
+    ? block(title, list, {showPassed:true})
+    : "<div class=\"block\"><div class=\"block-head\"><h2>"+title+"</h2><i class=\"hr\"></i></div><p class=\"empty\">"+
+      (kind==="fav"?"아직 없다. 목록에서 ★을 눌러 모은다.":"아직 없다. 아는 건 ✓로 빼면 목록이 가벼워진다.")+"</p></div>";
+}
+
+/* 지금 — 맥락을 주면 그 일에 쓰는 것만 */
+var pickedMode = null;
+function matchMode(text){
+  var t = (text||"").toLowerCase();
+  if(!t.trim()) return null;
+  var best=null, bestN=0;
+  MODES.forEach(function(M){
+    var n=0; M.keys.forEach(function(w){ if(t.indexOf(w)>-1) n++ });
+    if(n>bestN){ bestN=n; best=M }
+  });
+  return best;
+}
+function renderNow(){
+  var typed = document.getElementById("ctx").value;
+  var auto = matchMode(typed);
+  var M = pickedMode ? MODES.filter(function(m){return m.id===pickedMode})[0] : auto;
+  document.getElementById("modes").innerHTML = MODES.map(function(m){
+    return "<button type=\"button\" class=\"mode\" data-mode=\""+m.id+"\" aria-pressed=\""+(M&&M.id===m.id)+"\">"+m.name+"</button>";
+  }).join("");
+  var out = document.getElementById("now-out");
+  if(!M){
+    out.innerHTML = "<p class=\"why\">하는 일을 적거나 위에서 고르면 그 일에 쓰는 것만 추려서 보여준다. 아직 안 정했으면 이것부터.</p>"+
+      block("먼저 이것만 7개", STARTER, {cls:"first"});
+    return;
+  }
+  var list = M.ids.map(function(id){return BY_ID[id]}).filter(Boolean);
+  var obs = list.filter(function(s){return s.g==="옵시디언"});
+  out.innerHTML =
+    "<p class=\"why\"><b>"+M.name+"</b> — "+M.why+(auto&&!pickedMode?" <span style=\"color:var(--faint)\">(적은 내용으로 고름)</span>":"")+"</p>"+
+    block("지금 쓸 단축키", list, {}) +
+    (obs.length ? "<p class=\"why\">이 모드의 볼트 키 "+obs.length+"개는 <code>hotkeys.json</code>에 걸어 둔 것 — 옵시디언을 ⌘Q로 껐다 켜야 먹는다.</p>" : "");
+}
+
+var VIEWS = {now:"view-now", home:"view-home", fav:"view-fav", pass:"view-pass"};
+var current = "now";
+function show(name){
+  current = name;
+  Object.keys(VIEWS).forEach(function(k){
+    document.getElementById(VIEWS[k]).hidden = (k!==name);
+    document.getElementById("tab-"+k).setAttribute("aria-selected", String(k===name));
+  });
+  document.getElementById("view-search").hidden = true;
+  document.getElementById("chips").hidden = (name!=="home");
+  if(name==="now") renderNow();
+  if(name==="fav") renderList("fav");
+  if(name==="pass") renderList("pass");
+}
+function runSearch(){
+  var t = document.getElementById("q").value.trim().toLowerCase();
+  if(!t){ show(current); return; }
+  Object.keys(VIEWS).forEach(function(k){ document.getElementById(VIEWS[k]).hidden = true });
+  var res = ITEMS.filter(function(s){
+    var hay = (s.t+" "+(s.d||"")+" "+(s.x||"")+" "+s.g+" "+s.k.map(function(c){return c.join("")}).join(" ")).toLowerCase();
+    return hay.indexOf(t)>-1;
+  });
+  var hidden = res.filter(function(s){return marks[s.id]==="pass"}).length;
+  res = res.filter(function(s){return marks[s.id]!=="pass"});
+  var sv = document.getElementById("view-search");
+  sv.hidden = false;
+  sv.innerHTML = res.length ? block("‘"+t+"’ 검색", res, {
+      lead: hidden ? "<p class=\"lead\">패스한 "+hidden+"개는 뺐다 — 「패스」 탭에 있다.</p>" : ""})
+    : "<div class=\"block\"><div class=\"block-head\"><h2>‘"+t+"’ — 없다</h2><i class=\"hr\"></i></div>"+
+      "<p class=\"empty\">한글(복사·캡처·리플)이나 영문(cmd, finder, premiere)으로 다시 찾아보거나, "+
+      "<b>정말 없으면 채워 넣는다.</b></p>"+
+      "<div class=\"askrow\" style=\"margin-bottom:14px\"><button class=\"btn\" type=\"button\" data-fill=\""+
+      t.replace(/"/g,"&quot;")+"\">‘"+t+"’ 찾아서 넣기</button></div></div>";
+}
+function refresh(){
+  renderChips(); renderSections();
+  if(!document.getElementById("view-search").hidden){ runSearch(); return }
+  if(current==="now") renderNow();
+  if(current==="fav") renderList("fav");
+  if(current==="pass") renderList("pass");
+}
+
+document.addEventListener("click", function(e){
+  var mk = e.target.closest("[data-mark]");
+  if(mk){
+    var id = mk.getAttribute("data-id"), kind = mk.getAttribute("data-mark");
+    if(marks[id]===kind) delete marks[id]; else marks[id]=kind;
+    save("mk.marks", marks);
+    refresh();
+    return;
+  }
+  var fill = e.target.closest("[data-fill]");
+  if(fill){
+    document.getElementById("q").value = "";
+    show("now");
+    var box = document.getElementById("ask");
+    box.value = fill.getAttribute("data-fill");
+    askFor(box.value);
+    return;
+  }
+  var mode = e.target.closest("[data-mode]");
+  if(mode){
+    var mid = mode.getAttribute("data-mode");
+    pickedMode = (pickedMode===mid) ? null : mid;
+    renderNow();
+    return;
+  }
+  var chip = e.target.closest("[data-chip]");
+  if(chip){
+    filter = chip.getAttribute("data-chip");
+    renderChips(); renderSections();
+    if(current!=="home"){ document.getElementById("q").value=""; show("home") }
+    window.scrollTo({top:0,behavior:"instant"});
+    return;
+  }
+  var tab = e.target.closest("[role=tab]");
+  if(tab){ document.getElementById("q").value=""; show(tab.id.replace("tab-","")) }
+});
+document.getElementById("goto-pass").addEventListener("click", function(){
+  document.getElementById("q").value = "";
+  show("pass");
+  window.scrollTo({top:0, behavior:"instant"});
+});
+document.getElementById("q").addEventListener("input", runSearch);
+document.addEventListener("keydown", function(e){
+  var q = document.getElementById("q"), typing = document.activeElement===q;
+  if(e.key==="/" && !typing){ e.preventDefault(); q.focus(); return }
+  if(e.key==="Escape"){ q.value=""; runSearch(); q.blur() }
+});
+
+/* --- 없어요 → 채우기: Claude에게 묻고 db에 남긴다 --- */
+var SAMPLE = null, DB = null, askBusy = false;
+function slug(s){
+  return String(s||"").replace(/[^0-9A-Za-z가-힣]+/g,"-").replace(/^-+|-+$/g,"").slice(0,32) || "x";
+}
+function statusMsg(t, err){
+  var el = document.getElementById("ask-status");
+  el.hidden = !t; el.textContent = t || ""; el.className = "status" + (err ? " err" : "");
+}
+function docToItems(id, v){
+  var out = [];
+  (v.items||[]).forEach(function(it, i){
+    if(!it || !Array.isArray(it.keys) || !it.keys.length) return;
+    var keys = it.keys.map(function(c){ return Array.isArray(c) ? c.map(String) : [String(c)] });
+    out.push({ id:"add-"+id+"-"+i, k:keys, t:String(it.title||"").slice(0,60),
+      d:String(it.desc||"").slice(0,90), g:String(v.area||"추가됨").slice(0,20),
+      tag: it.confidence==="low" ? "확인 필요" : "앱 추가", unver:1,
+      x:String((v.area||"")+" "+(it.title||"")+" "+(v.q||"")) });
+  });
+  return out;
+}
+function repaint(){ reindex(); renderChips(); renderSections(); if(current==="now") renderNow() }
+
+var capReady;   // sample·db 준비가 끝나면 resolve
+(function(){
+  var done;
+  capReady = new Promise(function(r){ done = r });
+  if(!window.claude || typeof claude.use !== "function"){ done(); return }
+  var a = claude.use("sample").then(function(s){ SAMPLE = s }, function(){});
+  var b = claude.use("db").then(function(d){
+    if(!d) return;
+    DB = d;
+    try{
+      DB.collection("additions").onSnapshot(function(snap){
+        ADDED = [];
+        snap.docs.forEach(function(doc){
+          var v = doc.data();
+          if(v) ADDED = ADDED.concat(docToItems(doc.id, v));
+        });
+        repaint();
+      }, function(){});
+    }catch(e){}
+  }, function(){});
+  Promise.all([a, b]).then(function(){ done() }, function(){ done() });
+  setTimeout(done, 12000);   // 뷰어가 끝내 답이 없어도 버튼은 살아 있게
+})();
+
+var ASK_RULES =
+ "너는 macOS 키보드 단축키 레퍼런스다. 아래 요청에 해당하는 맥 단축키를 JSON으로만 답한다.\n\n" +
+ "규칙:\n" +
+ "- macOS 조합만. 기호는 ⌘ ⌥ ⌃ ⇧ fn 를 쓰고 글자는 대문자 한 글자로 쓴다. Windows의 Ctrl 버전은 쓰지 않는다.\n" +
+ "- 하루에 여러 번 쓰는 동작만 6~12개. 전부 나열하지 않는다.\n" +
+ "- 확실하지 않은 항목은 confidence를 \"low\"로 한다. 모르면 아예 넣지 않는다. 지어내지 않는다.\n" +
+ "- title과 desc는 한국어. desc는 한 줄, 없으면 빈 문자열.\n" +
+ "- area는 그 도구나 작업의 짧은 한국어 이름 (예: 슬랙, 피그마, 줌, 카카오톡).\n" +
+ "- 그 도구에 단축키가 없거나 요청이 단축키와 무관하면 items를 빈 배열로 둔다.\n\n" +
+ "형식 — 이 JSON 값 하나만, 다른 말 없이:\n" +
+ "{\"area\":\"슬랙\",\"items\":[{\"keys\":[[\"⌘\",\"K\"]],\"title\":\"대화로 이동\",\"desc\":\"채널·사람 이름으로\",\"confidence\":\"high\"}]}\n" +
+ "keys는 조합의 배열이다 — 대안이 둘이면 [[\"⌘\",\"K\"],[\"⌘\",\"T\"]].\n\n요청: ";
+
+function finishAsk(){
+  askBusy = false;
+  var b = document.getElementById("ask-go");
+  b.disabled = false; b.textContent = "찾아서 넣기";
+}
+function logRequest(q, why){
+  if(!DB){
+    statusMsg(why + " 이 화면에서는 저장도 안 된다 — 대화창에서 “단축키에 " + q + " 넣어줘”라고 하면 내가 넣는다.", true);
+    finishAsk(); return;
+  }
+  DB.collection("requests").doc(slug(q)+"-"+Date.now().toString(36).slice(-4))
+    .set({ q:q, createdAt:new Date().toISOString(), done:false })
+    .then(function(){
+      document.getElementById("ask").value = "";
+      statusMsg(why + " 요청으로 남겼다 — 다음에 내가 공식 문서로 찾아서 넣는다.");
+    })
+    .catch(function(){
+      statusMsg(why + " 저장도 안 됐다 — 대화창에서 말해 주면 내가 넣는다.", true);
+    })
+    .then(finishAsk);
+}
+function askFor(q){
+  q = String(q||"").trim();
+  if(!q || askBusy) return;
+  askBusy = true;
+  var btn = document.getElementById("ask-go");
+  btn.disabled = true; btn.textContent = "찾는 중…";
+  statusMsg("준비 중…");
+  capReady.then(function(){
+    if(!SAMPLE){ logRequest(q, "이 화면에서는 바로 찾을 수 없다."); return }
+    statusMsg("찾는 중… (처음 한 번은 허용할지 묻는다)");
+    SAMPLE.json(ASK_RULES + q).then(function(v){
+      var items = (v && Array.isArray(v.items)) ? v.items : [];
+      if(!items.length){
+        statusMsg("쓸 만한 게 안 나왔다. 더 좁혀서 적어 본다 — 예: “슬랙 메시지 작성”, “줌 음소거”.", true);
+        finishAsk(); return;
+      }
+      var area = String((v && v.area) || q).slice(0,20);
+      var id = slug(area) + "-" + Date.now().toString(36).slice(-4);
+      var body = { area:area, q:q, items:items.slice(0,14),
+                   createdAt:new Date().toISOString(), verified:false };
+      function land(local){
+        if(local){ ADDED = ADDED.concat(docToItems(id, body)); repaint() }
+        document.getElementById("ask").value = "";
+        filter = area;
+        renderChips(); renderSections();
+        show("home");
+        window.scrollTo({top:0, behavior:"instant"});
+        statusMsg(area + " " + body.items.length + "개 넣었다." +
+          (local ? " 이 화면에서만 보인다." : " 공식 문서로 검증한 값은 아니니 눌러 보고, 안 먹으면 알려 준다."));
+        finishAsk();
+      }
+      if(DB){
+        DB.collection("additions").doc(id).set(body).then(function(){ land(false) },
+                                                          function(){ land(true) });
+      } else { land(true) }
+    }, function(e){
+      var code = e && e.code;
+      if(code === "not_granted" || code === "sampling_disabled" || code === "not_declared"){
+        logRequest(q, "Claude에게 묻는 것이 허용되지 않았다.");
+      } else if(code === "rate_limited"){
+        statusMsg("지금은 너무 자주 불렀다. 잠시 뒤에 다시.", true); finishAsk();
+      } else if(code === "invalid_json" || code === "empty_completion"){
+        statusMsg("답이 깨졌다. 더 짧게 적어서 다시 — 예: “피그마”.", true); finishAsk();
+      } else if(code === "cancelled"){
+        statusMsg(""); finishAsk();
+      } else {
+        statusMsg("못 가져왔다 (" + (code||"오류") + "). 잠시 뒤에 다시 눌러 본다.", true); finishAsk();
+      }
+    });
+  });
+}
+document.getElementById("ask-go").addEventListener("click", function(){
+  askFor(document.getElementById("ask").value);
+});
+document.getElementById("ask").addEventListener("keydown", function(e){
+  if(e.key === "Enter"){ e.preventDefault(); askFor(this.value) }
+});
+
+document.getElementById("ctx").addEventListener("input", function(){ pickedMode = null; renderNow() });
+renderChips(); renderSections(); renderBoard(); renderNow();
+document.getElementById("chips").hidden = true;
+</script>
+
+</body></html>

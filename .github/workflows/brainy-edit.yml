@@ -1,0 +1,103 @@
+# 앱 고치기 — Brainy 홈 대화에서 "앱에서 ○○ 고쳐 줘" 하면 Supabase 함수(brainy-ai)가 이 작업을 깨운다.
+# Claude Code 가 원본을 고쳐 빌드한 판을 brainy-edit/<id> 가지에 올린다. main 에는 동욱이 "적용"해야 들어간다.
+# 필요한 비밀값: ANTHROPIC_API_KEY (Settings → Secrets and variables → Actions)
+name: Brainy 앱 고치기
+run-name: brainy-edit ${{ github.event.client_payload.id }}
+
+on:
+  repository_dispatch:
+    types: [brainy-edit]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: brainy-edit
+  cancel-in-progress: false
+
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MODEL: claude-opus-5-5   # 비용을 줄이려면 claude-sonnet-5-5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 부탁 확인
+        env:
+          REQ_ID: ${{ github.event.client_payload.id }}
+          REQ_TEXT: ${{ github.event.client_payload.text }}
+          HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        run: |
+          [[ "$REQ_ID" =~ ^e[a-z0-9]{6,30}$ ]] || { echo "id 모양이 달라요"; exit 1; }
+          [ -n "$REQ_TEXT" ] || { echo "부탁이 비었어요"; exit 1; }
+          [ "$HAS_KEY" = "true" ] || { echo "ANTHROPIC_API_KEY 비밀값이 없어요"; exit 1; }
+          git switch -c "brainy-edit/$REQ_ID"
+
+      - name: Claude Code 설치
+        env:
+          REQ_MODEL: ${{ github.event.client_payload.model }}
+        run: |
+          npm install -g @anthropic-ai/claude-code@2.1.310
+          # 앱에서 고른 모델이 있으면 그것으로 (Haiku 는 코드 고치기에 약해 Sonnet 으로 올린다)
+          case "$REQ_MODEL" in
+            claude-sonnet-5-5|claude-opus-5-5|claude-fable-5-1) echo "MODEL=$REQ_MODEL" >> "$GITHUB_ENV" ;;
+            claude-haiku-5-5) echo "MODEL=claude-sonnet-5-5" >> "$GITHUB_ENV" ;;
+          esac
+
+      - name: 고치기
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REQ_TEXT: ${{ github.event.client_payload.text }}
+        run: |
+          # 공개 저장소라 로그에 Claude 의 작업 내용은 남기지 않는다 (요약은 커밋 메시지로 간다)
+          timeout 25m claude -p "[동욱의 부탁]
+          $REQ_TEXT" \
+            --model "$MODEL" \
+            --append-system-prompt "$(cat .github/brainy-edit.md)" \
+            --permission-mode acceptEdits \
+            --allowedTools "Read" "Edit" "Write" "Glob" "Grep" "Bash(python3 build.py)" "Bash(node --check:*)" \
+            --output-format text > "$RUNNER_TEMP/summary.txt" 2> "$RUNNER_TEMP/claude.err" \
+            || { echo "Claude Code 가 끝까지 하지 못했어요"; tail -c 600 "$RUNNER_TEMP/claude.err" | grep -v -i "key" || true; exit 1; }
+
+      - name: 허락된 곳만 남기고 빌드·검사
+        run: |
+          # Claude 가 고쳐도 되는 곳: src/ shim.js build.py (빌드 결과물은 아래에서 다시 만든다)
+          { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u > "$RUNNER_TEMP/changed"
+          grep -vE '^(src/|shim\.js$|build\.py$|home/|shortcuts/|vocab/|index\.html$|version\.txt$)' "$RUNNER_TEMP/changed" > "$RUNNER_TEMP/outside" || true
+          if [ -s "$RUNNER_TEMP/outside" ]; then
+            echo "허락 밖 변경을 되돌려요:"; cat "$RUNNER_TEMP/outside"
+            while IFS= read -r f; do
+              if git ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then git checkout -- "$f"; else rm -f -- "$f"; fi
+            done < "$RUNNER_TEMP/outside"
+          fi
+          python3 build.py
+          python3 .github/check_apps.py
+          git add -A -- src shim.js build.py home shortcuts vocab index.html version.txt
+          git diff --cached --quiet && { echo "바뀐 게 없어요"; exit 1; } || true
+
+      - name: 고친 판 올리기
+        env:
+          REQ_ID: ${{ github.event.client_payload.id }}
+          REQ_TEXT: ${{ github.event.client_payload.text }}
+        run: |
+          python3 - "$RUNNER_TEMP/summary.txt" "$RUNNER_TEMP/msg.txt" <<'PY'
+          import os, sys
+          summary = open(sys.argv[1], encoding="utf-8", errors="replace").read().strip()[:2500] or "(요약 없음)"
+          req = " ".join(os.environ["REQ_TEXT"].split())
+          subject = "앱 고치기: " + (req[:50] + ("…" if len(req) > 50 else ""))
+          open(sys.argv[2], "w", encoding="utf-8").write(
+              subject + "\n\n" + summary + "\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n")
+          PY
+          git config user.name "Brainy 앱 고치기"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -F "$RUNNER_TEMP/msg.txt"
+          git push -q origin "brainy-edit/$REQ_ID"
+          git diff --stat HEAD~1 HEAD | tail -1
