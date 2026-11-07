@@ -121,6 +121,14 @@ function csSetReqs(list){
   CREQ = list.sort(function(a, b){ return (b.createdAt || "") < (a.createdAt || "") ? -1 : 1; });
   if(current === "course") renderCourse();
 }
+function csLPick(id){
+  var c = csCourse(); if(!c) return;
+  CPROG.pk = CPROG.pk || {}; if(id) CPROG.pk[c.id] = id; else delete CPROG.pk[c.id];
+  csView = "cheat"; save("sc.cview2", csView); csSave(); renderCourse();
+  var t = document.getElementById("cs-lsel"); if(t) t.scrollIntoView({ block: "nearest" });
+}
+document.addEventListener("change", function(e){ if(e.target && e.target.hasAttribute && e.target.hasAttribute("data-cslsel")) csLPick(e.target.value); });
+document.addEventListener("click", function(e){ var b = e.target.closest("[data-cslpick]"); if(b) csLPick(b.getAttribute("data-cslpick")); });
 document.addEventListener("submit", function(e){
   if(!e.target.closest("[data-csform]")) return;
   e.preventDefault();
@@ -184,7 +192,7 @@ function csCheat(c){
   h += "<div class=\"legend cs-legend\"><span><i class=\"dotp\">✓</i> 외웠어 — 흐리게</span><span><i class=\"dotf\">★</i> 즐겨찾기 — 「즐겨찾기」 탭에도 모임</span><span>외운 것 " + known + "/" + all.length + "</span></div>";
   var list = all.filter(function(x){ return csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csFilt === "cmd" ? csIsCmd(x) : CPROG.cf[cpKey(c, x)]); });
   if(!list.length) return h + "<p class=\"empty\">아직 없어요. 줄 옆 ★을 눌러 모아요.</p>";
-  if(csSort === "order") return h + csByLecture(c, list);
+  if(csSort === "order") return h + csByLecture(c, list, all);
   var secs = [], by = {};
   list.forEach(function(x){ var s = x.sec === "터미널 기본" ? "▶ 터미널 기본" : (x.kind === "key" ? "⌘ " : "$ ") + (x.sec || "기타"); if(!by[s]){ by[s] = []; secs.push(s); } by[s].push(x); });
   // 터미널 기본 → 단축키 묶음 → 명령어 묶음
@@ -196,13 +204,35 @@ function csCheat(c){
   }).join("");
 }
 // 강의 순서 — 챕터(강의)마다 거기서 배우는 단축키·명령어. 지금 들을 강의는 표시하고 바로 가기
-function csByLecture(c, list){
-  var here = csHere(c), hereIdx = c.chapters.indexOf(here), by = {}, basics = [];
+function csLecSteps(ch, keep){   // 그 강의(챕터)에 나온 단축키·명령어 — 교안 순서, 겹치는 건 한 번
+  var seen = {};
+  return csSteps(ch).map(function(x){ return x.s; }).filter(function(s){
+    var k = s.kind === "key" ? JSON.stringify(s.k) : s.code; if(seen[k]) return false; seen[k] = 1; return keep(s);
+  });
+}
+function csByLecture(c, list, all){
+  var keep = function(x){ return csFilt === "all" || (csFilt === "key" ? x.kind === "key" : csFilt === "cmd" ? csIsCmd(x) : CPROG.cf[cpKey(c, x)]); };
+  var lecs = c.chapters.filter(function(ch){ return csSteps(ch).length; }), here = csHere(c);
+  var pick = (CPROG.pk || {})[c.id] || "", sel = lecs.filter(function(ch){ return ch.id === pick; })[0];
+  // 강의 고르기 — 전체 / 강의 하나
+  var h = "<div class=\"cs-lpick\"><label for=\"cs-lsel\">강의</label><select id=\"cs-lsel\" data-cslsel=\"1\"><option value=\"\">전체 강의 — 순서대로 다 보기</option>" +
+    lecs.map(function(ch){ var dn = !!CPROG.done[c.id + "|" + ch.id];
+      return "<option value=\"" + cx(ch.id) + "\"" + (sel === ch ? " selected" : "") + ">" + (ch === here ? "▶ " : dn ? "✓ " : "") + cx(ch.title) + " (" + csLecSteps(ch, function(){ return true; }).length + ")</option>"; }).join("") + "</select>" +
+    (sel !== here && lecs.indexOf(here) > -1 ? "<button type=\"button\" class=\"ghost\" data-cslpick=\"" + cx(here.id) + "\">▶ 지금 들을 강의</button>" : "") + "</div>";
+  if(sel){
+    var i = lecs.indexOf(sel), rows = csLecSteps(sel, keep);
+    h += "<div class=\"block cs-lec here\"><div class=\"block-head\"><h2>" + cx(sel.title) + "</h2><i class=\"hr\"></i><span class=\"meta\">" + cx(sel.part || "") + " · " + rows.length + "</span></div>" +
+      (rows.length ? "<div class=\"cs-cheat\">" + rows.map(function(x){ return csCrow(c, x, {}, false); }).join("") + "</div>" : "<p class=\"empty\">이 강의엔 이 종류가 없어요.</p>") + "</div>";
+    h += "<div class=\"cs-nav\">" + (i > 0 ? "<button type=\"button\" class=\"ghost\" data-cslpick=\"" + cx(lecs[i - 1].id) + "\">◀ 이전 강의</button>" : "<span></span>") +
+      (sel !== here ? "<button type=\"button\" class=\"ghost\" data-cshere=\"" + cx(sel.id) + "\" data-cskeep=\"1\">여기를 지금 들을 강의로</button>" : "<span class=\"small\" style=\"color:var(--faint)\">▶ 지금 들을 강의</span>") +
+      (i < lecs.length - 1 ? "<button type=\"button\" class=\"ghost\" data-cslpick=\"" + cx(lecs[i + 1].id) + "\">다음 강의 ▶</button>" : "<span></span>") + "</div>";
+    return h;
+  }
+  var hereIdx = c.chapters.indexOf(here), by = {}, basics = [];
   list.forEach(function(x){ if(x.sec === "터미널 기본") basics.push(x); else (by[x.ch] = by[x.ch] || []).push(x); });
   var chs = c.chapters.filter(function(ch){ return by[ch.id]; });
   var target = chs.filter(function(ch){ return c.chapters.indexOf(ch) >= hereIdx; })[0];
-  var h = "";
-  if(target) h += "<button type=\"button\" class=\"cs-goto\" data-csscroll=\"" + cx(target.id) + "\"><span>▶ " + (target === here ? "지금 들을 강의" : "다음에 단축키 나오는 강의") + "</span><b>" + cx(target.title) + "</b><span class=\"n\">" + by[target.id].length + "개 →</span></button>";
+  if(target) h += "<button type=\"button\" class=\"cs-goto\" data-cslpick=\"" + cx(target.id) + "\"><span>▶ " + (target === here ? "지금 들을 강의" : "다음에 단축키 나오는 강의") + "</span><b>" + cx(target.title) + "</b><span class=\"n\">" + by[target.id].length + "개 →</span></button>";
   if(basics.length) h += "<div class=\"block\"><div class=\"block-head\"><h2>$ 터미널 기본</h2><i class=\"hr\"></i><span class=\"meta\">어느 강의에서나 · " + basics.length + "</span></div><div class=\"cs-cheat\">" +
     basics.map(function(x){ return csCrow(c, x, {}, false); }).join("") + "</div></div>";
   var part = null;
@@ -297,6 +327,7 @@ document.addEventListener("click", function(e){
   if(b.hasAttribute("data-cssd")){ var k = b.getAttribute("data-cssd"); if(CPROG.sd[k]) delete CPROG.sd[k]; else CPROG.sd[k] = 1; csSave(); renderCourse(); return; }
   if(b.hasAttribute("data-csdone")){ CPROG.done[c.id + "|" + b.getAttribute("data-csdone")] = 1; var vis = csVisible(c), i = vis.indexOf(csHere(c)); csGo(i < vis.length - 1 ? vis[i + 1].id : csHere(c).id); return; }
   if(b.hasAttribute("data-csgo")){ csGo(b.getAttribute("data-csgo")); return; }
+  if(b.hasAttribute("data-cshere") && b.hasAttribute("data-cskeep")){ CPROG.at[c.id] = b.getAttribute("data-cshere"); csSave(); renderCourse(); return; }
   if(b.hasAttribute("data-cshere")){ csGo(b.getAttribute("data-cshere"), true); return; }
   if(b.hasAttribute("data-csall")){ CPROG.all = !CPROG.all; csSave(); renderCourse(); return; }
   if(b.hasAttribute("data-csjump")){ var p = b.getAttribute("data-csjump").split("|"); CPROG.cur = p[0]; document.getElementById("q").value = ""; if(p[1]){ show("course"); csPeek(p[1]); } else { csView = "cheat"; save("sc.cview2", csView); show("course"); } return; }

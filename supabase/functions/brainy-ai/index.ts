@@ -128,6 +128,7 @@ async function gh(method: string, path: string, body?: Json): Promise<{ status: 
   const text = await res.text();
   let data: Json = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (res.status >= 400) console.error(`brainy-ai GitHub ${method} ${path.split("?")[0]} → ${res.status} ${String(data?.message ?? "").slice(0, 160)}`);
   return { status: res.status, data };
 }
 
@@ -448,6 +449,8 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
       for (const u of uses) {
         if (SERVER_TOOL_NAMES.has(u.name)) {
           const res = await runServerTool(sb, u.name, u.input);
+          if (res.isError) console.error(`brainy-ai ${id} 도구 ${u.name} 실패: ${res.content.slice(0, 300)}`);
+          else if (u.name.startsWith("app_edit_") || u.name === "set_model") console.log(`brainy-ai ${id} 도구 ${u.name} 됨`);
           results.push({ type: "tool_result", tool_use_id: u.id, content: res.content, ...(res.isError ? { is_error: true } : {}) });
         } else if (appNames.has(u.name) && u.input && typeof u.input === "object") {
           actions.push({ name: u.name, input: u.input });

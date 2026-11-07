@@ -321,7 +321,7 @@ patch('''    DB.doc("sc.marks/main").onSnapshot(function(s){''', '''    DB.doc("
     DB.collection("sc.creq").onSnapshot(function(q){ csSetReqs(q.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); })); }, function(){});
     DB.doc("sc.marks/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
-      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {}, cf: v.cf || {} }; save("sc.course", CPROG); if(current==="course") renderCourse(); if(current==="fav") renderList("fav"); }
+      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {}, cf: v.cf || {}, pk: v.pk || {} }; save("sc.course", CPROG); if(current==="course") renderCourse(); if(current==="fav") renderList("fav"); }
       else if(CPROG.cur || Object.keys(CPROG.at).length) csSave();
     }, function(){});
     DB.doc("sc.marks/main").onSnapshot(function(s){''')
@@ -361,6 +361,8 @@ SC_CSS += (".cs-addbtn{border-style:dashed!important;color:var(--accent)!importa
            ".cs-add{border:1px solid var(--rule);border-radius:12px;background:var(--surface);padding:12px 14px;margin:0 0 14px}"
            ".cs-addf{display:flex;gap:8px}.cs-addf input{flex:1;min-width:0;font:inherit;font-size:.9rem;padding:9px 11px;border:1px solid var(--rule);border-radius:9px;background:var(--bg);color:var(--fg)}"
            ".cs-sub{font-size:.74rem;color:var(--faint);margin:12px 0 6px}"
+           ".cs-lpick{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 14px}.cs-lpick label{font-size:.78rem;color:var(--faint)}"
+           ".cs-lpick select{flex:1;min-width:0;max-width:100%;font:inherit;font-size:.9rem;padding:9px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--surface);color:var(--fg)}"
            ".cs-req{font-size:.82rem;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cs-req span{color:var(--faint)}.cs-req.ok{color:var(--accent)}.cs-req.bad{color:#c0563b}.cs-x{padding:2px 8px}")
 
 emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a1f"),
