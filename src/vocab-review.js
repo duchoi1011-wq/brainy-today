@@ -46,7 +46,7 @@ function rvGrade(r){
   s.log = [...(s.log || []), { at: now, r }].slice(-30);
   if (t.cat === "영어 단어") s.pending = [...(s.pending || []), { at: now, r, box: s.box, due: s.due }];
   const patch = { srs: s, lastSeen: now, seen: (prog[id]?.seen || 0) + 1 };
-  if (r === "ok") { patch.level = 2; patch.fuzzy = false; } else if (r === "bad") patch.fuzzy = true;
+  if (r === "ok") { patch.level = Math.max(lv(id), s.box >= 4 ? 3 : 2); patch.fuzzy = false; } else if (r === "bad") patch.fuzzy = true;   // 2주 넘게(④칸) 떠올리면 ③ 소화 — 설명하기는 뺐다 (2026-11-07 동욱)
   RV.i++; RV.flipped = false;
   save(id, patch, r === "ok" ? "복습: 떠올림" : r === "mid" ? "복습: 헷갈림" : "복습: 몰랐음");
 }
@@ -71,7 +71,6 @@ function renderReview(){
   const dueN = TERMS.filter(t => { const s = srsOf(t.id); return s && s.due <= today; }).length;
   const learned = TERMS.filter(t => srsOf(t.id)).length;
   const tmr = TERMS.filter(t => { const s = srsOf(t.id); return s && s.due <= kday(1); }).length;
-  const talkReady = TERMS.filter(t => (srsOf(t.id)?.box || 0) >= 3 && lv(t.id) < 3);
   const head = `${statusNote()}
     <div class="meta small muted"><span>오늘 복습 <b class="mono">${dueN}</b> · 새 단어 <b class="mono">${Math.max(0, RV_NEW - firstToday())}</b>/${RV_NEW}</span><span>익힌 단어 <span class="mono">${learned}</span>/${TERMS.length}</span></div>`;
   if (RV.i >= RV.queue.length) {
@@ -79,8 +78,7 @@ function renderReview(){
     return `${head}<section class="card stack">
       <h3>${did ? "오늘 복습 끝" : "오늘은 복습할 게 없어요"}</h3>
       ${did ? `<p>✓ ${st.ok} · △ ${st.mid} · ✗ ${st.bad} — 내일 볼 단어 ${tmr}개</p>` : `<p class="muted">새 단어는 하루 ${RV_NEW}개까지예요. 내일 볼 단어 ${tmr}개.</p>`}
-      ${talkReady.length ? `<div class="note">설명해 볼 단어 ${talkReady.length}개 — 2주 넘게 떠올린 단어예요. 내 말로 설명하면 ③ 소화로 올라가요.
-        <div class="btns" style="margin-top:8px"><button class="btn primary" data-go="talk" data-id="${talkReady[0].id}">설명하기</button></div></div>` : ""}
+
       <div class="btns"><button class="btn" data-rv="more">새 단어 5개 더</button></div>
     </section>`;
   }
