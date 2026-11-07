@@ -152,8 +152,8 @@ patch('''href="' + esc(v.url) + '" target="_blank" rel="noopener"''', '''href=".
 #    읽기 도구(get_project 등)는 맥 Claude 가 볼트를 직접 읽는 걸로 대신하고, 볼트 반영도 시키면 바로 한다 (2026-11-06 동욱)
 patch('''" 프로젝트·태스크·카드 세부는 get_project, 위키는 search_wiki, 메모는 get_recent_notes, 다른 날 기록은 get_day를 먼저 불러 확인한다."''',
       '''" 데이터에 없는 세부(프로젝트 허브·태스크 노트·카드·위키·다른 날 기록·메모)는 볼트 파일을 직접 읽어 확인한다."''')
-patch('''"3. 옵시디언 볼트·Todoist·캘린더에 반영할 일(결산, 🗳 결산 대기 답, 아침 계획 응, 태스크 고치기, /log 등)은 동욱이 분명히 시키면 run_command로 맥의 Brainy에게 보낸다. 직접 쓰는 척하지 않는다. 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다."''',
-      '''"3. 동욱이 분명히 시키면 볼트에 바로 반영한다. 태스크 고치기(기한·상태·완료 기준)·노트에 넣기처럼 금방 끝나는 건 네가 직접 고치고 어디를 고쳤는지 한 줄로 알린다. 결산·🗳 결산 대기 답·아침 계획 응·/log처럼 오래 걸리거나 캘린더가 필요한 일은 run_command로 맥의 Brainy에게 보낸다(몇 분 뒤 기록 탭 '명령'에 결과). 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다."''')
+patch('''"3. 옵시디언 볼트에 반영할 일(결산, 🗳 결산 대기 답, 아침 계획 응, 태스크 고치기, /log 등)은 동욱이 분명히 시키면 run_command로 맥의 Brainy에게 보낸다. 직접 쓰는 척하지 않는다. 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다."''',
+      '''"3. 동욱이 분명히 시키면 볼트에 바로 반영한다. 태스크 고치기(기한·상태·완료 기준)·노트에 넣기처럼 금방 끝나는 건 네가 직접 고치고 어디를 고쳤는지 한 줄로 알린다. 결산·🗳 결산 대기 답·아침 계획 응·/log처럼 오래 걸리는 일은 run_command로 맥의 Brainy에게 보낸다(몇 분 뒤 기록 탭 '명령'에 결과). 구글 캘린더는 맥에 보내지 않는다 — 아래 3-1. 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다."''')
 patch('''"5. 볼트(옵시디언)는 여기서 직접 바꾸지 않는다. 체크·로그·산출물은 앱에 저장되고 1~2분 안에 맥의 Brainy가 태스크 노트로 자동 반영한다.",''',
       '''"5. 체크·로그·산출물·다음 한 걸음은 도구로 앱에 저장하면 잠시 뒤 맥의 Brainy가 태스크 노트로 자동 반영한다. 동욱이 기한·상태·완료 기준 문구·본문처럼 도구로 안 되는 걸 고치라고 분명히 시키면, 태스크 노트(3_Action/32_태스크/T-<태스크 이름>.md)를 action-update 규칙대로 직접 고치고 무엇을 고쳤는지 한 줄로 알린다.",''')
 patch("생각하는 중… (처음 한 번은 Claude 사용 허락을 물어요)", "맥의 Brainy가 생각하는 중… (보통 5~15초)", 2)
@@ -412,6 +412,9 @@ patch('''a.getAttribute("data-tw") || a.getAttribute("data-lg") ||''', '''a.getA
 #     Brainy 질문 · 메모 · 태스크 기록 · 오늘 쓰기 칸(경건생활·QnA·저널 …) · 점검 결과. (결산 대기·태스크 작업실·아침 제안은 이미 대화형)
 patch("lgSel: {}, lgT: {},", "lgSel: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {},")
 patch("  function ledgerChat() {", (root / "src" / "home-ic.js").read_text(encoding="utf-8") + "  function ledgerChat() {")
+# 🔌 연결 — 클라우드 Brainy가 맥을 거치지 않고 구글 캘린더 등에 바로 (2026-11-07 동욱: "Todoist는 이제 안 쓰고, 구글 캘린더 등으로 직접 연결")
+#    서비스 목록·구글 로그인·캘린더 도구·아침 계획 → 캘린더·기록 탭 「🔌 연결」 화면은 src/home-connect.js
+patch("  function labelOf(k) {", (root / "src" / "home-connect.js").read_text(encoding="utf-8") + "  function labelOf(k) {")
 patch("""    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id]; });""",
       """    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id] || (S.ic["q:" + q.id] || []).length; });""")
 patch("""+ ">보내기</button></div></div>";""",
@@ -469,12 +472,13 @@ patch("""      h += "</section>";
 patch_between((root / "src" / "home-today-anchor.js").read_text(encoding="utf-8"), "    return h;\n  }\n\n  /* ---------- 오늘 체크 줄", (root / "src" / "home-today.js").read_text(encoding="utf-8"))
 patch("""<p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 Brainy와 대화</p>""", """<p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 「로그」 또는 「Brainy와 진행」</p>""")
 # 기록 탭: 제안·점검 / 결산 / 지난 기록
-patch("""headView("기록", "점검·결산·명령 · 지난 기록")""", """headView("기록", "제안·점검 · 결산 · 지난 기록")""")
-patch("""var nv = S.noteView === "cal" ? "cal" : "ops", nWait""", """var nv = ["sug", "led", "cal"].indexOf(S.noteView) >= 0 ? S.noteView : "sug", nWait""")
+patch("""headView("기록", "점검·결산·명령 · 지난 기록")""", """headView("기록", "제안·점검 · 결산 · 지난 기록 · 연결")""")
+patch("""var nv = S.noteView === "cal" ? "cal" : "ops", nWait""", """var nv = ["sug", "led", "cal", "con"].indexOf(S.noteView) >= 0 ? S.noteView : "sug", nWait""")
 patch_between("""    h += '<div class="chips" role="tablist" aria-label="기록 보기">'""", """.join("") + "</div>";""",
       """    var nRep = (S.reports || []).filter(function (r) { return r.status !== "답함"; }).length;
-    h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["sug", "☀️ 제안·점검" + (nRep ? " " + nRep : "")], ["led", "🗳 결산" + (nWait ? " " + nWait : "")], ["cal", "📅 지난 기록"]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";""")
-patch("""    if (nv === "ops") return h + viewOps();""", """    if (nv === "sug" || nv === "led") return h + viewOps(nv);""")
+    h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["sug", "☀️ 제안·점검" + (nRep ? " " + nRep : "")], ["led", "🗳 결산" + (nWait ? " " + nWait : "")], ["cal", "📅 지난 기록"], ["con", "🔌 연결" + (Object.keys(CONN).some(function (k) { return connState(k) === "old"; }) ? " !" : "")]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";""")
+patch("""    if (nv === "ops") return h + viewOps();""", """    if (nv === "con") return h + viewConnect();
+    if (nv === "sug" || nv === "led") return h + viewOps(nv);""")
 patch("""  function viewOps() {""", """  function viewOps(part) {""")
 patch("""    h += morningCard(canCmd);
     h += viewReports();""", """    if (part !== "led") {
@@ -548,6 +552,11 @@ patch('''    DB = d;
       var v = s.exists ? s.data() : null;
       if(!v || !Array.isArray(v.items) || !v.items.length) return;
       GROUPS = v.groups; D = v.items; MODES = v.modes; PROJECTS = v.projects;
+      // Todoist 는 이제 안 쓴다 (2026-11-07 동욱) — 볼트 목록에 남아 있어도 빼고 보인다
+      var noTd = function(g){ return !/^todoist$/i.test(String(g||"")) };
+      if(Array.isArray(GROUPS)) GROUPS = GROUPS.filter(function(g){ return noTd(g && g.g !== undefined ? g.g : g) });
+      D = D.filter(function(x){ return noTd(x.g) });
+      [MODES, PROJECTS].forEach(function(L){ if(Array.isArray(L)) L.forEach(function(p){ if(Array.isArray(p.ids)) p.ids = p.ids.filter(function(id){ return !/^td-/.test(id) }); if(Array.isArray(p.keys)) p.keys = p.keys.filter(function(k){ return !/todoist/i.test(k) }); }); });
       STARTER = D.filter(function(x){ return x.starter });
       repaint(); renderBoard();
       if(current==="fav") renderList("fav"); if(current==="pass") renderList("pass");

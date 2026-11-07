@@ -1640,6 +1640,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     return h + "</div>";
   }
   var MO_FOLLOW = "오늘 계획 이어서 (이미 데일리 노트에 올린 「오늘의 계획」을 이 말대로 고치거나 답해 줘): ";
+  var MO_CAL = " (구글 캘린더에는 앱이 이미 넣었어요 — 캘린더는 건드리지 말고 데일리 노트만)";
   function cmdsWhere(pred) { return (S.cmds || []).filter(function (c) { return String(c.createdAt || "").slice(0, 10) >= ymd(new Date(NOW.getTime() - 86400000)) && pred(String(c.text || "")); }).slice().reverse(); }
   function moreBtn(key, n) { var on = !!S.thOpen[key]; return '<button class="more" data-act="thtoggle" data-k="' + esc(key) + '">' + (on ? "▴ 이전 대화 숨기기" : "▾ 이전 대화 " + n + "개 보기") + "</button>"; }
   function threadHtml(list, strip, key) {
@@ -1671,17 +1672,18 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var moPend = cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }).filter(function (c) { return /처리 중|보내는 중|맥 대기|못|확인/.test(c.status || ""); }).length;
     if (up && !moPend && !S.thOpen.moFull) {
       var fr = mo.final || mo.rows || [];
-      return '<section class="card brief"><div class="progress-row"><h2>☀️ 오늘 계획</h2><span class="pill good">올림 ✓</span></div>' + (fr.length ? '<ul class="crit">' + fr.map(function (r) { return "<li>○ " + esc(r.what || "") + "</li>"; }).join("") + "</ul>" : "") + '<button class="more" data-act="thtoggle" data-k="moFull">▾ 제안 · Brainy와 주고받은 것 · 이어서 쓰기</button></section>';
+      return '<section class="card brief"><div class="progress-row"><h2>☀️ 오늘 계획</h2><span class="pill good">올림 ✓</span></div>' + (fr.length ? '<ul class="crit">' + fr.map(function (r) { return "<li>○ " + esc(r.what || "") + "</li>"; }).join("") + "</ul>" : "") + moCalLine(mo) + '<button class="more" data-act="thtoggle" data-k="moFull">▾ 제안 · Brainy와 주고받은 것 · 이어서 쓰기</button></section>';
     }
     var h = (up && !moPend ? '<button class="more" data-act="thtoggle" data-k="moFull">▴ 접기</button>' : "") + '<section class="card brief"><div class="progress-row"><h2>☀️ 오늘 아침 제안</h2><span class="pill' + (up ? " good" : " accent") + '">' + esc(up ? "올림 ✓" : (mo.status || "대기")) + "</span></div>";
     if (mo.coach) h += '<p class="line">' + esc(mo.coach) + "</p>";
     var rows = mo.rows || [];
     if (rows.length) h += '<div class="tablewrap"><table class="days"><tbody>' + rows.map(function (r) { return "<tr><td class='n' style='text-align:left;width:64px'>" + esc(r.time || "") + "</td><td>" + esc(r.what || "") + (r.task ? '<br><span class="small muted">' + esc(r.task) + "</span>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
     if (mo.skipped && mo.skipped.length) h += '<details class="fold"><summary>오늘 안 들어간 것 ' + mo.skipped.length + '</summary><div class="md"><ul>' + mo.skipped.map(function (x) { return "<li>" + esc(x.what) + (x.why ? " — " + esc(x.why) : "") + (x.when ? " → " + esc(x.when) : "") + "</li>"; }).join("") + "</ul></div></details>";
-    h += threadHtml(cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }), function (t) { return t.replace(MO_FOLLOW, "").replace(/^아침 계획 고침:\s*/, "").replace(/^아침 계획 응$/, "응 — 이대로 진행"); }, "mo");
+    h += threadHtml(cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }), function (t) { return t.replace(MO_FOLLOW, "").replace(/^아침 계획 고침:\s*/, "").replace(MO_CAL, "").replace(/^아침 계획 응$/, "응 — 이대로 진행"); }, "mo");
     h += '<textarea class="grow" data-mo="1" rows="2" placeholder="' + (up ? "✍ Brainy에게 이어서 쓰기 — 예: 운동도 넣어줘, 브랜드 정의는 내일로" : "✍ Brainy에게 바로 쓰기 — 예: EP3는 오후 2시로 옮기고, 운동은 푸시로") + '">' + esc(S.moDraft || "") + "</textarea>";
     if (up) h += '<div class="row end"><button class="btn primary" data-act="mofollow"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "Brainy에게 보내기") + "</button></div>";
-    else h += '<div class="row end"><button class="btn" data-act="mosend"' + (canCmd && !S.moBusy ? "" : " disabled") + '>쓴 대로 고쳐서 올리기</button><button class="btn primary" data-act="moyes"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "응 — 이대로 진행" + (mo.calN ? " (데일리 노트 · 캘린더 " + mo.calN + ")" : " (데일리 노트에)")) + "</button></div>";
+    else h += '<div class="row end"><button class="btn" data-act="mosend"' + (canCmd && !S.moBusy ? "" : " disabled") + '>쓴 대로 고쳐서 올리기</button><button class="btn primary" data-act="moyes"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "응 — 이대로 진행" + (connOn("gcal") && moCalRows(mo).length ? " (데일리 노트 · 캘린더 " + moCalRows(mo).length + ")" : " (데일리 노트에)")) + "</button></div>";
+    h += moCalLine(mo);
     if (S.moMsg && S.moMsg.err) h += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";
     return h + "</section>";
   }
@@ -1894,7 +1896,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (lg && lg.closed && lg.closed.length) h += '<details class="fold"><summary>최근 닫은 것 ' + lg.closed.length + '</summary><div class="md"><ul>' + lg.closed.map(function (x) { return "<li>" + esc(x.n) + ". " + esc(x.text) + " " + esc(x.mark || "") + "</li>"; }).join("") + "</ul></div></details>";
     h += "</section>";
     // 명령
-    h += '<section class="card"><label for="cmd-input"><h2>명령 — 맥의 Brainy가 볼트·Todoist·캘린더에 반영해요</h2></label>';
+    h += '<section class="card"><label for="cmd-input"><h2>명령 — 맥의 Brainy가 볼트에 반영해요</h2></label>';
     h += '<div class="chips">' + ["결산해줘", "🗳 전부 응", "아침 계획 응", "홈 새로고침", "/log 오늘 기록 반영"].map(function (p) { return '<button class="chip" data-act="cmdfill" data-v="' + esc(p) + '">' + esc(p) + "</button>"; }).join("") + "</div>";
     h += '<textarea id="cmd-input" rows="2" placeholder="예: 🗳 1 응, 3 빼 · 결산해줘 · EP3 태스크 기한 11/9로 바꿔줘"' + (S.db && !S.readOnly ? "" : " disabled") + ">" + esc(S.cmdText) + "</textarea>";
     h += '<div class="row end"><button class="btn primary" data-act="cmdgo"' + (canCmd && S.cmdText.trim() && !S.cmdBusy ? "" : " disabled") + ">" + (S.cmdBusy ? "보내는 중…" : "보내기") + "</button></div>";
@@ -2007,6 +2009,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     L.push("## 최근 활동: " + gm.activities.slice(0, 12).map(function (a) { return a.date + " " + a.type + " " + (a.km || "") + "km " + (a.time || "") + (a.hr ? " 심박" + a.hr : "") + " [" + (a.source || "") + "]"; }).join(" / "));
     if (S.vocab) { var vc = { 1: 0, 2: 0, 3: 0, 4: 0 }; S.vocab.terms.forEach(function (t) { vc[t.lv || 1]++; }); L.push("## 체화 단어장: " + S.vocab.terms.length + "개 · 낯섦 " + vc[1] + " · 만남 " + vc[2] + " · 소화 " + vc[3] + " · 실행 " + vc[4] + " · 소화 이상 단어: " + S.vocab.terms.filter(function (t) { return t.lv >= 3; }).map(function (t) { return t.t; }).join(", ")); }
     if (S.chat.task) { var th = findTask(S.chat.task); L.push("\n## 지금 보고 있는 태스크: " + S.chat.task + "\n" + (th ? clip(th.task.body, 12000) : "(노트 없음)")); }
+    L.push(connCtx());
     if (S.chat.project) L.push("\n## 지금 보고 있는 프로젝트 전체\n" + projectText(projByExact(S.chat.project) || projByName(S.chat.project), 60000));
     if (!S.toolsOK) Object.keys(S.proj).forEach(function (id) { if (S.proj[id].name !== S.chat.project) L.push("\n" + projectText(S.proj[id], 12000)); });
     return L.join("\n");
@@ -2017,7 +2020,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       "할 일:",
       "1. 아래 데이터" + (S.toolsOK ? "와 도구" : "") + "로 동욱의 모든 것(오늘 기록·약속·프로젝트·태스크·카드·건강·위키·메모)에 대해 답한다." + (S.toolsOK ? " 프로젝트·태스크·카드 세부는 get_project, 위키는 search_wiki, 메모는 get_recent_notes, 다른 날 기록은 get_day를 먼저 불러 확인한다." : "") + " 데이터에 없는 건 모른다고 말하고 지어내지 않는다.",
       S.toolsOK ? "2. 동욱이 기록·체크·메모를 부탁하거나 '했어/먹었어/샀어/썼어'처럼 사실을 알려 주면 도구(check_item, write_today, add_meal, add_spend, add_note)로 앱에 바로 적고, 무엇을 했는지 한 줄로 알린다. 부탁이나 사실 없이 추측으로 쓰지 않는다. 금액·양이 애매하면 적기 전에 한 번만 묻는다." : "2. 이 화면에서는 앱에 직접 적을 수 없다. 적어야 할 게 있으면 어느 칸에 적으면 되는지 알려 준다.",
-      S.toolsOK ? "3. 옵시디언 볼트·Todoist·캘린더에 반영할 일(결산, 🗳 결산 대기 답, 아침 계획 응, 태스크 고치기, /log 등)은 동욱이 분명히 시키면 run_command로 맥의 Brainy에게 보낸다. 직접 쓰는 척하지 않는다. 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다." : "3. 옵시디언 볼트·Todoist·캘린더에는 여기서 직접 쓰지 않는다. 기록 탭의 '명령' 칸으로 보내면 된다고 안내한다.",
+      S.toolsOK ? "3. 옵시디언 볼트에 반영할 일(결산, 🗳 결산 대기 답, 아침 계획 응, 태스크 고치기, /log 등)은 동욱이 분명히 시키면 run_command로 맥의 Brainy에게 보낸다. 직접 쓰는 척하지 않는다. 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다." : "3. 옵시디언 볼트에는 여기서 직접 쓰지 않는다. 기록 탭의 '명령' 칸으로 보내면 된다고 안내한다.",
+      CONN_RULE,
       "4. 말투: 한국어. 친근하지만 현실적이고 직설적. 사실 → 이유 → 다음 행동. 행동은 짚되 사람은 깎아내리지 않는다. 결정이 가치·방향에 관한 것이면 동욱에게 묻는다. 보통 10줄 이내. 마크다운 기호(#, **, 표)는 쓰지 말고 줄바꿈과 '·', '1.'만 쓴다.",
       "",
       "=== 데이터 ===",
@@ -2050,11 +2054,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         execute: function (i) { var w2 = String(i.when || "식사"), f2 = String(i.food || "").trim(); if (!f2) throw new Error("food 비어 있음"); saveDay(function (b) { b.meals.push({ id: uid(), when: w2, food: f2 }); b.items.meal = true; delete b.est; }); act("✓ 식단 추가 · " + w2 + " " + clip(f2, 40)); return "ok (칼로리는 식단 칸의 '칼로리 추정' 버튼으로 계산)"; } },
       { name: "add_spend", description: "오늘 지출을 추가한다. book: 가계(개인) 또는 기업(사업). pay: 카드 또는 현금·이체.", inputSchema: { type: "object", properties: { item: { type: "string" }, amount: { type: "number" }, book: { type: "string", enum: ["가계", "기업"] }, pay: { type: "string", enum: ["카드", "현금·이체"] } }, required: ["item", "amount", "book", "pay"] },
         execute: function (i) { var a2 = Math.round(+i.amount || 0); if (!a2) throw new Error("금액이 없어요"); var s2 = { id: uid(), item: String(i.item || ""), amount: a2, book: i.book === "기업" ? "기업" : "가계", pay: i.pay === "현금·이체" ? "현금·이체" : "카드" }; saveDay(function (b) { b.spend.push(s2); b.items.spend = true; }); act("✓ 지출 추가 · " + s2.item + " " + a2.toLocaleString() + "원 (" + s2.book + ")"); return "ok"; } },
-      { name: "run_command", description: "볼트·Todoist·캘린더에 실제로 반영해야 하는 동욱의 명령을 맥의 Brainy(명령 처리 예약)에게 보낸다. 예: '결산해줘', '🗳 1 응, 3 빼', '아침 계획 응', '/log …', 'EP3 태스크 기한 11/9로'. 동욱이 분명히 시켰을 때만, 동욱이 말한 그대로 보낸다. 보내고 나면 몇 분 뒤 기록 탭 '명령'에 결과가 뜬다고 알린다.", inputSchema: { type: "object", properties: { text: { type: "string" } }, required: ["text"] },
+      { name: "run_command", description: "볼트에 실제로 반영해야 하는 동욱의 명령을 맥의 Brainy(명령 처리 예약)에게 보낸다. 예: '결산해줘', '🗳 1 응, 3 빼', '아침 계획 응', '/log …', 'EP3 태스크 기한 11/9로'. 동욱이 분명히 시켰을 때만, 동욱이 말한 그대로 보낸다. 보내고 나면 몇 분 뒤 기록 탭 '명령'에 결과가 뜬다고 알린다.", inputSchema: { type: "object", properties: { text: { type: "string" } }, required: ["text"] },
         execute: function (i) { var tx = String(i.text || "").trim(); return sendCommand(tx, true).then(function (m) { act("➤ 명령 보냄 · " + clip(tx, 40)); return m; }); } },
       { name: "add_note", description: "기록 탭에 메모를 남긴다 (맥의 Brainy가 바로 볼트에 반영). 생각·아이디어·할 일처럼 오늘 체크 칸에 맞지 않는 것.", inputSchema: { type: "object", properties: { text: { type: "string" } }, required: ["text"] },
         execute: function (i) { var tx = String(i.text || "").trim(); if (!tx || !S.db) throw new Error("저장할 수 없어요"); var nref = S.db.collection("inbox").doc(); return nref.set({ createdAt: new Date().toISOString(), date: TODAY, raw: tx, status: "대기" }).then(function () { memoSend(nref.id, tx); act("✓ 기록에 메모 남김 · " + clip(tx, 40)); return "ok"; }); } }
-    ];
+    ].concat(connTools());
   }
   function labelOf(k) { var t = todayList().filter(function (x) { return x.key === k; })[0]; return t ? t.label : k; }
 
@@ -2062,7 +2066,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function openChat(project, q) {
     if (!S.sample || S.sampleOff) { S.chatUnavailable = true; }
     if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }
-    sheet.hidden = false; document.getElementById("fab").hidden = true;
+    sheet.hidden = false; document.getElementById("fab").hidden = true; connLoadAll();
     document.getElementById("chat-ctx").textContent = S.chat.project ? "보고 있는 프로젝트: " + S.chat.project + " · 볼트 전체도 함께 봐요" : "내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요";
     renderChat();
     if (q) { chatInput.value = q; sendChat(); } else setTimeout(function () { try { chatInput.focus(); } catch (e) {} }, 50);
@@ -2187,6 +2191,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "saveans") { saveAnswer(); return; }
     if (act === "sayask") { speak("ask", S.ask.text); return; }
     if (act === "gonote") { S.tab = "notes"; try { localStorage.setItem("brainy-tab", S.tab); } catch (e) {} render(); window.scrollTo(0, 0); var ta = document.getElementById("note-input"); if (ta) ta.focus(); return; }
+    if (connClick(act, t)) return;
     if (act === "nview") { S.noteView = t.getAttribute("data-v"); try { localStorage.setItem("brainy-nview", S.noteView); } catch (e) {} render(); return; }
     if (act === "goops") { S.tab = "notes"; S.noteView = "ops"; render(); window.scrollTo(0, 0); return; }
     if (act === "calday") { S.calDay = t.getAttribute("data-v"); render(); return; }
@@ -2220,7 +2225,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "thtoggle") { var tk = t.getAttribute("data-k"); S.thOpen[tk] = !S.thOpen[tk]; if (tk === "chat") renderChat(); else render(); return; }
     if (act === "mofollow") { var mf = String(S.moDraft || "").trim(); if (!mf) { var mfe = document.querySelector('textarea[data-mo]'); if (mfe) mfe.focus(); return; } moSend(MO_FOLLOW + mf); return; }
     if (act === "cmdretry") { retryCmd(t.getAttribute("data-id")); return; }
-    if (act === "moyes") { var mt2 = String(S.moDraft || "").trim(); moSend(mt2 ? "아침 계획 고침: " + mt2 : "아침 계획 응"); return; }
+    if (act === "moyes") { var mt2 = String(S.moDraft || "").trim(), mcal = !mt2 && connOn("gcal") && moCalRows(S.morning || {}).length; if (mcal) moCalPush(S.morning); moSend(mt2 ? "아침 계획 고침: " + mt2 : "아침 계획 응" + (mcal ? MO_CAL : "")); return; }
     if (act === "lgclear") { S.lgSel = {}; S.lgAll = ""; render(); return; }
     if (act === "lgsend") { lgSend(); return; }
     if (act === "lgask") { var ln2 = t.getAttribute("data-n"), it2 = ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === ln2; })[0]; if (it2) openChat(null, "결산 대기 " + it2.n + "번 「" + it2.text + "」 — 이게 무슨 뜻이고, 응/고쳐서/빼 중 뭐가 나을지 근거와 함께 짧게 알려줘. 내가 고르면 run_command로 보내 줘."); return; }
@@ -2319,6 +2324,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     db.doc("config/ai").onSnapshot(function (s) { S.aiModel = (s.exists && s.data().model) || "auto"; var m = document.getElementById("chat-model"); if (m) m.value = S.aiModel; }, fail);
     document.getElementById("chat-model").addEventListener("change", function (e) { S.aiModel = e.target.value; db.doc("config/ai").set({ model: S.aiModel, at: new Date().toISOString() }); });
     db.doc("config/main").onSnapshot(function (s) { S.cfg = s.exists ? s.data() : {}; softRender(); }, fail);
+    db.doc("config/connect").onSnapshot(function (s) { S.connCfg = s.exists ? s.data() : {}; if (gClientId()) gisLoad().catch(function () {}); connLoadAll(); softRender(); }, fail);
     db.collection("cmd").orderBy("createdAt", "desc").limit(15).onSnapshot(function (q) { S.cmds = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);
     db.collection("inbox").orderBy("createdAt", "desc").limit(50).onSnapshot(function (q) {
       S.notes = q.docs.map(function (d) { var x = Object.assign({ id: d.id }, d.data()); return x; }); S.notesLoaded = true;
