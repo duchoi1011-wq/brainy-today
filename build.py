@@ -92,7 +92,7 @@ html,body{{max-width:100%;overflow-x:clip}}
 '''
 
 
-def emit(out_dir, title, short, theme, gate_vars, icons, app, manifest, css=""):
+def emit(out_dir, title, short, theme, gate_vars, icons, app, manifest, css="", tail=""):
     """head 를 붙여 out_dir/index.html 을 쓴다. 판 번호(version.txt)는 화면·받침 코드가 바뀌면 달라진다 —
     앱은 볼 때마다 version.txt 와 견주어 새 판이면 스스로 새로 고친다."""
     global body
@@ -102,7 +102,7 @@ def emit(out_dir, title, short, theme, gate_vars, icons, app, manifest, css=""):
     page = HEAD.format(title=title, short=short, theme_light=theme[0], theme_dark=theme[1], icons=icons,
                        gate_vars=gate_vars, css=css, app=app, up=up)
     b = body  # 공개 저장소에 올라가는 코드 — 실명은 원본에도 넣지 않는다
-    page = page + b + "\n</body>\n</html>\n"
+    page = page + b + tail + "\n</body>\n</html>\n"
     ver = hashlib.sha1((page + SHIM).encode("utf-8")).hexdigest()[:10]
     (d / "index.html").write_text(page.replace("__VERSION__", ver), encoding="utf-8")
     (d / "version.txt").write_text(ver + "\n", encoding="utf-8")
@@ -264,6 +264,9 @@ emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      '{"id":"/brainy-today/home/","name":"Brainy 홈","short_name":"Brainy 홈","start_url":"./","scope":"./","display":"standalone","background_color":"#eef0ec","theme_color":"#1f5e52","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]}',
      ".app{padding-top:calc(20px + env(safe-area-inset-top,0px))!important}")
 
+# Brainy 대화창 — 맥 단축키·체화 단어장 안에서 묻기·이 앱 고쳐 달라기 (클라우드 Brainy 의 app_edit_* 도구)
+BRAINY_CHAT = "\n" + (root / "src" / "brainy-chat.js").read_text(encoding="utf-8")
+
 # ═════════════════════════ 맥 단축키 ═════════════════════════
 load("shortcuts.html")
 # 목록은 볼트 `4_Outputs/단축키 앱/단축키 데이터.json` → 맥 동기화(app_data.py) → sc.data/main. 코드 안 목록은 처음 뜰 때만 쓴다.
@@ -369,7 +372,7 @@ emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a
      "--g-bg:var(--bg);--g-fg:var(--fg);--g-mut:var(--dim);--g-card:var(--surface);--g-line:var(--rule);--g-acc:var(--accent);--g-acc-ink:var(--bg);--g-warn:var(--accent);--g-ok:var(--ok)",
      '<link rel="apple-touch-icon" href="sc-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="sc-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="sc-icon-64.png">',
      '{key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]}',
-     '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"sc-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"sc-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', SC_CSS)
+     '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"sc-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"sc-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', SC_CSS, BRAINY_CHAT)
 
 # ═════════════════════════ 체화 단어장 ═════════════════════════
 load("vocab.html")
@@ -447,7 +450,7 @@ emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--l4)",
      '<link rel="apple-touch-icon" href="vo-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="vo-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="vo-icon-64.png">',
      '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]}',
-     '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vo-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vo-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
+     '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vo-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vo-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', "", BRAINY_CHAT)
 
 # ═════════════════════════ 옛 주소 /brainy-today/ → home/ ═════════════════════════
 # 예전엔 Brainy 홈이 맨 위 주소에 있어서 그 앱 범위가 단축키·단어장까지 덮었다 (같은 앱 창으로 열림).
