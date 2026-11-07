@@ -403,6 +403,30 @@ patch('''const view = () => (location.hash || "#home").slice(1);''', '''const vi
 patch('''main.innerHTML = v === "learn" ? renderLearn()''', '''main.innerHTML = v === "review" ? renderReview() : v === "learn" ? renderLearn()''')
 patch('''if (dm) { setDomain(dm.dataset.dom); location.hash = "home"; render(); return; }''', '''if (dm) { setDomain(dm.dataset.dom); if (view() !== "review") location.hash = "review"; render(); return; }''')
 patch("\ninit();\n", "\n" + (root / "src" / "vocab-review.js").read_text(encoding="utf-8") + "\ninit();\n")
+# 강의 — 강의(챕터)별 용어 정리 (2026-11-07 동욱: "강의별 용어정리도 단축키처럼"). 볼트 「강의 용어.json」 → vo.data/lec, 표시 → vo.marks/lec
+patch('''      <a href="#review" data-v="review">복습</a>''', '''      <a href="#review" data-v="review">복습</a>
+      <a href="#lec" data-v="lec">강의</a>''')
+patch('''main.innerHTML = v === "review" ? renderReview() :''', '''main.innerHTML = v === "lec" ? renderLec() : v === "review" ? renderReview() :''')
+patch("\ninit();\n", "\n" + (root / "src" / "vocab-lec.js").read_text(encoding="utf-8") + "\ninit();\n")
+patch('''  db.collection("ctx").onSnapshot(snap => {''', '''  db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = v; lsPut("vo.lec", v); if (view() === "lec") render(); } }, () => {});
+  db.doc("vo.marks/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { LM = { ok: v.ok || {}, fav: v.fav || {}, pk: v.pk || {}, cur: v.cur || "" }; lsPut("vo.lecm", LM); if (view() === "lec") render(); } }, () => {});
+  db.collection("ctx").onSnapshot(snap => {''')
+patch("</style>\n\n<div class=\"wrap\">", """.lc-pick{margin:4px 0 12px}.lc-pick .chip b{font-family:var(--f-mono);font-size:11px;color:var(--accent)}.lc-pick .chip.on b{color:inherit}.chips .chip span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-left:3px}
+.lc-sel{display:flex;gap:8px;align-items:center;margin:0 0 10px}.lc-sel label{font-size:13px;color:var(--muted)}
+.lc-sel select{flex:1;min-width:0;font:inherit;font-size:15px;padding:10px 11px;border:1px solid var(--accent);border-radius:10px;background:var(--surface);color:var(--ink)}
+.lc-card{margin-bottom:12px;padding:14px 16px}.lc-card h3{margin:2px 0 6px;font-size:16px}
+.lc-h{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%}
+.lc-part{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin:18px 2px 6px}
+.lc-nav{display:flex;justify-content:space-between;gap:8px;margin:4px 0 16px}
+.lt{display:flex;gap:10px;padding:11px 0;border-top:1px solid var(--line)}.lt:first-of-type{border-top:0}.lt.ok .lt-m{opacity:.5}
+.lt-m{flex:1;min-width:0}.lt-h b{font-weight:700;font-size:15px}.lt-h small{margin-left:6px;color:var(--muted);font-size:12px}
+.lt-m p{margin:3px 0 0;font-size:14px;line-height:1.5}.lt-m .lt-ex{font-size:13px;color:var(--muted)}
+.lt-ref{all:unset;cursor:pointer;margin-top:6px;font-size:12px;color:var(--accent);display:inline-flex;gap:6px;align-items:center}
+.lt-mk{display:flex;gap:6px;align-items:flex-start}.lt-mk .mk{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:15px;cursor:pointer}
+.lt-mk .mk.ok[aria-pressed=true]{background:var(--l4);border-color:var(--l4);color:#fff}.lt-mk .mk.fav[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+</style>
+
+<div class=\"wrap\">""")
 patch("<b>/log</b>를 돌리면 Claude가 이 기록을 읽어 위키 「이해도 기록」에 올릴 후보로 보여 드리고, 확인한 것만 반영돼요.",
       "<b>/log</b>를 돌리면 Claude가 이 기록을 읽어 위키 「이해도 기록」에 올릴 후보로 보여 드리고, 확인한 것만 반영돼요. Brainy 대화·태스크 작업실에서 익힌 용어를 실제로 쓰면 ④ 실행으로 저절로 올라가요.")
 patch('''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연동 단어장</small></div>''',
@@ -410,7 +434,7 @@ patch('''<div class="brand"><h1>체화 단어장</h1><small id="sub">위키 연�
 emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--l4)",
      '<link rel="apple-touch-icon" href="vo-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="vo-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="vo-icon-64.png">',
-     '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "progress", "ctx"]}',
+     '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]}',
      '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vo-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vo-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
 
 # ═════════════════════════ 옛 주소 /brainy-today/ → home/ ═════════════════════════

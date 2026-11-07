@@ -40,8 +40,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "111520e05c"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "progress", "ctx"]};</script>
-<script src="../shim.js?v=111520e05c"></script>
+<script>window.BRAINY_VERSION = "cd416d9bd9"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]};</script>
+<script src="../shim.js?v=cd416d9bd9"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -166,6 +166,19 @@ textarea{min-height:120px;resize:vertical}
 .hist{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 @media (max-width:420px){.catrow{grid-template-columns:86px 1fr 58px}.legend b{font-size:19px}}
 @media (prefers-reduced-motion:no-preference){.flash,.result{animation:fade .2s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
+.lc-pick{margin:4px 0 12px}.lc-pick .chip b{font-family:var(--f-mono);font-size:11px;color:var(--accent)}.lc-pick .chip.on b{color:inherit}.chips .chip span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-left:3px}
+.lc-sel{display:flex;gap:8px;align-items:center;margin:0 0 10px}.lc-sel label{font-size:13px;color:var(--muted)}
+.lc-sel select{flex:1;min-width:0;font:inherit;font-size:15px;padding:10px 11px;border:1px solid var(--accent);border-radius:10px;background:var(--surface);color:var(--ink)}
+.lc-card{margin-bottom:12px;padding:14px 16px}.lc-card h3{margin:2px 0 6px;font-size:16px}
+.lc-h{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%}
+.lc-part{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin:18px 2px 6px}
+.lc-nav{display:flex;justify-content:space-between;gap:8px;margin:4px 0 16px}
+.lt{display:flex;gap:10px;padding:11px 0;border-top:1px solid var(--line)}.lt:first-of-type{border-top:0}.lt.ok .lt-m{opacity:.5}
+.lt-m{flex:1;min-width:0}.lt-h b{font-weight:700;font-size:15px}.lt-h small{margin-left:6px;color:var(--muted);font-size:12px}
+.lt-m p{margin:3px 0 0;font-size:14px;line-height:1.5}.lt-m .lt-ex{font-size:13px;color:var(--muted)}
+.lt-ref{all:unset;cursor:pointer;margin-top:6px;font-size:12px;color:var(--accent);display:inline-flex;gap:6px;align-items:center}
+.lt-mk{display:flex;gap:6px;align-items:flex-start}.lt-mk .mk{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:15px;cursor:pointer}
+.lt-mk .mk.ok[aria-pressed=true]{background:var(--l4);border-color:var(--l4);color:#fff}.lt-mk .mk.fav[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 </style>
 
 <div class="wrap">
@@ -174,6 +187,7 @@ textarea{min-height:120px;resize:vertical}
     <div class="seg" id="dom" role="tablist" aria-label="영역"></div>
     <nav id="nav">
       <a href="#review" data-v="review">복습</a>
+      <a href="#lec" data-v="lec">강의</a>
       <a href="#home" data-v="home">홈</a>
       <a href="#learn" data-v="learn">알기</a>
       <a href="#talk" data-v="talk">설명하기</a>
@@ -575,7 +589,7 @@ function render(){
   const main = document.getElementById("view");
   const searchFocused = ae && ae.id === "listQ";
   if (v === "list" && searchFocused) { document.getElementById("listOut").innerHTML = listRows(); return; }
-  main.innerHTML = v === "review" ? renderReview() : v === "learn" ? renderLearn() : v === "talk" ? renderTalk() : v === "do" ? renderDo() : v === "list" ? renderList() : renderHome();
+  main.innerHTML = v === "lec" ? renderLec() : v === "review" ? renderReview() : v === "learn" ? renderLearn() : v === "talk" ? renderTalk() : v === "do" ? renderDo() : v === "list" ? renderList() : renderHome();
   document.getElementById("dom").innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
   document.getElementById("sub").textContent = `${S.domain} ${TERMS.length}개 · 목표 달성 ${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}`;
 }
@@ -718,6 +732,8 @@ async function init(){
     if (S.queue) S.queue = S.queue.filter(id => BYID[id]);
     render();
   }, () => {});
+  db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = v; lsPut("vo.lec", v); if (view() === "lec") render(); } }, () => {});
+  db.doc("vo.marks/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { LM = { ok: v.ok || {}, fav: v.fav || {}, pk: v.pk || {}, cur: v.cur || "" }; lsPut("vo.lecm", LM); if (view() === "lec") render(); } }, () => {});
   db.collection("ctx").onSnapshot(snap => {
     const m = {}; snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); });
     CTX = { ...m, ...Object.fromEntries(Object.entries(CTX).filter(([k]) => !m[k])) };
@@ -847,6 +863,73 @@ document.addEventListener("keydown", e => {
   if (view() !== "review" || e.isComposing || /input|textarea|select/i.test(document.activeElement?.tagName || "")) return;
   if (e.key === " " || e.key === "Enter") { if (!RV.flipped) { e.preventDefault(); RV.flipped = true; render(); } return; }
   if (RV.flipped && ["1", "2", "3"].includes(e.key)) rvGrade(e.key === "1" ? "bad" : e.key === "2" ? "mid" : "ok");
+});
+
+/* ── 강의 — 강의(챕터)별 용어 정리 (맥 단축키 「강의 고르기」와 같은 방식, build.py 가 끼움) ──
+   데이터: 볼트 `4_Outputs/체화 단어장/강의 용어.json` → 맥 동기화(app_data.py) → vo.data/lec
+   표시(고른 과정·강의, ✓ 외웠어, ★ 즐겨찾기): vo.marks/lec — 모든 기기에서 같다 */
+function lsGet(k, d){ try { return JSON.parse(localStorage.getItem(k) || "null") || d; } catch (e) { return d; } }
+function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+let LEC = lsGet("vo.lec", { courses: [] });
+let LM = lsGet("vo.lecm", {});
+LM.ok = LM.ok || {}; LM.fav = LM.fav || {}; LM.pk = LM.pk || {};
+let lecFilt = "all";
+function lmSave(){ lsPut("vo.lecm", LM); if (db) db.doc("vo.marks/lec").set({ ...LM, updatedAt: nowIso() }).catch(() => {}); }
+const lecKey = t => "t|" + String(t.t).toLowerCase().replace(/\s+/g, "");
+const lecList = () => (LEC.courses || []).filter(c => c.chapters.some(ch => (ch.terms || []).length));
+const lecCur = () => { const L = lecList(); return L.find(c => c.id === LM.cur) || L[0] || null; };
+const lecChs = c => c.chapters.filter(ch => (ch.terms || []).length);
+const lecKeep = t => lecFilt === "all" || (lecFilt === "todo" ? !LM.ok[lecKey(t)] : lecFilt === "ok" ? !!LM.ok[lecKey(t)] : !!LM.fav[lecKey(t)]);
+
+function lecRow(t){
+  const k = lecKey(t), ok = !!LM.ok[k], fv = !!LM.fav[k], ref = t.ref && BYID[t.ref];
+  return `<div class="lt${ok ? " ok" : ""}"><div class="lt-m"><div class="lt-h"><b>${esc(t.t)}</b>${t.en ? `<small>${esc(t.en)}</small>` : ""}</div>
+    <p>${esc(t.d)}</p>${t.ex ? `<p class="lt-ex">${esc(t.ex)}</p>` : ""}
+    ${ref ? `<button class="lt-ref" data-detail="${esc(t.ref)}">단어장에 있음 ${pill(lv(t.ref))} 장면·복습 보기 →</button>` : ""}</div>
+    <div class="lt-mk"><button class="mk ok" data-lok="${esc(k)}" aria-pressed="${ok}" title="외웠어" aria-label="${esc(t.t)} 외웠어">✓</button><button class="mk fav" data-lfav="${esc(k)}" aria-pressed="${fv}" title="즐겨찾기" aria-label="${esc(t.t)} 즐겨찾기">★</button></div></div>`;
+}
+function renderLec(){
+  const L = lecList();
+  if (!L.length) return `<section class="card"><p class="empty">강의 용어를 불러오는 중… 맥이 켜져 있으면 몇 초 안에 떠요.</p></section>`;
+  const c = lecCur(), chs = lecChs(c), all = chs.flatMap(ch => ch.terms);
+  const sel = chs.find(ch => ch.id === LM.pk[c.id]);
+  const base = sel ? sel.terms : all;
+  const n = { all: base.length, todo: base.filter(t => !LM.ok[lecKey(t)]).length, ok: base.filter(t => LM.ok[lecKey(t)]).length, fav: base.filter(t => LM.fav[lecKey(t)]).length };
+  let h = `<p class="muted" style="margin:6px 2px 10px;font-size:14px">강의를 고르면 <b>그 강의에서 배우는 용어</b>만 모아 봐요. 외운 건 ✓, 다시 볼 건 ★.</p>`;
+  h += `<div class="chips lc-pick">${L.map(x => { const tn = lecChs(x).reduce((a, ch) => a + ch.terms.length, 0);
+    return `<button class="chip${x.id === c.id ? " on" : ""}" data-lcourse="${esc(x.id)}">${x.tag ? `<b>${esc(x.tag)}</b> ` : ""}${esc(x.name)} <span>${tn}</span></button>`; }).join("")}</div>`;
+  h += `<div class="lc-sel"><label for="lc-sel">강의</label><select id="lc-sel" data-lsel="1"><option value="">전체 강의 — 순서대로 다 보기</option>${chs.map(ch => {
+    const k = ch.terms.filter(t => LM.ok[lecKey(t)]).length;
+    return `<option value="${esc(ch.id)}"${sel === ch ? " selected" : ""}>${k === ch.terms.length ? "✓ " : ""}${esc(ch.title)} (${ch.terms.length})</option>`; }).join("")}</select></div>`;
+  h += `<div class="chips" style="margin:2px 0 12px">${[["all", "전체"], ["todo", "아직"], ["ok", "✓ 외운 것"], ["fav", "★ 즐겨찾기"]].map(([k, l]) =>
+    `<button class="chip${lecFilt === k ? " on" : ""}" data-lfilt="${k}">${l} <span>${n[k]}</span></button>`).join("")}</div>`;
+  if (sel) {
+    const i = chs.indexOf(sel), rows = sel.terms.filter(lecKeep);
+    h += `<section class="card lc-card"><div class="meta"><span class="tc">${esc(sel.part || "")}</span><span class="muted">${sel.terms.length}개</span></div><h3>${esc(sel.title)}</h3>
+      ${rows.length ? rows.map(lecRow).join("") : `<p class="empty">여기엔 없어요.</p>`}</section>
+      <div class="lc-nav">${i > 0 ? `<button class="btn ghost" data-lpick="${esc(chs[i - 1].id)}">◀ 이전 강의</button>` : "<span></span>"}
+      ${i < chs.length - 1 ? `<button class="btn ghost" data-lpick="${esc(chs[i + 1].id)}">다음 강의 ▶</button>` : "<span></span>"}</div>`;
+    return h;
+  }
+  let part = null;
+  chs.forEach(ch => {
+    const rows = ch.terms.filter(lecKeep); if (!rows.length) return;
+    if (ch.part !== part) { part = ch.part; h += `<p class="lc-part">${esc(part || "")}</p>`; }
+    h += `<section class="card lc-card"><button class="lc-h" data-lpick="${esc(ch.id)}"><h3>${esc(ch.title)}</h3><span class="muted">${rows.length} →</span></button>${rows.map(lecRow).join("")}</section>`;
+  });
+  return h;
+}
+function lecPick(id){ const c = lecCur(); if (!c) return; if (id) LM.pk[c.id] = id; else delete LM.pk[c.id]; lmSave(); render(); window.scrollTo({ top: 0, behavior: "instant" }); }
+document.addEventListener("change", e => { if (e.target && e.target.dataset && e.target.dataset.lsel) lecPick(e.target.value); });
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-lcourse],[data-lok],[data-lfav],[data-lpick],[data-lfilt]"); if (!b) return;
+  const d = b.dataset;
+  if (d.lcourse) { LM.cur = d.lcourse; lmSave(); render(); return; }
+  if (d.lfilt) { lecFilt = d.lfilt; render(); return; }
+  if (d.lpick !== undefined) { lecPick(d.lpick); return; }
+  const m = d.lok ? LM.ok : LM.fav, k = d.lok || d.lfav;
+  if (m[k]) delete m[k]; else m[k] = 1;
+  lmSave(); render();
 });
 
 init();
