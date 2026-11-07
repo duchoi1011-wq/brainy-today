@@ -40,8 +40,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "a5fc4ff958"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests"]};</script>
-<script src="../shim.js?v=a5fc4ff958"></script>
+<script>window.BRAINY_VERSION = "bd6d09f01a"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests"]};</script>
+<script src="../shim.js?v=bd6d09f01a"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="web-icon-180.png">
@@ -868,7 +868,7 @@ function renderCourse(){
     var dn = x.chapters.filter(function(ch){ return CPROG.done[x.id + "|" + ch.id]; }).length;
     return "<button type=\"button\" class=\"mode\" data-cspick=\"" + cx(x.id) + "\" aria-pressed=\"" + (x.id === c.id) + "\">" + (x.tag ? "<b>" + cx(x.tag) + "</b> " : "") + cx(x.name) + " <span class=\"n\">" + dn + "/" + x.chapters.length + "</span></button>";
   }).join("") + "</div>";
-  h += "<p class=\"why\">강의 들으면서 <b>차례대로</b> — 번호를 누르면 체크, 다 하면 「다음 챕터」. " + (c.note ? cx(c.note) + " " : "") + "<span style=\"color:var(--faint)\">← → 키로 챕터 이동</span></p>";
+  h += "<p class=\"why\">강의 들으면서 <b>차례대로</b> — 번호를 누르면 체크, 다 하면 「다음 챕터」. " + (c.note ? cx(c.note) + " " : "") + "<span style=\"color:var(--faint)\">「Claude에게」 문장은 교안을 줄인 것 — 강의 화면과 다르면 화면이 맞아요. ← → 키로 챕터 이동</span></p>";
   // 지금 여기
   h += "<div class=\"cs-now\"><div class=\"block-head\"><h2>▶ 지금 여기</h2><i class=\"hr\"></i><span class=\"meta\">" + doneN + "/" + c.chapters.length + " 챕터 끝</span></div>" +
     "<p class=\"cs-part-l\">" + cx(here.part) + "</p><h3 class=\"cs-h\">" + cx(here.title) + "</h3>" + csBody(c, here, true) + "</div>";
