@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "0036e55333"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=0036e55333"></script>
+<script>window.BRAINY_VERSION = "9e979a457a"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=9e979a457a"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -523,7 +523,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var items = todayItems(), list = todayList(), done = list.filter(function (x) { return items[x.key]; }).length;
     var p = list.length ? Math.round(done / list.length * 100) : 0;
     var day = curDay(), w = S.db && !S.readOnly;
-    h += '<section class="section"><div class="progress-row"><div><h2>오늘 체크</h2><p class="small muted">한눈에 확인 · 쓰기는 기록 탭에서 (항목을 누르면 바로 가요)</p></div><div class="ring" style="--p:' + p + '"><span>' + done + "/" + list.length + "</span></div></div><div class='checks'>" + checkRows(list, day, w, false) + "</div></section>";
+    h += '<section class="section"><div class="progress-row"><div><h2>오늘 체크</h2><p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 Brainy와 대화</p></div><div class="ring" style="--p:' + p + '"><span>' + done + "/" + list.length + "</span></div></div><div class='checks'>" + checkRows(list, day, w, true) + "</div></section>";
 
     h += '<section class="card"><h2>이번 주 약속</h2>';
     (m.promises || []).forEach(function (pr) {
@@ -552,6 +552,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       });
       h += "</section>";
     }
+    h += '<section class="card composer"><label for="note-input"><h2>지금 떠오른 것</h2></label><textarea id="note-input" placeholder="생각 · 한 일 · 할 일 · 쓴 돈 — 무엇이든. 「로그」는 그대로 남기고, 「💬 Brainy와 대화」는 같이 정리해요"' + (w ? "" : " disabled") + ">" + esc(S.note) + "</textarea>" +
+      (S.justSaved && !S.note ? '<p class="small" style="color:var(--good)">남겼어요 — 맥이 볼트로 옮겨요.</p>' : "") +
+      '<div class="row end"><button class="btn" data-act="savenote"' + (w && S.note.trim() ? "" : " disabled") + '>로그</button><button class="btn primary" data-act="ictalk" data-k="memo" data-src="note-input">💬 Brainy와 대화</button></div>' + icHtml("memo") + "</section>";
     return h;
   }
 
@@ -1967,9 +1970,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   }
 
   function viewNotes() {
-    var h = headView("기록", "오늘 쓰기 · 지난 기록 · 메모 · 결산과 명령") + statusNotice();
-    var nv = S.noteView || "write", nWait = ledgerOpen().length;
-    h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["write", "✍ 오늘 쓰기"], ["cal", "📅 지난 기록"], ["memo", "✎ 메모"], ["ops", "🗳 점검·결산·명령" + ((nWait + ((S.reports || []).filter(function (r) { return r.status !== "답함"; }).length)) ? " " + (nWait + (S.reports || []).filter(function (r) { return r.status !== "답함"; }).length) : "")]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";
+    var h = headView("기록", "점검·결산·명령 · 지난 기록") + statusNotice();
+    var nv = S.noteView === "cal" ? "cal" : "ops", nWait = ledgerOpen().length;
+    h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["ops", "🗳 점검·결산·명령" + ((nWait + ((S.reports || []).filter(function (r) { return r.status !== "답함"; }).length)) ? " " + (nWait + (S.reports || []).filter(function (r) { return r.status !== "답함"; }).length) : "")], ["cal", "📅 지난 기록"]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";
     if (nv === "write") return h + viewWrite();
     if (nv === "cal") return h + viewCal();
     if (nv === "ops") return h + viewOps();
@@ -2386,7 +2389,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "nview") { S.noteView = t.getAttribute("data-v"); try { localStorage.setItem("brainy-nview", S.noteView); } catch (e) {} render(); return; }
     if (act === "goops") { S.tab = "notes"; S.noteView = "ops"; render(); window.scrollTo(0, 0); return; }
     if (act === "calday") { S.calDay = t.getAttribute("data-v"); render(); return; }
-    if (act === "writerow" || act === "gowrite") { var wk = t.getAttribute("data-key"); S.tab = "notes"; S.noteView = "write"; try { localStorage.setItem("brainy-tab", "notes"); localStorage.setItem("brainy-nview", "write"); } catch (e) {} if (DETAIL[wk]) S.openRow[wk] = true; render(); var rowEl = document.getElementById("row-" + wk); if (rowEl) rowEl.scrollIntoView({ block: "start" }); return; }
+    if (act === "writerow" || act === "gowrite") { var wk = t.getAttribute("data-key"); S.tab = "today"; try { localStorage.setItem("brainy-tab", "today"); } catch (e) {} if (DETAIL[wk]) S.openRow[wk] = true; render(); var rowEl = document.getElementById("row-" + wk); if (rowEl) rowEl.scrollIntoView({ block: "start" }); return; }
     if (act === "stepchk") { toggleStep(t.getAttribute("data-key"), t.getAttribute("data-v")); return; }
     if (act === "twstep") { var tt1 = t.getAttribute("data-title"), si = +t.getAttribute("data-i"), cur1 = twSteps(tt1)[si]; twSave(tt1, function (w) { w.steps = w.steps || {}; w.steps[si] = !(cur1 && cur1.done); w.log = (w.log || []).concat([{ at: new Date().toISOString(), text: (cur1 && cur1.done ? "☐ 해제 " : "☑ 완료 ") + (si + 1) + ". " + clip(cur1 ? cur1.text : "", 60) }]); }); return; }
     if (act === "twgo") { var tt2 = t.getAttribute("data-title"); var el2 = document.querySelector('textarea[data-tw="' + CSS.escape(tt2) + '"]'); if (el2) S.twDraft[tt2] = el2.value; if (!S.taskOpen && S.tab === "work") { S.taskOpen = tt2; } twSend(tt2, S.twDraft[tt2]); return; }

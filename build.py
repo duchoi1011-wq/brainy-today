@@ -437,6 +437,32 @@ patch(""".lgask { display: grid;""", """.ic { display: grid; gap: 6px; margin: 8
 .lgask { display: grid;""")
 patch("""DETAIL[x.key](day, w) + "</div>";""", """DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div>";""")
 
+# 11) 기록 탭은 「점검·결산·명령」부터 · 오늘 쓰기와 메모는 오늘 탭에서 (2026-11-07 동욱: "기록에는 점검 결산부터 · 메모·오늘쓰기는 오늘에 있으니 필요 없을 것 같아")
+patch("""headView("기록", "오늘 쓰기 · 지난 기록 · 메모 · 결산과 명령")""", """headView("기록", "점검·결산·명령 · 지난 기록")""")
+patch("""var nv = S.noteView || "write", nWait""", """var nv = S.noteView === "cal" ? "cal" : "ops", nWait""")
+patch("""[["write", "✍ 오늘 쓰기"], ["cal", "📅 지난 기록"], ["memo", "✎ 메모"], ["ops",""", """[["ops",""")
+patch(""": "")]].map(function (x) { return '<button class="chip" data-act="nview\"""", """: "")], ["cal", "📅 지난 기록"]].map(function (x) { return '<button class="chip" data-act="nview\"""")
+# 오늘 체크: 오늘 탭에서 바로 펼쳐 쓴다
+patch("""<h2>오늘 체크</h2><p class="small muted">한눈에 확인 · 쓰기는 기록 탭에서 (항목을 누르면 바로 가요)</p>""", """<h2>오늘 체크</h2><p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 Brainy와 대화</p>""")
+patch("""checkRows(list, day, w, false)""", """checkRows(list, day, w, true)""")
+patch("""S.tab = "notes"; S.noteView = "write"; try { localStorage.setItem("brainy-tab", "notes"); localStorage.setItem("brainy-nview", "write"); } catch (e) {}""",
+      """S.tab = "today"; try { localStorage.setItem("brainy-tab", "today"); } catch (e) {}""")
+# 메모(지금 떠오른 것)도 오늘 탭 맨 아래 — 「로그」 / 「💬 Brainy와 대화」
+patch("""      h += "</section>";
+    }
+    return h;
+  }
+
+  /* ---------- 오늘 체크 줄""", """      h += "</section>";
+    }
+    h += '<section class="card composer"><label for="note-input"><h2>지금 떠오른 것</h2></label><textarea id="note-input" placeholder="생각 · 한 일 · 할 일 · 쓴 돈 — 무엇이든. 「로그」는 그대로 남기고, 「💬 Brainy와 대화」는 같이 정리해요"' + (w ? "" : " disabled") + ">" + esc(S.note) + "</textarea>" +
+      (S.justSaved && !S.note ? '<p class="small" style="color:var(--good)">남겼어요 — 맥이 볼트로 옮겨요.</p>' : "") +
+      '<div class="row end"><button class="btn" data-act="savenote"' + (w && S.note.trim() ? "" : " disabled") + '>로그</button><button class="btn primary" data-act="ictalk" data-k="memo" data-src="note-input">💬 Brainy와 대화</button></div>' + icHtml("memo") + "</section>";
+    return h;
+  }
+
+  /* ---------- 오늘 체크 줄""")
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',
