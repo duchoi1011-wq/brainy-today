@@ -157,7 +157,18 @@
   };
   /* ---------- Brainy 대화 (sample) — 질문을 Supabase 에 두면 맥의 Claude(구독)가 집어서 답을 흘려보낸다 ---------- */
   var aiWait = {};   // id -> {opts, json, text, at, resolve, reject, timers}
-  var READ_TOOL = /^(get_|search_)/;  // 결과가 필요한 읽기 도구는 맥 Claude 가 볼트를 직접 읽는다
+  var READ_TOOL = /^(get_|search_)/;  // 결과가 필요한 읽기 도구는 Brainy 가 볼트를 직접 읽는다 (맥: 파일, 클라우드: notes 표)
+  var HANDOFF = "맥의 Brainy에게 넘기는 중";   // supabase/functions/brainy-ai 와 같은 글
+  // 질문은 먼저 클라우드 Brainy(Supabase Edge Function + 콘솔 API)가 받는다. 못 받으면 status "요청" 으로 맥에 넘긴다.
+  function aiCloud(id, req) {
+    function toMac() {
+      sb.from("docs").update({ data: Object.assign({}, req, { status: "요청" }) }).eq("path", "ai/" + id).eq("data->>status", "클라우드").then(function () {}, function () {});
+    }
+    sb.functions.invoke("brainy-ai", { body: { id: id } }).then(function (r) {
+      var st = r.error && r.error.context && r.error.context.status;
+      if (r.error && st !== 409) toMac();   // 409 = 이미 집었다
+    }, toMac);
+  }
   function toJpeg(blob) {
     return new Promise(function (resolve) {
       var url = URL.createObjectURL(blob), img = new Image();
@@ -182,7 +193,11 @@
   function aiOut(id, o) {
     var w = aiWait[id]; if (!w || !o) return;
     if (o.updatedAt && w.at && o.updatedAt <= w.at && o.status === w.status) return;
-    w.at = o.updatedAt; w.status = o.status; w.seen = true;
+    w.at = o.updatedAt; w.status = o.status; w.seen = true; w.via = o.via || "mac";
+    if (o.via === "cloud" && o.doing === HANDOFF && !w.handed) {   // 클라우드가 못 받아 맥으로 넘겼다 — 맥도 꺼져 있으면 여기서 알린다
+      w.handed = true;
+      w.timers.push(setTimeout(function () { if (w.via === "cloud" && !w.text) aiFail(id, "unavailable", "답할 곳이 없어요", "⚠ 지금은 Brainy가 답할 수 없어요 — 클라우드 Brainy(콘솔 API 키)를 쓸 수 없고 맥도 꺼져 있어요. 잠시 뒤 다시 보내 주세요."); }, 25000));
+    }
     if (o.doing && !o.text && !w.text && o.doing !== w.doing && w.opts.onText && !w.json) {   // 글 쓰기 전 — 지금 하는 일을 잠깐 보여 준다
       w.doing = o.doing; try { w.opts.onText({ text: "⋯ " + o.doing, delta: "" }); } catch (e) {}
     }
@@ -223,13 +238,13 @@
       return Promise.all(imgs.map(toJpeg)).then(function (list) {
         var id = "a" + Date.now().toString(36) + rid().slice(0, 6);
         var req = {
-          status: "요청", input: input, json: !!json, tier: opts.modelTier || "default", createdAt: new Date().toISOString(),
+          status: "클라우드", input: input, json: !!json, tier: opts.modelTier || "default", createdAt: new Date().toISOString(),
           tools: (opts.tools || []).filter(function (t) { return !READ_TOOL.test(t.name); }).map(function (t) { return { name: t.name, description: t.description || "", inputSchema: t.inputSchema || {} }; }),
           images: list.filter(Boolean)
         };
         return new Promise(function (resolve, reject) {
           var w = aiWait[id] = { opts: opts, json: !!json, text: "", at: "", resolve: resolve, reject: reject, timers: [], seen: false };
-          w.timers.push(setTimeout(function () { if (!w.seen) aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ 맥이 답하지 않아요 — 맥이 잠들었거나 꺼져 있으면 Brainy가 답할 수 없어요. 맥을 깨우고 다시 보내 주세요."); }, 25000));
+          w.timers.push(setTimeout(function () { if (!w.seen) aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ Brainy가 답하지 않아요 — 인터넷을 확인하고 다시 보내 주세요."); }, 25000));
           w.timers.push(setTimeout(function () { aiFail(id, "unavailable", "너무 오래 걸려요", (w.text ? w.text + "\n\n" : "") + "⚠ 답이 너무 오래 걸려 멈췄어요. 다시 보내 주세요."); }, 9 * 60 * 1000));
           w.timers.push(setInterval(function () { aiPoll(id); }, 1500));   // 실시간 알림을 놓쳐도 받도록
           if (opts.signal) opts.signal.addEventListener("abort", function () {
@@ -238,6 +253,7 @@
           });
           sb.from("docs").upsert({ path: "ai/" + id, coll: "ai", id: id, data: req }).then(function (r) {
             if (r.error) aiFail(id, "unavailable", r.error.message, "⚠ 질문을 보내지 못했어요 — 인터넷을 확인해 주세요.");
+            else aiCloud(id, req);
           }, function () { aiFail(id, "unavailable", "보내지 못했어요", "⚠ 질문을 보내지 못했어요 — 인터넷을 확인해 주세요."); });
         });
       });
