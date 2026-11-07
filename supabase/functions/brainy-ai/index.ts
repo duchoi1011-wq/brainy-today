@@ -239,8 +239,8 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
     if (!data || data.data?.status === "취소") { cancelled = true; stream?.abort(); }
   }, 2000);
 
+  const key = (Deno.env.get("ANTHROPIC_API_KEY") ?? "").replace(/\s+/g, "");   // 붙여 넣을 때 섞인 빈칸·줄바꿈은 뺀다
   try {
-    const key = Deno.env.get("ANTHROPIC_API_KEY");
     if (!key) throw new HandToMac("ANTHROPIC_API_KEY 가 없어요");
     await out({ status: "생각 중", text: "" });
 
@@ -310,6 +310,8 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
     }
     if (!timedOut) {
       console.error(`brainy-ai ${id}: ${e instanceof Anthropic.APIError ? `API ${e.status} ` : ""}${msg}`);
+      // 키가 거절되면 키 값 대신 종류(앞 10자)와 길이만 남긴다 — 일반 API 키는 sk-ant-api 로 시작한다
+      if (e instanceof Anthropic.AuthenticationError) console.error(`brainy-ai 키 모양: ${key.slice(0, 10)}… 길이 ${key.length}`);
       if (!started) {
         // 아직 아무것도 안 보냈으면 맥의 Brainy 에게 넘긴다 (키 없음·API 오류·한도)
         handed = true;
