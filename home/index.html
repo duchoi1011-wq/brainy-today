@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "9e979a457a"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=9e979a457a"></script>
+<script>window.BRAINY_VERSION = "1bdeca3ae4"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=1bdeca3ae4"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,7 +289,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .lgm.sys { color: var(--muted); font-size: 13px; padding: 2px 4px; }
 .lgm.warn { color: var(--warn); font-size: 13px; padding: 2px 4px; }
 .ic { display: grid; gap: 6px; margin: 8px 0 4px; }
-.lgask { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; margin-top: 6px; }
+.lgask { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: end; margin-top: 6px; }
 /* Brainy chat sheet */
 .fab { position: fixed; z-index: 6; right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 13px 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
 .fab svg { width: 18px; height: 18px; }
@@ -505,41 +505,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var h = headView(title, sub, listen) + statusNotice();
     var canCmd = S.db && !S.readOnly && S.mcp && cmdTriggerId();
     h += morningCard(canCmd);
-    igActive().forEach(function (d) { h += d.status === "게시됨" ? '<div class="card brief"><p class="line">📸 인스타 게시됨 ✓ — ' + esc(clip(d.title, 30)) + "</p></div>" : igCard(d); });
     var fresh = (S.reports || []).filter(function (r) { return r.status !== "답함" && r.kind !== "morning" && r.date >= ymd(new Date(NOW.getTime() - 3 * 86400000)); });
     var repCmd = function (r) { return lastCmd(function (t) { return t.indexOf("reports/" + r.id + ")") >= 0; }); };
     fresh = fresh.filter(function (r) { var c = repCmd(r); return !(c && c.status === "끝"); });
-    if (fresh.length) h += '<section class="section"><h2>📋 새 점검 결과 ' + fresh.length + '</h2><p class="small muted">예약 점검이 끝나면 자동으로 떠요 · 답이 반영되면 사라져요</p>' + fresh.slice(0, 4).map(function (r, i) {
-      var c = repCmd(r);
-      if (c && /처리 중|보내는 중/.test(c.status || "")) return '<div class="card brief"><p class="line">' + (REPORT_ICON[r.kind] || "📋") + " " + esc(r.title || "") + ' — 답을 보냈어요</p><p class="small muted">Brainy가 처리하는 중 · 끝나면 이 줄은 사라지고 결과는 기록 탭에 남아요</p></div>';
-      return reportCard(r, i === 0);
-    }).join("") + "</section>";
-    var nWait = ledgerOpen().length;
-    if (nWait) h += '<button class="card brief projcard" data-act="goops" style="border:0"><span class="line">🗳 결산 대기 ' + nWait + '개</span><span class="small muted">기록 탭에서 항목마다 답하기 →</span></button>';
-    if (!m) return h + emptyMain();
+    if (!m) return h + (fresh.length ? reportCard(fresh[0], true) : "") + emptyMain();
     var b = m.brainy;
     h += '<div class="card brief"><p class="line">' + esc(b.line) + '</p><dl class="kv"><dt>오늘 한 걸음</dt><dd>' + esc(b.next) + "</dd><dt>잘한 것</dt><dd>" + esc(b.good) + "</dd><dt>직면할 것</dt><dd>" + esc(b.confront) + "</dd></dl></div>";
-
-    var items = todayItems(), list = todayList(), done = list.filter(function (x) { return items[x.key]; }).length;
-    var p = list.length ? Math.round(done / list.length * 100) : 0;
-    var day = curDay(), w = S.db && !S.readOnly;
-    h += '<section class="section"><div class="progress-row"><div><h2>오늘 체크</h2><p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 Brainy와 대화</p></div><div class="ring" style="--p:' + p + '"><span>' + done + "/" + list.length + "</span></div></div><div class='checks'>" + checkRows(list, day, w, true) + "</div></section>";
-
-    h += '<section class="card"><h2>이번 주 약속</h2>';
-    (m.promises || []).forEach(function (pr) {
-      var w = weekCount(pr), r = Math.min(1, w.done / pr.goal) * 100;
-      var tag = w.done >= pr.goal ? '<span class="pill good">채움</span>' : (w.done === 0 ? '<span class="pill warn">0회</span>' : "");
-      h += '<div class="promise"><div class="top"><div><span class="role">' + esc(pr.role) + "</span><br><b>" + esc(pr.label) + '</b><br><span class="muted small">' + esc(pr.note) + '</span></div><div style="white-space:nowrap"><span class="num">' + w.done + "/" + pr.goal + "</span> " + tag + '</div></div><div class="meter"><i style="width:' + r + '%"></i></div></div>';
-    });
-    h += "</section>";
-
-    var overdue = (m.tasks || []).filter(function (t) { return t.due && t.due < TODAY; });
-    if (overdue.length) {
-      h += '<section class="card"><div class="progress-row"><h2>기한 지난 태스크</h2><button class="btn quiet" data-act="tab" data-tab="work">프로젝트 보기</button></div>';
-      overdue.forEach(function (t) { h += taskView(t); });
-      h += "</section>";
-    }
-
     var ans = (S.checks[TODAY] && S.checks[TODAY].answers) || {}, qa = S.qa || (S.qa = {});
     var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id] || (S.ic["q:" + q.id] || []).length; });
     if (openQ.length) {
@@ -548,13 +519,20 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         if (qa[q.id]) { h += '<div class="q"><p>' + esc(q.text) + '</p><p class="small' + (qa[q.id].err ? '" style="color:var(--warn)">' : ' muted">') + (qa[q.id].busy ? "Brainy가 바로 반영하는 중…" : esc(qa[q.id].msg)) + "</p></div>"; return; }
         var draft = S.drafts[q.id] != null ? S.drafts[q.id] : (ans[q.id] || "");
         var savedNow = ans[q.id] && ans[q.id] === draft;
-        h += '<div class="q"><p>' + esc(q.text) + '</p><textarea id="ans-' + q.id + '" data-q="' + q.id + '" rows="1" placeholder="한 줄이면 돼요"' + (S.db && !S.readOnly ? "" : " disabled") + ">" + esc(draft) + '</textarea><div class="qrow">' + (savedNow ? '<span class="pill good">보냄</span>' : "") + '<button class="btn" data-act="answer" data-q="' + q.id + '"' + (S.db && !S.readOnly && draft.trim() && !savedNow ? "" : " disabled") + '>로그</button><button class="btn primary" data-act="ictalk" data-k="q:' + q.id + '" data-src="ans-' + q.id + '"' + (S.icBusy["q:" + q.id] ? " disabled" : "") + '>💬 Brainy와 대화</button></div>' + icHtml("q:" + q.id) + "</div>";
+        h += '<div class="q"><p>' + esc(q.text) + '</p><textarea id="ans-' + q.id + '" data-q="' + q.id + '" rows="1" placeholder="한 줄이면 돼요"' + (S.db && !S.readOnly ? "" : " disabled") + ">" + esc(draft) + '</textarea><div class="qrow">' + (savedNow ? '<span class="pill good">보냄</span>' : "") + '<button class="btn" data-act="answer" data-q="' + q.id + '"' + (S.db && !S.readOnly && draft.trim() && !savedNow ? "" : " disabled") + '>로그</button><button class="btn primary" data-act="ictalk" data-k="q:' + q.id + '" data-src="ans-' + q.id + '"' + (S.icBusy["q:" + q.id] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("q:" + q.id) + "</div>";
       });
       h += "</section>";
     }
-    h += '<section class="card composer"><label for="note-input"><h2>지금 떠오른 것</h2></label><textarea id="note-input" placeholder="생각 · 한 일 · 할 일 · 쓴 돈 — 무엇이든. 「로그」는 그대로 남기고, 「💬 Brainy와 대화」는 같이 정리해요"' + (w ? "" : " disabled") + ">" + esc(S.note) + "</textarea>" +
-      (S.justSaved && !S.note ? '<p class="small" style="color:var(--good)">남겼어요 — 맥이 볼트로 옮겨요.</p>' : "") +
-      '<div class="row end"><button class="btn" data-act="savenote"' + (w && S.note.trim() ? "" : " disabled") + '>로그</button><button class="btn primary" data-act="ictalk" data-k="memo" data-src="note-input">💬 Brainy와 대화</button></div>' + icHtml("memo") + "</section>";
+    if (fresh.length) h += '<section class="section"><h2>📋 최근 점검</h2><p class="small muted">예약 점검이 끝나면 자동으로 떠요 · 답이 반영되면 사라져요</p>' + fresh.slice(0, 1).map(function (r, i) {
+      var c = repCmd(r);
+      if (c && /처리 중|보내는 중/.test(c.status || "")) return '<div class="card brief"><p class="line">' + (REPORT_ICON[r.kind] || "📋") + " " + esc(r.title || "") + ' — 답을 보냈어요</p><p class="small muted">Brainy가 처리하는 중 · 끝나면 이 줄은 사라지고 결과는 기록 탭에 남아요</p></div>';
+      return reportCard(r, i === 0);
+    }).join("") + "</section>";
+
+    var items = todayItems(), list = todayList(), done = list.filter(function (x) { return items[x.key]; }).length;
+    var p = list.length ? Math.round(done / list.length * 100) : 0;
+    var day = curDay(), w = S.db && !S.readOnly;
+    h += '<section class="section"><div class="progress-row"><div><h2>오늘 체크</h2><p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 「로그」 또는 「Brainy와 진행」</p></div><div class="ring" style="--p:' + p + '"><span>' + done + "/" + list.length + "</span></div></div><div class='checks'>" + checkRows(list, day, w, true) + "</div></section>";
     return h;
   }
 
@@ -566,7 +544,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       var vs_ = vsyncOf(day.date), syncedAt = (vs_ && vs_.synced && vs_.synced[x.key]) || (day.synced && day.synced[x.key]), vrev_ = vs_ && ((vs_.review && vs_.review[x.key]) || (vs_.later && vs_.later[x.key]));
       var right = writing ? (open ? "접기" : (DETAIL[x.key] ? "쓰기" : "")) : (DETAIL[x.key] ? "기록에서 쓰기 →" : "");
       h += '<div class="crow' + (on ? " on" : "") + '" id="row-' + x.key + '"><div class="head2"><button class="boxbtn" id="' + (writing ? "wchk-" : "chk-") + x.key + '" data-act="check" data-key="' + esc(x.key) + '" aria-pressed="' + on + '" aria-label="' + esc(x.label) + (on ? " 완료 취소" : " 완료") + '"' + (w ? "" : " disabled") + '><span class="box">' + CHECK_SVG + '</span></button><button class="lblbtn" data-act="' + (writing ? "openrow" : "gowrite") + '" data-key="' + esc(x.key) + '"' + (writing ? ' aria-expanded="' + open + '"' : "") + '><span class="lbl"><span>' + esc(x.label) + '</span><span class="open">' + (vrev_ ? '<span class="pill warn" title="' + esc(vrev_) + '">볼트 확인</span> ' : syncedAt ? '<span class="pill good">볼트 반영</span> ' : "") + right + "</span></span>" + (sum ? '<span class="sum">' + esc(sum) + "</span>" : '<span class="hint">' + esc(writing ? x.hint : "아직 안 씀") + "</span>") + "</button></div>";
-      if (open && DETAIL[x.key]) h += '<div class="detail">' + (vrev_ ? '<p class="notice warn">볼트에 못 넣은 칸이 있어요 — ' + esc(vrev_) + '</p>' : "") + vaultFold(x.key) + DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div>";
+      if (open && DETAIL[x.key]) h += '<div class="detail">' + (vrev_ ? '<p class="notice warn">볼트에 못 넣은 칸이 있어요 — ' + esc(vrev_) + '</p>' : "") + vaultFold(x.key) + DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button><button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("fd:" + x.key) + "</div>";
       h += "</div>";
     });
     return h;
@@ -1595,7 +1573,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (now) h += '<p class="nowline"><b>▶ 지금</b> ' + esc(clip(now, 60)) + "</p>";
     else if (steps.length) h += '<p class="nowline"><b>✓</b> 완료 기준을 다 채웠어요</p>';
     h += '<textarea id="twin-' + slug + '" class="grow" data-tw="' + esc(title) + '" rows="1" placeholder="한 일을 쓰거나 일을 시켜요"' + (canW ? "" : " disabled") + ">" + esc(S.twDraft[title] || "") + "</textarea>";
-    h += '<div class="row end">' + (r.busy ? '<button class="btn" data-act="twstop" data-title="' + esc(title) + '">멈추기</button>' : "") + '<button class="btn" data-act="twlog" data-title="' + esc(title) + '"' + (canW ? "" : " disabled") + ">로그만</button>" + (canAi ? '<button class="btn primary" data-act="twgo" data-title="' + esc(title) + '"' + (r.busy ? " disabled" : "") + ">" + (r.busy ? "진행하는 중…" : "Brainy와 진행") + "</button>" : "") + "</div>";
+    h += '<div class="row end">' + (r.busy ? '<button class="btn" data-act="twstop" data-title="' + esc(title) + '">멈추기</button>' : "") + '<button class="btn" data-act="twlog" data-title="' + esc(title) + '"' + (canW ? "" : " disabled") + ">로그</button>" + (canAi ? '<button class="btn primary" data-act="twgo" data-title="' + esc(title) + '"' + (r.busy ? " disabled" : "") + ">" + (r.busy ? "진행하는 중…" : "Brainy와 진행") + "</button>" : "") + "</div>";
     if (S.twMsg) h += '<p class="small" style="color:var(--warn)">' + esc(S.twMsg) + "</p>";
     var nT = Math.ceil(r.turns.length / 2), nO = (w.outputs || []).length, nL = (w.log || []).length, key = "twc:" + slug;
     if (r.busy) S.thOpen[key] = true;
@@ -1635,7 +1613,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var chips = ["다음 한 걸음 같이 하자", "지금 단계 초안 만들어줘", "끝낸 것 체크해줘"];
     if (canAi && !compact) h += '<div class="chips">' + chips.map(function (c) { return '<button class="chip" data-act="twchip" data-title="' + esc(title) + '" data-v="' + esc(c) + '">' + esc(c) + "</button>"; }).join("") + "</div>";
     h += '<textarea id="twin-' + slug + '" class="grow" data-tw="' + esc(title) + '" rows="2" placeholder="한 일을 쓰거나 일을 시켜요 — 예: 내레이션 1테이크 녹음했어 / 편집 순서 짜줘"' + (canW ? "" : " disabled") + ">" + esc(S.twDraft[title] || "") + "</textarea>";
-    h += '<div class="row end">' + (r.busy ? '<button class="btn" data-act="twstop" data-title="' + esc(title) + '">멈추기</button>' : "") + '<button class="btn" data-act="twlog" data-title="' + esc(title) + '"' + (canW ? "" : " disabled") + ">로그만</button>" + (canAi ? '<button class="btn primary" data-act="twgo" data-title="' + esc(title) + '"' + (r.busy ? " disabled" : "") + ">" + (r.busy ? "진행하는 중…" : "Brainy와 진행") + "</button>" : "") + "</div>";
+    h += '<div class="row end">' + (r.busy ? '<button class="btn" data-act="twstop" data-title="' + esc(title) + '">멈추기</button>' : "") + '<button class="btn" data-act="twlog" data-title="' + esc(title) + '"' + (canW ? "" : " disabled") + ">로그</button>" + (canAi ? '<button class="btn primary" data-act="twgo" data-title="' + esc(title) + '"' + (r.busy ? " disabled" : "") + ">" + (r.busy ? "진행하는 중…" : "Brainy와 진행") + "</button>" : "") + "</div>";
     if (!canAi) h += '<p class="small muted">이 화면에서는 Claude를 부를 수 없어서 로그와 체크만 돼요.</p>';
     if (S.twMsg) h += '<p class="small" style="color:var(--warn)">' + esc(S.twMsg) + "</p>";
     // outputs
@@ -1658,7 +1636,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function taskLogBox(title, compact) {
     var w = S.db && !S.readOnly, k = "tl-" + title.replace(/[^\w가-힣]/g, "_"), logs = logsFor(title);
     var h = '<div class="fields" style="margin-top:6px"><textarea id="' + k + '" class="grow" data-tl="' + esc(title) + '" rows="1" placeholder="이 태스크에 한 일 · 정한 것 · 막힌 것 — 예: 내레이션 1테이크 녹음, 톤이 빨라서 다시"' + (w ? "" : " disabled") + ">" + esc(S.tlDraft[title] || "") + "</textarea>";
-    h += '<div class="row end">' + (S.tlMsg[title] ? '<span class="small' + (S.tlMsg[title].err ? '" style="color:var(--warn)' : '" style="color:var(--good)') + '">' + esc(S.tlMsg[title].t) + "</span>" : "") + '<button class="btn" data-act="tlsave" data-title="' + esc(title) + '"' + (w && !S.tlBusy[title] ? "" : " disabled") + '>로그</button><button class="btn" data-act="ictalk" data-k="tl:' + esc(title) + '" data-src="' + k + '">💬 Brainy와 대화</button><button class="btn primary" data-act="tlsend" data-title="' + esc(title) + '"' + (w && S.mcp && cmdTriggerId() && !S.tlBusy[title] ? "" : " disabled") + ">기록하고 태스크에 반영</button></div></div>";
+    h += '<div class="row end">' + (S.tlMsg[title] ? '<span class="small' + (S.tlMsg[title].err ? '" style="color:var(--warn)' : '" style="color:var(--good)') + '">' + esc(S.tlMsg[title].t) + "</span>" : "") + '<button class="btn" data-act="tlsave" data-title="' + esc(title) + '"' + (w && !S.tlBusy[title] ? "" : " disabled") + '>로그</button><button class="btn" data-act="ictalk" data-k="tl:' + esc(title) + '" data-src="' + k + '">Brainy와 진행</button><button class="btn primary" data-act="tlsend" data-title="' + esc(title) + '"' + (w && S.mcp && cmdTriggerId() && !S.tlBusy[title] ? "" : " disabled") + ">기록하고 태스크에 반영</button></div></div>";
     h += icHtml("tl:" + title);
     if (logs.length) h += '<div class="entries">' + logs.slice(0, compact ? 3 : 10).map(function (x) { return '<div class="entry" style="grid-template-columns:auto 1fr auto"><span class="tag">' + esc(md(x.date)) + '</span><span style="white-space:pre-wrap">' + esc(clip(x.text, 200)) + (x.result ? '<br><span class="small muted">→ ' + esc(x.result) + "</span>" : "") + "</span>" + '<span class="pill' + (x.status === "반영됨" ? " good" : x.status === "보냄" ? " accent" : "") + '">' + esc(x.status || "대기") + "</span></div>"; }).join("") + "</div>";
     return h;
@@ -1739,9 +1717,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (rows.length) h += '<div class="tablewrap"><table class="days"><tbody>' + rows.map(function (r) { return "<tr><td class='n' style='text-align:left;width:64px'>" + esc(r.time || "") + "</td><td>" + esc(r.what || "") + (r.task ? '<br><span class="small muted">' + esc(r.task) + "</span>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
     if (mo.skipped && mo.skipped.length) h += '<details class="fold"><summary>오늘 안 들어간 것 ' + mo.skipped.length + '</summary><div class="md"><ul>' + mo.skipped.map(function (x) { return "<li>" + esc(x.what) + (x.why ? " — " + esc(x.why) : "") + (x.when ? " → " + esc(x.when) : "") + "</li>"; }).join("") + "</ul></div></details>";
     h += threadHtml(cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }), function (t) { return t.replace(MO_FOLLOW, "").replace(/^아침 계획 고침:\s*/, "").replace(/^아침 계획 응$/, "응 — 이대로 진행"); }, "mo");
-    h += '<textarea class="grow" data-mo="1" rows="2" placeholder="' + (up ? "✍ Brainy에게 이어서 쓰기 — 예: 운동도 넣어줘, 브랜드 정의는 내일로" : "✍ Brainy에게 바로 쓰기 — 예: EP3는 오후 2시로 옮기고, 운동은 푸시로") + '">' + esc(S.moDraft || "") + "</textarea>";
-    if (up) h += '<div class="row end"><button class="btn primary" data-act="mofollow"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "Brainy에게 보내기") + "</button></div>";
-    else h += '<div class="row end"><button class="btn" data-act="mosend"' + (canCmd && !S.moBusy ? "" : " disabled") + '>쓴 대로 고쳐서 올리기</button><button class="btn primary" data-act="moyes"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "응 — 이대로 진행" + (mo.calN ? " (데일리 노트 · 캘린더 " + mo.calN + ")" : " (데일리 노트에)")) + "</button></div>";
+    h += '<textarea id="mo-input" class="grow" data-mo="1" rows="2" placeholder="' + (up ? "✍ Brainy에게 이어서 쓰기 — 예: 운동도 넣어줘, 브랜드 정의는 내일로" : "✍ Brainy에게 바로 쓰기 — 예: EP3는 오후 2시로 옮기고, 운동은 푸시로") + '">' + esc(S.moDraft || "") + "</textarea>";
+    if (up) h += '<div class="row end"><button class="btn primary" data-act="mofollow"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "로그") + '</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button></div>' + icHtml("mo");
+    else h += '<div class="row end"><button class="btn" data-act="mosend"' + (canCmd && !S.moBusy ? "" : " disabled") + '>로그 (쓴 대로 고쳐 올리기)</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button><button class="btn primary" data-act="moyes"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "응 — 이대로 진행" + (mo.calN ? " (데일리 노트 · 캘린더 " + mo.calN + ")" : " (데일리 노트에)")) + "</button></div>";
+    if (!up) h += icHtml("mo");
     if (S.moMsg && S.moMsg.err) h += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";
     return h + "</section>";
   }
@@ -1763,10 +1742,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         '<div class="chips" style="flex-wrap:wrap">' + [["응", "그대로 해줘"], ["나중에", "나중에"], ["빼", "빼"]].map(function (o) { return '<button class="chip" data-act="anspick" data-scope="' + esc(scope) + '" data-n="' + esc(it.n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>" +
         '<textarea class="grow" data-ans="' + esc(scope) + '" data-ansn="' + esc(it.n) + '" rows="2" placeholder="✍ Brainy에게 바로 쓰기 — 이 항목을 어떻게 할지">' + esc(sel.note || "") + "</textarea></div>";
     });
-    h += '<textarea class="grow" data-ans="' + esc(scope) + '" data-ansn="__all" rows="2" placeholder="' + esc(allPh || "✍ 이 점검 전체에 Brainy에게 쓰기 — 예: 오늘은 캡처 정리부터 해줘") + '">' + esc(st.all || "") + "</textarea>";
+    h += '<textarea id="ansall-' + esc(scope) + '" class="grow" data-ans="' + esc(scope) + '" data-ansn="__all" rows="2" placeholder="' + esc(allPh || "✍ 이 점검 전체에 Brainy에게 쓰기 — 예: 오늘은 캡처 정리부터 해줘") + '">' + esc(st.all || "") + "</textarea>";
     var n = ansPicked(scope).length;
-    h += '<div class="row end"><button class="btn primary" data-act="anssend" data-scope="' + esc(scope) + '"' + (ansCanSend(scope) ? "" : " disabled") + ">" + (S.ansBusy[scope] ? "보내는 중…" : "Brainy에게 보내기" + (n ? " (" + n + ")" : "")) + "</button></div>";
-    h += icHtml("ans:" + scope, true);
+    h += '<div class="row end"><button class="btn primary" data-act="anssend" data-scope="' + esc(scope) + '"' + (ansCanSend(scope) ? "" : " disabled") + ">" + (S.ansBusy[scope] ? "보내는 중…" : "로그" + (n ? " (" + n + ")" : "")) + '</button><button class="btn" data-act="ictalk" data-k="ans:' + esc(scope) + '" data-src="ansall-' + esc(scope) + '">Brainy와 진행</button></div>';
+    h += icHtml("ans:" + scope);
     if (S.ansMsg[scope] && S.ansMsg[scope].err) h += '<p class="small" style="color:var(--warn)">' + esc(S.ansMsg[scope].t) + "</p>";
     return h;
   }
@@ -1927,10 +1906,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var cls = st === "끝" ? "good" : st === "처리 중" || st === "보내는 중" ? "accent" : /못|멈춤|확인/.test(st) ? "warn" : "";
     return '<span class="pill ' + cls + '">' + esc(st) + "</span>";
   }
-  function viewOps() {
+  function viewOps(part) {
     var h = "", canCmd = S.db && !S.readOnly && S.mcp && cmdTriggerId();
-    h += morningCard(canCmd);
-    h += viewReports();
+    if (part !== "led") {
+      igActive().forEach(function (d) { h += d.status === "게시됨" ? '<div class="card brief"><p class="line">📸 인스타 게시됨 ✓ — ' + esc(clip(d.title, 30)) + "</p></div>" : igCard(d); });
+      h += morningCard(canCmd);
+      h += viewReports();
+      return h;
+    }
     // 결산 대기
     var lg = S.ledger, live = (lg && lg.items) || [];
     h += '<section class="card"><div class="progress-row"><h2>🗳 결산 대기 ' + ledgerOpen().length + '</h2><span class="small muted">' + (lg && lg.updatedAt ? "원장 " + whenKo(lg.updatedAt) + " 기준" : "결산 원장") + "</span></div>";
@@ -1970,12 +1953,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   }
 
   function viewNotes() {
-    var h = headView("기록", "점검·결산·명령 · 지난 기록") + statusNotice();
-    var nv = S.noteView === "cal" ? "cal" : "ops", nWait = ledgerOpen().length;
-    h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["ops", "🗳 점검·결산·명령" + ((nWait + ((S.reports || []).filter(function (r) { return r.status !== "답함"; }).length)) ? " " + (nWait + (S.reports || []).filter(function (r) { return r.status !== "답함"; }).length) : "")], ["cal", "📅 지난 기록"]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";
+    var h = headView("기록", "제안·점검 · 결산 · 지난 기록") + statusNotice();
+    var nv = ["sug", "led", "cal"].indexOf(S.noteView) >= 0 ? S.noteView : "sug", nWait = ledgerOpen().length;
+    var nRep = (S.reports || []).filter(function (r) { return r.status !== "답함"; }).length;
+    h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["sug", "☀️ 제안·점검" + (nRep ? " " + nRep : "")], ["led", "🗳 결산" + (nWait ? " " + nWait : "")], ["cal", "📅 지난 기록"]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";
     if (nv === "write") return h + viewWrite();
     if (nv === "cal") return h + viewCal();
-    if (nv === "ops") return h + viewOps();
+    if (nv === "sug" || nv === "led") return h + viewOps(nv);
     var canWrite = S.db && !S.readOnly, canAi = S.sample && !S.sampleOff;
     h += '<section class="card composer"><label for="note-input"><h2>지금 떠오른 것</h2></label><textarea id="note-input" placeholder="생각 · 한 일 · 먹은 것 · 할 일 · 쓴 돈 — 무엇이든 한 덩어리로. 말로 하려면 키보드의 마이크(받아쓰기)를 누르세요."' + (canWrite ? "" : " disabled") + ">" + esc(S.note) + "</textarea>";
     if (S.justSaved && !S.note) h += '<p class="small" style="color:var(--good)">저장했어요. 아래 목록에 들어갔어요.</p>';
@@ -2083,7 +2067,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         h += '<div class="lgm ' + (bad ? "warn" : done ? "ai" : "sys") + '">' + (done ? "<b>맥 Brainy</b> ✓ " + esc(clip(c.result || "반영했어요", 500)) : bad ? "⚠ " + esc(st) + (c.result ? " — " + esc(clip(c.result, 300)) : "") : "⏳ 맥의 Brainy가 원장에 반영하는 중… (보통 1~3분)") + "</div>"; }
       h += "</div>";
     }
-    h += '<div class="lgask"><textarea class="grow" data-lgq="' + esc(n) + '" rows="1" placeholder="' + (v === "고쳐서" ? "어떻게 고쳐서 할지 써 주세요" : "이 항목 Brainy에게 묻기 — 예: 이거 왜 올라왔어?") + '"' + (busy ? " disabled" : "") + ">" + esc(S.lgQ[n] || "") + '</textarea><button class="btn' + (v === "고쳐서" ? " primary" : "") + '" data-act="lgqsend" data-n="' + esc(n) + '"' + (busy ? " disabled" : "") + ">" + (v === "고쳐서" ? "고쳐서 보내기" : busy ? "…" : "묻기") + "</button></div>";
+    h += '<div class="lgask"><textarea class="grow" data-lgq="' + esc(n) + '" rows="1" placeholder="' + (v === "고쳐서" ? "어떻게 고쳐서 할지 써 주세요" : "이 항목에 쓸 말 — 로그는 그대로 보내고, Brainy와 진행은 같이 정해요") + '"' + (busy ? " disabled" : "") + ">" + esc(S.lgQ[n] || "") + '</textarea><button class="btn' + (v === "고쳐서" ? " primary" : "") + '" data-act="lgqsend" data-n="' + esc(n) + '"' + (busy ? " disabled" : "") + ">" + (v === "고쳐서" ? "고쳐서 보내기" : busy ? "…" : "Brainy와 진행") + "</button>" + (v === "고쳐서" ? "" : '<button class="btn" data-act="lglog" data-n="' + esc(n) + '"' + (busy ? " disabled" : "") + ">로그</button>") + "</div>";
     return h + "</div>";
   }
   function lgPush(n, m) { (S.lgT[n] = S.lgT[n] || []).push(m); return m; }
@@ -2146,7 +2130,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function ledgerAnswer(n, ans, note) {
     var it = ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === String(n); })[0];
     if (!it) throw new Error("열린 결산 대기에 " + n + "번이 없어요");
-    if (["응", "고쳐서", "나중에", "빼"].indexOf(ans) < 0) throw new Error("answer 는 응·고쳐서·나중에·빼 중 하나");
+    if (["응", "고쳐서", "나중에", "빼", "지시"].indexOf(ans) < 0) throw new Error("answer 는 응·고쳐서·나중에·빼 중 하나");
     if (ans === "고쳐서" && !String(note || "").trim()) throw new Error("고쳐서는 어떻게 고칠지 note 가 필요해요");
     var tx = "🗳 결산 대기 답\n" + it.n + " " + ans + " — 「" + clip(it.text, 60) + "」" + (String(note || "").trim() ? " — 추가: " + String(note).trim() : "");
     return sendCommand(tx, true).then(function (m) {
@@ -2387,7 +2371,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "sayask") { speak("ask", S.ask.text); return; }
     if (act === "gonote") { S.tab = "notes"; try { localStorage.setItem("brainy-tab", S.tab); } catch (e) {} render(); window.scrollTo(0, 0); var ta = document.getElementById("note-input"); if (ta) ta.focus(); return; }
     if (act === "nview") { S.noteView = t.getAttribute("data-v"); try { localStorage.setItem("brainy-nview", S.noteView); } catch (e) {} render(); return; }
-    if (act === "goops") { S.tab = "notes"; S.noteView = "ops"; render(); window.scrollTo(0, 0); return; }
+    if (act === "goops") { S.tab = "notes"; S.noteView = "led"; render(); window.scrollTo(0, 0); return; }
     if (act === "calday") { S.calDay = t.getAttribute("data-v"); render(); return; }
     if (act === "writerow" || act === "gowrite") { var wk = t.getAttribute("data-key"); S.tab = "today"; try { localStorage.setItem("brainy-tab", "today"); } catch (e) {} if (DETAIL[wk]) S.openRow[wk] = true; render(); var rowEl = document.getElementById("row-" + wk); if (rowEl) rowEl.scrollIntoView({ block: "start" }); return; }
     if (act === "stepchk") { toggleStep(t.getAttribute("data-key"), t.getAttribute("data-v")); return; }
@@ -2425,6 +2409,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "lgclear") { S.lgSel = {}; S.lgAll = ""; render(); return; }
     if (act === "lgsend") { lgSend(); return; }
     if (act === "ictalk") { var ik = t.getAttribute("data-k"), isrc = document.getElementById(t.getAttribute("data-src")), itx = isrc ? isrc.value : ""; if (!String(itx).trim()) { if (isrc) isrc.focus(); return; } if (ik.indexOf("q:") === 0) { var iq = ik.slice(2); saveDay(function (b) { b.answers[iq] = String(itx).trim(); }); S.drafts[iq] = String(itx).trim(); } icTalk(ik, itx); return; }
+    if (act === "lglog") { var lgn = t.getAttribute("data-n"), lgt = String(S.lgQ[lgn] || "").trim(); if (!lgt) { var lge = document.querySelector('[data-lgq="' + CSS.escape(lgn) + '"]'); if (lge) lge.focus(); return; } lgSendOne(lgn, "지시", lgt); return; }
+    if (act === "fdlog") { var fk = t.getAttribute("data-key"); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { S.fd[fe.id] = fe.value; }); saveDay(function (b) { b.notes[fk] = Object.assign({}, b.notes[fk] || {}); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { if (fe.getAttribute("data-f")) b.notes[fk][fe.getAttribute("data-f")] = fe.value; }); }); var fl = document.getElementById("fdlog-" + fk); if (fl) fl.textContent = "남겼어요 ✓"; return; }
+    if (act === "fdgo") { var gk = t.getAttribute("data-key"), parts = []; document.querySelectorAll('[data-fd][data-k="' + gk + '"]').forEach(function (fe) { if (String(fe.value || "").trim()) parts.push((fe.getAttribute("data-f") || "") + ": " + fe.value.trim()); }); icTalk("fd:" + gk, parts.length ? "이 칸에 쓴 것으로 같이 진행해 줘.\n" + parts.join("\n") : "이 칸, 같이 진행해 줘 — 무엇부터 쓰면 될까?"); return; }
     if (act === "icsend") { var sk = t.getAttribute("data-k"); icTalk(sk, S.icQ[sk]); return; }
     if (act === "lgone") { var on1 = t.getAttribute("data-n"), ov = t.getAttribute("data-v"); if (ov === "고쳐서") { S.lgSel[on1] = (S.lgSel[on1] || {}).v === "고쳐서" ? {} : { v: "고쳐서" }; render(); var te1 = document.querySelector('[data-lgq="' + CSS.escape(on1) + '"]'); if (te1) te1.focus(); return; } lgSendOne(on1, ov, S.lgQ[on1]); return; }
     if (act === "lgqsend") { var qn = t.getAttribute("data-n"), qt = String(S.lgQ[qn] || "").trim(); if ((S.lgSel[qn] || {}).v === "고쳐서") { if (!qt) { var te2 = document.querySelector('[data-lgq="' + CSS.escape(qn) + '"]'); if (te2) te2.focus(); return; } lgSendOne(qn, "고쳐서", qt); return; } if (qt) lgAskOne(qn, qt); return; }

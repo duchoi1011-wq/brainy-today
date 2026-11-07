@@ -463,6 +463,58 @@ patch("""      h += "</section>";
 
   /* ---------- 오늘 체크 줄""")
 
+# 12) 페이지를 짧게 (2026-11-07 동욱): ① 오늘 = 최신 제안 · 점검(결산 요약·Brainy 질문·최근 점검 1개) · 오늘 체크만
+#     ② 기록 = 「제안·점검」(아침 제안·점검 결과·인스타) · 「결산」(결산 대기·명령) · 「지난 기록」
+#     ③ 내가 쓰는 칸은 모두 「로그」(쓴 대로 남기기·보내기)와 「Brainy와 진행」(그 칸에서 Brainy와 이어 가기) 두 가지
+patch_between((root / "src" / "home-today-anchor.js").read_text(encoding="utf-8"), "    return h;\n  }\n\n  /* ---------- 오늘 체크 줄", (root / "src" / "home-today.js").read_text(encoding="utf-8"))
+patch("""<p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 Brainy와 대화</p>""", """<p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 「로그」 또는 「Brainy와 진행」</p>""")
+# 기록 탭: 제안·점검 / 결산 / 지난 기록
+patch("""headView("기록", "점검·결산·명령 · 지난 기록")""", """headView("기록", "제안·점검 · 결산 · 지난 기록")""")
+patch("""var nv = S.noteView === "cal" ? "cal" : "ops", nWait""", """var nv = ["sug", "led", "cal"].indexOf(S.noteView) >= 0 ? S.noteView : "sug", nWait""")
+patch_between("""    h += '<div class="chips" role="tablist" aria-label="기록 보기">'""", """.join("") + "</div>";""",
+      """    var nRep = (S.reports || []).filter(function (r) { return r.status !== "답함"; }).length;
+    h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["sug", "☀️ 제안·점검" + (nRep ? " " + nRep : "")], ["led", "🗳 결산" + (nWait ? " " + nWait : "")], ["cal", "📅 지난 기록"]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";""")
+patch("""    if (nv === "ops") return h + viewOps();""", """    if (nv === "sug" || nv === "led") return h + viewOps(nv);""")
+patch("""  function viewOps() {""", """  function viewOps(part) {""")
+patch("""    h += morningCard(canCmd);
+    h += viewReports();""", """    if (part !== "led") {
+      igActive().forEach(function (d) { h += d.status === "게시됨" ? '<div class="card brief"><p class="line">📸 인스타 게시됨 ✓ — ' + esc(clip(d.title, 30)) + "</p></div>" : igCard(d); });
+      h += morningCard(canCmd);
+      h += viewReports();
+      return h;
+    }""")
+patch("""if (act === "goops") { S.tab = "notes"; S.noteView = "ops";""", """if (act === "goops") { S.tab = "notes"; S.noteView = "led";""")
+# 로그 / Brainy와 진행 — 이름 통일
+patch("""'>💬 Brainy와 대화</button></div>' + icHtml("q:" + q.id)""", """'>Brainy와 진행</button></div>' + icHtml("q:" + q.id)""")
+patch("""data-src="' + k + '">💬 Brainy와 대화</button>""", """data-src="' + k + '">Brainy와 진행</button>""")
+patch(""">로그만</button>""", """>로그</button>""", 2)
+# 오늘 쓰기 칸: 칸 아래 [로그] [Brainy와 진행] — 로그는 지금 바로 저장, 진행은 쓴 내용으로 그 칸에서 Brainy와
+patch("""DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div>";""",
+      """DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button><button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("fd:" + x.key) + "</div>";""")
+# 아침 제안: 「로그」(쓴 대로 반영) · 「Brainy와 진행」
+patch("""'<textarea class="grow" data-mo="1" rows=""", """'<textarea id="mo-input" class="grow" data-mo="1" rows=""")
+patch(""">" + (S.moBusy ? "보내는 중…" : "Brainy에게 보내기") + "</button></div>";""", """>" + (S.moBusy ? "보내는 중…" : "로그") + '</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button></div>' + icHtml("mo");""")
+patch("""'>쓴 대로 고쳐서 올리기</button>""", """'>로그 (쓴 대로 고쳐 올리기)</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button>""")
+patch("""    if (S.moMsg && S.moMsg.err) h += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";""", """    if (!up) h += icHtml("mo");
+    if (S.moMsg && S.moMsg.err) h += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";""")
+# 점검 결과: 「로그」(쓴 대로 보내기) · 「Brainy와 진행」
+patch("""    h += '<textarea class="grow" data-ans="' + esc(scope) + '" data-ansn="__all" rows="2\"""", """    h += '<textarea id="ansall-' + esc(scope) + '" class="grow" data-ans="' + esc(scope) + '" data-ansn="__all" rows="2\"""")
+patch("""(S.ansBusy[scope] ? "보내는 중…" : "Brainy에게 보내기" + (n ? " (" + n + ")" : "")) + "</button></div>";""",
+      """(S.ansBusy[scope] ? "보내는 중…" : "로그" + (n ? " (" + n + ")" : "")) + '</button><button class="btn" data-act="ictalk" data-k="ans:' + esc(scope) + '" data-src="ansall-' + esc(scope) + '">Brainy와 진행</button></div>';""")
+patch("""    h += icHtml("ans:" + scope, true);""", """    h += icHtml("ans:" + scope);""")
+# 결산 대기 칸: 「로그」(쓴 말을 그 항목 지시로 바로 보내기) · 「Brainy와 진행」
+patch("""(v === "고쳐서" ? "고쳐서 보내기" : busy ? "…" : "묻기") + "</button></div>";""",
+      """(v === "고쳐서" ? "고쳐서 보내기" : busy ? "…" : "Brainy와 진행") + "</button>" + (v === "고쳐서" ? "" : '<button class="btn" data-act="lglog" data-n="' + esc(n) + '"' + (busy ? " disabled" : "") + ">로그</button>") + "</div>";""")
+patch("""placeholder="' + (v === "고쳐서" ? "어떻게 고쳐서 할지 써 주세요" : "이 항목 Brainy에게 묻기 — 예: 이거 왜 올라왔어?")""",
+      """placeholder="' + (v === "고쳐서" ? "어떻게 고쳐서 할지 써 주세요" : "이 항목에 쓸 말 — 로그는 그대로 보내고, Brainy와 진행은 같이 정해요")""")
+patch(""".lgask { display: grid; grid-template-columns: 1fr auto;""", """.lgask { display: grid; grid-template-columns: 1fr auto auto;""")
+patch("""    if (["응", "고쳐서", "나중에", "빼"].indexOf(ans) < 0) throw new Error("answer 는 응·고쳐서·나중에·빼 중 하나");""",
+      """    if (["응", "고쳐서", "나중에", "빼", "지시"].indexOf(ans) < 0) throw new Error("answer 는 응·고쳐서·나중에·빼 중 하나");""")
+patch("""    if (act === "icsend") {""", """    if (act === "lglog") { var lgn = t.getAttribute("data-n"), lgt = String(S.lgQ[lgn] || "").trim(); if (!lgt) { var lge = document.querySelector('[data-lgq="' + CSS.escape(lgn) + '"]'); if (lge) lge.focus(); return; } lgSendOne(lgn, "지시", lgt); return; }
+    if (act === "fdlog") { var fk = t.getAttribute("data-key"); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { S.fd[fe.id] = fe.value; }); saveDay(function (b) { b.notes[fk] = Object.assign({}, b.notes[fk] || {}); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { if (fe.getAttribute("data-f")) b.notes[fk][fe.getAttribute("data-f")] = fe.value; }); }); var fl = document.getElementById("fdlog-" + fk); if (fl) fl.textContent = "남겼어요 ✓"; return; }
+    if (act === "fdgo") { var gk = t.getAttribute("data-key"), parts = []; document.querySelectorAll('[data-fd][data-k="' + gk + '"]').forEach(function (fe) { if (String(fe.value || "").trim()) parts.push((fe.getAttribute("data-f") || "") + ": " + fe.value.trim()); }); icTalk("fd:" + gk, parts.length ? "이 칸에 쓴 것으로 같이 진행해 줘.\\n" + parts.join("\\n") : "이 칸, 같이 진행해 줘 — 무엇부터 쓰면 될까?"); return; }
+    if (act === "icsend") {""")
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',
