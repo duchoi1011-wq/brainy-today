@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "703ea0257b"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=703ea0257b"></script>
+<script>window.BRAINY_VERSION = "6b12939c81"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=6b12939c81"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -504,7 +504,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (c && /처리 중|보내는 중/.test(c.status || "")) return '<div class="card brief"><p class="line">' + (REPORT_ICON[r.kind] || "📋") + " " + esc(r.title || "") + ' — 답을 보냈어요</p><p class="small muted">Brainy가 처리하는 중 · 끝나면 이 줄은 사라지고 결과는 기록 탭에 남아요</p></div>';
       return reportCard(r, i === 0);
     }).join("") + "</section>";
-    var nWait = (S.ledger && S.ledger.items && S.ledger.items.length) || 0;
+    var nWait = ledgerOpen().length;
     if (nWait) h += '<button class="card brief projcard" data-act="goops" style="border:0"><span class="line">🗳 결산 대기 ' + nWait + '개</span><span class="small muted">기록 탭에서 항목마다 답하기 →</span></button>';
     if (!m) return h + emptyMain();
     var b = m.brainy;
@@ -530,10 +530,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       h += "</section>";
     }
 
-    if (b.questions && b.questions.length) {
-      h += '<section class="card"><h2>Brainy 질문 — 여기서 답하면 밤 점검 때 읽어요</h2>';
-      var ans = (S.checks[TODAY] && S.checks[TODAY].answers) || {};
-      b.questions.forEach(function (q) {
+    var ans = (S.checks[TODAY] && S.checks[TODAY].answers) || {}, qa = S.qa || (S.qa = {});
+    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id]; });
+    if (openQ.length) {
+      h += '<section class="card"><h2>Brainy 질문</h2>';
+      openQ.forEach(function (q) {
+        if (qa[q.id]) { h += '<div class="q"><p>' + esc(q.text) + '</p><p class="small' + (qa[q.id].err ? '" style="color:var(--warn)">' : ' muted">') + (qa[q.id].busy ? "Brainy가 바로 반영하는 중…" : esc(qa[q.id].msg)) + "</p></div>"; return; }
         var draft = S.drafts[q.id] != null ? S.drafts[q.id] : (ans[q.id] || "");
         var savedNow = ans[q.id] && ans[q.id] === draft;
         h += '<div class="q"><p>' + esc(q.text) + '</p><textarea id="ans-' + q.id + '" data-q="' + q.id + '" rows="1" placeholder="한 줄이면 돼요"' + (S.db && !S.readOnly ? "" : " disabled") + ">" + esc(draft) + '</textarea><div class="qrow">' + (savedNow ? '<span class="pill good">보냄</span>' : "") + '<button class="btn" data-act="answer" data-q="' + q.id + '"' + (S.db && !S.readOnly && draft.trim() && !savedNow ? "" : " disabled") + ">보내기</button></div></div>";
@@ -1900,7 +1902,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function lgSend() {
     var tx = lgCompose(); if (!tx) return;
     S.lgBusy = true; render();
-    sendCommand(tx).then(function (m) { S.lgBusy = false; S.lgSel = {}; S.lgAll = ""; S.lgMsg = m; S.lgErr = false; render(); }, function (e) { S.lgBusy = false; S.lgMsg = e.message; S.lgErr = true; render(); });
+    var sentN = Object.keys(S.lgSel).filter(function (k) { var x = S.lgSel[k]; return x && (x.v || String(x.note || "").trim()); });
+    sendCommand(tx).then(function (m) {
+      if (sentN.length && S.ledger) { var sn = Object.assign({}, S.ledger.sent || {}), at = new Date().toISOString(); sentN.forEach(function (k) { sn[k] = at; }); S.ledger.sent = sn; S.db.doc("ledger/main").update({ sent: sn }).catch(function () {}); }
+      S.lgBusy = false; S.lgSel = {}; S.lgAll = ""; S.lgMsg = m; S.lgErr = false; render(); }, function (e) { S.lgBusy = false; S.lgMsg = e.message; S.lgErr = true; render(); });
   }
   function cmdStatusPill(c) {
     var st = c.status || "";
@@ -1912,10 +1917,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     h += morningCard(canCmd);
     h += viewReports();
     // 결산 대기
-    var lg = S.ledger, items = (lg && lg.items) || [];
+    var lg = S.ledger, items = ledgerOpen(), nSent = ((lg && lg.items) || []).length - items.length;
     h += '<section class="card"><div class="progress-row"><h2>🗳 결산 대기 ' + items.length + '</h2><span class="small muted">' + (lg && lg.updatedAt ? "원장 " + whenKo(lg.updatedAt) + " 기준" : "결산 원장") + "</span></div>";
     if (!lg) h += '<p class="muted small">다음 결산이 끝나면 결산 원장의 🗳 목록이 여기 떠요.</p>';
-    else if (!items.length) h += '<p class="muted small">고를 게 없어요. 결산이 새 후보를 찾으면 여기 떠요.</p>';
+    if (nSent) h += '<p class="small muted">보낸 ' + nSent + '개는 맥의 Brainy가 처리하는 중이에요 — 끝나면 원장에서 닫혀요.</p>';
+    if (!lg) {} else if (!items.length) h += nSent ? "" : '<p class="muted small">고를 게 없어요. 결산이 새 후보를 찾으면 여기 떠요.</p>';
     else {
       h += '<p class="small muted">버튼으로 고르거나, 칸에 Brainy에게 바로 시킬 말을 써요 — 예: "화자 2는 김대표 맞아, 이름 지정하고 미팅 노트도 만들어"</p>';
       h += items.map(function (it) {
@@ -1964,7 +1970,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
   function viewNotes() {
     var h = headView("기록", "오늘 쓰기 · 지난 기록 · 메모 · 결산과 명령") + statusNotice();
-    var nv = S.noteView || "write", nWait = (S.ledger && S.ledger.items && S.ledger.items.length) || 0;
+    var nv = S.noteView || "write", nWait = ledgerOpen().length;
     h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["write", "✍ 오늘 쓰기"], ["cal", "📅 지난 기록"], ["memo", "✎ 메모"], ["ops", "🗳 점검·결산·명령" + ((nWait + ((S.reports || []).filter(function (r) { return r.status !== "답함"; }).length)) ? " " + (nWait + (S.reports || []).filter(function (r) { return r.status !== "답함"; }).length) : "")]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";
     if (nv === "write") return h + viewWrite();
     if (nv === "cal") return h + viewCal();
@@ -2052,6 +2058,20 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (S.chat.project) L.push("\n## 지금 보고 있는 프로젝트 전체\n" + projectText(projByExact(S.chat.project) || projByName(S.chat.project), 60000));
     if (!S.toolsOK) Object.keys(S.proj).forEach(function (id) { if (S.proj[id].name !== S.chat.project) L.push("\n" + projectText(S.proj[id], 12000)); });
     return L.join("\n");
+  }
+  function answerNow(qid, txt) {
+    var q = (((S.main || {}).brainy || {}).questions || []).filter(function (x) { return x.id === qid; })[0];
+    var done = function (msg, err) { S.qa[qid] = { msg: msg, err: !!err }; render(); setTimeout(function () { delete S.qa[qid]; render(); }, 6000); };
+    S.qa = S.qa || {};
+    if (!S.sample || S.sampleOff) { done("저장했어요 — 결산 때 반영돼요"); return; }
+    S.qa[qid] = { busy: true }; render();
+    var input = [{ role: "user", content: chatRules() }, { role: "user", content: "결산 질문에 동욱이 앱에서 답했다.\n질문: 「" + (q ? q.text : qid) + "」\n답: 「" + txt + "」\n이 답을 지금 바로 반영한다 — 식단·운동·경건생활·지출·체크는 앱 도구로 적고, 일정·태스크·볼트에 넣을 일은 볼트에 바로 넣거나 run_command 로 보낸다. 반영할 게 없으면 아무것도 하지 않는다. 무엇을 했는지 40자 안팎 한 줄로만 답한다." }];
+    var opts = { cache: false }; if (S.toolsOK) opts.tools = chatTools();
+    S.sample(input, opts).then(function (r) { done("✓ " + clip(String((r && r.text) || "반영했어요").trim().split("\n")[0], 90)); }, function () { done("저장했어요 — 바로 반영은 못 했어요. 결산 때 반영돼요", true); });
+  }
+  function ledgerOpen() {
+    var lg = S.ledger, sent = (lg && lg.sent) || {};
+    return ((lg && lg.items) || []).filter(function (it) { var s = sent[it.n]; return !(s && Date.now() - Date.parse(s) < 6 * 3600e3); });
   }
   function chatRules() {
     return [
@@ -2230,7 +2250,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (!act && t.classList.contains("tab")) act = "tab";
     if (act === "tab") { S.tab = t.getAttribute("data-tab"); try { localStorage.setItem("brainy-tab", S.tab); } catch (e) {} render(); window.scrollTo(0, 0); return; }
     if (act === "check") { var k = t.getAttribute("data-key"); saveDay(function (b) { if (b.items[k]) delete b.items[k]; else b.items[k] = true; }); return; }
-    if (act === "answer") { var q = t.getAttribute("data-q"); var txt = (S.drafts[q] || "").trim(); if (!txt) return; saveDay(function (b) { b.answers[q] = txt; }); S.drafts[q] = txt; return; }
+    if (act === "answer") { var q = t.getAttribute("data-q"); var txt = (S.drafts[q] || "").trim(); if (!txt) return; saveDay(function (b) { b.answers[q] = txt; }); S.drafts[q] = txt; answerNow(q, txt); return; }
     if (act === "brief") { speak("brief", briefingText()); return; }
     if (act === "area") { S.area = t.getAttribute("data-area"); render(); return; }
     if (act === "expand") { var key = t.getAttribute("data-key"); S.expanded[key] = !S.expanded[key]; render(); return; }

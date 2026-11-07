@@ -257,6 +257,46 @@ patch('''    db.collection("taskwork").onSnapshot(''', '''    db.collection("cha
     db.collection("twchat").onSnapshot(function (q) { q.docs.forEach(function (d) { var x = d.data(), r = S.twRun[x.task]; if (!x.task || (r && (r.busy || (r.at || "") >= (x.updatedAt || "")))) return; S.twRun[x.task] = { turns: x.turns || [], at: x.updatedAt }; }); softRender(); }, fail);
     db.collection("taskwork").onSnapshot(''')
 
+# 7) 결산을 위해 뜨는 칸은 답하면 바로 반영·바로 사라진다 (2026-11-07 동욱: "밤 점검 때 읽어요 빼 · 바로바로 사라지게 · 바로 업데이팅")
+#    - Brainy 질문: 답하면 그 자리에서 Brainy(클라우드)가 앱 도구로 바로 반영하고 한 줄로 알린 뒤 사라진다. 답은 checks 에도 남는다(결산이 참고)
+#    - 🗳 결산 대기: 보낸 줄은 바로 목록에서 빠진다(ledger/main.sent, 6시간). 맥의 Brainy가 처리하고 원장을 다시 쓰면 sent 는 지워진다
+patch("""    if (b.questions && b.questions.length) {
+      h += '<section class="card"><h2>Brainy 질문 — 여기서 답하면 밤 점검 때 읽어요</h2>';
+      var ans = (S.checks[TODAY] && S.checks[TODAY].answers) || {};
+      b.questions.forEach(function (q) {""", """    var ans = (S.checks[TODAY] && S.checks[TODAY].answers) || {}, qa = S.qa || (S.qa = {});
+    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id]; });
+    if (openQ.length) {
+      h += '<section class="card"><h2>Brainy 질문</h2>';
+      openQ.forEach(function (q) {
+        if (qa[q.id]) { h += '<div class="q"><p>' + esc(q.text) + '</p><p class="small' + (qa[q.id].err ? '" style="color:var(--warn)">' : ' muted">') + (qa[q.id].busy ? "Brainy가 바로 반영하는 중…" : esc(qa[q.id].msg)) + "</p></div>"; return; }""")
+patch("""if (act === "answer") { var q = t.getAttribute("data-q"); var txt = (S.drafts[q] || "").trim(); if (!txt) return; saveDay(function (b) { b.answers[q] = txt; }); S.drafts[q] = txt; return; }""",
+      """if (act === "answer") { var q = t.getAttribute("data-q"); var txt = (S.drafts[q] || "").trim(); if (!txt) return; saveDay(function (b) { b.answers[q] = txt; }); S.drafts[q] = txt; answerNow(q, txt); return; }""")
+patch("""  function chatRules() {""", """  function answerNow(qid, txt) {
+    var q = (((S.main || {}).brainy || {}).questions || []).filter(function (x) { return x.id === qid; })[0];
+    var done = function (msg, err) { S.qa[qid] = { msg: msg, err: !!err }; render(); setTimeout(function () { delete S.qa[qid]; render(); }, 6000); };
+    S.qa = S.qa || {};
+    if (!S.sample || S.sampleOff) { done("저장했어요 — 결산 때 반영돼요"); return; }
+    S.qa[qid] = { busy: true }; render();
+    var input = [{ role: "user", content: chatRules() }, { role: "user", content: "결산 질문에 동욱이 앱에서 답했다.\\n질문: 「" + (q ? q.text : qid) + "」\\n답: 「" + txt + "」\\n이 답을 지금 바로 반영한다 — 식단·운동·경건생활·지출·체크는 앱 도구로 적고, 일정·태스크·볼트에 넣을 일은 볼트에 바로 넣거나 run_command 로 보낸다. 반영할 게 없으면 아무것도 하지 않는다. 무엇을 했는지 40자 안팎 한 줄로만 답한다." }];
+    var opts = { cache: false }; if (S.toolsOK) opts.tools = chatTools();
+    S.sample(input, opts).then(function (r) { done("✓ " + clip(String((r && r.text) || "반영했어요").trim().split("\\n")[0], 90)); }, function () { done("저장했어요 — 바로 반영은 못 했어요. 결산 때 반영돼요", true); });
+  }
+  function ledgerOpen() {
+    var lg = S.ledger, sent = (lg && lg.sent) || {};
+    return ((lg && lg.items) || []).filter(function (it) { var s = sent[it.n]; return !(s && Date.now() - Date.parse(s) < 6 * 3600e3); });
+  }
+  function chatRules() {""")
+patch("""(S.ledger && S.ledger.items && S.ledger.items.length) || 0""", """ledgerOpen().length""", 2)
+patch("""    var lg = S.ledger, items = (lg && lg.items) || [];""", """    var lg = S.ledger, items = ledgerOpen(), nSent = ((lg && lg.items) || []).length - items.length;""")
+patch("""    else if (!items.length) h += '<p class="muted small">고를 게 없어요. 결산이 새 후보를 찾으면 여기 떠요.</p>';""",
+      """    if (nSent) h += '<p class="small muted">보낸 ' + nSent + '개는 맥의 Brainy가 처리하는 중이에요 — 끝나면 원장에서 닫혀요.</p>';
+    if (!lg) {} else if (!items.length) h += nSent ? "" : '<p class="muted small">고를 게 없어요. 결산이 새 후보를 찾으면 여기 떠요.</p>';""")
+patch("""    sendCommand(tx).then(function (m) { S.lgBusy = false; S.lgSel = {}; S.lgAll = ""; S.lgMsg = m; S.lgErr = false; render(); }""",
+      """    var sentN = Object.keys(S.lgSel).filter(function (k) { var x = S.lgSel[k]; return x && (x.v || String(x.note || "").trim()); });
+    sendCommand(tx).then(function (m) {
+      if (sentN.length && S.ledger) { var sn = Object.assign({}, S.ledger.sent || {}), at = new Date().toISOString(); sentN.forEach(function (k) { sn[k] = at; }); S.ledger.sent = sn; S.db.doc("ledger/main").update({ sent: sn }).catch(function () {}); }
+      S.lgBusy = false; S.lgSel = {}; S.lgAll = ""; S.lgMsg = m; S.lgErr = false; render(); }""")
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',
