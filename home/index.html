@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "1bdeca3ae4"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=1bdeca3ae4"></script>
+<script>window.BRAINY_VERSION = "dd35989931"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=dd35989931"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -280,6 +280,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .fold[open] > summary::after { content: "접기"; }
 .fold > .md { padding: 0 14px 14px; }
 .projcard { cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%; }
+.sd { display: block; font-size: 12.5px; color: var(--muted); font-weight: 400; line-height: 1.5; margin-top: 2px; }
+.now .sd { margin-top: 4px; }
 /* 결산 대기 — 칸 안 대화 */
 .lgitem.sent .t b { color: var(--muted); }
 .lgthread { display: grid; gap: 6px; margin: 8px 0 6px; }
@@ -748,7 +750,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (t.due && t.due < TODAY) chip = '<span class="pill warn">기한 ' + daysBetween(t.due, TODAY) + "일 지남</span>";
     else if (t.due) chip = '<span class="pill">' + md(t.due) + " 까지</span>";
     else chip = '<span class="pill">기한 없음</span>';
-    return '<div class="task"><div class="t"><b>' + esc(t.title) + "</b>" + chip + '</div><div class="steps" aria-label="완료 기준 ' + t.done + "/" + t.total + '">' + steps + '</div>' + (function () { var ss = twSteps(t.title).filter(function (x) { return !x.done; })[0], tx = ss ? ss.text : t.next; return tx ? '<p class="nowline"><b>▶ 지금</b> ' + esc(clip(tx, 90)) + "</p>" : ""; })() + '<div class="progress-row"><p class="small muted">' + esc(t.project) + " · " + esc(t.status) + " · 완료 기준 " + t.done + "/" + t.total + '</p><button class="btn" data-act="taskopen" data-title="' + esc(t.title) + '">자세히</button></div></div>';
+    return '<div class="task"><div class="t"><b>' + esc(t.title) + "</b>" + chip + '</div><div class="steps" aria-label="완료 기준 ' + t.done + "/" + t.total + '">' + steps + '</div>' + (function () { var ss = twSteps(t.title).filter(function (x) { return !x.done; })[0], tx = ss ? ss.text : t.next; return tx ? '<p class="nowline"><b>▶ 지금</b> ' + esc(stepSplit(tx).t) + "</p>" : ""; })() + '<div class="progress-row"><p class="small muted">' + esc(t.project) + " · " + esc(t.status) + " · 완료 기준 " + t.done + "/" + t.total + '</p><button class="btn" data-act="taskopen" data-title="' + esc(t.title) + '">자세히</button></div></div>';
   }
   function findTask(title) {
     var key = String(title || "").replace(/^T-/, "").replace(/\s+/g, "");
@@ -1560,7 +1562,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (!steps.length) return fallback ? '<div class="now"><span class="lbl">▶ 이 태스크에서 할 일</span><b class="nowt">' + esc(clip(fallback, 140)) + "</b></div>" : "";
     if (ci < 0) return '<div class="now done"><span class="lbl">✓ 완료 기준 ' + steps.length + "개를 다 채웠어요</span><p class=\"small muted\">Brainy가 태스크 완료 처리할지 물어봐요.</p></div>";
     var cur = steps[ci];
-    var h = '<div class="now"><span class="lbl">▶ 지금 할 일 · 완료 기준 ' + (ci + 1) + "번</span><b class=\"nowt\">" + esc(clip(cur.text, 120)) + "</b>";
+    var h = '<div class="now"><span class="lbl">▶ 지금 할 일 · 완료 기준 ' + (ci + 1) + "번</span>" + stepHtml(cur.text, "nowt");
     h += '<ul class="crit">' + steps.map(function (x, i) { return '<li class="' + (x.done ? "ok" : i === ci ? "cur" : "") + '">' + (x.done ? "✓ " : i === ci ? "▶ " : "○ ") + esc(clip(x.text, i === ci ? 36 : 56)) + "</li>"; }).join("") + "</ul>";
     h += '<div class="row"><span class="small muted" style="flex:1">' + done + "/" + steps.length + " 끝 · 할 일 전체</span>" + '<button class="btn primary" data-act="twstep" data-title="' + esc(title) + '" data-i="' + ci + '"' + (canW ? "" : " disabled") + ">" + (ci + 1) + "번 끝냈어 ✓</button></div></div>";
     return h;
@@ -1570,7 +1572,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var h = "";
     if (steps.length) h += '<div class="progress-row"><div class="steps" style="flex:1">' + steps.map(function (x) { return '<b class="' + (x.done ? "on" : "") + '"></b>'; }).join("") + '</div><span class="small muted num">' + done + "/" + steps.length + "</span></div>";
     var now = cur ? cur.text : (steps.length ? "" : fb);
-    if (now) h += '<p class="nowline"><b>▶ 지금</b> ' + esc(clip(now, 60)) + "</p>";
+    if (now) h += '<p class="nowline"><b>▶ 지금</b> ' + esc(stepSplit(now).t) + "</p>";
     else if (steps.length) h += '<p class="nowline"><b>✓</b> 완료 기준을 다 채웠어요</p>';
     h += '<textarea id="twin-' + slug + '" class="grow" data-tw="' + esc(title) + '" rows="1" placeholder="한 일을 쓰거나 일을 시켜요"' + (canW ? "" : " disabled") + ">" + esc(S.twDraft[title] || "") + "</textarea>";
     h += '<div class="row end">' + (r.busy ? '<button class="btn" data-act="twstop" data-title="' + esc(title) + '">멈추기</button>' : "") + '<button class="btn" data-act="twlog" data-title="' + esc(title) + '"' + (canW ? "" : " disabled") + ">로그</button>" + (canAi ? '<button class="btn primary" data-act="twgo" data-title="' + esc(title) + '"' + (r.busy ? " disabled" : "") + ">" + (r.busy ? "진행하는 중…" : "Brainy와 진행") + "</button>" : "") + "</div>";
@@ -1598,7 +1600,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var h = nowBox(title, (S.twFallback || {})[title]);
     if (steps.length) {
       h += '<div class="progress-row"><h2>완료 기준 ' + done + "/" + steps.length + "</h2>" + (w.updatedAt ? '<span class="small muted">' + (w.synced ? "볼트 반영됨" : "앱에서 진행 · 곧 자동으로 볼트로") + "</span>" : "") + '</div><div class="steps">' + steps.map(function (x) { return '<b class="' + (x.done ? "on" : "") + '"></b>'; }).join("") + "</div>";
-      if (!compact) h += '<div class="checks">' + steps.map(function (x, i) { return '<button class="chk" data-act="twstep" data-title="' + esc(title) + '" data-i="' + i + '" aria-pressed="' + x.done + '"' + (canW ? "" : " disabled") + '><span class="box">' + CHECK_SVG + '</span><span><span class="lbl">' + esc(clip(x.text, 160)) + "</span>" + (x.app ? '<br><span class="hint">앱에서 ' + (x.done ? "체크" : "해제") + "</span>" : x.extra ? '<br><span class="hint">새로 붙인 단계</span>' : "") + "</span></button>"; }).join("") + "</div>";
+      if (!compact) h += '<div class="checks">' + steps.map(function (x, i) { return '<button class="chk" data-act="twstep" data-title="' + esc(title) + '" data-i="' + i + '" aria-pressed="' + x.done + '"' + (canW ? "" : " disabled") + '><span class="box">' + CHECK_SVG + '</span><span><span class="lbl">' + esc(stepSplit(x.text).t) + "</span>" + (stepSplit(x.text).d ? '<br><span class="hint">' + esc(clip(stepSplit(x.text).d, 110)) + "</span>" : "") + (x.app ? '<br><span class="hint">앱에서 ' + (x.done ? "체크" : "해제") + "</span>" : x.extra ? '<br><span class="hint">새로 붙인 단계</span>' : "") + "</span></button>"; }).join("") + "</div>";
     }
     if (w.next) h += '<p class="small"><span class="muted">Brainy가 정한 다음 한 걸음 →</span> ' + esc(w.next) + "</p>";
     // conversation: 마지막 주고받기만, 이전은 접기
@@ -1738,7 +1740,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var st = ansState(scope), h = "";
     (items || []).forEach(function (it) {
       var sel = st.sel[it.n] || {}, v = sel.v || "";
-      h += '<div class="task"><div class="t"><b>' + esc(it.n) + ". " + esc(it.text) + "</b></div>" +
+      h += '<div class="task"><div class="t"><b>' + esc(it.n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (stepSplit(it.text).d ? '<span class="sd">' + esc(clip(stepSplit(it.text).d, 160)) + "</span>" : "") + "</div>" +
         '<div class="chips" style="flex-wrap:wrap">' + [["응", "그대로 해줘"], ["나중에", "나중에"], ["빼", "빼"]].map(function (o) { return '<button class="chip" data-act="anspick" data-scope="' + esc(scope) + '" data-n="' + esc(it.n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>" +
         '<textarea class="grow" data-ans="' + esc(scope) + '" data-ansn="' + esc(it.n) + '" rows="2" placeholder="✍ Brainy에게 바로 쓰기 — 이 항목을 어떻게 할지">' + esc(sel.note || "") + "</textarea></div>";
     });
@@ -2058,7 +2060,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function lgCmdOf(n) { var id = S.lgCmdLocal[n] || ((S.ledger && S.ledger.cmds) || {})[n]; return id ? (S.cmds.filter(function (c) { return c.id === id; })[0] || { id: id, status: "보내는 중" }) : null; }
   function ledgerItemHtml(it) {
     var n = String(it.n), sel = S.lgSel[n] || {}, v = sel.v || "", th = S.lgT[n] || [], sent = ((S.ledger && S.ledger.sent) || {})[n], c = lgCmdOf(n), busy = !!S.lgAsk[n];
-    var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(it.text) + "</b>" + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";
+    var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (stepSplit(it.text).d ? '<span class="sd">' + esc(clip(stepSplit(it.text).d, 160)) + "</span>" : "") + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";
     if (!sent) h += '<div class="chips" style="flex-wrap:wrap" role="group" aria-label="' + esc(n) + '번 답">' + [["응", "응"], ["고쳐서", "고쳐서 응"], ["나중에", "나중에"], ["빼", "빼"]].map(function (o) {
       return '<button class="chip" data-act="lgone" data-n="' + esc(n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>";
     if (th.length || c) {
@@ -2126,6 +2128,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       .then(function (r) { ai.t = (r && r.text) || ai.t; }, function (e) { ai.t = (e && e.text) || "답을 받지 못했어요. 다시 보내 주세요."; })
       .then(function () { ai.pending = false; S.icBusy[key] = false; render(); });
   }
+  /* ── 긴 할 일 줄을 「짧은 제목 — 설명」으로 나눠 보이기 (볼트 규칙: 완료 기준·결산 줄은 짧은 제목 — 설명) ── */
+  function stepSplit(s) {
+    var x = String(s || "").replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2").replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+    var i = x.indexOf(" — "), t = i > 0 ? x.slice(0, i) : x, d = i > 0 ? x.slice(i + 3) : "";
+    if (t.length > 30) { var j = t.slice(6).search(/ · | \(|: | → /); if (j >= 0) { j += 6; d = t.slice(j).replace(/^ · |^: |^ → /, "").trim() + (d ? " — " + d : ""); t = t.slice(0, j); } }
+    if (t.length > 34) { d = "…" + t.slice(32) + (d ? " — " + d : ""); t = t.slice(0, 32) + "…"; }
+    return { t: t, d: d };
+  }
+  function stepHtml(s, cls) { var p = stepSplit(s); return '<b class="' + (cls || "") + '">' + esc(p.t) + "</b>" + (p.d ? '<span class="sd" title="' + esc(p.d) + '">' + esc(clip(p.d, 110)) + "</span>" : ""); }
   function ledgerChat() { if (S.chat && S.chat.busy) return; S.chat = { turns: [], busy: false, ctl: null, project: null }; }
   function ledgerAnswer(n, ans, note) {
     var it = ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === String(n); })[0];

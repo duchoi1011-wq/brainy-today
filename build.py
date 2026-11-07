@@ -347,7 +347,7 @@ patch_between("""    var lg = S.ledger, items = ledgerOpen(), nSent""", """     
 patch("""  function ledgerChat() {""", """  function lgCmdOf(n) { var id = S.lgCmdLocal[n] || ((S.ledger && S.ledger.cmds) || {})[n]; return id ? (S.cmds.filter(function (c) { return c.id === id; })[0] || { id: id, status: "보내는 중" }) : null; }
   function ledgerItemHtml(it) {
     var n = String(it.n), sel = S.lgSel[n] || {}, v = sel.v || "", th = S.lgT[n] || [], sent = ((S.ledger && S.ledger.sent) || {})[n], c = lgCmdOf(n), busy = !!S.lgAsk[n];
-    var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(it.text) + "</b>" + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";
+    var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (stepSplit(it.text).d ? '<span class="sd">' + esc(clip(stepSplit(it.text).d, 160)) + "</span>" : "") + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";
     if (!sent) h += '<div class="chips" style="flex-wrap:wrap" role="group" aria-label="' + esc(n) + '번 답">' + [["응", "응"], ["고쳐서", "고쳐서 응"], ["나중에", "나중에"], ["빼", "빼"]].map(function (o) {
       return '<button class="chip" data-act="lgone" data-n="' + esc(n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>";
     if (th.length || c) {
@@ -514,6 +514,16 @@ patch("""    if (act === "icsend") {""", """    if (act === "lglog") { var lgn =
     if (act === "fdlog") { var fk = t.getAttribute("data-key"); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { S.fd[fe.id] = fe.value; }); saveDay(function (b) { b.notes[fk] = Object.assign({}, b.notes[fk] || {}); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { if (fe.getAttribute("data-f")) b.notes[fk][fe.getAttribute("data-f")] = fe.value; }); }); var fl = document.getElementById("fdlog-" + fk); if (fl) fl.textContent = "남겼어요 ✓"; return; }
     if (act === "fdgo") { var gk = t.getAttribute("data-key"), parts = []; document.querySelectorAll('[data-fd][data-k="' + gk + '"]').forEach(function (fe) { if (String(fe.value || "").trim()) parts.push((fe.getAttribute("data-f") || "") + ": " + fe.value.trim()); }); icTalk("fd:" + gk, parts.length ? "이 칸에 쓴 것으로 같이 진행해 줘.\\n" + parts.join("\\n") : "이 칸, 같이 진행해 줘 — 무엇부터 쓰면 될까?"); return; }
     if (act === "icsend") {""")
+
+# 13) 긴 할 일 줄은 「짧은 제목」만 크게, 설명은 아래 작게 (2026-11-07 동욱: "태스크 일들 제목이 길어서 보기 힘들어") — stepSplit 은 src/home-ic.js
+patch(r"""</span><b class=\"nowt\">" + esc(clip(cur.text, 120)) + "</b>";""", r"""</span>" + stepHtml(cur.text, "nowt");""")
+patch("""'<p class="nowline"><b>▶ 지금</b> ' + esc(clip(now, 60)) + "</p>\"""", """'<p class="nowline"><b>▶ 지금</b> ' + esc(stepSplit(now).t) + "</p>\"""")
+patch("""'<p class="nowline"><b>▶ 지금</b> ' + esc(clip(tx, 90)) + "</p>\"""", """'<p class="nowline"><b>▶ 지금</b> ' + esc(stepSplit(tx).t) + "</p>\"""")
+patch("""<span class="lbl">' + esc(clip(x.text, 160)) + "</span>\"""", """<span class="lbl">' + esc(stepSplit(x.text).t) + "</span>" + (stepSplit(x.text).d ? '<br><span class="hint">' + esc(clip(stepSplit(x.text).d, 110)) + "</span>" : "")""")
+patch("""esc(it.n) + ". " + esc(it.text) + "</b></div>\"""", """esc(it.n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (stepSplit(it.text).d ? '<span class="sd">' + esc(clip(stepSplit(it.text).d, 160)) + "</span>" : "") + "</div>\"""")
+patch("""/* 결산 대기 — 칸 안 대화 */""", """.sd { display: block; font-size: 12.5px; color: var(--muted); font-weight: 400; line-height: 1.5; margin-top: 2px; }
+.now .sd { margin-top: 4px; }
+/* 결산 대기 — 칸 안 대화 */""")
 
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",

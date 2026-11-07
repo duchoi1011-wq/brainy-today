@@ -30,3 +30,12 @@
       .then(function (r) { ai.t = (r && r.text) || ai.t; }, function (e) { ai.t = (e && e.text) || "답을 받지 못했어요. 다시 보내 주세요."; })
       .then(function () { ai.pending = false; S.icBusy[key] = false; render(); });
   }
+  /* ── 긴 할 일 줄을 「짧은 제목 — 설명」으로 나눠 보이기 (볼트 규칙: 완료 기준·결산 줄은 짧은 제목 — 설명) ── */
+  function stepSplit(s) {
+    var x = String(s || "").replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2").replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+    var i = x.indexOf(" — "), t = i > 0 ? x.slice(0, i) : x, d = i > 0 ? x.slice(i + 3) : "";
+    if (t.length > 30) { var j = t.slice(6).search(/ · | \(|: | → /); if (j >= 0) { j += 6; d = t.slice(j).replace(/^ · |^: |^ → /, "").trim() + (d ? " — " + d : ""); t = t.slice(0, j); } }
+    if (t.length > 34) { d = "…" + t.slice(32) + (d ? " — " + d : ""); t = t.slice(0, 32) + "…"; }
+    return { t: t, d: d };
+  }
+  function stepHtml(s, cls) { var p = stepSplit(s); return '<b class="' + (cls || "") + '">' + esc(p.t) + "</b>" + (p.d ? '<span class="sd" title="' + esc(p.d) + '">' + esc(clip(p.d, 110)) + "</span>" : ""); }
