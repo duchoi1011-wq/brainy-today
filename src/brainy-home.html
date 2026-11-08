@@ -248,8 +248,20 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .fold.flat > .fhead { padding: 4px 0; font-size: 13px; color: var(--muted); }
 .fbody { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows var(--fold-t) ease, visibility 0s linear var(--fold-t); }
 .fold.open > .fbody, .crow.open > .fbody { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows var(--fold-t) ease, visibility 0s; }
-.fbody > .fin { min-height: 0; overflow: hidden; display: grid; gap: 10px; align-content: start; min-width: 0; }
-.fold.flat > .fbody > .fin { padding-top: 0; transition: padding-top var(--fold-t) ease; }
+.fbody > .fin { min-height: 0; overflow: hidden; display: grid; gap: 10px; align-content: start; min-width: 0; opacity: 0; transform: translateY(-4px); transition: opacity var(--fold-t) ease, transform var(--fold-t) ease; }
+.fold.open > .fbody > .fin, .crow.open > .fbody > .fin { opacity: 1; transform: none; }
+/* 프로젝트 탭 — 강조색 상위 카드(프로젝트) 안에 들여쓴 작은 카드(태스크) */
+.fold.pcard { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--r); overflow: hidden; }
+.fold.pcard > .fhead { padding: 14px 16px; background: var(--accent-soft); align-items: flex-start; }
+.fold.pcard > .fhead .ft { display: grid; gap: 2px; }
+.fold.pcard > .fhead .pn { font-size: 17px; font-weight: 700; }
+.fold.pcard > .fhead .fx { margin-top: 3px; }
+.fold.pcard > .fbody > .fin { padding: 0 16px; gap: 12px; transition: opacity var(--fold-t) ease, transform var(--fold-t) ease, padding var(--fold-t) ease; }
+.fold.pcard.open > .fbody > .fin { padding: 14px 16px 16px; }
+.pcard .ptasks { display: grid; gap: 8px; padding-left: 12px; border-left: 2px solid var(--accent-soft); }
+.pcard .ptasks .task, .pcard .ptasks .task:first-child { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.pcard .ptasks .task b { font-size: 14px; }
+.fold.flat > .fbody > .fin { padding-top: 0; transition: opacity var(--fold-t) ease, transform var(--fold-t) ease, padding-top var(--fold-t) ease; }
 .fold.flat.open > .fbody > .fin { padding-top: 10px; }
 .projcard { cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%; }
 /* Brainy chat sheet */
@@ -833,18 +845,19 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     h += viewTodayTasks();
     h += '<h2 class="group-head">프로젝트 <span class="cnt">' + (m.projects || []).length + "개</span></h2>";
     (m.projects || []).forEach(function (p) {
-      h += '<section class="card"><div class="progress-row"><div><h3>' + esc(p.name) + '</h3><p class="small muted">' + esc(p.deliverable) + '</p></div><button class="btn quiet" data-act="projopen" data-name="' + esc(p.name) + '">허브</button></div>';
+      var ts = (m.tasks || []).filter(function (t) { return t.project === p.short; }), b = "";
+      var head = '<span class="pn">' + esc(p.name) + '</span><span class="small muted" style="font-weight:400">' + esc(p.deliverable) + '</span><span class="row" style="gap:6px;margin-top:4px"><span class="pill accent">태스크 ' + ts.length + "</span>" + (ts.some(function (t) { return t.due && t.due < TODAY; }) ? '<span class="pill warn">기한 지남</span>' : "") + "</span>";
       (p.metrics || []).forEach(function (x) {
         var r = pct(x.start, x.now, x.goal);
-        h += '<div class="metric"><div class="mv"><span class="small">' + esc(x.label) + '</span><span class="num small">' + fmt(x.now, x.unit) + ' <span class="muted">/ ' + fmt(x.goal, x.unit) + '</span></span></div><div class="meter"><i style="width:' + r + '%"></i></div><p class="small muted">시작 ' + fmt(x.start, x.unit) + " · " + esc(x.asOf) + " 기준</p></div>";
+        b += '<div class="metric"><div class="mv"><span class="small">' + esc(x.label) + '</span><span class="num small">' + fmt(x.now, x.unit) + ' <span class="muted">/ ' + fmt(x.goal, x.unit) + '</span></span></div><div class="meter"><i style="width:' + r + '%"></i></div><p class="small muted">시작 ' + fmt(x.start, x.unit) + " · " + esc(x.asOf) + " 기준</p></div>";
       });
       if (p.milestones && p.milestones.length) {
-        h += '<div class="ms">' + p.milestones.map(function (s, i) { return '<span class="pill ' + (s.done ? "good" : s.doing ? "accent" : "") + '">M' + (i + 1) + " " + esc(s.label) + (s.done ? " ✓" : s.doing ? " · 진행" : "") + "</span>"; }).join("") + "</div>";
-      } else if (p.note) h += '<p class="notice">' + esc(p.note) + "</p>";
-      var ts = (m.tasks || []).filter(function (t) { return t.project === p.short; });
-      if (ts.length) { h += '<div class="section">' + ts.map(taskView).join("") + "</div>"; }
-      else h += '<p class="small muted">열린 태스크 없음</p>';
-      h += "</section>";
+        b += '<div class="ms">' + p.milestones.map(function (s, i) { return '<span class="pill ' + (s.done ? "good" : s.doing ? "accent" : "") + '">M' + (i + 1) + " " + esc(s.label) + (s.done ? " ✓" : s.doing ? " · 진행" : "") + "</span>"; }).join("") + "</div>";
+      } else if (p.note) b += '<p class="notice">' + esc(p.note) + "</p>";
+      if (ts.length) b += '<div class="ptasks">' + ts.map(taskView).join("") + "</div>";
+      else b += '<p class="small muted">열린 태스크 없음</p>';
+      b += '<div class="row end"><button class="btn quiet" data-act="projopen" data-name="' + esc(p.name) + '">허브 열기 →</button></div>';
+      h += foldHtml("pj:" + p.name, head, b, { cls: "pcard" });
     });
     return h;
   }
@@ -1679,11 +1692,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function cmdsWhere(pred) { return (S.cmds || []).filter(function (c) { return String(c.createdAt || "").slice(0, 10) >= ymd(new Date(NOW.getTime() - 86400000)) && pred(String(c.text || "")); }).slice().reverse(); }
   function moreBtn(key, n) { var on = !!S.thOpen[key]; return '<button class="more" data-act="thtoggle" data-k="' + esc(key) + '">' + (on ? "▴ 이전 대화 숨기기" : "▾ 이전 대화 " + n + "개 보기") + "</button>"; }
   /* ---------- 접기·펼치기 (오늘 탭 공통) — 머리줄 오른쪽 「펼치기 ▾/접기 ▴」 하나, 내용은 늘 그려 두고 누르면 그 자리에서 같은 시간 동안 열린다.
-     다시 그리지 않으므로 다른 칸이 튀지 않고, 열림 상태는 S.thOpen[key] 에 남아 다시 그려도 그대로다. o.open: 처음 열림 · o.flat: 칸 안 한 줄 · o.extra: 머리줄 오른쪽 표시(pill 등) ---------- */
+     다시 그리지 않으므로 다른 칸이 튀지 않고, 열림 상태는 S.thOpen[key] 에 남아 다시 그려도 그대로다. o.open: 처음 열림 · o.flat: 칸 안 한 줄 · o.extra: 머리줄 오른쪽 표시(pill 등) · o.cls: 겉 상자 모양(pcard = 프로젝트 카드) ---------- */
   function foldOpen(key, def) { return S.thOpen[key] != null ? !!S.thOpen[key] : !!def; }
   function foldHtml(key, head, body, o) {
     o = o || {}; var on = foldOpen(key, o.open);
-    return '<div class="fold' + (o.flat ? " flat" : "") + (on ? " open" : "") + '"><button type="button" class="fhead" data-act="fold" data-k="' + esc(key) + '" aria-expanded="' + on + '"><span class="ft">' + head + "</span>" + (o.extra || "") + '<span class="fx">' + (on ? "접기 ▴" : "펼치기 ▾") + '</span></button><div class="fbody"><div class="fin">' + body + "</div></div></div>";
+    return '<div class="fold' + (o.flat ? " flat" : "") + (o.cls ? " " + o.cls : "") + (on ? " open" : "") + '"><button type="button" class="fhead" data-act="fold" data-k="' + esc(key) + '" aria-expanded="' + on + '"><span class="ft">' + head + "</span>" + (o.extra || "") + '<span class="fx">' + (on ? "접기 ▴" : "펼치기 ▾") + '</span></button><div class="fbody"><div class="fin">' + body + "</div></div></div>";
   }
   function threadHtml(list, strip, key) {
     if (!list.length) return "";
