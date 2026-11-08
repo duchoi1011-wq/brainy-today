@@ -355,7 +355,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     ask: { state: "idle", q: "", text: "", msg: "", ctl: null },
     ledger: null, morning: null, cmds: [], cfg: {}, mcp: null, mcpOff: false,
     cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
-    triggers: null, trigState: "idle", trigMsg: "", trigAt: 0, cmdText: "", autoState: {}, nrDraft: {}, moBusy: false, moMsg: null, retrying: {}, thOpen: {}, exp: {}, dl: null, insta: [], igThumb: {}, igCap: {}, igBusy: {}, igMsg: {}, igOpen: {}, igFix: {}, cmdBusy: false, cmdMsg: "", fireAsk: null, fired: {}
+    triggers: null, trigState: "idle", trigMsg: "", trigAt: 0, cmdText: "", autoState: {}, nrDraft: {}, moBusy: false, moMsg: null, retrying: {}, thOpen: {}, exp: {}, dl: null, insta: [], igThumb: {}, igCap: {}, igBusy: {}, igMsg: {}, igOpen: {}, igFix: {}, cmdBusy: false, cmdMsg: "", fireAsk: null, fired: {}, midBusy: false, midMsg: null
   };
   var CC_SERVER = "Claude Code Remote";
   var KINDS = ["씨앗", "할일", "운동", "식단", "지출", "일정", "회고", "질문"];
@@ -1907,8 +1907,34 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var cls = st === "끝" ? "good" : st === "처리 중" || st === "보내는 중" ? "accent" : /못|멈춤|확인/.test(st) ? "warn" : "";
     return '<span class="pill ' + cls + '">' + esc(st) + "</span>";
   }
+  /* ---------- 중간 결산 (결산 탭 맨 위) — 하루 결산을 기다리지 않고 앱에 지금까지 쓴 것을 맥의 볼트에 바로 최신화. 명령 큐(cmd)로 보내고, 결과가 올 때까지 버튼은 '보내는 중' ---------- */
+  var MID_SYNC = "중간 결산";
+  function midLast() { return lastCmd(function (t) { return t === MID_SYNC; }); }
+  function midPending(c) { return !!(c && /처리 중|보내는 중/.test(c.status || "")); }
+  function midSend() {
+    if (S.midBusy || midPending(midLast())) return;
+    S.midBusy = true; S.midMsg = null; render();
+    sendCommand(MID_SYNC).then(function () { S.midBusy = false; S.midMsg = null; render(); }, function (e) { S.midBusy = false; S.midMsg = { t: e.message, err: true }; render(); });
+  }
+  function midCard(canCmd) {
+    var c = midLast(), pend = midPending(c), busy = S.midBusy || pend;
+    var h = '<section class="card brief"><div class="progress-row"><h2>⚡ 중간 결산</h2><button class="btn primary" data-act="midsync"' + (canCmd && !busy ? "" : " disabled") + ">" + (busy ? "보내는 중…" : "중간 결산") + "</button></div>";
+    h += '<p class="small muted">하루 결산을 기다리지 않고, 앱에 지금까지 쓴 것(오늘 체크·경건생활·QnA·저널·오늘의 글·운동·식단·지출·스킨케어·메모·태스크 로그)을 맥의 Brainy가 볼트에 바로 최신화해요. 결과는 아래 \'명령\'에 남아요.</p>';
+    if (S.midBusy) h += '<p class="small muted">맥의 Brainy에게 보내는 중…</p>';
+    else if (S.midMsg && S.midMsg.err) h += '<p class="small" style="color:var(--warn)">' + esc(S.midMsg.t) + "</p>";
+    else if (c) {
+      var line = esc(whenKo(c.createdAt)) + " 보냄";
+      if (pend) line += " · 맥의 Brainy가 볼트에 반영하는 중 — 끝나면 여기와 아래 '명령'에 결과가 떠요 (보통 몇 분)";
+      else if (c.status === "끝") line += " → " + esc(whenKo(c.doneAt || c.createdAt)) + " 반영 ✓" + (c.result ? " · " + esc(clip(String(c.result).split("\n")[0], 80)) : "");
+      else line += " · " + esc(c.status || "") + " — 아래 '명령'에서 다시 보낼 수 있어요";
+      h += '<p class="small"' + (c.status === "끝" ? ' style="color:var(--good)"' : pend ? "" : ' style="color:var(--warn)"') + ">" + line + "</p>";
+    }
+    else if (!canCmd && S.mcpOff) h += '<p class="small muted">이 화면에서는 보낼 수 없어요 — Claude 앱이나 claude.ai에서 열어 주세요.</p>';
+    return h + "</section>";
+  }
   function viewOps() {
     var h = "", canCmd = S.db && !S.readOnly && S.mcp && cmdTriggerId();
+    h += midCard(canCmd);
     h += morningCard(canCmd);
     h += viewReports();
     // 결산 대기
@@ -2289,6 +2315,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "lgsend") { lgSend(); return; }
     if (act === "lgask") { var ln2 = t.getAttribute("data-n"), it2 = ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === ln2; })[0]; if (it2) openChat(null, "결산 대기 " + it2.n + "번 「" + it2.text + "」 — 이게 무슨 뜻이고, 응/고쳐서/빼 중 뭐가 나을지 근거와 함께 짧게 알려줘. 내가 고르면 run_command로 보내 줘."); return; }
     if (act === "cmdgo") { submitCmd(); return; }
+    if (act === "midsync") { midSend(); return; }
     if (act === "cmdsend") { S.cmdText = t.getAttribute("data-v"); submitCmd(); return; }
     if (act === "trigload") { loadTriggersOnce(); return; }
     if (act === "fireask") { S.fireAsk = t.getAttribute("data-id"); render(); return; }
