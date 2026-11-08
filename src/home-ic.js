@@ -12,7 +12,10 @@
   function icHtml(key, own) {
     var th = S.ic[key] || [], busy = !!S.icBusy[key];
     if (!th.length && !own) return "";
-    var h = '<div class="ic">' + th.map(function (m, i) { return '<div class="lgm ' + m.r + '" id="' + esc(icId(key, i)) + '">' + (m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
+    var shut = th.length && S.icFold[key];
+    var h = '<div class="ic">' + (th.length ? '<button class="more" data-act="icfold" data-k="' + esc(key) + '" aria-expanded="' + !shut + '">' + (shut ? "▾ Brainy와 나눈 대화 " + Math.ceil(th.length / 2) + "개 펼치기" : "▴ 대화 접기") + "</button>" : "");
+    if (shut) return h + "</div>";
+    h += th.map(function (m, i) { return '<div class="lgm ' + m.r + '" id="' + esc(icId(key, i)) + '">' + (m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
     h += '<div class="lgask"><textarea class="grow" data-icq="' + esc(key) + '" rows="1" placeholder="' + (th.length ? "이어서 Brainy에게…" : "💬 이 칸 Brainy와 이야기 — 예: 같이 정리해 줘") + '"' + (busy ? " disabled" : "") + ">" + esc(S.icQ[key] || "") + '</textarea><button class="btn" data-act="icsend" data-k="' + esc(key) + '"' + (busy ? " disabled" : "") + ">" + (busy ? "…" : th.length ? "보내기" : "💬 대화") + "</button></div>";
     return h + "</div>";
   }
@@ -21,7 +24,7 @@
     var th = S.ic[key] = S.ic[key] || [];
     if (!S.sample || S.sampleOff) { th.push({ r: "warn", t: "지금은 Brainy와 대화할 수 없어요." }); render(); return; }
     var hist = th.filter(function (m) { return (m.r === "me" || m.r === "ai") && m.t; }).slice(-10).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: m.t }; });
-    th.push({ r: "me", t: text }); var ai = { r: "ai", t: "", pending: true }; th.push(ai); S.icQ[key] = ""; S.icBusy[key] = true; render();
+    S.icFold[key] = false; th.push({ r: "me", t: text }); var ai = { r: "ai", t: "", pending: true }; th.push(ai); S.icQ[key] = ""; S.icBusy[key] = true; render();
     var rules = chatRules() + "\n\n=== 지금 이 대화 ===\n" + icCtx(key) + "\n앱 화면의 그 칸 바로 아래에서 나누는 짧은 대화다. 3~5줄, 마크다운 기호 없이, 해요체. 기록·반영을 원하면 앱 도구로 바로 하고 무엇을 했는지 한 줄로 말한다.";
     var elId = icId(key, th.length - 1);
     var opts = { cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; var el = document.getElementById(elId); if (el) el.innerHTML = "<b>Brainy</b> " + esc(u.text); } };

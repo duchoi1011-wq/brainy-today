@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "90c18ef228"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=90c18ef228"></script>
+<script>window.BRAINY_VERSION = "db71d7970f"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=db71d7970f"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -399,7 +399,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     note: "", opt: { state: "idle", data: null, msg: "" }, confirmDel: null,
     ask: { state: "idle", q: "", text: "", msg: "", ctl: null },
     ledger: null, morning: null, cmds: [], cfg: {}, mcp: null, mcpOff: false,
-    cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
+    cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, ic: {}, icQ: {}, icBusy: {}, icFold: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
     triggers: null, trigState: "idle", trigMsg: "", trigAt: 0, cmdText: "", autoState: {}, nrDraft: {}, moBusy: false, moMsg: null, retrying: {}, thOpen: {}, exp: {}, dl: null, insta: [], igThumb: {}, igCap: {}, igBusy: {}, igMsg: {}, igOpen: {}, igFix: {}, cmdBusy: false, cmdMsg: "", fireAsk: null, fired: {}
   };
   var CC_SERVER = "Claude Code Remote";
@@ -2130,7 +2130,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function icHtml(key, own) {
     var th = S.ic[key] || [], busy = !!S.icBusy[key];
     if (!th.length && !own) return "";
-    var h = '<div class="ic">' + th.map(function (m, i) { return '<div class="lgm ' + m.r + '" id="' + esc(icId(key, i)) + '">' + (m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
+    var shut = th.length && S.icFold[key];
+    var h = '<div class="ic">' + (th.length ? '<button class="more" data-act="icfold" data-k="' + esc(key) + '" aria-expanded="' + !shut + '">' + (shut ? "▾ Brainy와 나눈 대화 " + Math.ceil(th.length / 2) + "개 펼치기" : "▴ 대화 접기") + "</button>" : "");
+    if (shut) return h + "</div>";
+    h += th.map(function (m, i) { return '<div class="lgm ' + m.r + '" id="' + esc(icId(key, i)) + '">' + (m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
     h += '<div class="lgask"><textarea class="grow" data-icq="' + esc(key) + '" rows="1" placeholder="' + (th.length ? "이어서 Brainy에게…" : "💬 이 칸 Brainy와 이야기 — 예: 같이 정리해 줘") + '"' + (busy ? " disabled" : "") + ">" + esc(S.icQ[key] || "") + '</textarea><button class="btn" data-act="icsend" data-k="' + esc(key) + '"' + (busy ? " disabled" : "") + ">" + (busy ? "…" : th.length ? "보내기" : "💬 대화") + "</button></div>";
     return h + "</div>";
   }
@@ -2139,7 +2142,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var th = S.ic[key] = S.ic[key] || [];
     if (!S.sample || S.sampleOff) { th.push({ r: "warn", t: "지금은 Brainy와 대화할 수 없어요." }); render(); return; }
     var hist = th.filter(function (m) { return (m.r === "me" || m.r === "ai") && m.t; }).slice(-10).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: m.t }; });
-    th.push({ r: "me", t: text }); var ai = { r: "ai", t: "", pending: true }; th.push(ai); S.icQ[key] = ""; S.icBusy[key] = true; render();
+    S.icFold[key] = false; th.push({ r: "me", t: text }); var ai = { r: "ai", t: "", pending: true }; th.push(ai); S.icQ[key] = ""; S.icBusy[key] = true; render();
     var rules = chatRules() + "\n\n=== 지금 이 대화 ===\n" + icCtx(key) + "\n앱 화면의 그 칸 바로 아래에서 나누는 짧은 대화다. 3~5줄, 마크다운 기호 없이, 해요체. 기록·반영을 원하면 앱 도구로 바로 하고 무엇을 했는지 한 줄로 말한다.";
     var elId = icId(key, th.length - 1);
     var opts = { cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; var el = document.getElementById(elId); if (el) el.innerHTML = "<b>Brainy</b> " + esc(u.text); } };
@@ -2465,6 +2468,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "fdlog") { var fk = t.getAttribute("data-key"); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { S.fd[fe.id] = fe.value; }); saveDay(function (b) { b.notes[fk] = Object.assign({}, b.notes[fk] || {}); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { if (fe.getAttribute("data-f")) b.notes[fk][fe.getAttribute("data-f")] = fe.value; }); }); var fl = document.getElementById("fdlog-" + fk); if (fl) fl.textContent = "남겼어요 ✓"; return; }
     if (act === "fdgo") { var gk = t.getAttribute("data-key"), parts = []; document.querySelectorAll('[data-fd][data-k="' + gk + '"]').forEach(function (fe) { if (String(fe.value || "").trim()) parts.push((fe.getAttribute("data-f") || "") + ": " + fe.value.trim()); }); icTalk("fd:" + gk, parts.length ? "이 칸에 쓴 것으로 같이 진행해 줘.\n" + parts.join("\n") : "이 칸, 같이 진행해 줘 — 무엇부터 쓰면 될까?"); return; }
     if (act === "icsend") { var sk = t.getAttribute("data-k"); icTalk(sk, S.icQ[sk]); return; }
+    if (act === "icfold") { var fk0 = t.getAttribute("data-k"); S.icFold[fk0] = !S.icFold[fk0]; render(); return; }
     if (act === "lgone") { var on1 = t.getAttribute("data-n"), ov = t.getAttribute("data-v"); if (ov === "고쳐서") { S.lgSel[on1] = (S.lgSel[on1] || {}).v === "고쳐서" ? {} : { v: "고쳐서" }; render(); var te1 = document.querySelector('[data-lgq="' + CSS.escape(on1) + '"]'); if (te1) te1.focus(); return; } lgSendOne(on1, ov, S.lgQ[on1]); return; }
     if (act === "lgqsend") { var qn = t.getAttribute("data-n"), qt = String(S.lgQ[qn] || "").trim(); if ((S.lgSel[qn] || {}).v === "고쳐서") { if (!qt) { var te2 = document.querySelector('[data-lgq="' + CSS.escape(qn) + '"]'); if (te2) te2.focus(); return; } lgSendOne(qn, "고쳐서", qt); return; } if (qt) lgAskOne(qn, qt); return; }
     if (act === "lgask") { var ln2 = t.getAttribute("data-n"), it2 = ledgerOpen().filter(function (x) { return String(x.n) === ln2; })[0]; if (it2) { ledgerChat(); openChat(null, "🗳 결산 대기 " + it2.n + "번 「" + it2.text + "」 같이 정리하자. 이게 무슨 뜻이고 왜 올라왔는지, 응/고쳐서/나중에/빼 중 뭐가 나을지 근거와 함께 짧게 말해 줘."); } return; }

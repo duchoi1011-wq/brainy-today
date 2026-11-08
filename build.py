@@ -410,7 +410,7 @@ patch('''a.getAttribute("data-tw") || a.getAttribute("data-lg") ||''', '''a.getA
 
 # 10) 직접 쓰는 칸마다 「로그」 + 「💬 Brainy와 대화」 — 대화는 그 칸 바로 아래에서 이어진다 (2026-11-07 동욱: "직접 입력하는 부분은 다 브레이니와 대화할 수 있게, 로그와 브레이니와 대화 나누고")
 #     Brainy 질문 · 메모 · 태스크 기록 · 오늘 쓰기 칸(경건생활·QnA·저널 …) · 점검 결과. (결산 대기·태스크 작업실·아침 제안은 이미 대화형)
-patch("lgSel: {}, lgT: {},", "lgSel: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {},")
+patch("lgSel: {}, lgT: {},", "lgSel: {}, ic: {}, icQ: {}, icBusy: {}, icFold: {}, lgT: {},")
 patch("  function ledgerChat() {", (root / "src" / "home-ic.js").read_text(encoding="utf-8") + "  function ledgerChat() {")
 patch("""    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id]; });""",
       """    var openQ = (b.questions || []).filter(function (q) { return !ans[q.id] || qa[q.id] || (S.ic["q:" + q.id] || []).length; });""")
@@ -429,7 +429,8 @@ patch("""    if (S.ansMsg[scope] && S.ansMsg[scope].err) h += '<p class="small" 
     if (S.ansMsg[scope] && S.ansMsg[scope].err) h += '<p class="small" style="color:var(--warn)">' + esc(S.ansMsg[scope].t) + "</p>";""")
 patch("""    if (act === "lgsend") { lgSend(); return; }""", """    if (act === "lgsend") { lgSend(); return; }
     if (act === "ictalk") { var ik = t.getAttribute("data-k"), isrc = document.getElementById(t.getAttribute("data-src")), itx = isrc ? isrc.value : ""; if (!String(itx).trim()) { if (isrc) isrc.focus(); return; } if (ik.indexOf("q:") === 0) { var iq = ik.slice(2); saveDay(function (b) { b.answers[iq] = String(itx).trim(); }); S.drafts[iq] = String(itx).trim(); } icTalk(ik, itx); return; }
-    if (act === "icsend") { var sk = t.getAttribute("data-k"); icTalk(sk, S.icQ[sk]); return; }""")
+    if (act === "icsend") { var sk = t.getAttribute("data-k"); icTalk(sk, S.icQ[sk]); return; }
+    if (act === "icfold") { var fk0 = t.getAttribute("data-k"); S.icFold[fk0] = !S.icFold[fk0]; render(); return; }""")
 patch("""    if (el.getAttribute && el.getAttribute("data-lgq")) {""", """    if (el.getAttribute && el.getAttribute("data-icq")) { S.icQ[el.getAttribute("data-icq")] = el.value; if (el.classList.contains("grow")) grow(el); }
     if (el.getAttribute && el.getAttribute("data-lgq")) {""")
 patch("""a.getAttribute("data-lgq") ||""", """a.getAttribute("data-lgq") || a.getAttribute("data-icq") ||""")
