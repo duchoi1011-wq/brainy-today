@@ -174,8 +174,9 @@ patch('''.bub.ai.wait { color: var(--muted); }''', '''.bub.ai.wait { color: var(
 .bub.clamp { max-height: 7.4em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
 .bubx { justify-self: start; font: inherit; font-size: 13px; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0 6px; margin-top: -4px; cursor: pointer; }
 .bubx.me { justify-self: end; }
-.thr { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: grid; gap: 8px; padding: 10px 12px; }
-.thr > .h { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }''')
+.thr { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: grid; gap: 4px; padding: 10px 12px; font: inherit; color: inherit; text-align: left; cursor: pointer; width: 100%; }
+.thr .h { color: var(--ink); display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.thr .thl { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }''')
 patch('''  function renderChat() {''', '''  function bubHtml(key, t, cls, attrs, live) {
     var txt = t.content || "", long = !live && txt.length > 260, open = !!S.exp[key];
     var h = '<div class="bub ' + cls + (long && !open ? " clamp" : "") + '"' + (attrs || "") + ">" + esc(txt) + "</div>";
@@ -204,21 +205,20 @@ patch('''  function renderChat() {''', '''  function bubHtml(key, t, cls, attrs,
     S.thOpen.chat = false; S.thOpen.past = false;
     document.getElementById("chat-ctx").textContent = S.chat.project ? "보고 있는 프로젝트: " + S.chat.project + " · 볼트 전체도 함께 봐요" : "내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요";
   }
+  // 이어 볼 대화: 프로젝트에서 열면 그 프로젝트의 가장 최근 대화, 아니면 가장 최근 대화 (2026-11-08 동욱: "앱을 열면 가장 최근 대화가 이어져 보이게")
+  function recentThread(project) {
+    return (S.threads || []).filter(function (x) { return (x.turns || []).length && (!project || (x.project === project && !x.task)); })[0];
+  }
+  // 지난 대화 목록 — 누르면 그 대화를 다시 열어 이어서 쓴다
   function pastThreads(open) {
-    var list = (S.threads || []).filter(function (x) { return x.id !== S.chat.id && (x.turns || []).length; }).slice(0, 11);
-    if (!list.length) return "";
+    var list = (S.threads || []).filter(function (x) { return x.id !== S.chat.id && (x.turns || []).length; });
     var on = open || !!S.thOpen.past;
-    var h = open ? '<p class="small muted" style="margin-top:6px">지난 대화</p>' : '<button class="more" data-act="thtoggle" data-k="past">' + (on ? "▴ 지난 대화 숨기기" : "▾ 지난 대화 " + list.length + "개") + "</button>";
+    if (!list.length) return on && !open ? '<p class="small muted">지난 대화가 아직 없어요.</p>' : "";
+    var h = open ? '<p class="small muted" style="margin-top:6px">지난 대화 — 누르면 이어서 써요</p>' : '<button class="more" data-act="thtoggle" data-k="past">' + (on ? "▴ 지난 대화 숨기기" : "▾ 지난 대화 " + list.length + "개") + "</button>";
     if (!on) return h;
     return h + list.map(function (x) {
-      var k = "thr:" + x.id, op = !!S.thOpen[k], n = Math.ceil(x.turns.length / 2);
-      var s = '<div class="thr"><button class="h" data-act="thtoggle" data-k="' + esc(k) + '"><span>' + (op ? "▴ " : "▾ ") + esc(x.title || "대화") + (x.task ? ' <span class="small muted">· ' + esc(x.task) + "</span>" : x.project ? ' <span class="small muted">· ' + esc(x.project) + "</span>" : "") + '</span><span class="small muted" style="white-space:nowrap">' + esc(whenKo(x.updatedAt)) + " · " + n + "번</span></button>";
-      if (op) {
-        var last = x.turns.slice(-2), base = x.turns.length - last.length;
-        s += last.map(function (t, j) { return bubHtml("b:" + x.id + ":" + x.updatedAt + ":" + (base + j), t, t.role === "user" ? "me" : "ai", "", false); }).join("");
-        s += '<div class="row end"><button class="btn" data-act="chatresume" data-id="' + esc(x.id) + '">이어서 하기</button></div>';
-      }
-      return s + "</div>";
+      var n = Math.ceil(x.turns.length / 2), last = x.turns[x.turns.length - 1], ctx = x.task || x.project || "";
+      return '<button class="thr" data-act="chatresume" data-id="' + esc(x.id) + '"><span class="h"><span>' + esc(x.title || "대화") + (ctx ? ' <span class="small muted">· ' + esc(ctx) + "</span>" : "") + '</span><span class="small muted" style="white-space:nowrap">' + esc(whenKo(x.updatedAt)) + " · " + n + '번</span></span><span class="small muted thl">' + esc(clip((last && last.content) || "", 80)) + "</span></button>";
     }).join("");
   }
   function renderChat(keep) {
@@ -236,10 +236,10 @@ patch('''btn.setAttribute("data-act", S.chat.busy ? "chatstop" : "chatsend");
     var box = document.getElementById("msgs"); box.scrollTop = box.scrollHeight;''',
       '''btn.setAttribute("data-act", S.chat.busy ? "chatstop" : "chatsend");
     var box = document.getElementById("msgs"); box.scrollTop = keep ? top0 : box.scrollHeight;''')
-# 열 때: 6시간 안에 하던 대화(같은 프로젝트)가 있으면 그대로 이어서 보여 준다
+# 열 때: 가장 최근 대화(프로젝트에서 열면 그 프로젝트의 최근 대화)를 그대로 이어서 보여 준다 · 「새 대화」를 누른 뒤엔 빈 채로 둔다
 patch('''    if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }''',
       '''    if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }
-    if (!S.chat.turns.length && !S.chat.task && !q) { var rec = (S.threads || []).filter(function (x) { return (x.project || null) === (S.chat.project || null) && !x.task && (x.turns || []).length && Date.now() - Date.parse(x.updatedAt || 0) < 6 * 3600e3; })[0]; if (rec) resumeChat(rec); }''')
+    if (!S.chat.turns.length && !S.chat.task && !S.chat.fresh && !q) { var rec = recentThread(S.chat.project); if (rec) resumeChat(rec); }''')
 patch('''    S.chat.turns.push({ role: "user", content: q });''',
       '''    S.chat.turns.push({ role: "user", content: q }); S.thOpen.chat = false;''')
 patch('''    }).then(function () { S.chat.busy = false; S.chat.ctl = null; renderChat(); render(); });''',
@@ -252,8 +252,9 @@ patch('''return '<div class="bub ' + (t.role === "user" ? "me" : "ai") + '" styl
 patch('''    if (act === "thtoggle") { var tk = t.getAttribute("data-k"); S.thOpen[tk] = !S.thOpen[tk]; if (tk === "chat") renderChat(); else render(); return; }''',
       '''    if (act === "thtoggle") { var tk = t.getAttribute("data-k"); S.thOpen[tk] = !S.thOpen[tk]; if (tk === "chat" || tk === "past" || tk.indexOf("thr:") === 0) renderChat(tk !== "chat"); else render(); return; }
     if (act === "bubx") { var bxk = t.getAttribute("data-k"); S.exp[bxk] = !S.exp[bxk]; if (!sheet.hidden) renderChat(true); else render(); return; }
+    if (act === "chatlist") { S.thOpen.past = !S.thOpen.past; renderChat(true); if (S.thOpen.past) document.getElementById("msgs").scrollTop = 0; return; }
     if (act === "chatresume") { var rid0 = t.getAttribute("data-id"), th0 = (S.threads || []).filter(function (x) { return x.id === rid0; })[0]; if (th0 && !S.chat.busy) { resumeChat(th0); renderChat(); } return; }''')
-patch('''    db.collection("taskwork").onSnapshot(''', '''    db.collection("chat").onSnapshot(function (q) { S.threads = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }).sort(function (a, b) { return (b.updatedAt || "") < (a.updatedAt || "") ? -1 : 1; }); if (!sheet.hidden && !S.chat.busy) renderChat(true); }, fail);
+patch('''    db.collection("taskwork").onSnapshot(''', '''    db.collection("chat").onSnapshot(function (q) { S.threads = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }).sort(function (a, b) { return (b.updatedAt || "") < (a.updatedAt || "") ? -1 : 1; }); if (!S.chat.busy && !S.chat.turns.length && !S.chat.task && !S.chat.fresh) { var rc = recentThread(S.chat.project); if (rc) resumeChat(rc); } if (!sheet.hidden && !S.chat.busy) renderChat(true); }, fail);
     db.collection("twchat").onSnapshot(function (q) { q.docs.forEach(function (d) { var x = d.data(), r = S.twRun[x.task]; if (!x.task || (r && (r.busy || (r.at || "") >= (x.updatedAt || "")))) return; S.twRun[x.task] = { turns: x.turns || [], at: x.updatedAt }; }); softRender(); }, fail);
     db.collection("taskwork").onSnapshot(''')
 
