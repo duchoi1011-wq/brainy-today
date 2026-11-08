@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "320a8a6664"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=320a8a6664"></script>
+<script>window.BRAINY_VERSION = "d5c1d1affd"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=d5c1d1affd"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -194,6 +194,10 @@ textarea { min-height: 44px; resize: vertical; }
 .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
 .chip { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+/* 지난 기록 — 날짜 고르기 줄: ◀ 이전 · 달력 · 다음 ▶ · 오늘 */
+.calnav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.calnav .btn { white-space: nowrap; }
+.calnav input[type="date"] { font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; flex: 1; min-width: 130px; min-height: 38px; }
 .wp { display: grid; gap: 8px; }
 .wp .wt { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
 .dep { flex: none; width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--ink); }
@@ -1253,28 +1257,66 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 
   /* ---------- 캘린더 노트 (0_Calendar — 볼트에서 올라온 것) ---------- */
-  var CAL_KINDS = { daily: "데일리 노트", worship: "경건생활", qna: "QnA", journal: "저널 · 기도일기", life: "기록", meeting: "미팅" };
+  /* ---------- 지난 기록 — 날짜를 골라 그날 캘린더 노트(cal/<날짜>)를 종류별 접기 칸으로, 맨 위에 그날 건강 요약 ---------- */
+  var CAL_KINDS = { daily: "데일리 노트", worship: "경건생활", qna: "QnA", journal: "저널 · 기도일기", health: "건강", finance: "재정", life: "기록", meeting: "미팅" };
+  var CAL_ORDER = ["daily", "worship", "qna", "journal", "health", "finance", "life", "meeting"];
+  var CAL_ALIAS = { "건강": "health", body: "health", money: "finance", budget: "finance", "재정": "finance", "기록": "life", "미팅": "meeting", "데일리": "daily" };
   var CAL_ROW = { worship: "worship", qna: "qna", journal: "journal", daily: "sentence" };
+  function calKind(x) { var k = String((x && x.kind) || "").trim(); return CAL_ALIAS[k] || k; }
+  function calShift(d, n) { return ymd(new Date(parse(d).getTime() + n * 86400000)); }
+  function calCur() {
+    if (S.calDay && /^\d{4}-\d\d-\d\d$/.test(S.calDay) && S.calDay <= TODAY) return S.calDay;
+    var past = Object.keys(S.cal).filter(function (d) { return d < TODAY; }).sort();
+    return past.length ? past[past.length - 1] : calShift(TODAY, -1);
+  }
+  function calDayLabel(d) { return d === TODAY ? "오늘" : d === calShift(TODAY, -1) ? "어제" : md(d) + " " + DOW[parse(d).getDay()]; }
+  function calHealth(d) {
+    var c = S.checks[d] || {}, n = c.notes || {}, hd = (((S.main || {}).health || {}).days || []).filter(function (x) { return x.date === d; })[0] || {};
+    var kcal = hd.kcal != null ? hd.kcal : c.est ? c.est.kcal : null, prot = hd.protein != null ? hd.protein : c.est ? c.est.protein : null, kApp = hd.kcal == null && !!c.est;
+    var meals = (c.meals || []).length;
+    var ex = "", exSub = "";
+    if (n.workout && (n.workout.type || n.workout.sets)) { ex = n.workout.type || "운동"; exSub = [String(n.workout.sets || "").split("\n")[0], n.workout.min ? n.workout.min + "분" : ""].filter(Boolean).join(" · "); }
+    else if (hd.exercise) { ex = hd.exercise; exSub = "볼트"; }
+    var acts = ((S.garmin && S.garmin.activities) || []).filter(function (a) { return a.date === d; });
+    if (!ex && acts.length) { ex = acts.map(function (a) { return a.type; }).join(" · "); exSub = "가민 · " + acts.map(function (a) { return (a.km ? a.km + "km " : "") + (a.min ? a.min + "분" : ""); }).join(" / ").trim(); }
+    var gd = ((S.garmin && S.garmin.days) || []).filter(function (x) { return x.d === d; })[0] || {};
+    var sleep = gd.sleep != null ? gd.sleep : garminMerged().sleep[d], sleepMin = gd.sleepMin, active = gd.active;
+    var tiles = [];
+    if (kcal != null) tiles.push(["식단", kcal.toLocaleString() + '<span class="small muted"> kcal</span>', "단백질 " + (prot != null ? prot + "g" : "—") + (kApp ? " · 앱 추정" : "")]);
+    else if (meals) tiles.push(["식단", meals + '<span class="small muted"> 끼</span>', "칼로리 추정 전"]);
+    if (ex) tiles.push(["운동", esc(ex), exSub]);
+    if (sleep != null) tiles.push(["수면 점수", esc(sleep), sleepMin ? Math.floor(sleepMin / 60) + "시간 " + (sleepMin % 60) + "분" : "가민"]);
+    if (active != null) tiles.push(["활동 칼로리", active.toLocaleString() + '<span class="small muted"> kcal</span>', gd.total ? "총 소모 " + gd.total.toLocaleString() : "가민"]);
+    var h = '<section class="card"><h2>건강 요약 · ' + esc(calDayLabel(d)) + "</h2>";
+    if (!tiles.length) return h + '<p class="muted">기록 없음</p></section>';
+    return h + '<div class="grid2">' + tiles.map(function (t) { return '<div class="stat"><span class="small muted">' + t[0] + '</span><span class="v">' + t[1] + '</span><span class="small muted">' + esc(t[2]) + "</span></div>"; }).join("") + "</div></section>";
+  }
   function viewCal() {
-    var days = Object.keys(S.cal).sort().reverse();
-    var h = "";
-    if (!days.length) return h + '<div class="card"><p class="muted">볼트의 캘린더 노트가 아직 안 올라왔어요. 결산이나 명령 「홈 새로고침」 때 최근 7일이 올라와요.</p></div>';
-    days = days.filter(function (d) { return d !== TODAY; });
-    if (!days.length) return h + '<div class="card"><p class="muted">지난 날 노트가 아직 안 올라왔어요.</p></div>';
-    h += '<p class="small muted">지난 날 볼트에 남은 노트를 읽는 곳이에요. 오늘 것은 「✍ 오늘 쓰기」에서 쓰고 봐요.</p>';
-    var cur = S.calDay && S.cal[S.calDay] && S.calDay !== TODAY ? S.calDay : days[0];
-    h += '<div class="chips" role="group" aria-label="날짜">' + days.map(function (d) { return '<button class="chip" data-act="calday" data-v="' + d + '" aria-pressed="' + (d === cur) + '">' + (d === TODAY ? "오늘" : md(d) + " " + DOW[parse(d).getDay()]) + "</button>"; }).join("") + "</div>";
+    var cur = calCur(), h = "";
+    h += '<div class="calnav"><button class="btn" data-act="calgo" data-v="-1" aria-label="이전 날">◀ 이전</button><input type="date" id="cal-date" value="' + cur + '" max="' + TODAY + '" aria-label="날짜 고르기"><button class="btn" data-act="calgo" data-v="1" aria-label="다음 날"' + (cur >= TODAY ? " disabled" : "") + '>다음 ▶</button><button class="btn quiet" data-act="calday" data-v="' + TODAY + '"' + (cur === TODAY ? " disabled" : "") + ">오늘</button></div>";
+    var days = []; for (var i = 0; i < 14; i++) days.push(calShift(TODAY, -i));
+    h += '<div class="chips" role="group" aria-label="최근 14일">' + days.map(function (d) { return '<button class="chip" data-act="calday" data-v="' + d + '" aria-pressed="' + (d === cur) + '">' + calDayLabel(d) + "</button>"; }).join("") + "</div>";
+    var dd = parse(cur);
+    h += '<p class="small muted">' + (dd.getMonth() + 1) + "월 " + dd.getDate() + "일 " + DOW[dd.getDay()] + " · 볼트에 남은 노트를 읽는 곳이에요. 오늘 것은 오늘 탭에서 쓰고 봐요.</p>";
+    h += calHealth(cur);
     var c = S.cal[cur], app = (S.checks[cur] && S.checks[cur].notes) || {};
+    if (!c || !(c.notes || []).length) {
+      return h + '<div class="card"><p class="muted">기록 없음</p><p class="small muted">' + (Object.keys(S.cal).length ? "이 날의 캘린더 노트가 앱에 없어요. 결산이나 명령 「홈 새로고침」 때 최근 7일이 올라와요." : "볼트의 캘린더 노트가 아직 안 올라왔어요. 결산이나 명령 「홈 새로고침」 때 최근 7일이 올라와요.") + "</p></div>";
+    }
     h += '<p class="small muted">볼트 0_Calendar · ' + esc(c.exportedAt ? whenKo(c.exportedAt) : "") + ' 기준 · 앱에서 쓴 건 몇 초 안에 같은 노트로 들어가요</p>';
-    (c.notes || []).forEach(function (x) {
-      var rk = CAL_ROW[x.kind], appHas = rk && app[rk] && JSON.stringify(app[rk]).replace(/[{}":,\[\]]|true|false/g, "").trim().length > 2;
+    var notes = (c.notes || []).map(function (x, i) { return { x: x, k: calKind(x), i: i }; });
+    notes.sort(function (a, b) { var oa = CAL_ORDER.indexOf(a.k), ob = CAL_ORDER.indexOf(b.k); if (oa < 0) oa = 99; if (ob < 0) ob = 99; return oa - ob || a.i - b.i; });
+    h += '<div class="section">';
+    notes.forEach(function (it) {
+      var x = it.x, k = it.k, rk = CAL_ROW[k], appHas = rk && app[rk] && JSON.stringify(app[rk]).replace(/[{}":,\[\]]|true|false/g, "").trim().length > 2;
       var filled = (x.chars || 0) > 15;
-      h += '<details class="fold"' + (filled && x.kind !== "daily" ? " open" : "") + '><summary><span>' + esc(CAL_KINDS[x.kind] || x.kind) + (x.kind === "meeting" ? " · " + esc(x.name.replace(/^\d{4}-\d\d-\d\d\s*/, "")) : "") + '</span><span class="row" style="gap:6px">' + (filled ? '<span class="pill good">' + (x.chars > 999 ? Math.round(x.chars / 100) / 10 + "천" : x.chars) + "자</span>" : '<span class="pill">비어 있음</span>') + (appHas ? '<span class="pill accent">앱에 씀</span>' : "") + "</span></summary>";
-      h += '<div class="md">' + mdHtml(x.body || "") + "</div>";
-      if (cur === TODAY && rk) h += '<div class="row end" style="padding:0 14px 12px"><button class="btn" data-act="writerow" data-key="' + rk + '">' + (appHas ? "앱에서 이어 쓰기" : "앱에서 쓰기") + "</button></div>";
-      h += "</details>";
+      var head = esc(CAL_KINDS[k] || x.kind) + (k === "meeting" && x.name ? ' <span class="small muted">· ' + esc(String(x.name).replace(/^\d{4}-\d\d-\d\d\s*/, "")) + "</span>" : "");
+      var extra = '<span class="row" style="gap:6px;flex:none">' + (filled ? '<span class="pill good">' + (x.chars > 999 ? Math.round(x.chars / 100) / 10 + "천" : x.chars) + "자</span>" : '<span class="pill">비어 있음</span>') + (appHas ? '<span class="pill accent">앱에 씀</span>' : "") + "</span>";
+      var body = '<div class="md">' + (filled || (x.body || "").trim() ? mdHtml(x.body || "") : '<p class="muted">기록 없음</p>') + "</div>";
+      if (cur === TODAY && rk) body += '<div class="row end" style="padding:0 14px 14px"><button class="btn" data-act="writerow" data-key="' + rk + '">' + (appHas ? "앱에서 이어 쓰기" : "앱에서 쓰기") + "</button></div>";
+      h += foldHtml("cal:" + cur + ":" + k + ":" + it.i, head, body, { open: filled && k !== "daily", extra: extra });
     });
-    return h;
+    return h + "</div>";
   }
 
 
@@ -2436,6 +2478,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "nview") { S.noteView = t.getAttribute("data-v"); try { localStorage.setItem("brainy-nview", S.noteView); } catch (e) {} render(); return; }
     if (act === "goops") { S.tab = "notes"; S.noteView = "led"; render(); window.scrollTo(0, 0); return; }
     if (act === "calday") { S.calDay = t.getAttribute("data-v"); render(); return; }
+    if (act === "calgo") { var cg = calShift(calCur(), +t.getAttribute("data-v") || 0); S.calDay = cg > TODAY ? TODAY : cg; render(); return; }
     if (act === "writerow" || act === "gowrite") { var wk = t.getAttribute("data-key"); S.tab = "today"; try { localStorage.setItem("brainy-tab", "today"); } catch (e) {} if (DETAIL[wk]) S.openRow[wk] = true; render(); var rowEl = document.getElementById("row-" + wk); if (rowEl) rowEl.scrollIntoView({ block: "start" }); return; }
     if (act === "stepchk") { toggleStep(t.getAttribute("data-key"), t.getAttribute("data-v")); return; }
     if (act === "twstep") { var tt1 = t.getAttribute("data-title"), si = +t.getAttribute("data-i"), cur1 = twSteps(tt1)[si]; twSave(tt1, function (w) { w.steps = w.steps || {}; w.steps[si] = !(cur1 && cur1.done); w.log = (w.log || []).concat([{ at: new Date().toISOString(), text: (cur1 && cur1.done ? "☐ 해제 " : "☑ 완료 ") + (si + 1) + ". " + clip(cur1 ? cur1.text : "", 60) }]); }); return; }
@@ -2531,10 +2574,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (el.getAttribute && el.getAttribute("data-fd")) { S.fd[el.id] = el.value; if (el.getAttribute("data-k")) scheduleAuto(el); if (el.classList.contains("grow")) grow(el); }
   });
   function grow(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight + 2, 900) + "px"; }
-  function typing() { var a = document.activeElement; return !!(a && a.getAttribute && (a.getAttribute("data-fd") || (/^(note|ask|cmd)-input$/.test(a.id) || a.getAttribute("data-tl") || a.getAttribute("data-tw") || a.getAttribute("data-lg") || a.getAttribute("data-lgq") || a.getAttribute("data-icq") || a.getAttribute("data-lgall") || a.getAttribute("data-ans") || a.getAttribute("data-mo") || a.getAttribute("data-igcap") || a.getAttribute("data-igfix") || a.getAttribute("data-nr")))); }
+  function typing() { var a = document.activeElement; return !!(a && a.getAttribute && (a.getAttribute("data-fd") || (/^(note|ask|cmd)-input$/.test(a.id) || a.id === "cal-date" || a.getAttribute("data-tl") || a.getAttribute("data-tw") || a.getAttribute("data-lg") || a.getAttribute("data-lgq") || a.getAttribute("data-icq") || a.getAttribute("data-lgall") || a.getAttribute("data-ans") || a.getAttribute("data-mo") || a.getAttribute("data-igcap") || a.getAttribute("data-igfix") || a.getAttribute("data-nr")))); }
   function softRender() { if (typing()) { S.pendingRender = true; return; } render(); }
   document.addEventListener("focusout", function () { setTimeout(function () { if (S.pendingRender && !typing()) { S.pendingRender = false; render(); } }, 300); });
-  document.addEventListener("change", function (ev) { if (ev.target && ev.target.id === "garmin-file") { uploadGarmin(ev.target.files); } if (ev.target && ev.target.id === "chat-file") { addChatPics(ev.target.files); ev.target.value = ""; } });
+  document.addEventListener("change", function (ev) { if (ev.target && ev.target.id === "garmin-file") { uploadGarmin(ev.target.files); } if (ev.target && ev.target.id === "chat-file") { addChatPics(ev.target.files); ev.target.value = ""; } if (ev.target && ev.target.id === "cal-date") { var cv = String(ev.target.value || ""); if (/^\d{4}-\d\d-\d\d$/.test(cv)) { S.calDay = cv > TODAY ? TODAY : cv; render(); } } });
   document.addEventListener("keydown", function (ev) {
     if (ev.key !== "Enter" || ev.isComposing) return;
     var id = ev.target && ev.target.id;
