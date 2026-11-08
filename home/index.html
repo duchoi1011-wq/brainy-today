@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "dd35989931"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=dd35989931"></script>
+<script>window.BRAINY_VERSION = "90c18ef228"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=90c18ef228"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -298,8 +298,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .sheet { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; grid-template-rows: auto 1fr auto; padding-top: env(safe-area-inset-top, 0px); }
 .sheet[hidden] { display: none !important; }
 .sheet .bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--line); background: var(--surface); }
-.sheet .bar .row { flex-wrap: nowrap; }
+.sheet .bar { flex-wrap: wrap; row-gap: 8px; }
+.sheet .bar > div:first-child { flex: 1 1 220px; min-width: 0; word-break: keep-all; overflow-wrap: break-word; }
+.sheet .bar .row { flex-wrap: nowrap; gap: 4px; margin-left: auto; }
+.sheet .bar .row > * { flex: none; white-space: nowrap; }
 .sheet .bar h2 { color: var(--ink); font-size: 16px; letter-spacing: 0; }
+.sheet .bar .ctxchip { margin-top: 2px; line-height: 1.45; }
+.sheet .chip { white-space: normal; word-break: keep-all; text-align: left; line-height: 1.4; }
 .sheet .msgs { overflow-y: auto; padding: 14px max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 10px; align-content: start; }
 .sheet .in2 { max-width: 720px; width: 100%; margin: 0 auto; display: grid; gap: 10px; }
 .bub { padding: 10px 14px; border-radius: 14px; white-space: pre-wrap; line-height: 1.65; font-size: 15px; max-width: 92%; overflow-wrap: anywhere; }
@@ -314,7 +319,22 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .acts2 { display: grid; gap: 4px; justify-self: start; }
 .acts2 span { font-size: 12px; color: var(--good); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; }
 .sheet .composer2 { border-top: 1px solid var(--line); background: var(--surface); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
-.sheet .composer2 .in2 { grid-template-columns: 1fr auto; align-items: end; }
+.sheet .composer2 .in2 { grid-template-columns: auto 1fr auto; align-items: end; gap: 8px; }
+.sheet .composer2 .btn { min-height: 44px; white-space: nowrap; }
+.sheet .composer2 .attach { width: 44px; padding: 0; justify-content: center; cursor: pointer; }
+.sheet .composer2 .attach svg { width: 20px; height: 20px; }
+.sheet .composer2 .attach.off { opacity: 0.5; pointer-events: none; }
+.sheet .composer2 .attach[hidden] { display: none; }
+.sheet .composer2 textarea { grid-column: 2; }
+.sheet .composer2 #chat-send { grid-column: 3; }
+.sheet .composer2 .attach[hidden] ~ textarea { grid-column: 1 / 3; }
+.pics { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.pics[hidden] { display: none; }
+.pic { position: relative; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--bg); flex: none; }
+.pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pic button { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; border: 0; padding: 0; background: rgba(0, 0, 0, 0.6); color: #fff; font: inherit; font-size: 14px; line-height: 22px; cursor: pointer; }
+.bubpics { justify-self: end; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 92%; }
+.bubpics img { width: 96px; height: 96px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); display: block; }
 .sheet textarea { max-height: 160px; }
 .ctxchip { font-size: 12px; color: var(--muted); }
 /* notes */
@@ -354,7 +374,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 <section class="sheet" id="sheet" hidden aria-label="Brainy 대화">
   <div class="bar"><div><h2>브레이니</h2><p class="ctxchip" id="chat-ctx">내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요</p></div><div class="row"><select id="chat-model" class="btn quiet" aria-label="답할 Claude 모델" title="답할 Claude 모델"><option value="auto">자동</option><option value="claude-haiku-5-5">Haiku 5.5 · 빠름</option><option value="claude-sonnet-5-5">Sonnet 5.5 · 기본</option><option value="claude-opus-5-5">Opus 5.5 · 깊게</option><option value="claude-fable-5-1">Fable 5.1 · 최고</option></select><button class="btn quiet" data-act="chatnew">새 대화</button><button class="btn" data-act="chatclose">닫기</button></div></div>
   <div class="msgs" id="msgs"><div class="in2" id="msgs-in"></div></div>
-  <div class="composer2"><div class="in2"><textarea id="chat-input" rows="1" placeholder="무엇이든 물어보거나 시켜 보세요 — 예: 점심 해장국 먹었어 기록해줘"></textarea><button class="btn primary" id="chat-send" data-act="chatsend">보내기</button></div></div>
+  <div class="composer2"><div class="in2"><div class="pics" id="chat-pics" hidden></div><label class="btn attach" id="chat-attach" for="chat-file" title="사진 첨부" aria-label="사진 첨부" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 15l-5-5-8 9"/></svg></label><input type="file" id="chat-file" accept="image/*" multiple hidden><textarea id="chat-input" rows="1" placeholder="무엇이든 물어보거나 시켜 보세요 — 예: 점심 해장국 먹었어 기록해줘"></textarea><button class="btn primary" id="chat-send" data-act="chatsend">보내기</button></div></div>
 </section>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
@@ -371,7 +391,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     db: null, dbState: "loading", loaded: { main: false, wiki: false },
     drafts: {}, saved: {}, readOnly: false, speaking: null,
     proj: {}, projOpen: null, taskOpen: null, toolsOK: false,
-    garmin: null, gups: [], gBusy: false, gMsg: "", canImages: false, maxImages: 5,
+    garmin: null, gups: [], gBusy: false, gMsg: "", canImages: false, maxImages: 5, chatPics: [],
     vocab: null, vIdx: 0, vFlip: false, wView: "pages",
     chat: { turns: [], busy: false, ctl: null, project: null },
     openRow: {}, fd: {}, est: "idle", estMsg: "", autoAt: {}, pendingRender: false,
@@ -2220,7 +2240,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (long) h += '<button class="bubx' + (t.role === "user" ? " me" : "") + '" data-act="bubx" data-k="' + esc(key) + '">' + (open ? "▴ 접기" : "▾ 펼치기") + "</button>";
     return h;
   }
-  function slimTurns(turns) { return turns.filter(function (t) { return t.content && !t.pending; }).slice(-30).map(function (t) { return { role: t.role, content: clip(t.content, 6000), acts: t.acts || [], err: t.err || "" }; }); }
+  function slimTurns(turns) { return turns.filter(function (t) { return t.content && !t.pending; }).slice(-30).map(function (t) { var o = { role: t.role, content: clip(t.content, 6000), acts: t.acts || [], err: t.err || "" }; if (t.picN) o.picN = t.picN; return o; }); }
   function chatSlot() {
     var have = {}; (S.threads || []).forEach(function (x) { have[x.id] = x; });
     for (var i = 0; i < 12; i++) if (!have["s" + i]) return "s" + i;
@@ -2275,6 +2295,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (S.chat.turns.length > 2) h += moreBtn("chat", Math.ceil(cut / 2) || Math.ceil((S.chat.turns.length - 2) / 2));
     S.chat.turns.forEach(function (t, i) {
       if (i < cut) return;
+      if (t.role === "user" && t.pics && t.pics.length) h += '<div class="bubpics">' + t.pics.map(function (u) { return '<img src="' + esc(u) + '" alt="보낸 사진">'; }).join("") + "</div>";
+      else if (t.role === "user" && t.picN) h += '<p class="small muted" style="justify-self:end">사진 ' + t.picN + "장 함께 보냄</p>";
       var bk = "b:" + (S.chat.id || "new") + ":" + (S.chat.at || "") + ":" + i, live = i >= S.chat.turns.length - 2;
       if (t.role === "user") h += bubHtml(bk, t, "me", "", live);
       else {
@@ -2285,26 +2307,44 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       }
     });
     msgsIn.innerHTML = h;
+    renderPics();
     var btn = document.getElementById("chat-send"); btn.textContent = S.chat.busy ? "멈추기" : "보내기"; btn.setAttribute("data-act", S.chat.busy ? "chatstop" : "chatsend");
     var box = document.getElementById("msgs"); box.scrollTop = keep ? top0 : box.scrollHeight;
   }
+  function renderPics() {
+    var on = !!(S.sample && !S.sampleOff && S.canImages), full = S.chatPics.length >= (S.maxImages || 5);
+    var at = document.getElementById("chat-attach"), box = document.getElementById("chat-pics"), f = document.getElementById("chat-file");
+    at.hidden = !on; at.classList.toggle("off", full || S.chat.busy); f.disabled = full || S.chat.busy;
+    at.title = full ? "사진은 " + (S.maxImages || 5) + "장까지 보낼 수 있어요" : "사진 첨부";
+    box.hidden = !S.chatPics.length;
+    box.innerHTML = S.chatPics.map(function (p, i) { return '<div class="pic"><img src="' + esc(p.url) + '" alt="첨부할 사진 ' + (i + 1) + '"><button data-act="chatpicx" data-i="' + i + '" aria-label="사진 ' + (i + 1) + ' 빼기">×</button></div>'; }).join("");
+  }
+  function addChatPics(files) {
+    var room = (S.maxImages || 5) - S.chatPics.length;
+    Array.prototype.slice.call(files || []).filter(function (f) { return /^image\//.test(f.type) || !f.type; }).slice(0, Math.max(0, room)).forEach(function (f) { S.chatPics.push({ file: f, url: URL.createObjectURL(f) }); });
+    renderPics();
+  }
+  function clearChatPics() { S.chatPics.forEach(function (p) { try { URL.revokeObjectURL(p.url); } catch (e) {} }); S.chatPics = []; renderPics(); }
   function sendChat() {
-    var q = (chatInput.value || "").trim(); if (!q || S.chat.busy || !S.sample || S.sampleOff) return;
-    chatInput.value = ""; grow(chatInput);
+    var q = (chatInput.value || "").trim(), pics = S.chatPics; if ((!q && !pics.length) || S.chat.busy || !S.sample || S.sampleOff) return;
+    if (!q) q = "이 사진 보고 답해 줘.";
+    chatInput.value = ""; grow(chatInput); S.chatPics = [];
     var history = S.chat.turns.filter(function (t) { return t.content && !t.err; }).slice(-12).map(function (t) { return { role: t.role, content: t.content }; });
     S.chat.turns.push({ role: "user", content: q }); S.thOpen.chat = false;
+    if (pics.length) { var ut = S.chat.turns[S.chat.turns.length - 1]; ut.pics = pics.map(function (p) { return p.url; }); ut.picN = pics.length; }
     var ai = { role: "assistant", content: "", acts: [], pending: true }; S.chat.turns.push(ai);
     var ctl = new AbortController(); S.chat.busy = true; S.chat.ctl = ctl; renderChat();
     var input = [{ role: "user", content: chatRules() }].concat(history).concat([{ role: "user", content: q }]);
     var opts = { signal: ctl.signal, onText: function (u) { ai.content = u.text; var el = document.getElementById("bub-" + (S.chat.turns.length - 1)); if (el) { el.textContent = u.text; el.classList.remove("wait"); } else renderChat(); var box = document.getElementById("msgs"); box.scrollTop = box.scrollHeight; } };
     if (S.toolsOK) opts.tools = chatTools(); else opts.cache = false;
+    if (pics.length) opts.images = pics.map(function (p) { return p.file; });
     S.sample(input, opts).then(function (r) {
       ai.content = r.text; ai.pending = false; if (r.truncated) ai.err = "답이 길어서 중간에 끊겼어요.";
     }).catch(function (e) {
       var c = e && e.code; ai.pending = false;
       if (c === "not_granted" || c === "sampling_disabled" || c === "capability_disabled" || c === "capability_removed" || c === "not_declared") { S.sampleOff = true; ai.err = "Claude 사용이 허락되지 않았어요."; }
       else if (c === "tools_unavailable") { S.toolsOK = false; ai.err = "이 기기에서는 앱에 직접 적기가 안 돼요. 다시 보내면 묻고 답하기로 해요."; }
-      else { if (c !== "refused") ai.content = (e && e.text) || ai.content; else ai.content = ""; ai.err = c === "cancelled" ? "멈췄어요." : c === "rate_limited" ? "지금은 요청이 많아요. 잠시 뒤 다시 보내 주세요." : c === "refused" ? "이 요청에는 답하지 못했어요." : c === "prompt_too_large" ? "데이터가 너무 많아요. 새 대화로 다시 물어봐 주세요." : "답을 끝까지 받지 못했어요. 다시 보내 주세요."; }
+      else { if (c !== "refused") ai.content = (e && e.text) || ai.content; else ai.content = ""; ai.err = c === "cancelled" ? "멈췄어요." : c === "rate_limited" ? "지금은 요청이 많아요. 잠시 뒤 다시 보내 주세요." : c === "refused" ? "이 요청에는 답하지 못했어요." : c === "image_rejected" ? "이 사진은 읽을 수 없어요. 다른 사진으로 보내 주세요." : c === "prompt_too_large" ? "데이터가 너무 많아요. 새 대화로 다시 물어봐 주세요." : "답을 끝까지 받지 못했어요. 다시 보내 주세요."; }
     }).then(function () { S.chat.busy = false; S.chat.ctl = null; saveChat(); renderChat(); render(); });
   }
   function keepChat(i) {
@@ -2340,7 +2380,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "mark") { toggleMark(t.getAttribute("data-key")); return; }
     if (act === "chat") { openChat(S.tab === "work" && S.projOpen ? S.projOpen : (S.chat.project && S.tab === "work" ? S.chat.project : null)); return; }
     if (act === "chatclose") { closeChat(); return; }
-    if (act === "chatnew") { if (S.chat.ctl) S.chat.ctl.abort(); S.chat = { turns: [], busy: false, ctl: null, project: S.chat.project }; renderChat(); return; }
+    if (act === "chatpicx") { var px = S.chatPics.splice(+t.getAttribute("data-i"), 1)[0]; if (px) { try { URL.revokeObjectURL(px.url); } catch (e) {} } renderPics(); return; }
+    if (act === "chatnew") { clearChatPics(); if (S.chat.ctl) S.chat.ctl.abort(); S.chat ={ turns: [], busy: false, ctl: null, project: S.chat.project }; renderChat(); return; }
     if (act === "chatsend") { sendChat(); return; }
     if (act === "chatstop") { if (S.chat.ctl) S.chat.ctl.abort(); return; }
     if (act === "chatq") { chatInput.value = t.getAttribute("data-q"); sendChat(); return; }
@@ -2482,7 +2523,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function typing() { var a = document.activeElement; return !!(a && a.getAttribute && (a.getAttribute("data-fd") || (/^(note|ask|cmd)-input$/.test(a.id) || a.getAttribute("data-tl") || a.getAttribute("data-tw") || a.getAttribute("data-lg") || a.getAttribute("data-lgq") || a.getAttribute("data-icq") || a.getAttribute("data-lgall") || a.getAttribute("data-ans") || a.getAttribute("data-mo") || a.getAttribute("data-igcap") || a.getAttribute("data-igfix") || a.getAttribute("data-nr")))); }
   function softRender() { if (typing()) { S.pendingRender = true; return; } render(); }
   document.addEventListener("focusout", function () { setTimeout(function () { if (S.pendingRender && !typing()) { S.pendingRender = false; render(); } }, 300); });
-  document.addEventListener("change", function (ev) { if (ev.target && ev.target.id === "garmin-file") { uploadGarmin(ev.target.files); } });
+  document.addEventListener("change", function (ev) { if (ev.target && ev.target.id === "garmin-file") { uploadGarmin(ev.target.files); } if (ev.target && ev.target.id === "chat-file") { addChatPics(ev.target.files); ev.target.value = ""; } });
   document.addEventListener("keydown", function (ev) {
     if (ev.key !== "Enter" || ev.isComposing) return;
     var id = ev.target && ev.target.id;
