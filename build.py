@@ -525,6 +525,49 @@ patch("""/* 결산 대기 — 칸 안 대화 */""", """.sd { display: block; fon
 .now .sd { margin-top: 4px; }
 /* 결산 대기 — 칸 안 대화 */""")
 
+# 14) 🗳 결산 대기: 항목은 「주제」(한 줄)만 보이고 「세부사항」은 눌러서 펴기 · Brainy 답도 주제 먼저, 세부사항은 접어 둠 (2026-11-08 동욱: "주제와 세부사항 나눠서 · 접기 펴기")
+patch("lgSel: {}, ic: {},", "lgSel: {}, lgOpen: {}, ic: {},")
+patch("""esc(n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (stepSplit(it.text).d ? '<span class="sd">' + esc(clip(stepSplit(it.text).d, 160)) + "</span>" : "") + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";""",
+      """esc(n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>" + lgFold("i" + n, lgDetail(it));""")
+patch("""th.map(function (m) { return '<div class="lgm ' + m.r + '">' + (m.r === "me" ? "" : m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("")""",
+      """th.map(function (m, i) { return lgMsgHtml(n, m, i); }).join("")""")
+patch("""  function lgPush(n, m) {""", """  function lgDetail(it) {
+    var p = stepSplit(it.text), full = String(it.text || "").replace(/\\[\\[([^\\]|]+)\\|([^\\]]+)\\]\\]/g, "$2").replace(/\\[\\[([^\\]]+)\\]\\]/g, "$1").replace(/\\*\\*/g, "").trim();
+    var out = [/…$/.test(p.t) ? full : p.d];
+    ["detail", "why", "body", "note"].forEach(function (k) { if (typeof it[k] === "string" && it[k].trim()) out.push(it[k].trim()); });
+    return out.filter(Boolean).join("\\n");
+  }
+  function lgFold(key, d) {
+    if (!d) return "";
+    var o = !!S.lgOpen[key];
+    return '<button class="lgfold" data-act="lgfold" data-k="' + esc(key) + '" aria-expanded="' + o + '">' + (o ? "▾ 세부사항 접기" : "▸ 세부사항 보기") + "</button>" + (o ? '<div class="lgdet">' + esc(d) + "</div>" : "");
+  }
+  function lgMsgSplit(s) {
+    var ls = String(s || "").split("\\n").map(function (x) { return x.trim(); }).filter(Boolean);
+    var t = (ls.shift() || "").replace(/^주제\\s*[:：]\\s*/, "");
+    if (ls.length && /^세부\\s*사항\\s*[:：]?\\s*$/.test(ls[0])) ls.shift();
+    else if (ls.length) ls[0] = ls[0].replace(/^세부\\s*사항\\s*[:：]\\s*/, "");
+    return { t: t, d: ls.join("\\n") };
+  }
+  function lgMsgHtml(n, m, i) {
+    if (m.r !== "ai" || !m.t) return '<div class="lgm ' + m.r + '">' + (m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>";
+    var p = lgMsgSplit(m.t);
+    return '<div class="lgm ai"><b>Brainy</b> ' + esc(p.t) + lgFold("m" + n + ":" + i, p.d) + "</div>";
+  }
+  function lgPush(n, m) {""")
+patch("""답은 3~5줄, 마크다운 기호 없이. 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거.""",
+      """답 형식: 첫 줄은 주제 한 줄(무엇에 대한 건지와 추천, 40자 안팎). 둘째 줄부터 세부사항 2~5줄(뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)의 근거) — 앱은 주제만 먼저 보이고 세부사항은 접어 둔다. 마크다운 기호 없이.""")
+patch("""이제 무엇이 어떻게 반영되는지 동욱에게 한두 문장, 해요체로 짧게 알려 줘. 마크다운 기호 없이.""",
+      """첫 줄은 무엇이 반영되는지 주제 한 줄, 둘째 줄부터 어떻게 반영되는지 세부사항 한두 줄로 동욱에게 알려 줘. 해요체, 마크다운 기호 없이.""")
+patch("""동욱이 정하면 ledger_answer 로 바로 보내고 다음 항목으로.""",
+      """항목을 설명할 때는 첫 줄에 주제 한 줄, 그 아래 줄부터 세부사항. 동욱이 정하면 ledger_answer 로 바로 보내고 다음 항목으로.""")
+patch("""    if (act === "lgsend") { lgSend(); return; }""", """    if (act === "lgsend") { lgSend(); return; }
+    if (act === "lgfold") { var lfk = t.getAttribute("data-k"); S.lgOpen[lfk] = !S.lgOpen[lfk]; render(); return; }""")
+patch(""".lgask { display: grid;""", """.lgfold { justify-self: start; background: none; border: 0; padding: 2px 0; font: inherit; font-size: 13px; color: var(--accent); cursor: pointer; text-align: left; }
+.lgm .lgfold { display: block; margin-top: 4px; }
+.lgdet { font-size: 13.5px; line-height: 1.6; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; padding: 6px 10px; border-left: 2px solid var(--line); }
+.lgask { display: grid;""")
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',

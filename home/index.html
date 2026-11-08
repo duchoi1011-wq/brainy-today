@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "90c18ef228"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=90c18ef228"></script>
+<script>window.BRAINY_VERSION = "6287cfb43d"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=6287cfb43d"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -291,6 +291,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .lgm.sys { color: var(--muted); font-size: 13px; padding: 2px 4px; }
 .lgm.warn { color: var(--warn); font-size: 13px; padding: 2px 4px; }
 .ic { display: grid; gap: 6px; margin: 8px 0 4px; }
+.lgfold { justify-self: start; background: none; border: 0; padding: 2px 0; font: inherit; font-size: 13px; color: var(--accent); cursor: pointer; text-align: left; }
+.lgm .lgfold { display: block; margin-top: 4px; }
+.lgdet { font-size: 13.5px; line-height: 1.6; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; padding: 6px 10px; border-left: 2px solid var(--line); }
 .lgask { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: end; margin-top: 6px; }
 /* Brainy chat sheet */
 .fab { position: fixed; z-index: 6; right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 13px 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
@@ -399,7 +402,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     note: "", opt: { state: "idle", data: null, msg: "" }, confirmDel: null,
     ask: { state: "idle", q: "", text: "", msg: "", ctl: null },
     ledger: null, morning: null, cmds: [], cfg: {}, mcp: null, mcpOff: false,
-    cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
+    cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, lgOpen: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
     triggers: null, trigState: "idle", trigMsg: "", trigAt: 0, cmdText: "", autoState: {}, nrDraft: {}, moBusy: false, moMsg: null, retrying: {}, thOpen: {}, exp: {}, dl: null, insta: [], igThumb: {}, igCap: {}, igBusy: {}, igMsg: {}, igOpen: {}, igFix: {}, cmdBusy: false, cmdMsg: "", fireAsk: null, fired: {}
   };
   var CC_SERVER = "Claude Code Remote";
@@ -2049,7 +2052,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     L.push("## 프로젝트 요약: " + JSON.stringify((m.projects || []).map(function (p) { return { name: p.name, deliverable: p.deliverable, metrics: p.metrics, milestones: p.milestones }; })));
     L.push("## 열린 태스크: " + JSON.stringify(m.tasks || []));
     L.push("## 점검 결과 (예약): " + clip(JSON.stringify((S.reports || []).slice(0, 4).map(function (r) { return { kind: r.kind, date: r.date, title: r.title, lines: r.lines, items: r.items, status: r.status }; })), 6000));
-    L.push("## 🗳 결산 대기 (결산 원장, 아직 안 보낸 것): " + JSON.stringify(ledgerOpen()) + " — 동욱과 정리할 때: 한 번에 한 항목, 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거를 짧게 말하고 묻는다. 동욱이 정하면 ledger_answer 로 바로 보내고 다음 항목으로. 자세한 사정은 볼트 「3_Action/결산 원장.md」를 읽어 확인한다.");
+    L.push("## 🗳 결산 대기 (결산 원장, 아직 안 보낸 것): " + JSON.stringify(ledgerOpen()) + " — 동욱과 정리할 때: 한 번에 한 항목, 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거를 짧게 말하고 묻는다. 항목을 설명할 때는 첫 줄에 주제 한 줄, 그 아래 줄부터 세부사항. 동욱이 정하면 ledger_answer 로 바로 보내고 다음 항목으로. 자세한 사정은 볼트 「3_Action/결산 원장.md」를 읽어 확인한다.");
     if (S.morning && S.morning.date === TODAY) L.push("## 오늘 아침 제안 (" + (S.morning.status || "대기") + "): " + clip(JSON.stringify(S.morning), 3000));
     L.push("## 최근 앱 명령: " + JSON.stringify(S.cmds.slice(0, 5).map(function (c) { return { text: c.text, status: c.status, result: c.result }; })));
     L.push("## 예약: " + JSON.stringify(trigList().map(function (tr) { return { name: tr.name, schedule: cronKo(tr.cron_expression), next: whenKo(tr.next_run_at), last: runKo(tr.last_run).t }; })));
@@ -2080,17 +2083,40 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function lgCmdOf(n) { var id = S.lgCmdLocal[n] || ((S.ledger && S.ledger.cmds) || {})[n]; return id ? (S.cmds.filter(function (c) { return c.id === id; })[0] || { id: id, status: "보내는 중" }) : null; }
   function ledgerItemHtml(it) {
     var n = String(it.n), sel = S.lgSel[n] || {}, v = sel.v || "", th = S.lgT[n] || [], sent = ((S.ledger && S.ledger.sent) || {})[n], c = lgCmdOf(n), busy = !!S.lgAsk[n];
-    var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (stepSplit(it.text).d ? '<span class="sd">' + esc(clip(stepSplit(it.text).d, 160)) + "</span>" : "") + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";
+    var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>" + lgFold("i" + n, lgDetail(it));
     if (!sent) h += '<div class="chips" style="flex-wrap:wrap" role="group" aria-label="' + esc(n) + '번 답">' + [["응", "응"], ["고쳐서", "고쳐서 응"], ["나중에", "나중에"], ["빼", "빼"]].map(function (o) {
       return '<button class="chip" data-act="lgone" data-n="' + esc(n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>";
     if (th.length || c) {
-      h += '<div class="lgthread">' + th.map(function (m) { return '<div class="lgm ' + m.r + '">' + (m.r === "me" ? "" : m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>"; }).join("");
+      h += '<div class="lgthread">' + th.map(function (m, i) { return lgMsgHtml(n, m, i); }).join("");
       if (c) { var st = c.status || "", done = st === "끝", bad = /못|멈춤|확인|오류/.test(st);
         h += '<div class="lgm ' + (bad ? "warn" : done ? "ai" : "sys") + '">' + (done ? "<b>맥 Brainy</b> ✓ " + esc(clip(c.result || "반영했어요", 500)) : bad ? "⚠ " + esc(st) + (c.result ? " — " + esc(clip(c.result, 300)) : "") : "⏳ 맥의 Brainy가 원장에 반영하는 중… (보통 1~3분)") + "</div>"; }
       h += "</div>";
     }
     h += '<div class="lgask"><textarea class="grow" data-lgq="' + esc(n) + '" rows="1" placeholder="' + (v === "고쳐서" ? "어떻게 고쳐서 할지 써 주세요" : "이 항목에 쓸 말 — 로그는 그대로 보내고, Brainy와 진행은 같이 정해요") + '"' + (busy ? " disabled" : "") + ">" + esc(S.lgQ[n] || "") + '</textarea><button class="btn' + (v === "고쳐서" ? " primary" : "") + '" data-act="lgqsend" data-n="' + esc(n) + '"' + (busy ? " disabled" : "") + ">" + (v === "고쳐서" ? "고쳐서 보내기" : busy ? "…" : "Brainy와 진행") + "</button>" + (v === "고쳐서" ? "" : '<button class="btn" data-act="lglog" data-n="' + esc(n) + '"' + (busy ? " disabled" : "") + ">로그</button>") + "</div>";
     return h + "</div>";
+  }
+  function lgDetail(it) {
+    var p = stepSplit(it.text), full = String(it.text || "").replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2").replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\*\*/g, "").trim();
+    var out = [/…$/.test(p.t) ? full : p.d];
+    ["detail", "why", "body", "note"].forEach(function (k) { if (typeof it[k] === "string" && it[k].trim()) out.push(it[k].trim()); });
+    return out.filter(Boolean).join("\n");
+  }
+  function lgFold(key, d) {
+    if (!d) return "";
+    var o = !!S.lgOpen[key];
+    return '<button class="lgfold" data-act="lgfold" data-k="' + esc(key) + '" aria-expanded="' + o + '">' + (o ? "▾ 세부사항 접기" : "▸ 세부사항 보기") + "</button>" + (o ? '<div class="lgdet">' + esc(d) + "</div>" : "");
+  }
+  function lgMsgSplit(s) {
+    var ls = String(s || "").split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
+    var t = (ls.shift() || "").replace(/^주제\s*[:：]\s*/, "");
+    if (ls.length && /^세부\s*사항\s*[:：]?\s*$/.test(ls[0])) ls.shift();
+    else if (ls.length) ls[0] = ls[0].replace(/^세부\s*사항\s*[:：]\s*/, "");
+    return { t: t, d: ls.join("\n") };
+  }
+  function lgMsgHtml(n, m, i) {
+    if (m.r !== "ai" || !m.t) return '<div class="lgm ' + m.r + '">' + (m.r === "ai" ? "<b>Brainy</b> " : "") + esc(m.t || (m.pending ? "생각하는 중…" : "")) + "</div>";
+    var p = lgMsgSplit(m.t);
+    return '<div class="lgm ai"><b>Brainy</b> ' + esc(p.t) + lgFold("m" + n + ":" + i, p.d) + "</div>";
   }
   function lgPush(n, m) { (S.lgT[n] = S.lgT[n] || []).push(m); return m; }
   function lgItem(n) { return ((S.ledger && S.ledger.items) || []).filter(function (x) { return String(x.n) === String(n); })[0]; }
@@ -2101,7 +2127,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     ledgerAnswer(n, v, note).then(function () {
       var ai = lgPush(n, { r: "ai", t: "", pending: true }); render();
       if (!S.sample || S.sampleOff || !it) { ai.pending = false; ai.t = "보냈어요."; render(); return; }
-      S.sample("결산 대기 " + n + "번 「" + it.text + "」에 동욱이 「" + v + (note ? " — " + note : "") + "」로 답했고, 맥의 Brainy에게 반영하라고 보냈다. 이제 무엇이 어떻게 반영되는지 동욱에게 한두 문장, 해요체로 짧게 알려 줘. 마크다운 기호 없이.", { modelTier: "quick", cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; render(); } })
+      S.sample("결산 대기 " + n + "번 「" + it.text + "」에 동욱이 「" + v + (note ? " — " + note : "") + "」로 답했고, 맥의 Brainy에게 반영하라고 보냈다. 첫 줄은 무엇이 반영되는지 주제 한 줄, 둘째 줄부터 어떻게 반영되는지 세부사항 한두 줄로 동욱에게 알려 줘. 해요체, 마크다운 기호 없이.", { modelTier: "quick", cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; render(); } })
         .then(function (r) { ai.t = (r && r.text) || ai.t || "보냈어요."; }, function () { ai.t = ai.t || "보냈어요 — 처리 결과가 여기 떠요."; }).then(function () { ai.pending = false; render(); });
     }, function (e) { lgPush(n, { r: "warn", t: "못 보냈어요 — " + e.message }); render(); });
   }
@@ -2109,7 +2135,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     n = String(n); var it = lgItem(n); if (!it || !q) return;
     var hist = (S.lgT[n] || []).filter(function (m) { return (m.r === "me" || m.r === "ai") && m.t; }).slice(-8).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: m.t }; });
     lgPush(n, { r: "me", t: q }); S.lgQ[n] = ""; var ai = lgPush(n, { r: "ai", t: "", pending: true }); S.lgAsk[n] = true; render();
-    var rules = chatRules() + "\n\n=== 지금 이 대화 ===\n앱 「🗳 결산 대기」의 " + n + "번 칸 안에서 이 항목 하나만 동욱과 이야기한다: 「" + it.text + "」(" + (it.date || "") + "). 필요하면 볼트 「3_Action/결산 원장.md」를 읽어 사정을 확인한다. 답은 3~5줄, 마크다운 기호 없이. 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거. 동욱이 분명히 정하면 ledger_answer 로 이 항목(n=" + n + ")을 보낸다.";
+    var rules = chatRules() + "\n\n=== 지금 이 대화 ===\n앱 「🗳 결산 대기」의 " + n + "번 칸 안에서 이 항목 하나만 동욱과 이야기한다: 「" + it.text + "」(" + (it.date || "") + "). 필요하면 볼트 「3_Action/결산 원장.md」를 읽어 사정을 확인한다. 답 형식: 첫 줄은 주제 한 줄(무엇에 대한 건지와 추천, 40자 안팎). 둘째 줄부터 세부사항 2~5줄(뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)의 근거) — 앱은 주제만 먼저 보이고 세부사항은 접어 둔다. 마크다운 기호 없이. 동욱이 분명히 정하면 ledger_answer 로 이 항목(n=" + n + ")을 보낸다.";
     var opts = { cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; var el = document.querySelector('[data-lgq="' + n + '"]'); render(); } };
     if (S.toolsOK) opts.tools = chatTools();
     S.sample([{ role: "user", content: rules }].concat(hist).concat([{ role: "user", content: q }]), opts)
@@ -2460,6 +2486,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "moyes") { var mt2 = String(S.moDraft || "").trim(); moSend(mt2 ? "아침 계획 고침: " + mt2 : "아침 계획 응"); return; }
     if (act === "lgclear") { S.lgSel = {}; S.lgAll = ""; render(); return; }
     if (act === "lgsend") { lgSend(); return; }
+    if (act === "lgfold") { var lfk = t.getAttribute("data-k"); S.lgOpen[lfk] = !S.lgOpen[lfk]; render(); return; }
     if (act === "ictalk") { var ik = t.getAttribute("data-k"), isrc = document.getElementById(t.getAttribute("data-src")), itx = isrc ? isrc.value : ""; if (!String(itx).trim()) { if (isrc) isrc.focus(); return; } if (ik.indexOf("q:") === 0) { var iq = ik.slice(2); saveDay(function (b) { b.answers[iq] = String(itx).trim(); }); S.drafts[iq] = String(itx).trim(); } icTalk(ik, itx); return; }
     if (act === "lglog") { var lgn = t.getAttribute("data-n"), lgt = String(S.lgQ[lgn] || "").trim(); if (!lgt) { var lge = document.querySelector('[data-lgq="' + CSS.escape(lgn) + '"]'); if (lge) lge.focus(); return; } lgSendOne(lgn, "지시", lgt); return; }
     if (act === "fdlog") { var fk = t.getAttribute("data-key"); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { S.fd[fe.id] = fe.value; }); saveDay(function (b) { b.notes[fk] = Object.assign({}, b.notes[fk] || {}); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { if (fe.getAttribute("data-f")) b.notes[fk][fe.getAttribute("data-f")] = fe.value; }); }); var fl = document.getElementById("fdlog-" + fk); if (fl) fl.textContent = "남겼어요 ✓"; return; }
