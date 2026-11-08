@@ -126,8 +126,8 @@ patch('var syncedAt = day.synced && day.synced[x.key];',
       'var vs_ = vsyncOf(day.date), syncedAt = (vs_ && vs_.synced && vs_.synced[x.key]) || (day.synced && day.synced[x.key]), vrev_ = vs_ && ((vs_.review && vs_.review[x.key]) || (vs_.later && vs_.later[x.key]));')
 patch('''(syncedAt ? '<span class="pill good">볼트 반영</span> ' : "") + right''',
       '''(vrev_ ? '<span class="pill warn" title="' + esc(vrev_) + '">볼트 확인</span> ' : syncedAt ? '<span class="pill good">볼트 반영</span> ' : "") + right''')
-patch('''if (open && DETAIL[x.key]) h += '<div class="detail">' + vaultFold(x.key)''',
-      '''if (open && DETAIL[x.key]) h += '<div class="detail">' + (vrev_ ? '<p class="notice warn">볼트에 못 넣은 칸이 있어요 — ' + esc(vrev_) + '</p>' : "") + vaultFold(x.key)''')
+patch('''if (writing && DETAIL[x.key]) h += '<div class="fbody"><div class="fin"><div class="detail">' + vaultFold(x.key)''',
+      '''if (writing && DETAIL[x.key]) h += '<div class="fbody"><div class="fin"><div class="detail">' + (vrev_ ? '<p class="notice warn">볼트에 못 넣은 칸이 있어요 — ' + esc(vrev_) + '</p>' : "") + vaultFold(x.key)''')
 patch('db.doc("config/main").onSnapshot(function (s) { S.cfg = s.exists ? s.data() : {}; softRender(); }, fail);',
       'db.doc("config/main").onSnapshot(function (s) { S.cfg = s.exists ? s.data() : {}; softRender(); }, fail);\n    db.doc("sync/" + TODAY).onSnapshot(function (s) { S.vsync = s.exists ? s.data() : null; softRender(); }, fail);')
 patch("앱에서 쓴 건 2분 안에 같은 노트로 들어가요", "앱에서 쓴 건 몇 초 안에 같은 노트로 들어가요")
@@ -435,7 +435,7 @@ patch("""    if (el.getAttribute && el.getAttribute("data-lgq")) {""", """    if
 patch("""a.getAttribute("data-lgq") ||""", """a.getAttribute("data-lgq") || a.getAttribute("data-icq") ||""")
 patch(""".lgask { display: grid;""", """.ic { display: grid; gap: 6px; margin: 8px 0 4px; }
 .lgask { display: grid;""")
-patch("""DETAIL[x.key](day, w) + "</div>";""", """DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div>";""")
+patch("""DETAIL[x.key](day, w) + "</div></div></div>";""", """DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div></div></div>";""")
 
 # 11) 기록 탭은 「점검·결산·명령」부터 · 오늘 쓰기와 메모는 오늘 탭에서 (2026-11-07 동욱: "기록에는 점검 결산부터 · 메모·오늘쓰기는 오늘에 있으니 필요 없을 것 같아")
 patch("""headView("기록", "오늘 쓰기 · 지난 기록 · 메모 · 결산과 명령")""", """headView("기록", "점검·결산·명령 · 지난 기록")""")
@@ -489,14 +489,14 @@ patch("""if (act === "goops") { S.tab = "notes"; S.noteView = "ops";""", """if (
 patch("""data-src="' + k + '">💬 Brainy와 대화</button>""", """data-src="' + k + '">Brainy와 진행</button>""")
 patch(""">로그만</button>""", """>로그</button>""", 2)
 # 오늘 쓰기 칸: 칸 아래 [로그] [Brainy와 진행] — 로그는 지금 바로 저장, 진행은 쓴 내용으로 그 칸에서 Brainy와
-patch("""DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div>";""",
-      """DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button><button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("fd:" + x.key) + "</div>";""")
+patch("""DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div></div></div>";""",
+      """DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button><button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("fd:" + x.key) + "</div></div></div>";""")
 # 아침 제안: 「로그」(쓴 대로 반영) · 「Brainy와 진행」
 patch("""'<textarea class="grow" data-mo="1" rows=""", """'<textarea id="mo-input" class="grow" data-mo="1" rows=""")
 patch(""">" + (S.moBusy ? "보내는 중…" : "Brainy에게 보내기") + "</button></div>";""", """>" + (S.moBusy ? "보내는 중…" : "로그") + '</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button></div>' + icHtml("mo");""")
 patch("""'>쓴 대로 고쳐서 올리기</button>""", """'>로그 (쓴 대로 고쳐 올리기)</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button>""")
-patch("""    if (S.moMsg && S.moMsg.err) h += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";""", """    if (!up) h += icHtml("mo");
-    if (S.moMsg && S.moMsg.err) h += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";""")
+patch("""    if (S.moMsg && S.moMsg.err) b += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";""", """    if (!up) b += icHtml("mo");
+    if (S.moMsg && S.moMsg.err) b += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";""")
 # 점검 결과: 「로그」(쓴 대로 보내기) · 「Brainy와 진행」
 patch("""    h += '<textarea class="grow" data-ans="' + esc(scope) + '" data-ansn="__all" rows="2\"""", """    h += '<textarea id="ansall-' + esc(scope) + '" class="grow" data-ans="' + esc(scope) + '" data-ansn="__all" rows="2\"""")
 patch("""(S.ansBusy[scope] ? "보내는 중…" : "Brainy에게 보내기" + (n ? " (" + n + ")" : "")) + "</button></div>";""",

@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "ad810ade27"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=ad810ade27"></script>
+<script>window.BRAINY_VERSION = "320a8a6664"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=320a8a6664"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -101,7 +101,7 @@ p { margin: 0; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 a.btn { text-decoration: none; }
 .btn.quiet { background: transparent; border-color: transparent; color: var(--accent); padding-inline: 6px; }
-.btn:focus-visible, .chk:focus-visible, .tab:focus-visible, .chip:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn:focus-visible, .chk:focus-visible, .tab:focus-visible, .chip:focus-visible, .fhead:focus-visible, .lblbtn:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn[disabled] { opacity: 0.5; cursor: default; }
 .brief { background: var(--accent-soft); border-color: transparent; }
 .brief .line { font-size: 16px; font-weight: 500; }
@@ -220,11 +220,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .crow .box svg { width: 16px; height: 16px; opacity: 0; }
 .crow.on .box { background: var(--accent); border-color: var(--accent); }
 .crow.on .box svg { opacity: 1; }
-.crow .lblbtn { font: inherit; color: inherit; background: none; border: 0; text-align: left; cursor: pointer; padding: 12px 14px 12px 4px; display: grid; gap: 2px; min-width: 0; }
-.crow .lbl { font-weight: 600; display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-.crow .lbl .open { font-size: 12px; font-weight: 600; color: var(--accent); white-space: nowrap; }
-.crow .hint { font-size: 13px; color: var(--muted); }
-.crow .sum { font-size: 13px; color: var(--ink); }
+.crow .lblbtn { font: inherit; color: inherit; background: none; border: 0; text-align: left; cursor: pointer; padding: 12px 14px 12px 4px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; min-width: 0; }
+.crow .lbl { font-weight: 600; min-width: 0; }
+.crow .lblbtn .open { grid-column: 2; grid-row: 1 / span 2; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.crow .hint { font-size: 13px; color: var(--muted); grid-column: 1; }
+.crow .sum { font-size: 13px; color: var(--ink); grid-column: 1; }
 .steplist { display: flex; flex-wrap: wrap; gap: 6px; }
 .stepchk { font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px 7px 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
 .stepchk .box { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--line); display: grid; place-items: center; }
@@ -236,7 +236,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .crow .stepchk .box svg, .crow.on .stepchk .box svg { opacity: 0; }
 .crow .stepchk[aria-pressed="true"] .box { background: var(--accent); border-color: var(--accent); }
 .crow .stepchk[aria-pressed="true"] .box svg { opacity: 1; }
-.fold > .md { padding: 0 14px 14px; }
 .detail { display: grid; gap: 10px; padding: 0 14px 14px; }
 .detail .fields { display: grid; gap: 8px; }
 .detail .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -275,12 +274,25 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .md hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
 .md .wl { color: var(--accent); font-weight: 600; }
 .md a { color: var(--accent); }
-.fold { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
-.fold > summary { cursor: pointer; padding: 12px 14px; font-weight: 600; display: flex; justify-content: space-between; gap: 10px; align-items: center; list-style: none; }
+/* 접기·펼치기 — 어느 칸이든 같은 모양·같은 자리: 머리줄 오른쪽 끝 「펼치기 ▾ / 접기 ▴」, 같은 시간(--fold-t) 동안 아래로만 부드럽게 열린다.
+   .fold(테두리 상자) · .fold.flat(칸 안 한 줄) · .crow(오늘 체크 줄) 모두 .fbody > .fin 으로 열고 닫는다 (높이는 grid-template-rows 0fr↔1fr) */
+:root { --fold-t: .24s; }
+@media (prefers-reduced-motion: reduce) { :root { --fold-t: 0s; } }
+.fold { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: grid; min-width: 0; }
+.fold > summary, .fold > .fhead { cursor: pointer; padding: 12px 14px; font: inherit; font-weight: 600; color: inherit; background: none; border: 0; width: 100%; min-width: 0; text-align: left; display: flex; justify-content: space-between; gap: 10px; align-items: center; list-style: none; }
 .fold > summary::-webkit-details-marker { display: none; }
-.fold > summary::after { content: "펼치기"; font-size: 12px; color: var(--accent); white-space: nowrap; }
-.fold[open] > summary::after { content: "접기"; }
-.fold > .md { padding: 0 14px 14px; }
+.fold > .fhead .ft { flex: 1; min-width: 0; }
+.fold > summary::after, .fx { font-size: 12px; font-weight: 600; color: var(--accent); white-space: nowrap; flex: none; }
+.fold > summary::after { content: "펼치기 ▾"; }
+.fold[open] > summary::after { content: "접기 ▴"; }
+.fold > .md, .fold > .fbody > .fin > .md { padding: 0 14px 14px; }
+.fold.flat { border: 0; border-radius: 0; background: none; }
+.fold.flat > .fhead { padding: 4px 0; font-size: 13px; color: var(--muted); }
+.fbody { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows var(--fold-t) ease, visibility 0s linear var(--fold-t); }
+.fold.open > .fbody, .crow.open > .fbody { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows var(--fold-t) ease, visibility 0s; }
+.fbody > .fin { min-height: 0; overflow: hidden; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.fold.flat > .fbody > .fin { padding-top: 0; transition: padding-top var(--fold-t) ease; }
+.fold.flat.open > .fbody > .fin { padding-top: 10px; }
 .projcard { cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%; }
 .sd { display: block; font-size: 12.5px; color: var(--muted); font-weight: 400; line-height: 1.5; margin-top: 2px; }
 .now .sd { margin-top: 4px; }
@@ -554,9 +566,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     list.forEach(function (x) {
       var on = !!items[x.key], open = writing && !!S.openRow[x.key], sum = summary(x.key, day);
       var vs_ = vsyncOf(day.date), syncedAt = (vs_ && vs_.synced && vs_.synced[x.key]) || (day.synced && day.synced[x.key]), vrev_ = vs_ && ((vs_.review && vs_.review[x.key]) || (vs_.later && vs_.later[x.key]));
-      var right = writing ? (open ? "접기" : (DETAIL[x.key] ? "쓰기" : "")) : (DETAIL[x.key] ? "기록에서 쓰기 →" : "");
-      h += '<div class="crow' + (on ? " on" : "") + '" id="row-' + x.key + '"><div class="head2"><button class="boxbtn" id="' + (writing ? "wchk-" : "chk-") + x.key + '" data-act="check" data-key="' + esc(x.key) + '" aria-pressed="' + on + '" aria-label="' + esc(x.label) + (on ? " 완료 취소" : " 완료") + '"' + (w ? "" : " disabled") + '><span class="box">' + CHECK_SVG + '</span></button><button class="lblbtn" data-act="' + (writing ? "openrow" : "gowrite") + '" data-key="' + esc(x.key) + '"' + (writing ? ' aria-expanded="' + open + '"' : "") + '><span class="lbl"><span>' + esc(x.label) + '</span><span class="open">' + (vrev_ ? '<span class="pill warn" title="' + esc(vrev_) + '">볼트 확인</span> ' : syncedAt ? '<span class="pill good">볼트 반영</span> ' : "") + right + "</span></span>" + (sum ? '<span class="sum">' + esc(sum) + "</span>" : '<span class="hint">' + esc(writing ? x.hint : "아직 안 씀") + "</span>") + "</button></div>";
-      if (open && DETAIL[x.key]) h += '<div class="detail">' + (vrev_ ? '<p class="notice warn">볼트에 못 넣은 칸이 있어요 — ' + esc(vrev_) + '</p>' : "") + vaultFold(x.key) + DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button><button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("fd:" + x.key) + "</div>";
+      var right = writing ? (DETAIL[x.key] ? '<span class="fx">' + (open ? "접기 ▴" : "쓰기 ▾") + "</span>" : "") : (DETAIL[x.key] ? "기록에서 쓰기 →" : "");
+      h += '<div class="crow' + (on ? " on" : "") + (open ? " open" : "") + '" id="row-' + x.key + '"><div class="head2"><button class="boxbtn" id="' + (writing ? "wchk-" : "chk-") + x.key + '" data-act="check" data-key="' + esc(x.key) + '" aria-pressed="' + on + '" aria-label="' + esc(x.label) + (on ? " 완료 취소" : " 완료") + '"' + (w ? "" : " disabled") + '><span class="box">' + CHECK_SVG + '</span></button><button class="lblbtn" data-act="' + (writing ? "openrow" : "gowrite") + '" data-key="' + esc(x.key) + '"' + (writing ? ' aria-expanded="' + open + '"' : "") + '><span class="lbl">' + esc(x.label) + '</span><span class="open">' + (vrev_ ? '<span class="pill warn" title="' + esc(vrev_) + '">볼트 확인</span> ' : syncedAt ? '<span class="pill good">볼트 반영</span> ' : "") + right + "</span>" + (sum ? '<span class="sum">' + esc(sum) + "</span>" : '<span class="hint">' + esc(writing ? x.hint : "아직 안 씀") + "</span>") + "</button></div>";
+      // 쓰기 칸은 늘 그려 두고(접힌 채) 누르면 그 자리에서 같은 속도로 열린다 — 다시 그리지 않아 다른 칸이 튀지 않는다
+      if (writing && DETAIL[x.key]) h += '<div class="fbody"><div class="fin"><div class="detail">' + (vrev_ ? '<p class="notice warn">볼트에 못 넣은 칸이 있어요 — ' + esc(vrev_) + '</p>' : "") + vaultFold(x.key) + DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button><button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("fd:" + x.key) + "</div></div></div>";
       h += "</div>";
     });
     return h;
@@ -565,7 +578,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function vaultFold(key) {
     var kind = ROW_CAL[key], c = S.cal[TODAY]; if (!kind || !c) return "";
     var n = (c.notes || []).filter(function (x) { return x.kind === kind; })[0]; if (!n || (n.chars || 0) <= 15) return "";
-    return '<details class="fold"><summary><span class="small">볼트 노트에 이미 쓴 글 ' + n.chars + '자</span><span class="small muted">' + esc(c.exportedAt ? whenKo(c.exportedAt) : "") + '</span></summary><div class="md">' + mdHtml(n.body) + "</div></details>";
+    return foldHtml("vf:" + key, '<span class="small">볼트 노트에 이미 쓴 글 ' + n.chars + "자</span>", '<div class="md">' + mdHtml(n.body) + "</div>", { extra: '<span class="small muted">' + esc(c.exportedAt ? whenKo(c.exportedAt) : "") + "</span>" });
   }
   function viewWrite() {
     var day = curDay(), w = S.db && !S.readOnly, list = todayList();
@@ -1692,11 +1705,18 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   var MO_FOLLOW = "오늘 계획 이어서 (이미 데일리 노트에 올린 「오늘의 계획」을 이 말대로 고치거나 답해 줘): ";
   function cmdsWhere(pred) { return (S.cmds || []).filter(function (c) { return String(c.createdAt || "").slice(0, 10) >= ymd(new Date(NOW.getTime() - 86400000)) && pred(String(c.text || "")); }).slice().reverse(); }
   function moreBtn(key, n) { var on = !!S.thOpen[key]; return '<button class="more" data-act="thtoggle" data-k="' + esc(key) + '">' + (on ? "▴ 이전 대화 숨기기" : "▾ 이전 대화 " + n + "개 보기") + "</button>"; }
+  /* ---------- 접기·펼치기 (오늘 탭 공통) — 머리줄 오른쪽 「펼치기 ▾/접기 ▴」 하나, 내용은 늘 그려 두고 누르면 그 자리에서 같은 시간 동안 열린다.
+     다시 그리지 않으므로 다른 칸이 튀지 않고, 열림 상태는 S.thOpen[key] 에 남아 다시 그려도 그대로다. o.open: 처음 열림 · o.flat: 칸 안 한 줄 · o.extra: 머리줄 오른쪽 표시(pill 등) ---------- */
+  function foldOpen(key, def) { return S.thOpen[key] != null ? !!S.thOpen[key] : !!def; }
+  function foldHtml(key, head, body, o) {
+    o = o || {}; var on = foldOpen(key, o.open);
+    return '<div class="fold' + (o.flat ? " flat" : "") + (on ? " open" : "") + '"><button type="button" class="fhead" data-act="fold" data-k="' + esc(key) + '" aria-expanded="' + on + '"><span class="ft">' + head + "</span>" + (o.extra || "") + '<span class="fx">' + (on ? "접기 ▴" : "펼치기 ▾") + '</span></button><div class="fbody"><div class="fin">' + body + "</div></div></div>";
+  }
   function threadHtml(list, strip, key) {
     if (!list.length) return "";
     var one = function (c) { var mine = String(c.text || ""); if (strip) mine = strip(mine); return '<div class="msg me"><p>' + esc(mine) + '</p><span class="small muted">' + esc(whenKo(c.createdAt)) + "</span></div>" + replyBox(c); };
     var old = list.slice(0, -1), h = '<div class="thread">';
-    if (old.length) h += moreBtn(key, old.length) + (S.thOpen[key] ? old.map(one).join("") : "");
+    if (old.length) h += foldHtml(key, "이전 대화 " + old.length + "개", old.map(one).join(""), { flat: true });
     return h + one(list[list.length - 1]) + "</div>";
   }
   function retryCmd(id) {
@@ -1719,22 +1739,22 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     }
     var up = mo.status === "올림";
     var moPend = cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }).filter(function (c) { return /처리 중|보내는 중|맥 대기|못|확인/.test(c.status || ""); }).length;
-    if (up && !moPend && !S.thOpen.moFull) {
-      var fr = mo.final || mo.rows || [];
-      return '<section class="card brief"><div class="progress-row"><h2>☀️ 오늘 계획</h2><span class="pill good">올림 ✓</span></div>' + (fr.length ? '<ul class="crit">' + fr.map(function (r) { return "<li>○ " + esc(r.what || "") + "</li>"; }).join("") + "</ul>" : "") + '<button class="more" data-act="thtoggle" data-k="moFull">▾ 제안 · Brainy와 주고받은 것 · 이어서 쓰기</button></section>';
-    }
-    var h = (up && !moPend ? '<button class="more" data-act="thtoggle" data-k="moFull">▴ 접기</button>' : "") + '<section class="card brief"><div class="progress-row"><h2>☀️ 오늘 아침 제안</h2><span class="pill' + (up ? " good" : " accent") + '">' + esc(up ? "올림 ✓" : (mo.status || "대기")) + "</span></div>";
-    if (mo.coach) h += '<p class="line">' + esc(mo.coach) + "</p>";
+    // 올린 뒤엔 「오늘 계획」 요약만 보이고, 제안·주고받은 것·이어서 쓰기는 같은 칸 안에서 접힌다 (접기 버튼도 늘 같은 자리 — 칸이 위아래로 밀리지 않게)
+    var fold = up && !moPend;
+    var h = '<section class="card brief"><div class="progress-row"><h2>☀️ ' + (fold ? "오늘 계획" : "오늘 아침 제안") + '</h2><span class="pill' + (up ? " good" : " accent") + '">' + esc(up ? "올림 ✓" : (mo.status || "대기")) + "</span></div>";
+    if (fold) { var fr = mo.final || mo.rows || []; if (fr.length) h += '<ul class="crit">' + fr.map(function (r) { return "<li>○ " + esc(r.what || "") + "</li>"; }).join("") + "</ul>"; }
+    var b = "";
+    if (mo.coach) b += '<p class="line">' + esc(mo.coach) + "</p>";
     var rows = mo.rows || [];
-    if (rows.length) h += '<div class="tablewrap"><table class="days"><tbody>' + rows.map(function (r) { return "<tr><td class='n' style='text-align:left;width:64px'>" + esc(r.time || "") + "</td><td>" + esc(r.what || "") + (r.task ? '<br><span class="small muted">' + esc(r.task) + "</span>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
-    if (mo.skipped && mo.skipped.length) h += '<details class="fold"><summary>오늘 안 들어간 것 ' + mo.skipped.length + '</summary><div class="md"><ul>' + mo.skipped.map(function (x) { return "<li>" + esc(x.what) + (x.why ? " — " + esc(x.why) : "") + (x.when ? " → " + esc(x.when) : "") + "</li>"; }).join("") + "</ul></div></details>";
-    h += threadHtml(cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }), function (t) { return t.replace(MO_FOLLOW, "").replace(/^아침 계획 고침:\s*/, "").replace(/^아침 계획 응$/, "응 — 이대로 진행"); }, "mo");
-    h += '<textarea id="mo-input" class="grow" data-mo="1" rows="2" placeholder="' + (up ? "✍ Brainy에게 이어서 쓰기 — 예: 운동도 넣어줘, 브랜드 정의는 내일로" : "✍ Brainy에게 바로 쓰기 — 예: EP3는 오후 2시로 옮기고, 운동은 푸시로") + '">' + esc(S.moDraft || "") + "</textarea>";
-    if (up) h += '<div class="row end"><button class="btn primary" data-act="mofollow"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "로그") + '</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button></div>' + icHtml("mo");
-    else h += '<div class="row end"><button class="btn" data-act="mosend"' + (canCmd && !S.moBusy ? "" : " disabled") + '>로그 (쓴 대로 고쳐 올리기)</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button><button class="btn primary" data-act="moyes"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "응 — 이대로 진행" + (mo.calN ? " (데일리 노트 · 캘린더 " + mo.calN + ")" : " (데일리 노트에)")) + "</button></div>";
-    if (!up) h += icHtml("mo");
-    if (S.moMsg && S.moMsg.err) h += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";
-    return h + "</section>";
+    if (rows.length) b += (fold ? "<h2>아침 제안</h2>" : "") + '<div class="tablewrap"><table class="days"><tbody>' + rows.map(function (r) { return "<tr><td class='n' style='text-align:left;width:64px'>" + esc(r.time || "") + "</td><td>" + esc(r.what || "") + (r.task ? '<br><span class="small muted">' + esc(r.task) + "</span>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    if (mo.skipped && mo.skipped.length) b += foldHtml("moskip", "오늘 안 들어간 것 " + mo.skipped.length, '<div class="md"><ul>' + mo.skipped.map(function (x) { return "<li>" + esc(x.what) + (x.why ? " — " + esc(x.why) : "") + (x.when ? " → " + esc(x.when) : "") + "</li>"; }).join("") + "</ul></div>");
+    b += threadHtml(cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }), function (t) { return t.replace(MO_FOLLOW, "").replace(/^아침 계획 고침:\s*/, "").replace(/^아침 계획 응$/, "응 — 이대로 진행"); }, "mo");
+    b += '<textarea id="mo-input" class="grow" data-mo="1" rows="2" placeholder="' + (up ? "✍ Brainy에게 이어서 쓰기 — 예: 운동도 넣어줘, 브랜드 정의는 내일로" : "✍ Brainy에게 바로 쓰기 — 예: EP3는 오후 2시로 옮기고, 운동은 푸시로") + '">' + esc(S.moDraft || "") + "</textarea>";
+    if (up) b += '<div class="row end"><button class="btn primary" data-act="mofollow"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "로그") + '</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button></div>' + icHtml("mo");
+    else b += '<div class="row end"><button class="btn" data-act="mosend"' + (canCmd && !S.moBusy ? "" : " disabled") + '>로그 (쓴 대로 고쳐 올리기)</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button><button class="btn primary" data-act="moyes"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "응 — 이대로 진행" + (mo.calN ? " (데일리 노트 · 캘린더 " + mo.calN + ")" : " (데일리 노트에)")) + "</button></div>";
+    if (!up) b += icHtml("mo");
+    if (S.moMsg && S.moMsg.err) b += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";
+    return h + (fold ? foldHtml("moFull", "제안 · Brainy와 주고받은 것 · 이어서 쓰기", b, { flat: true }) : b) + "</section>";
   }
   function moSend(text) {
     S.moBusy = true; S.moMsg = null; render();
@@ -1772,12 +1792,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   }
   function reportCard(r, open) {
     var scope = "rp:" + r.id, ic = REPORT_ICON[r.kind] || "📋";
-    var h = '<details class="fold"' + (open ? " open" : "") + '><summary><span>' + ic + " " + esc(r.title || r.kind) + ' <span class="small muted">' + esc(r.date ? md(r.date) : "") + "</span></span>" + (r.status === "답함" ? '<span class="pill good">답함</span>' : '<span class="pill accent">새로</span>') + '</summary><div style="padding:0 14px 14px;display:grid;gap:10px">';
+    var h = '<div style="padding:0 14px 14px;display:grid;gap:10px">';
     if (r.lines && r.lines.length) h += '<div class="md"><ul>' + r.lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></div>";
     if (r.body) h += '<div class="md">' + mdHtml(r.body) + "</div>";
     h += threadHtml(cmdsWhere(function (t) { return t.indexOf("reports/" + r.id + ")") >= 0; }), function (t) { return t.split("\n").slice(1).join("\n").replace(/^전체:\s*/m, ""); }, "rp:" + r.id);
-    h += ansBox(scope, r.items || []) + "</div></details>";
-    return h;
+    h += ansBox(scope, r.items || []) + "</div>";
+    return foldHtml("rpf:" + r.id, ic + " " + esc(r.title || r.kind) + ' <span class="small muted">' + esc(r.date ? md(r.date) : "") + "</span>", h, { open: open, extra: r.status === "답함" ? '<span class="pill good">답함</span>' : '<span class="pill accent">새로</span>' });
   }
   function viewReports() {
     var rs = (S.reports || []).filter(function (r) { return r.kind !== "morning" || r.date !== TODAY; });
@@ -2367,6 +2387,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "brief") { speak("brief", briefingText()); return; }
     if (act === "area") { S.area = t.getAttribute("data-area"); render(); return; }
     if (act === "expand") { var key = t.getAttribute("data-key"); S.expanded[key] = !S.expanded[key]; render(); return; }
+    if (act === "fold") { var fk = t.getAttribute("data-k"), fbox = t.closest(".fold"), fon = !(fbox && fbox.classList.contains("open")); S.thOpen[fk] = fon; if (fbox) { fbox.classList.toggle("open", fon); t.setAttribute("aria-expanded", String(fon)); var fx = t.querySelector(".fx"); if (fx) fx.textContent = fon ? "접기 ▴" : "펼치기 ▾"; } else render(); return; }
     if (act === "mark") { toggleMark(t.getAttribute("data-key")); return; }
     if (act === "chat") { openChat(S.tab === "work" && S.projOpen ? S.projOpen : (S.chat.project && S.tab === "work" ? S.chat.project : null)); return; }
     if (act === "chatclose") { closeChat(); return; }
@@ -2389,7 +2410,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "projopen") { S.projOpen = t.getAttribute("data-name"); render(); window.scrollTo(0, 0); return; }
     if (act === "projback") { S.projOpen = null; S.taskOpen = null; render(); window.scrollTo(0, 0); return; }
     if (act === "chatproj") { openChat(t.getAttribute("data-name")); return; }
-    if (act === "openrow") { var ok = t.getAttribute("data-key"); if (!DETAIL[ok]) { saveDay(function (b) { if (b.items[ok]) delete b.items[ok]; else b.items[ok] = true; }); return; } S.openRow[ok] = !S.openRow[ok]; render(); return; }
+    if (act === "openrow") { var ok = t.getAttribute("data-key"); if (!DETAIL[ok]) { saveDay(function (b) { if (b.items[ok]) delete b.items[ok]; else b.items[ok] = true; }); return; } var rowBox = document.getElementById("row-" + ok), ron = !(rowBox && rowBox.classList.contains("open")); S.openRow[ok] = ron; if (rowBox && rowBox.querySelector(".fbody")) { rowBox.classList.toggle("open", ron); t.setAttribute("aria-expanded", String(ron)); var rx = rowBox.querySelector(".fx"); if (rx) rx.textContent = ron ? "접기 ▴" : "쓰기 ▾"; } else render(); return; }
     if (act === "savedetail") { saveDetail(t.getAttribute("data-key")); return; }
     if (act === "donedetail") { doneDetail(t.getAttribute("data-key")); return; }
     if (act === "wtype") { var tv = t.getAttribute("data-v"); S.fd["f-wo-type"] = tv; saveDay(function (b) { b.notes.workout = Object.assign({}, b.notes.workout || {}, { type: tv }); }, true); render(); return; }
