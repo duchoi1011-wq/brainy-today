@@ -182,7 +182,7 @@ patch('''  function renderChat() {''', '''  function bubHtml(key, t, cls, attrs,
     if (long) h += '<button class="bubx' + (t.role === "user" ? " me" : "") + '" data-act="bubx" data-k="' + esc(key) + '">' + (open ? "▴ 접기" : "▾ 펼치기") + "</button>";
     return h;
   }
-  function slimTurns(turns) { return turns.filter(function (t) { return t.content && !t.pending; }).slice(-30).map(function (t) { return { role: t.role, content: clip(t.content, 6000), acts: t.acts || [], err: t.err || "" }; }); }
+  function slimTurns(turns) { return turns.filter(function (t) { return t.content && !t.pending; }).slice(-30).map(function (t) { var o = { role: t.role, content: clip(t.content, 6000), acts: t.acts || [], err: t.err || "" }; if (t.picN) o.picN = t.picN; return o; }); }
   function chatSlot() {
     var have = {}; (S.threads || []).forEach(function (x) { have[x.id] = x; });
     for (var i = 0; i < 12; i++) if (!have["s" + i]) return "s" + i;
