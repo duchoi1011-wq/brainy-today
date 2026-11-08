@@ -126,6 +126,39 @@ textarea { min-height: 44px; resize: vertical; }
 .metric { display: grid; gap: 6px; }
 .metric .mv { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
 .ms { display: flex; gap: 6px; flex-wrap: wrap; }
+/* 프로젝트 탭 — 프로젝트 카드(.pcard, 상위)와 그 안의 태스크 줄(.tcard, 하위)을 한눈에 구별.
+   프로젝트: 왼쪽 강조 띠 + 강조색 머리(아이콘·큰 제목·산출물·지표·마일스톤), 머리줄 오른쪽 「펼치기 ▾/접기 ▴」로 소속 태스크를 같은 모션(.fold)으로 열고 닫는다.
+   태스크: 프로젝트 안에서 들여쓰고 연한 배경(--sunk)에 작은 제목, 기한·완료 수·다음 한 걸음을 한 줄로. 프로젝트 없는 태스크는 「기타」 묶음(.pcard.misc). */
+.pcard { border-left: 5px solid var(--accent); border-radius: var(--r); overflow: hidden; }
+.pcard.misc { border-left-color: var(--muted); }
+.pcard > .fhead { background: var(--accent-soft); padding: 14px 14px 10px; align-items: flex-start; }
+.pcard.misc > .fhead, .pcard.misc > .psum { background: var(--sunk); }
+.pcard > .fhead .ft { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: baseline; }
+.pcard .pico { font-size: 20px; line-height: 1.2; grid-row: 1 / span 2; }
+.pcard .pname { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3; color: var(--ink); overflow-wrap: anywhere; }
+.pcard .pdel { grid-column: 2; font-size: 13px; font-weight: 500; color: var(--muted); overflow-wrap: anywhere; }
+.pcard > .fhead .fx { margin-top: 4px; }
+.pcard > .psum { display: grid; gap: 10px; padding: 0 14px 12px; background: var(--accent-soft); }
+.pcard > .psum .meter { background: var(--surface); }
+.pcard > .psum .pill { background: var(--surface); }
+.pcard > .psum .pill.good { color: var(--good); } .pcard > .psum .pill.accent { color: var(--accent); }
+.pcard .pfoot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.pcard .tasks { display: grid; gap: 8px; padding: 12px 14px 14px 14px; border-top: 1px solid var(--line); }
+.tcard { position: relative; margin-left: 12px; background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; min-width: 0; }
+.tcard::before { content: ""; position: absolute; left: -13px; top: 0; bottom: -9px; border-left: 2px solid var(--line); }
+.tcard:last-child::before { bottom: 50%; }
+.tcard::after { content: ""; position: absolute; left: -13px; top: 50%; width: 9px; border-top: 2px solid var(--line); }
+.tcard .t { display: flex; gap: 8px; justify-content: space-between; align-items: baseline; }
+.tcard .tt { font-size: 15px; font-weight: 600; line-height: 1.4; min-width: 0; overflow-wrap: anywhere; }
+.tcard .t .btn { flex: none; font-size: 13px; padding-block: 4px; }
+.tcard .tline { display: flex; gap: 6px 8px; align-items: center; font-size: 13px; color: var(--muted); min-width: 0; }
+.tcard .tline .pill { background: var(--surface); flex: none; }
+.tcard .tline .pill.warn { background: var(--warn-soft); color: var(--warn); }
+.tcard .tline .cnt { font-family: var(--mono); font-variant-numeric: tabular-nums; flex: none; }
+.tcard .tline .tnext { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.tcard .tline .tnext b { color: var(--good); font-size: 12px; margin-right: 3px; }
+.tcard .steps b { background: var(--surface); } .tcard .steps b.on { background: var(--accent); }
+.pcard .tnone { margin-left: 12px; font-size: 13px; color: var(--muted); }
 /* body */
 .big { font-family: var(--mono); font-size: 34px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; }
 .track { position: relative; height: 10px; border-radius: 99px; background: var(--sunk); }
@@ -831,8 +864,21 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (!m) return h + emptyMain();
     h += viewTodayTasks();
     h += '<h2 class="group-head">프로젝트 <span class="cnt">' + (m.projects || []).length + "개</span></h2>";
+    var shorts = {};
     (m.projects || []).forEach(function (p) {
-      h += '<section class="card"><div class="progress-row"><div><h3>' + esc(p.name) + '</h3><p class="small muted">' + esc(p.deliverable) + '</p></div><button class="btn quiet" data-act="projopen" data-name="' + esc(p.name) + '">허브</button></div>';
+      shorts[p.short] = 1;
+      h += projCard(p, (m.tasks || []).filter(function (t) { return t.project === p.short; }));
+    });
+    var etc = (m.tasks || []).filter(function (t) { return !shorts[t.project]; });
+    if (etc.length) h += projCard(null, etc);
+    return h;
+  }
+  /* 프로젝트 카드(상위) — 머리에 아이콘·큰 제목·산출물·지표·마일스톤, 「펼치기/접기」로 소속 태스크(.tcard)를 연다. p 가 없으면 「기타」(프로젝트 없는 태스크) 묶음 */
+  function projCard(p, ts) {
+    var key = "proj:" + (p ? p.short || p.name : "etc"), on = foldOpen(key, true);
+    var h = '<section class="fold pcard' + (p ? "" : " misc") + (on ? " open" : "") + '"><button type="button" class="fhead" data-act="fold" data-k="' + esc(key) + '" aria-expanded="' + on + '"><span class="ft"><span class="pico">' + (p ? "📁" : "📂") + '</span><span class="pname">' + esc(p ? p.name : "기타") + '</span><span class="pdel">' + esc(p ? p.deliverable || "" : "프로젝트에 안 묶인 열린 태스크") + '</span></span><span class="fx">' + (on ? "접기 ▴" : "펼치기 ▾") + "</span></button>";
+    h += '<div class="psum">';
+    if (p) {
       (p.metrics || []).forEach(function (x) {
         var r = pct(x.start, x.now, x.goal);
         h += '<div class="metric"><div class="mv"><span class="small">' + esc(x.label) + '</span><span class="num small">' + fmt(x.now, x.unit) + ' <span class="muted">/ ' + fmt(x.goal, x.unit) + '</span></span></div><div class="meter"><i style="width:' + r + '%"></i></div><p class="small muted">시작 ' + fmt(x.start, x.unit) + " · " + esc(x.asOf) + " 기준</p></div>";
@@ -840,12 +886,20 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (p.milestones && p.milestones.length) {
         h += '<div class="ms">' + p.milestones.map(function (s, i) { return '<span class="pill ' + (s.done ? "good" : s.doing ? "accent" : "") + '">M' + (i + 1) + " " + esc(s.label) + (s.done ? " ✓" : s.doing ? " · 진행" : "") + "</span>"; }).join("") + "</div>";
       } else if (p.note) h += '<p class="notice">' + esc(p.note) + "</p>";
-      var ts = (m.tasks || []).filter(function (t) { return t.project === p.short; });
-      if (ts.length) { h += '<div class="section">' + ts.map(taskView).join("") + "</div>"; }
-      else h += '<p class="small muted">열린 태스크 없음</p>';
-      h += "</section>";
-    });
+    }
+    h += '<div class="pfoot"><span class="small muted">열린 태스크 ' + ts.length + "개</span>" + (p ? '<button class="btn quiet" data-act="projopen" data-name="' + esc(p.name) + '">허브 열기 →</button>' : "") + "</div></div>";
+    h += '<div class="fbody"><div class="fin"><div class="tasks">' + (ts.length ? ts.map(taskRow).join("") : '<p class="tnone">열린 태스크 없음</p>') + "</div></div></div></section>";
     return h;
+  }
+  /* 태스크 줄(하위) — 작은 제목 · 완료 기준 막대 · 기한·완료 수·다음 한 걸음 한 줄 */
+  function taskRow(t) {
+    var steps = ""; for (var i = 0; i < t.total; i++) steps += '<b class="' + (i < t.done ? "on" : "") + '"></b>';
+    var chip = "";
+    if (t.due && t.due < TODAY) chip = '<span class="pill warn">기한 ' + daysBetween(t.due, TODAY) + "일 지남</span>";
+    else if (t.due) chip = '<span class="pill">' + md(t.due) + " 까지</span>";
+    else chip = '<span class="pill">기한 없음</span>';
+    var ss = twSteps(t.title).filter(function (x) { return !x.done; })[0], nx = ss ? ss.text : t.next;
+    return '<div class="tcard"><div class="t"><b class="tt">' + esc(t.title) + '</b><button class="btn quiet" data-act="taskopen" data-title="' + esc(t.title) + '">자세히</button></div>' + (t.total ? '<div class="steps" aria-label="완료 기준 ' + t.done + "/" + t.total + '">' + steps + "</div>" : "") + '<p class="tline">' + chip + (t.status ? '<span class="pill">' + esc(t.status) + "</span>" : "") + '<span class="cnt">' + t.done + "/" + t.total + "</span>" + (nx ? '<span class="tnext" title="' + esc(nx) + '"><b>▶</b>' + esc(nx) + "</span>" : "") + "</p></div>";
   }
 
   function viewBody() {
