@@ -21,7 +21,10 @@
     var th = S.ic[key] = S.ic[key] || [];
     if (!S.sample || S.sampleOff) { th.push({ r: "warn", t: "지금은 Brainy와 대화할 수 없어요." }); render(); return; }
     var hist = th.filter(function (m) { return (m.r === "me" || m.r === "ai") && m.t; }).slice(-10).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: m.t }; });
-    th.push({ r: "me", t: text }); var ai = { r: "ai", t: "", pending: true }; th.push(ai); S.icQ[key] = ""; S.icBusy[key] = true; render();
+    th.push({ r: "me", t: text }); var ai = { r: "ai", t: "", pending: true }; th.push(ai); S.icQ[key] = ""; S.icBusy[key] = true;
+    // 제안·점검 카드의 대화는 「Brainy 대화」 칸에 쌓인다 — 답이 보이게 그 칸을 연다
+    var tk = key === "mo" ? "mo/t" : key.indexOf("ans:rp:") === 0 ? key.slice(4) + "/t" : null; if (tk) S.thOpen[tk] = true;
+    render();
     var rules = chatRules() + "\n\n=== 지금 이 대화 ===\n" + icCtx(key) + "\n앱 화면의 그 칸 바로 아래에서 나누는 짧은 대화다. 3~5줄, 마크다운 기호 없이, 해요체. 기록·반영을 원하면 앱 도구로 바로 하고 무엇을 했는지 한 줄로 말한다.";
     var elId = icId(key, th.length - 1);
     var opts = { cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; var el = document.getElementById(elId); if (el) el.innerHTML = "<b>Brainy</b> " + esc(u.text); } };

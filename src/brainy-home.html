@@ -232,9 +232,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .md hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
 .md .wl { color: var(--accent); font-weight: 600; }
 .md a { color: var(--accent); }
-/* 접기·펼치기 — 어느 칸이든 같은 모양·같은 자리: 머리줄 오른쪽 끝 「펼치기 ▾ / 접기 ▴」, 같은 시간(--fold-t) 동안 아래로만 부드럽게 열린다.
-   .fold(테두리 상자) · .fold.flat(칸 안 한 줄) · .crow(오늘 체크 줄) 모두 .fbody > .fin 으로 열고 닫는다 (높이는 grid-template-rows 0fr↔1fr) */
-:root { --fold-t: .24s; }
+/* 접기·펼치기 — 어느 칸이든 같은 모양·같은 움직임: 누르면 실제 높이를 재서 height 0 ↔ 잰 값으로 같은 시간(--fold-t, ease-in-out) 동안 아래로만 미끄러지듯 열리고 닫힌다 (foldAnim).
+   .fold(테두리 상자) · .fold.flat(칸 안 한 줄) · .crow(오늘 체크 줄) · 제안·점검 카드의 「상세 보기」「Brainy 대화」(twinFold) 모두 .fbody.open > .fin 하나로 열고 닫는다 */
+:root { --fold-t: .28s; }
 @media (prefers-reduced-motion: reduce) { :root { --fold-t: 0s; } }
 .fold { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: grid; min-width: 0; }
 .fold > summary, .fold > .fhead { cursor: pointer; padding: 12px 14px; font: inherit; font-weight: 600; color: inherit; background: none; border: 0; width: 100%; min-width: 0; text-align: left; display: flex; justify-content: space-between; gap: 10px; align-items: center; list-style: none; }
@@ -246,11 +246,21 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .fold > .md, .fold > .fbody > .fin > .md { padding: 0 14px 14px; }
 .fold.flat { border: 0; border-radius: 0; background: none; }
 .fold.flat > .fhead { padding: 4px 0; font-size: 13px; color: var(--muted); }
-.fbody { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows var(--fold-t) ease, visibility 0s linear var(--fold-t); }
-.fold.open > .fbody, .crow.open > .fbody { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows var(--fold-t) ease, visibility 0s; }
-.fbody > .fin { min-height: 0; overflow: hidden; display: grid; gap: 10px; align-content: start; min-width: 0; }
-.fold.flat > .fbody > .fin { padding-top: 0; transition: padding-top var(--fold-t) ease; }
-.fold.flat.open > .fbody > .fin { padding-top: 10px; }
+.fbody { height: 0; overflow: hidden; visibility: hidden; min-width: 0; transition: height var(--fold-t) ease-in-out, visibility 0s linear var(--fold-t); }
+.fbody.open { height: auto; visibility: visible; transition: height var(--fold-t) ease-in-out, visibility 0s; }
+.fbody > .fin { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.fold.flat > .fbody > .fin { padding-top: 10px; }
+/* 제안·점검 카드: 한 줄 요약(.fsum)은 늘 보이고, 아래 「상세 보기 펼치기」「Brainy 대화 펼쳐보기」 두 버튼(.frow)이 각자 제 칸(.twin 안 .fbody 둘)을 연다 */
+.fsum { display: grid; gap: 3px; min-width: 0; }
+.fsum .line { margin: 0; overflow-wrap: anywhere; }
+.fold > .fhead.still { cursor: default; padding-bottom: 6px; }
+.fold > .fsum { padding: 0 14px 10px; }
+.twin { display: grid; min-width: 0; }
+.frow { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.fold > .twin > .frow { padding: 0 14px 12px; }
+.frow .fx { background: none; border: 0; padding: 2px 0; font: inherit; font-size: 12px; font-weight: 600; color: var(--accent); cursor: pointer; }
+.card > .twin > .fbody > .fin { padding-top: 12px; }
+.fold > .twin > .fbody > .fin > .fpad { padding: 0 14px 14px; display: grid; gap: 10px; min-width: 0; }
 .projcard { cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%; }
 /* Brainy chat sheet */
 .fab { position: fixed; z-index: 6; right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 13px 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
@@ -489,7 +499,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (fresh.length) h += '<section class="section"><h2>📋 새 점검 결과 ' + fresh.length + '</h2><p class="small muted">예약 점검이 끝나면 자동으로 떠요 · 답이 반영되면 사라져요</p>' + fresh.slice(0, 4).map(function (r, i) {
       var c = repCmd(r);
       if (c && /처리 중|보내는 중/.test(c.status || "")) return '<div class="card brief"><p class="line">' + (REPORT_ICON[r.kind] || "📋") + " " + esc(r.title || "") + ' — 답을 보냈어요</p><p class="small muted">Brainy가 처리하는 중 · 끝나면 이 줄은 사라지고 결과는 기록 탭에 남아요</p></div>';
-      return reportCard(r, i === 0);
+      return reportCard(r);
     }).join("") + "</section>";
     var nWait = (S.ledger && S.ledger.items && S.ledger.items.length) || 0;
     if (nWait) h += '<button class="card brief projcard" data-act="goops" style="border:0"><span class="line">🗳 결산 대기 ' + nWait + '개</span><span class="small muted">기록 탭에서 항목마다 답하기 →</span></button>';
@@ -536,10 +546,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     list.forEach(function (x) {
       var on = !!items[x.key], open = writing && !!S.openRow[x.key], sum = summary(x.key, day);
       var syncedAt = day.synced && day.synced[x.key];
-      var right = writing ? (DETAIL[x.key] ? '<span class="fx">' + (open ? "접기 ▴" : "쓰기 ▾") + "</span>" : "") : (DETAIL[x.key] ? "기록에서 쓰기 →" : "");
+      var right = writing ? (DETAIL[x.key] ? '<span class="fx" data-lc="쓰기 ▾" data-lo="접기 ▴">' + (open ? "접기 ▴" : "쓰기 ▾") + "</span>" : "") : (DETAIL[x.key] ? "기록에서 쓰기 →" : "");
       h += '<div class="crow' + (on ? " on" : "") + (open ? " open" : "") + '" id="row-' + x.key + '"><div class="head2"><button class="boxbtn" id="' + (writing ? "wchk-" : "chk-") + x.key + '" data-act="check" data-key="' + esc(x.key) + '" aria-pressed="' + on + '" aria-label="' + esc(x.label) + (on ? " 완료 취소" : " 완료") + '"' + (w ? "" : " disabled") + '><span class="box">' + CHECK_SVG + '</span></button><button class="lblbtn" data-act="' + (writing ? "openrow" : "gowrite") + '" data-key="' + esc(x.key) + '"' + (writing ? ' aria-expanded="' + open + '"' : "") + '><span class="lbl">' + esc(x.label) + '</span><span class="open">' + (syncedAt ? '<span class="pill good">볼트 반영</span> ' : "") + right + "</span>" + (sum ? '<span class="sum">' + esc(sum) + "</span>" : '<span class="hint">' + esc(writing ? x.hint : "아직 안 씀") + "</span>") + "</button></div>";
-      // 쓰기 칸은 늘 그려 두고(접힌 채) 누르면 그 자리에서 같은 속도로 열린다 — 다시 그리지 않아 다른 칸이 튀지 않는다
-      if (writing && DETAIL[x.key]) h += '<div class="fbody"><div class="fin"><div class="detail">' + vaultFold(x.key) + DETAIL[x.key](day, w) + "</div></div></div>";
+      // 쓰기 칸은 늘 그려 두고(접힌 채) 누르면 그 자리에서 같은 속도로 열린다 (foldAnim) — 다시 그리지 않아 다른 칸이 튀지 않는다
+      if (writing && DETAIL[x.key]) h += fbodyHtml("row:" + x.key, open, '<div class="detail">' + vaultFold(x.key) + DETAIL[x.key](day, w) + "</div>");
       h += "</div>";
     });
     return h;
@@ -1677,12 +1687,45 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   var MO_FOLLOW = "오늘 계획 이어서 (이미 데일리 노트에 올린 「오늘의 계획」을 이 말대로 고치거나 답해 줘): ";
   function cmdsWhere(pred) { return (S.cmds || []).filter(function (c) { return String(c.createdAt || "").slice(0, 10) >= ymd(new Date(NOW.getTime() - 86400000)) && pred(String(c.text || "")); }).slice().reverse(); }
   function moreBtn(key, n) { var on = !!S.thOpen[key]; return '<button class="more" data-act="thtoggle" data-k="' + esc(key) + '">' + (on ? "▴ 이전 대화 숨기기" : "▾ 이전 대화 " + n + "개 보기") + "</button>"; }
-  /* ---------- 접기·펼치기 (오늘 탭 공통) — 머리줄 오른쪽 「펼치기 ▾/접기 ▴」 하나, 내용은 늘 그려 두고 누르면 그 자리에서 같은 시간 동안 열린다.
-     다시 그리지 않으므로 다른 칸이 튀지 않고, 열림 상태는 S.thOpen[key] 에 남아 다시 그려도 그대로다. o.open: 처음 열림 · o.flat: 칸 안 한 줄 · o.extra: 머리줄 오른쪽 표시(pill 등) ---------- */
+  /* ---------- 접기·펼치기 (오늘 탭 공통) — 내용은 늘 그려 두고(.fbody#fb-<key>) 누르면 그 자리에서 실제 높이를 재어 같은 시간 동안 미끄러지듯 열린다 (foldAnim).
+     다시 그리지 않으므로 다른 칸이 튀지 않고, 열림 상태는 S.thOpen[key] 에 남아 데이터가 와서 다시 그려도 그대로다.
+     foldHtml: 머리줄 오른쪽 「펼치기 ▾/접기 ▴」 하나 (o.open: 처음 열림 · o.flat: 칸 안 한 줄 · o.extra: 머리줄 오른쪽 표시)
+     twinFold: 제안·점검 카드 — 「상세 보기 펼치기」(key/d)와 「Brainy 대화 펼쳐보기」(key/t) 두 버튼이 서로 따로 제 칸을 연다 ---------- */
   function foldOpen(key, def) { return S.thOpen[key] != null ? !!S.thOpen[key] : !!def; }
+  function fbodyHtml(key, on, body) { return '<div class="fbody' + (on ? " open" : "") + '" id="fb-' + esc(key) + '"><div class="fin">' + body + "</div></div>"; }
   function foldHtml(key, head, body, o) {
     o = o || {}; var on = foldOpen(key, o.open);
-    return '<div class="fold' + (o.flat ? " flat" : "") + (on ? " open" : "") + '"><button type="button" class="fhead" data-act="fold" data-k="' + esc(key) + '" aria-expanded="' + on + '"><span class="ft">' + head + "</span>" + (o.extra || "") + '<span class="fx">' + (on ? "접기 ▴" : "펼치기 ▾") + '</span></button><div class="fbody"><div class="fin">' + body + "</div></div></div>";
+    return '<div class="fold' + (o.flat ? " flat" : "") + '"><button type="button" class="fhead" data-act="fold" data-k="' + esc(key) + '" aria-expanded="' + on + '" aria-controls="fb-' + esc(key) + '"><span class="ft">' + head + "</span>" + (o.extra || "") + '<span class="fx" data-lc="펼치기 ▾" data-lo="접기 ▴">' + (on ? "접기 ▴" : "펼치기 ▾") + "</span></button>" + fbodyHtml(key, on, body) + "</div>";
+  }
+  function foldBtn(key, on, lc, lo) { return '<button type="button" class="fx" data-act="fold" data-k="' + esc(key) + '" data-lc="' + esc(lc) + '" data-lo="' + esc(lo) + '" aria-expanded="' + on + '" aria-controls="fb-' + esc(key) + '">' + esc(on ? lo : lc) + "</button>"; }
+  function twinFold(key, detail, talk) {
+    var kd = key + "/d", kt = key + "/t", od = foldOpen(kd), ot = foldOpen(kt);
+    return '<div class="twin"><div class="frow">' + foldBtn(kd, od, "상세 보기 펼치기 ▾", "상세 보기 접기 ▴") + foldBtn(kt, ot, "Brainy 대화 펼쳐보기 ▾", "Brainy 대화 접기 ▴") + "</div>" + fbodyHtml(kd, od, detail) + fbodyHtml(kt, ot, talk) + "</div>";
+  }
+  function foldMs() { var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fold-t")) || 0; return v < 5 ? v * 1000 : v; }
+  // 실제 높이를 재서 height 0 ↔ 잰 값으로 움직인 뒤(끝나면 auto) — 어느 기기에서나 같은 속도로 미끄러진다
+  function foldAnim(fb, on) {
+    if (!fb || fb.classList.contains("open") === on) return;
+    clearTimeout(fb._ft);
+    var from = fb.offsetHeight;   // 지금 보이는 높이 — 움직이는 중에 다시 누르면 그 자리에서 이어서
+    fb.style.transition = "none";
+    if (on) fb.classList.add("open");
+    fb.style.height = from + "px"; void fb.offsetHeight; fb.style.transition = "";
+    if (!on) fb.classList.remove("open");
+    fb.style.height = on ? fb.scrollHeight + "px" : "0px";
+    fb._ft = setTimeout(function () { fb.style.height = ""; }, foldMs() + 40);
+  }
+  function foldToggle(key, on) {
+    var fb = document.getElementById("fb-" + key);
+    if (on == null) on = fb ? !fb.classList.contains("open") : !foldOpen(key);
+    S.thOpen[key] = on;
+    if (!fb) { render(); return; }
+    document.querySelectorAll('[data-act="fold"][data-k="' + CSS.escape(key) + '"]').forEach(function (b) {
+      b.setAttribute("aria-expanded", String(on));
+      var fx = b.classList.contains("fx") ? b : b.querySelector(".fx");
+      if (fx) fx.textContent = on ? (fx.getAttribute("data-lo") || "접기 ▴") : (fx.getAttribute("data-lc") || "펼치기 ▾");
+    });
+    foldAnim(fb, on);
   }
   function threadHtml(list, strip, key) {
     if (!list.length) return "";
@@ -1709,26 +1752,28 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       return '<section class="card brief"><div class="progress-row"><h2>☀️ 오늘 아침 제안</h2><span class="pill">아직</span></div><p class="small muted">매일 06:30 예약이 오늘 계획 제안을 만들면 여기 자동으로 떠요.' + (fs === "ok" ? " 지금 만드는 중이에요 — 몇 분 뒤 떠요." : "") + "</p>" +
         (mt ? '<div class="row end"><button class="btn" data-act="fireyes" data-id="' + esc(mt.id) + '"' + (S.mcp && fs !== "busy" && fs !== "ok" ? "" : " disabled") + ">" + (fs === "busy" ? "보내는 중…" : fs === "ok" ? "요청함 ✓" : "지금 제안 받기") + "</button></div>" : "") + "</section>";
     }
-    var up = mo.status === "올림";
-    var moPend = cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }).filter(function (c) { return /처리 중|보내는 중|맥 대기|못|확인/.test(c.status || ""); }).length;
-    // 올린 뒤엔 「오늘 계획」 요약만 보이고, 제안·주고받은 것·이어서 쓰기는 같은 칸 안에서 접힌다 (접기 버튼도 늘 같은 자리 — 칸이 위아래로 밀리지 않게)
-    var fold = up && !moPend;
-    var h = '<section class="card brief"><div class="progress-row"><h2>☀️ ' + (fold ? "오늘 계획" : "오늘 아침 제안") + '</h2><span class="pill' + (up ? " good" : " accent") + '">' + esc(up ? "올림 ✓" : (mo.status || "대기")) + "</span></div>";
-    if (fold) { var fr = mo.final || mo.rows || []; if (fr.length) h += '<ul class="crit">' + fr.map(function (r) { return "<li>○ " + esc(r.what || "") + "</li>"; }).join("") + "</ul>"; }
+    var up = mo.status === "올림", rows = mo.rows || [], fr = mo.final || rows;
+    // 처음엔 한 줄 요약(핵심 한 줄 + 개수)만 보이고, 「상세 보기 펼치기」에 계획·제안·이어서 쓰기, 「Brainy 대화 펼쳐보기」에 주고받은 것이 각각 따로 열린다 (열림은 S.thOpen 에 남는다)
+    var h = '<section class="card brief"><div class="progress-row"><h2>☀️ ' + (up ? "오늘 계획" : "오늘 아침 제안") + '</h2><span class="pill' + (up ? " good" : " accent") + '">' + esc(up ? "올림 ✓" : (mo.status || "대기")) + "</span></div>";
+    var sum = String(mo.summary || mo.coach || (fr[0] && fr[0].what) || "").trim(), cnt = [];
+    if (fr.length) cnt.push((up ? "계획 " : "제안 ") + fr.length + "개");
+    if (mo.skipped && mo.skipped.length) cnt.push("안 들어간 것 " + mo.skipped.length);
+    if (!up) cnt.push("펼쳐서 확인하고 「응 — 이대로 진행」");
+    h += '<div class="fsum">' + (sum ? '<p class="line">' + esc(clip(sum, 90)) + "</p>" : "") + (cnt.length ? '<p class="small muted">' + esc(cnt.join(" · ")) + "</p>" : "") + "</div>";
     var b = "";
+    if (up && fr.length) b += '<ul class="crit">' + fr.map(function (r) { return "<li>○ " + esc(r.what || "") + "</li>"; }).join("") + "</ul>";
     if (mo.coach) b += '<p class="line">' + esc(mo.coach) + "</p>";
-    var rows = mo.rows || [];
-    if (rows.length) b += (fold ? "<h2>아침 제안</h2>" : "") + '<div class="tablewrap"><table class="days"><tbody>' + rows.map(function (r) { return "<tr><td class='n' style='text-align:left;width:64px'>" + esc(r.time || "") + "</td><td>" + esc(r.what || "") + (r.task ? '<br><span class="small muted">' + esc(r.task) + "</span>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    if (rows.length) b += (up ? "<h2>아침 제안</h2>" : "") + '<div class="tablewrap"><table class="days"><tbody>' + rows.map(function (r) { return "<tr><td class='n' style='text-align:left;width:64px'>" + esc(r.time || "") + "</td><td>" + esc(r.what || "") + (r.task ? '<br><span class="small muted">' + esc(r.task) + "</span>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
     if (mo.skipped && mo.skipped.length) b += foldHtml("moskip", "오늘 안 들어간 것 " + mo.skipped.length, '<div class="md"><ul>' + mo.skipped.map(function (x) { return "<li>" + esc(x.what) + (x.why ? " — " + esc(x.why) : "") + (x.when ? " → " + esc(x.when) : "") + "</li>"; }).join("") + "</ul></div>");
-    b += threadHtml(cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }), function (t) { return t.replace(MO_FOLLOW, "").replace(/^아침 계획 고침:\s*/, "").replace(/^아침 계획 응$/, "응 — 이대로 진행"); }, "mo");
     b += '<textarea class="grow" data-mo="1" rows="2" placeholder="' + (up ? "✍ Brainy에게 이어서 쓰기 — 예: 운동도 넣어줘, 브랜드 정의는 내일로" : "✍ Brainy에게 바로 쓰기 — 예: EP3는 오후 2시로 옮기고, 운동은 푸시로") + '">' + esc(S.moDraft || "") + "</textarea>";
     if (up) b += '<div class="row end"><button class="btn primary" data-act="mofollow"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "Brainy에게 보내기") + "</button></div>";
     else b += '<div class="row end"><button class="btn" data-act="mosend"' + (canCmd && !S.moBusy ? "" : " disabled") + '>쓴 대로 고쳐서 올리기</button><button class="btn primary" data-act="moyes"' + (canCmd && !S.moBusy ? "" : " disabled") + ">" + (S.moBusy ? "보내는 중…" : "응 — 이대로 진행" + (mo.calN ? " (데일리 노트 · 캘린더 " + mo.calN + ")" : " (데일리 노트에)")) + "</button></div>";
     if (S.moMsg && S.moMsg.err) b += '<p class="small" style="color:var(--warn)">' + esc(S.moMsg.t) + "</p>";
-    return h + (fold ? foldHtml("moFull", "제안 · Brainy와 주고받은 것 · 이어서 쓰기", b, { flat: true }) : b) + "</section>";
+    var talk = threadHtml(cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }), function (t) { return t.replace(MO_FOLLOW, "").replace(/^아침 계획 고침:\s*/, "").replace(/^아침 계획 응$/, "응 — 이대로 진행"); }, "mo");
+    return h + twinFold("mo", b, talk || '<p class="small muted">아직 주고받은 게 없어요 — 상세 보기에서 쓰면 여기 이어져요.</p>') + "</section>";
   }
   function moSend(text) {
-    S.moBusy = true; S.moMsg = null; render();
+    S.moBusy = true; S.moMsg = null; S.thOpen["mo/t"] = true; render();
     sendCommand(text).then(function () { S.moBusy = false; S.moDraft = ""; S.moMsg = { t: "보냄 — 맥의 Brainy가 데일리 노트에 올리면 '올림 ✓'으로 바뀌어요" }; render(); }, function (e) { S.moBusy = false; S.moMsg = { t: e.message, err: true }; render(); });
   }
 
@@ -1757,23 +1802,45 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var all = String(st.all || "").trim();
     if (!lines.length && !all) return;
     var tx = header + (lines.length ? "\n" + lines.join("\n") : "") + (all ? "\n전체: " + all : "");
-    S.ansBusy[scope] = true; render();
+    S.ansBusy[scope] = true; S.thOpen[scope + "/t"] = true; render();
     sendCommand(tx).then(function (m) { S.ansBusy[scope] = false; S.ans[scope] = { sel: {}, all: "" }; S.ansMsg[scope] = { t: m }; render(); }, function (e) { S.ansBusy[scope] = false; S.ansMsg[scope] = { t: e.message, err: true }; render(); });
   }
-  function reportCard(r, open) {
-    var scope = "rp:" + r.id, ic = REPORT_ICON[r.kind] || "📋";
-    var h = '<div style="padding:0 14px 14px;display:grid;gap:10px">';
-    if (r.lines && r.lines.length) h += '<div class="md"><ul>' + r.lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></div>";
-    if (r.body) h += '<div class="md">' + mdHtml(r.body) + "</div>";
-    h += threadHtml(cmdsWhere(function (t) { return t.indexOf("reports/" + r.id + ")") >= 0; }), function (t) { return t.split("\n").slice(1).join("\n").replace(/^전체:\s*/m, ""); }, "rp:" + r.id);
-    h += ansBox(scope, r.items || []) + "</div>";
-    return foldHtml("rpf:" + r.id, ic + " " + esc(r.title || r.kind) + ' <span class="small muted">' + esc(r.date ? md(r.date) : "") + "</span>", h, { open: open, extra: r.status === "답함" ? '<span class="pill good">답함</span>' : '<span class="pill accent">새로</span>' });
+  /* 점검 결과 문서(reports/<id>) 형식 — 예약이 쓴다:
+       kind · date · title · status 에 더해
+       summary: 한 줄 요약 (새 칸 — 카드를 접어 둔 채 보이는 핵심 한 줄)
+       lines:   상세 줄 전체 (펼쳐야 보임) · items: 답할 항목 [{n, text}] · body: 마크다운 본문 (선택)
+     summary 가 없는 예전 문서는 lines 첫 줄(없으면 body 첫 줄 · 제목)을 요약으로 쓴다 */
+  function reportSummary(r) {
+    var s = String(r.summary || "").trim();
+    if (!s && r.lines && r.lines.length) s = String(r.lines[0] || "");
+    if (!s && r.body) s = String(r.body).split("\n").filter(function (l) { return l.trim(); })[0] || "";
+    if (!s) s = r.title || r.kind || "";
+    return clip(s.replace(/^[-*•]\s*/, "").replace(/^#+\s*/, "").trim(), 90);
+  }
+  function reportCounts(r) {
+    var c = [];
+    if (r.items && r.items.length) c.push("답할 항목 " + r.items.length);
+    if (r.lines && r.lines.length) c.push("줄 " + r.lines.length);
+    if (r.status === "답함") c.push("답함");
+    return c.join(" · ");
+  }
+  function reportCard(r) {
+    var scope = "rp:" + r.id, ic = REPORT_ICON[r.kind] || "📋", cnt = reportCounts(r);
+    // 접어 둔 채: 제목 · 요약 한 줄 · 개수. 「상세 보기 펼치기」: 줄 전체·본문·항목별 답. 「Brainy 대화 펼쳐보기」: 이 점검에 보낸 말과 답
+    var head = '<div class="fhead still"><span class="ft">' + ic + " " + esc(r.title || r.kind) + ' <span class="small muted">' + esc(r.date ? md(r.date) : "") + "</span></span>" + (r.status === "답함" ? '<span class="pill good">답함</span>' : '<span class="pill accent">새로</span>') + "</div>";
+    head += '<div class="fsum"><p class="line">' + esc(reportSummary(r)) + "</p>" + (cnt ? '<p class="small muted">' + esc(cnt) + "</p>" : "") + "</div>";
+    var d = '<div class="fpad">';
+    if (r.lines && r.lines.length) d += '<div class="md"><ul>' + r.lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></div>";
+    if (r.body) d += '<div class="md">' + mdHtml(r.body) + "</div>";
+    d += ansBox(scope, r.items || []) + "</div>";
+    var talk = threadHtml(cmdsWhere(function (t) { return t.indexOf("reports/" + r.id + ")") >= 0; }), function (t) { return t.split("\n").slice(1).join("\n").replace(/^전체:\s*/m, ""); }, "rp:" + r.id);
+    return '<div class="fold">' + head + twinFold(scope, d, '<div class="fpad">' + (talk || '<p class="small muted">아직 주고받은 게 없어요 — 상세 보기에서 답하면 여기 이어져요.</p>') + "</div>") + "</div>";
   }
   function viewReports() {
     var rs = (S.reports || []).filter(function (r) { return r.kind !== "morning" || r.date !== TODAY; });
     if (!rs.length) return '<section class="card"><h2>📋 점검 결과</h2><p class="muted small">아침 제안·하루 결산·주간·월간 점검이 끝나면 결과가 여기 자동으로 떠요. 항목마다 Brainy에게 바로 쓸 수 있어요.</p></section>';
     var fresh = rs.filter(function (r) { return r.status !== "답함"; }).length;
-    return '<section class="section"><div class="progress-row"><h2>📋 점검 결과' + (fresh ? " · 새로 " + fresh : "") + '</h2><span class="small muted">예약이 끝날 때마다 자동으로</span></div>' + rs.slice(0, 6).map(function (r, i) { return reportCard(r, i === 0 && r.status !== "답함"); }).join("") + "</section>";
+    return '<section class="section"><div class="progress-row"><h2>📋 점검 결과' + (fresh ? " · 새로 " + fresh : "") + '</h2><span class="small muted">예약이 끝날 때마다 자동으로</span></div>' + rs.slice(0, 6).map(reportCard).join("") + "</section>";
   }
 
   /* ---------- 예약 · 결산 대기 · 명령 ---------- */
@@ -1933,7 +2000,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (S.lgMsg && S.lgErr) h += '<p class="small" style="color:var(--warn)">' + esc(S.lgMsg) + "</p>";
       h += replyBox(lastCmd(function (t) { return /^🗳/.test(t); }));
     }
-    if (lg && lg.closed && lg.closed.length) h += '<details class="fold"><summary>최근 닫은 것 ' + lg.closed.length + '</summary><div class="md"><ul>' + lg.closed.map(function (x) { return "<li>" + esc(x.n) + ". " + esc(x.text) + " " + esc(x.mark || "") + "</li>"; }).join("") + "</ul></div></details>";
+    if (lg && lg.closed && lg.closed.length) h += foldHtml("lgclosed", "최근 닫은 것 " + lg.closed.length, '<div class="md"><ul>' + lg.closed.map(function (x) { return "<li>" + esc(x.n) + ". " + esc(x.text) + " " + esc(x.mark || "") + "</li>"; }).join("") + "</ul></div>");
     h += "</section>";
     // 명령
     h += '<section class="card"><label for="cmd-input"><h2>명령 — 맥의 Brainy가 볼트·Todoist·캘린더에 반영해요</h2></label>';
@@ -2034,7 +2101,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     L.push("## Brainy 최근 점검 (" + (m.date || "") + "): " + JSON.stringify(m.brainy || {}));
     L.push("## 프로젝트 요약: " + JSON.stringify((m.projects || []).map(function (p) { return { name: p.name, deliverable: p.deliverable, metrics: p.metrics, milestones: p.milestones }; })));
     L.push("## 열린 태스크: " + JSON.stringify(m.tasks || []));
-    L.push("## 점검 결과 (예약): " + clip(JSON.stringify((S.reports || []).slice(0, 4).map(function (r) { return { kind: r.kind, date: r.date, title: r.title, lines: r.lines, items: r.items, status: r.status }; })), 6000));
+    L.push("## 점검 결과 (예약): " + clip(JSON.stringify((S.reports || []).slice(0, 4).map(function (r) { return { kind: r.kind, date: r.date, title: r.title, summary: reportSummary(r), lines: r.lines, items: r.items, status: r.status }; })), 6000));
     L.push("## 🗳 결산 대기 (결산 원장): " + JSON.stringify((S.ledger && S.ledger.items) || []));
     if (S.morning && S.morning.date === TODAY) L.push("## 오늘 아침 제안 (" + (S.morning.status || "대기") + "): " + clip(JSON.stringify(S.morning), 3000));
     L.push("## 최근 앱 명령: " + JSON.stringify(S.cmds.slice(0, 5).map(function (c) { return { text: c.text, status: c.status, result: c.result }; })));
@@ -2205,7 +2272,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "brief") { speak("brief", briefingText()); return; }
     if (act === "area") { S.area = t.getAttribute("data-area"); render(); return; }
     if (act === "expand") { var key = t.getAttribute("data-key"); S.expanded[key] = !S.expanded[key]; render(); return; }
-    if (act === "fold") { var fk = t.getAttribute("data-k"), fbox = t.closest(".fold"), fon = !(fbox && fbox.classList.contains("open")); S.thOpen[fk] = fon; if (fbox) { fbox.classList.toggle("open", fon); t.setAttribute("aria-expanded", String(fon)); var fx = t.querySelector(".fx"); if (fx) fx.textContent = fon ? "접기 ▴" : "펼치기 ▾"; } else render(); return; }
+    if (act === "fold") { foldToggle(t.getAttribute("data-k")); return; }
     if (act === "mark") { toggleMark(t.getAttribute("data-key")); return; }
     if (act === "chat") { openChat(S.tab === "work" && S.projOpen ? S.projOpen : (S.chat.project && S.tab === "work" ? S.chat.project : null)); return; }
     if (act === "chatclose") { closeChat(); return; }
@@ -2228,7 +2295,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "projopen") { S.projOpen = t.getAttribute("data-name"); render(); window.scrollTo(0, 0); return; }
     if (act === "projback") { S.projOpen = null; S.taskOpen = null; render(); window.scrollTo(0, 0); return; }
     if (act === "chatproj") { openChat(t.getAttribute("data-name")); return; }
-    if (act === "openrow") { var ok = t.getAttribute("data-key"); if (!DETAIL[ok]) { saveDay(function (b) { if (b.items[ok]) delete b.items[ok]; else b.items[ok] = true; }); return; } var rowBox = document.getElementById("row-" + ok), ron = !(rowBox && rowBox.classList.contains("open")); S.openRow[ok] = ron; if (rowBox && rowBox.querySelector(".fbody")) { rowBox.classList.toggle("open", ron); t.setAttribute("aria-expanded", String(ron)); var rx = rowBox.querySelector(".fx"); if (rx) rx.textContent = ron ? "접기 ▴" : "쓰기 ▾"; } else render(); return; }
+    if (act === "openrow") { var ok = t.getAttribute("data-key"); if (!DETAIL[ok]) { saveDay(function (b) { if (b.items[ok]) delete b.items[ok]; else b.items[ok] = true; }); return; } var rowBox = document.getElementById("row-" + ok), rfb = document.getElementById("fb-row:" + ok), ron = !(rfb && rfb.classList.contains("open")); S.openRow[ok] = ron; if (rowBox && rfb) { rowBox.classList.toggle("open", ron); t.setAttribute("aria-expanded", String(ron)); var rx = rowBox.querySelector(".fx"); if (rx) rx.textContent = ron ? "접기 ▴" : "쓰기 ▾"; foldAnim(rfb, ron); } else render(); return; }
     if (act === "savedetail") { saveDetail(t.getAttribute("data-key")); return; }
     if (act === "donedetail") { doneDetail(t.getAttribute("data-key")); return; }
     if (act === "wtype") { var tv = t.getAttribute("data-v"); S.fd["f-wo-type"] = tv; saveDay(function (b) { b.notes.workout = Object.assign({}, b.notes.workout || {}, { type: tv }); }, true); render(); return; }
