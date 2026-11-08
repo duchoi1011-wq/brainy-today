@@ -525,6 +525,36 @@ patch("""/* 결산 대기 — 칸 안 대화 */""", """.sd { display: block; fon
 .now .sd { margin-top: 4px; }
 /* 결산 대기 — 칸 안 대화 */""")
 
+# 14) 🗳 결산 대기: 항목마다 펼치기/접기 (2026-11-08 동욱: "항목 내용이 길어서 잘 안 보여요")
+#     - 접힘: 번호와 앞부분 두 줄만 · 누르면 펼쳐서 전체 글 + 답 고르기 + 칸 안 대화
+#     - 대화가 있는 칸에서는 위쪽 항목 설명을 세 줄로 접어 두고 「설명 펼치기」로 전체
+#     - 처음에는 대화·고르는 중인 칸만 펼쳐 둔다
+patch("""lgSel: {}, ic: {},""", """lgSel: {}, lgOpen: {}, lgDesc: {}, ic: {},""")
+patch("""    var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (stepSplit(it.text).d ? '<span class="sd">' + esc(clip(stepSplit(it.text).d, 160)) + "</span>" : "") + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";""",
+      r"""    var talk = !!(th.length || c), op = S.lgOpen[n] != null ? S.lgOpen[n] : (talk || busy || !!v), p = stepSplit(it.text);
+    var full = String(it.text || "").replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2").replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\*\*/g, "").trim();
+    var h = '<div class="task lgitem' + (sent ? " sent" : "") + (op ? " open" : "") + '"><button class="lghead" data-act="lgfold" data-n="' + esc(n) + '" aria-expanded="' + op + '">';
+    if (!op) return h + '<span class="lgsum"><b>' + esc(n) + ". " + esc(p.t) + "</b> " + (p.d ? '<span class="sd">' + esc(p.d) + "</span>" : "") + '</span><span class="lgcar" aria-hidden="true">펼치기 ▾</span></button></div>';
+    h += '<span class="lgsum"><b>' + esc(n) + ". " + esc(p.t) + "</b>" + (it.date ? ' <span class="small muted">' + esc(md(it.date)) + "</span>" : "") + '</span><span class="lgcar" aria-hidden="true">접기 ▴</span></button>';
+    var lng = full.length > 90, dOpen = S.lgDesc[n] != null ? S.lgDesc[n] : !talk;
+    h += '<div class="lgfull' + (lng && !dOpen ? " clamp" : "") + '">' + esc(full) + "</div>";
+    if (lng && talk) h += '<button class="lgmore" data-act="lgdesc" data-n="' + esc(n) + '" aria-expanded="' + dOpen + '">' + (dOpen ? "설명 접기 ▴" : "설명 펼치기 ▾") + "</button>";""")
+patch("""    if (act === "lglog") {""", """    if (act === "lgfold") { S.lgOpen[t.getAttribute("data-n")] = t.getAttribute("aria-expanded") !== "true"; render(); return; }
+    if (act === "lgdesc") { S.lgDesc[t.getAttribute("data-n")] = t.getAttribute("aria-expanded") !== "true"; render(); return; }
+    if (act === "lglog") {""")
+patch("""/* 결산 대기 — 칸 안 대화 */
+.lgitem.sent""", """/* 결산 대기 — 칸 안 대화 */
+.lghead { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; width: 100%; min-height: 44px; padding: 4px 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.lgsum { flex: 1; min-width: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.lgitem:not(.open) .lgsum { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.lgitem:not(.open) .lgsum .sd { display: inline; margin: 0; font-size: 13px; }
+.lgcar { flex: none; font-size: 12.5px; color: var(--muted); padding: 2px 0 2px 6px; white-space: nowrap; }
+.lgitem.sent .lgsum b { color: var(--muted); }
+.lgfull { font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
+.lgfull.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; color: var(--muted); }
+.lgmore { justify-self: start; min-height: 36px; padding: 4px 2px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; }
+.lgitem.sent""")
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',

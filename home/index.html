@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "dd35989931"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=dd35989931"></script>
+<script>window.BRAINY_VERSION = "dccee3edfe"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=dccee3edfe"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -283,6 +283,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .sd { display: block; font-size: 12.5px; color: var(--muted); font-weight: 400; line-height: 1.5; margin-top: 2px; }
 .now .sd { margin-top: 4px; }
 /* 결산 대기 — 칸 안 대화 */
+.lghead { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; width: 100%; min-height: 44px; padding: 4px 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.lgsum { flex: 1; min-width: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.lgitem:not(.open) .lgsum { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.lgitem:not(.open) .lgsum .sd { display: inline; margin: 0; font-size: 13px; }
+.lgcar { flex: none; font-size: 12.5px; color: var(--muted); padding: 2px 0 2px 6px; white-space: nowrap; }
+.lgitem.sent .lgsum b { color: var(--muted); }
+.lgfull { font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
+.lgfull.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; color: var(--muted); }
+.lgmore { justify-self: start; min-height: 36px; padding: 4px 2px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; }
 .lgitem.sent .t b { color: var(--muted); }
 .lgthread { display: grid; gap: 6px; margin: 8px 0 6px; }
 .lgm { font-size: 14px; line-height: 1.6; padding: 7px 11px; border-radius: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -379,7 +388,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     note: "", opt: { state: "idle", data: null, msg: "" }, confirmDel: null,
     ask: { state: "idle", q: "", text: "", msg: "", ctl: null },
     ledger: null, morning: null, cmds: [], cfg: {}, mcp: null, mcpOff: false,
-    cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
+    cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, lgOpen: {}, lgDesc: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
     triggers: null, trigState: "idle", trigMsg: "", trigAt: 0, cmdText: "", autoState: {}, nrDraft: {}, moBusy: false, moMsg: null, retrying: {}, thOpen: {}, exp: {}, dl: null, insta: [], igThumb: {}, igCap: {}, igBusy: {}, igMsg: {}, igOpen: {}, igFix: {}, cmdBusy: false, cmdMsg: "", fireAsk: null, fired: {}
   };
   var CC_SERVER = "Claude Code Remote";
@@ -2060,7 +2069,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function lgCmdOf(n) { var id = S.lgCmdLocal[n] || ((S.ledger && S.ledger.cmds) || {})[n]; return id ? (S.cmds.filter(function (c) { return c.id === id; })[0] || { id: id, status: "보내는 중" }) : null; }
   function ledgerItemHtml(it) {
     var n = String(it.n), sel = S.lgSel[n] || {}, v = sel.v || "", th = S.lgT[n] || [], sent = ((S.ledger && S.ledger.sent) || {})[n], c = lgCmdOf(n), busy = !!S.lgAsk[n];
-    var h = '<div class="task lgitem' + (sent ? " sent" : "") + '"><div class="t"><b>' + esc(n) + ". " + esc(stepSplit(it.text).t) + "</b>" + (stepSplit(it.text).d ? '<span class="sd">' + esc(clip(stepSplit(it.text).d, 160)) + "</span>" : "") + (it.date ? '<span class="small muted">' + esc(md(it.date)) + "</span>" : "") + "</div>";
+    var talk = !!(th.length || c), op = S.lgOpen[n] != null ? S.lgOpen[n] : (talk || busy || !!v), p = stepSplit(it.text);
+    var full = String(it.text || "").replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2").replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\*\*/g, "").trim();
+    var h = '<div class="task lgitem' + (sent ? " sent" : "") + (op ? " open" : "") + '"><button class="lghead" data-act="lgfold" data-n="' + esc(n) + '" aria-expanded="' + op + '">';
+    if (!op) return h + '<span class="lgsum"><b>' + esc(n) + ". " + esc(p.t) + "</b> " + (p.d ? '<span class="sd">' + esc(p.d) + "</span>" : "") + '</span><span class="lgcar" aria-hidden="true">펼치기 ▾</span></button></div>';
+    h += '<span class="lgsum"><b>' + esc(n) + ". " + esc(p.t) + "</b>" + (it.date ? ' <span class="small muted">' + esc(md(it.date)) + "</span>" : "") + '</span><span class="lgcar" aria-hidden="true">접기 ▴</span></button>';
+    var lng = full.length > 90, dOpen = S.lgDesc[n] != null ? S.lgDesc[n] : !talk;
+    h += '<div class="lgfull' + (lng && !dOpen ? " clamp" : "") + '">' + esc(full) + "</div>";
+    if (lng && talk) h += '<button class="lgmore" data-act="lgdesc" data-n="' + esc(n) + '" aria-expanded="' + dOpen + '">' + (dOpen ? "설명 접기 ▴" : "설명 펼치기 ▾") + "</button>";
     if (!sent) h += '<div class="chips" style="flex-wrap:wrap" role="group" aria-label="' + esc(n) + '번 답">' + [["응", "응"], ["고쳐서", "고쳐서 응"], ["나중에", "나중에"], ["빼", "빼"]].map(function (o) {
       return '<button class="chip" data-act="lgone" data-n="' + esc(n) + '" data-v="' + o[0] + '" aria-pressed="' + (v === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>";
     if (th.length || c) {
@@ -2420,6 +2436,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "lgclear") { S.lgSel = {}; S.lgAll = ""; render(); return; }
     if (act === "lgsend") { lgSend(); return; }
     if (act === "ictalk") { var ik = t.getAttribute("data-k"), isrc = document.getElementById(t.getAttribute("data-src")), itx = isrc ? isrc.value : ""; if (!String(itx).trim()) { if (isrc) isrc.focus(); return; } if (ik.indexOf("q:") === 0) { var iq = ik.slice(2); saveDay(function (b) { b.answers[iq] = String(itx).trim(); }); S.drafts[iq] = String(itx).trim(); } icTalk(ik, itx); return; }
+    if (act === "lgfold") { S.lgOpen[t.getAttribute("data-n")] = t.getAttribute("aria-expanded") !== "true"; render(); return; }
+    if (act === "lgdesc") { S.lgDesc[t.getAttribute("data-n")] = t.getAttribute("aria-expanded") !== "true"; render(); return; }
     if (act === "lglog") { var lgn = t.getAttribute("data-n"), lgt = String(S.lgQ[lgn] || "").trim(); if (!lgt) { var lge = document.querySelector('[data-lgq="' + CSS.escape(lgn) + '"]'); if (lge) lge.focus(); return; } lgSendOne(lgn, "지시", lgt); return; }
     if (act === "fdlog") { var fk = t.getAttribute("data-key"); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { S.fd[fe.id] = fe.value; }); saveDay(function (b) { b.notes[fk] = Object.assign({}, b.notes[fk] || {}); document.querySelectorAll('[data-fd][data-k="' + fk + '"]').forEach(function (fe) { if (fe.getAttribute("data-f")) b.notes[fk][fe.getAttribute("data-f")] = fe.value; }); }); var fl = document.getElementById("fdlog-" + fk); if (fl) fl.textContent = "남겼어요 ✓"; return; }
     if (act === "fdgo") { var gk = t.getAttribute("data-key"), parts = []; document.querySelectorAll('[data-fd][data-k="' + gk + '"]').forEach(function (fe) { if (String(fe.value || "").trim()) parts.push((fe.getAttribute("data-f") || "") + ": " + fe.value.trim()); }); icTalk("fd:" + gk, parts.length ? "이 칸에 쓴 것으로 같이 진행해 줘.\n" + parts.join("\n") : "이 칸, 같이 진행해 줘 — 무엇부터 쓰면 될까?"); return; }
