@@ -490,7 +490,7 @@ patch("""data-src="' + k + '">💬 Brainy와 대화</button>""", """data-src="' 
 patch(""">로그만</button>""", """>로그</button>""", 2)
 # 오늘 쓰기 칸: 칸 아래 [로그] [Brainy와 진행] — 로그는 지금 바로 저장, 진행은 쓴 내용으로 그 칸에서 Brainy와
 patch("""DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div>";""",
-      """DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button><button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("fd:" + x.key) + "</div>";""")
+      """DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button><button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button></div>' + (["worship", "qna", "journal", "sentence", "workout", "content"].indexOf(x.key) >= 0 ? '<p class="small muted">「다 썼어요」는 저장하고 이 항목을 완료로 체크해요 · 「로그」는 체크 없이 쓴 것만 지금 저장해요 — 볼트 노트에는 둘 다 똑같이 들어가요</p>' : "") + icHtml("fd:" + x.key) + "</div>";""")
 # 아침 제안: 「로그」(쓴 대로 반영) · 「Brainy와 진행」
 patch("""'<textarea class="grow" data-mo="1" rows=""", """'<textarea id="mo-input" class="grow" data-mo="1" rows=""")
 patch(""">" + (S.moBusy ? "보내는 중…" : "Brainy에게 보내기") + "</button></div>";""", """>" + (S.moBusy ? "보내는 중…" : "로그") + '</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button></div>' + icHtml("mo");""")
