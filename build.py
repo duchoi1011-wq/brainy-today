@@ -328,6 +328,7 @@ patch("""      { name: "run_command", description:""", """      { name: "ledger_
 patch("""    L.push("## 🗳 결산 대기 (결산 원장): " + JSON.stringify((S.ledger && S.ledger.items) || []));""",
       """    L.push("## 🗳 결산 대기 (결산 원장, 아직 안 보낸 것): " + JSON.stringify(ledgerOpen()) + " — 동욱과 정리할 때: 한 번에 한 항목, 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거를 짧게 말하고 묻는다. 동욱이 정하면 ledger_answer 로 바로 보내고 다음 항목으로. 자세한 사정은 볼트 「3_Action/결산 원장.md」를 읽어 확인한다.");""")
 
+# (2026-11-08 동욱: "Brainy 질문 자체가 결산") 결산 질문은 오늘 탭에 따로 띄우지 않고 이 칸 맨 위에서 같이 답한다 — openQs/qHtml 은 src/home-ic.js
 # 9) 🗳 결산 대기: 항목마다 응·고쳐서·나중에·빼를 누르면 그 항목만 바로 보내고, 그 칸에서 바로 대화·피드백 (2026-11-07 동욱)
 #    - 누르면 그 줄 하나만 명령으로 맥에 → 칸 안에 「나: 응」 → Brainy 한 줄 확인(바로) → 맥의 처리 결과(명령 result)가 같은 칸에
 #    - 칸 안 입력으로 Brainy에게 그 항목을 바로 묻고, 정하면 Brainy가 ledger_answer 로 보낸다. 모아서 보내기·대화창 버튼은 뺀다
@@ -335,10 +336,11 @@ patch("""    var id = "c" + Date.now().toString(36), at = new Date().toISOString
 patch("""lgSel: {}, lgBusy: false,""", """lgSel: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false,""")
 patch_between("""    var lg = S.ledger, items = ledgerOpen(), nSent""", """      h += replyBox(lastCmd(function (t) { return /^🗳/.test(t); }));
     }
-""", """    var lg = S.ledger, live = (lg && lg.items) || [];
-    h += '<section class="card"><div class="progress-row"><h2>🗳 결산 대기 ' + ledgerOpen().length + '</h2><span class="small muted">' + (lg && lg.updatedAt ? "원장 " + whenKo(lg.updatedAt) + " 기준" : "결산 원장") + "</span></div>";
-    if (!lg) h += '<p class="muted small">다음 결산이 끝나면 결산 원장의 🗳 목록이 여기 떠요.</p>';
-    else if (!live.length) h += '<p class="muted small">고를 게 없어요. 결산이 새 후보를 찾으면 여기 떠요.</p>';
+""", """    var lg = S.ledger, live = (lg && lg.items) || [], qs = openQs();
+    h += '<section class="card"><div class="progress-row"><h2>🗳 결산 대기 ' + (ledgerOpen().length + qs.length) + '</h2><span class="small muted">' + (lg && lg.updatedAt ? "원장 " + whenKo(lg.updatedAt) + " 기준" : "결산 원장") + "</span></div>";
+    if (qs.length) h += '<h3 class="small" style="margin:6px 0 4px">결산 질문 ' + qs.length + '</h3><p class="small muted">결산 때 Brainy가 물은 것 — 답을 「로그」로 남기면 Brainy가 바로 반영하고, 「Brainy와 진행」은 이 칸에서 같이 정해요.</p>' + qs.map(qHtml).join("") + (live.length ? '<h3 class="small" style="margin:14px 0 4px">고를 것 ' + ledgerOpen().length + "</h3>" : "");
+    if (!lg) h += qs.length ? "" : '<p class="muted small">다음 결산이 끝나면 결산 원장의 🗳 목록이 여기 떠요.</p>';
+    else if (!live.length) h += qs.length ? "" : '<p class="muted small">고를 게 없어요. 결산이 새 후보를 찾으면 여기 떠요.</p>';
     else {
       h += '<p class="small muted">항목마다 바로 골라요 — 누르면 그 항목만 바로 맥의 Brainy에게 가고, Brainy의 답과 처리 결과가 그 칸에 떠요. 궁금하면 칸에 바로 물어보세요.</p>';
       h += live.map(ledgerItemHtml).join("");
@@ -473,7 +475,8 @@ patch("""headView("기록", "점검·결산·명령 · 지난 기록")""", """he
 patch("""var nv = S.noteView === "cal" ? "cal" : "ops", nWait""", """var nv = ["sug", "led", "cal"].indexOf(S.noteView) >= 0 ? S.noteView : "sug", nWait""")
 patch_between("""    h += '<div class="chips" role="tablist" aria-label="기록 보기">'""", """.join("") + "</div>";""",
       """    var nRep = (S.reports || []).filter(function (r) { return r.status !== "답함"; }).length;
-    h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["sug", "☀️ 제안·점검" + (nRep ? " " + nRep : "")], ["led", "🗳 결산" + (nWait ? " " + nWait : "")], ["cal", "📅 지난 기록"]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";""")
+    var nLed = nWait + openQs().length;
+    h += '<div class="chips" role="tablist" aria-label="기록 보기">' + [["sug", "☀️ 제안·점검" + (nRep ? " " + nRep : "")], ["led", "🗳 결산" + (nLed ? " " + nLed : "")], ["cal", "📅 지난 기록"]].map(function (x) { return '<button class="chip" data-act="nview" data-v="' + x[0] + '" aria-pressed="' + (nv === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";""")
 patch("""    if (nv === "ops") return h + viewOps();""", """    if (nv === "sug" || nv === "led") return h + viewOps(nv);""")
 patch("""  function viewOps() {""", """  function viewOps(part) {""")
 patch("""    h += morningCard(canCmd);
@@ -485,7 +488,6 @@ patch("""    h += morningCard(canCmd);
     }""")
 patch("""if (act === "goops") { S.tab = "notes"; S.noteView = "ops";""", """if (act === "goops") { S.tab = "notes"; S.noteView = "led";""")
 # 로그 / Brainy와 진행 — 이름 통일
-patch("""'>💬 Brainy와 대화</button></div>' + icHtml("q:" + q.id)""", """'>Brainy와 진행</button></div>' + icHtml("q:" + q.id)""")
 patch("""data-src="' + k + '">💬 Brainy와 대화</button>""", """data-src="' + k + '">Brainy와 진행</button>""")
 patch(""">로그만</button>""", """>로그</button>""", 2)
 # 오늘 쓰기 칸: 칸 아래 [로그] [Brainy와 진행] — 로그는 지금 바로 저장, 진행은 쓴 내용으로 그 칸에서 Brainy와

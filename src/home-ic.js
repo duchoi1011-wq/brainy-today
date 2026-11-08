@@ -1,7 +1,7 @@
   /* ── 칸 안 대화: 직접 쓰는 칸마다 「💬 Brainy와 대화」 — 그 칸 바로 아래에서 이어진다 (build.py 가 끼움) ── */
   function icCtx(key) {
     var k = key.split(":")[0], rest = key.slice(k.length + 1), d = curDay();
-    if (k === "q") { var q = (((S.main || {}).brainy || {}).questions || []).filter(function (x) { return x.id === rest; })[0]; return "오늘 탭 「Brainy 질문」 칸 — 결산 때 Brainy가 한 질문: 「" + (q ? q.text : rest) + "」. 동욱의 답을 듣고 필요하면 앱 도구로 바로 반영한다."; }
+    if (k === "q") { var q = (((S.main || {}).brainy || {}).questions || []).filter(function (x) { return x.id === rest; })[0]; return "기록 탭 「🗳 결산」 칸의 결산 질문 — 결산 때 Brainy가 한 질문: 「" + (q ? q.text : rest) + "」. 동욱의 답을 듣고 필요하면 앱 도구로 바로 반영한다."; }
     if (k === "memo") return "기록 탭 「지금 떠오른 것」 메모 칸 — 동욱이 쓰던 메모를 같이 다듬거나 정리한다. 남기라고 하면 add_note 로 남긴다.";
     if (k === "tl") { var th = findTask(rest); return "태스크 「" + rest + "」 기록 칸 — 동욱이 이 태스크에 한 일·정한 것·막힌 것을 이야기한다. 태스크 노트: " + (th ? clip(th.task.body, 5000) : "(없음)"); }
     if (k === "fd") return "오늘 쓰기 「" + labelOf(rest) + "」 칸 (key " + rest + ") — 지금 적힌 것: " + clip(JSON.stringify(((d.notes || {})[rest]) || {}), 4000) + ". 동욱이 이 칸 글을 같이 쓰거나 다듬자고 하면 write_today 로 그 칸에 바로 적는다.";
@@ -29,6 +29,18 @@
     S.sample([{ role: "user", content: rules }].concat(hist).concat([{ role: "user", content: text }]), opts)
       .then(function (r) { ai.t = (r && r.text) || ai.t; }, function (e) { ai.t = (e && e.text) || "답을 받지 못했어요. 다시 보내 주세요."; })
       .then(function () { ai.pending = false; S.icBusy[key] = false; render(); });
+  }
+  /* ── 결산 질문: 결산 때 Brainy가 한 질문 — 따로 띄우지 않고 「🗳 결산」 칸 안에서 결산 대기와 같이 답한다 ── */
+  function openQs() {
+    var ans = (S.checks[TODAY] && S.checks[TODAY].answers) || {}, qa = S.qa || (S.qa = {});
+    return (((S.main || {}).brainy || {}).questions || []).filter(function (q) { return !ans[q.id] || qa[q.id] || (S.ic["q:" + q.id] || []).length; });
+  }
+  function qHtml(q) {
+    var ans = (S.checks[TODAY] && S.checks[TODAY].answers) || {}, qa = S.qa || {};
+    if (qa[q.id]) return '<div class="q"><p>' + esc(q.text) + '</p><p class="small' + (qa[q.id].err ? '" style="color:var(--warn)">' : ' muted">') + (qa[q.id].busy ? "Brainy가 바로 반영하는 중…" : esc(qa[q.id].msg)) + "</p></div>";
+    var draft = S.drafts[q.id] != null ? S.drafts[q.id] : (ans[q.id] || "");
+    var savedNow = ans[q.id] && ans[q.id] === draft;
+    return '<div class="q"><p>' + esc(q.text) + '</p><textarea id="ans-' + q.id + '" data-q="' + q.id + '" rows="1" placeholder="한 줄이면 돼요"' + (S.db && !S.readOnly ? "" : " disabled") + ">" + esc(draft) + '</textarea><div class="qrow">' + (savedNow ? '<span class="pill good">보냄</span>' : "") + '<button class="btn" data-act="answer" data-q="' + q.id + '"' + (S.db && !S.readOnly && draft.trim() && !savedNow ? "" : " disabled") + '>로그</button><button class="btn primary" data-act="ictalk" data-k="q:' + q.id + '" data-src="ans-' + q.id + '"' + (S.icBusy["q:" + q.id] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("q:" + q.id) + "</div>";
   }
   /* ── 긴 할 일 줄을 「짧은 제목 — 설명」으로 나눠 보이기 (볼트 규칙: 완료 기준·결산 줄은 짧은 제목 — 설명) ── */
   function stepSplit(s) {
