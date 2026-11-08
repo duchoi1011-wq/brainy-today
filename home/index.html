@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "b8eb129ebe"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=b8eb129ebe"></script>
+<script>window.BRAINY_VERSION = "4b45f4d28b"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=4b45f4d28b"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -414,7 +414,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     ask: { state: "idle", q: "", text: "", msg: "", ctl: null },
     ledger: null, morning: null, cmds: [], cfg: {}, mcp: null, mcpOff: false,
     cal: {}, calDay: null, reports: [], ans: {}, ansBusy: {}, ansMsg: {}, lgSel: {}, ic: {}, icQ: {}, icBusy: {}, lgT: {}, lgQ: {}, lgAsk: {}, lgCmdLocal: {}, lgBusy: false, lgMsg: "", tw: {}, twRun: {}, twDraft: {}, noteView: null, tasklog: [], tlDraft: {}, tlBusy: {}, tlMsg: {},
-    triggers: null, trigState: "idle", trigMsg: "", trigAt: 0, cmdText: "", autoState: {}, nrDraft: {}, moBusy: false, moMsg: null, retrying: {}, thOpen: {}, exp: {}, dl: null, insta: [], igThumb: {}, igCap: {}, igBusy: {}, igMsg: {}, igOpen: {}, igFix: {}, cmdBusy: false, cmdMsg: "", fireAsk: null, fired: {}
+    triggers: null, trigState: "idle", trigMsg: "", trigAt: 0, cmdText: "", autoState: {}, nrDraft: {}, moBusy: false, moMsg: null, retrying: {}, thOpen: {}, exp: {}, dl: null, insta: [], igThumb: {}, igCap: {}, igBusy: {}, igMsg: {}, igOpen: {}, igFix: {}, cmdBusy: false, cmdMsg: "", midBusy: false, midMsg: null, fireAsk: null, fired: {}
   };
   var CC_SERVER = "Claude Code Remote";
   var KINDS = ["씨앗", "할일", "운동", "식단", "지출", "일정", "회고", "질문"];
@@ -1934,6 +1934,23 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (sentN.length && S.ledger) { var sn = Object.assign({}, S.ledger.sent || {}), at = new Date().toISOString(); sentN.forEach(function (k) { sn[k] = at; }); S.ledger.sent = sn; S.db.doc("ledger/main").update({ sent: sn }).catch(function () {}); }
       S.lgBusy = false; S.lgSel = {}; S.lgAll = ""; S.lgMsg = m; S.lgErr = false; render(); }, function (e) { S.lgBusy = false; S.lgMsg = e.message; S.lgErr = true; render(); });
   }
+  /* ---------- ⚡ 중간 결산: 앱에 쓴 것을 지금 볼트로 최신화 (2026-11-08 동욱) ---------- */
+  var MID_CLOSE = "중간 결산";
+  function midCloseCmd() { return lastCmd(function (t) { return t === MID_CLOSE; }); }
+  function midClosePending() { var c = midCloseCmd(); return !!c && /보내는 중|처리 중/.test(c.status || "") && Date.now() - new Date(c.createdAt || 0).getTime() < 30 * 60000; }
+  function midClose() {
+    if (S.midBusy || midClosePending()) return;
+    S.midBusy = true; S.midMsg = null; render();
+    sendCommand(MID_CLOSE).then(function (m) { S.midBusy = false; S.midMsg = { t: m }; render(); }, function (e) { S.midBusy = false; S.midMsg = { t: e.message, err: true }; render(); });
+  }
+  function midCloseCard(canCmd) {
+    var pend = midClosePending(), off = !canCmd || S.midBusy || pend;
+    var h = '<section class="card"><div class="progress-row"><h2>⚡ 중간 결산</h2><button class="btn primary" data-act="midclose"' + (off ? " disabled" : "") + ">" + (S.midBusy ? "보내는 중…" : pend ? "결산하는 중…" : "⚡ 중간 결산") + "</button></div>";
+    h += '<p class="small muted">앱에 쓴 깨끗한 것들을 지금 옵시디언 볼트에 최신화해요 — 맥의 Brainy가 바로 처리하고, 결과는 여기와 아래 「명령」 목록에 떠요.</p>';
+    if (S.midMsg) h += '<p class="small"' + (S.midMsg.err ? ' style="color:var(--warn)"' : ' style="color:var(--good)"') + ">" + esc(S.midMsg.t) + "</p>";
+    h += replyBox(midCloseCmd());
+    return h + "</section>";
+  }
   function cmdStatusPill(c) {
     var st = c.status || "";
     var cls = st === "끝" ? "good" : st === "처리 중" || st === "보내는 중" ? "accent" : /못|멈춤|확인/.test(st) ? "warn" : "";
@@ -1947,6 +1964,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       h += viewReports();
       return h;
     }
+    h += midCloseCard(canCmd);
     // 결산 대기
     var lg = S.ledger, live = (lg && lg.items) || [];
     h += '<section class="card"><div class="progress-row"><h2>🗳 결산 대기 ' + ledgerOpen().length + '</h2><span class="small muted">' + (lg && lg.updatedAt ? "원장 " + whenKo(lg.updatedAt) + " 기준" : "결산 원장") + "</span></div>";
@@ -2482,6 +2500,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "lgask") { var ln2 = t.getAttribute("data-n"), it2 = ledgerOpen().filter(function (x) { return String(x.n) === ln2; })[0]; if (it2) { ledgerChat(); openChat(null, "🗳 결산 대기 " + it2.n + "번 「" + it2.text + "」 같이 정리하자. 이게 무슨 뜻이고 왜 올라왔는지, 응/고쳐서/나중에/빼 중 뭐가 나을지 근거와 함께 짧게 말해 줘."); } return; }
     if (act === "lgtalk") { var op = ledgerOpen(); if (op.length) { ledgerChat(); openChat(null, "🗳 결산 대기 " + op.length + "개를 하나씩 정리하자. " + op[0].n + "번부터 — 뜻과 추천을 짧게 말하고 내 답을 기다려. 내가 정하면 바로 보내고 다음 번호로 넘어가."); } return; }
     if (act === "cmdgo") { submitCmd(); return; }
+    if (act === "midclose") { midClose(); return; }
     if (act === "cmdsend") { S.cmdText = t.getAttribute("data-v"); submitCmd(); return; }
     if (act === "trigload") { loadTriggersOnce(); return; }
     if (act === "fireask") { S.fireAsk = t.getAttribute("data-id"); render(); return; }
