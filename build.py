@@ -463,7 +463,8 @@ patch("""      h += "</section>";
 
   /* ---------- 오늘 체크 줄""")
 
-# 12) 페이지를 짧게 (2026-11-07 동욱): ① 오늘 = 최신 제안 · 점검(결산 요약·Brainy 질문·최근 점검 1개) · 오늘 체크만
+# 12) 페이지를 짧게 (2026-11-07 동욱): ① 오늘 = 최신 제안 · 점검(결산 요약·최근 점검 1개) · 오늘 체크만
+#     (Brainy 질문 칸은 뺐다 — 2026-11-08 동욱: "질문 없애, 결국 결산에서 하는데")
 #     ② 기록 = 「제안·점검」(아침 제안·점검 결과·인스타) · 「결산」(결산 대기·명령) · 「지난 기록」
 #     ③ 내가 쓰는 칸은 모두 「로그」(쓴 대로 남기기·보내기)와 「Brainy와 진행」(그 칸에서 Brainy와 이어 가기) 두 가지
 patch_between((root / "src" / "home-today-anchor.js").read_text(encoding="utf-8"), "    return h;\n  }\n\n  /* ---------- 오늘 체크 줄", (root / "src" / "home-today.js").read_text(encoding="utf-8"))
@@ -485,7 +486,6 @@ patch("""    h += morningCard(canCmd);
     }""")
 patch("""if (act === "goops") { S.tab = "notes"; S.noteView = "ops";""", """if (act === "goops") { S.tab = "notes"; S.noteView = "led";""")
 # 로그 / Brainy와 진행 — 이름 통일
-patch("""'>💬 Brainy와 대화</button></div>' + icHtml("q:" + q.id)""", """'>Brainy와 진행</button></div>' + icHtml("q:" + q.id)""")
 patch("""data-src="' + k + '">💬 Brainy와 대화</button>""", """data-src="' + k + '">Brainy와 진행</button>""")
 patch(""">로그만</button>""", """>로그</button>""", 2)
 # 오늘 쓰기 칸: 칸 아래 [로그] [Brainy와 진행] — 로그는 지금 바로 저장, 진행은 쓴 내용으로 그 칸에서 Brainy와
