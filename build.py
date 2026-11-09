@@ -745,3 +745,15 @@ redirect = """<!doctype html>
 # 열려 있던 옛 화면이 version.txt 를 보고 스스로 새로 고치면 → 이 넘김 페이지 → home/
 (root / "version.txt").write_text(hashlib.sha1(redirect.encode()).hexdigest()[:10] + "\n", encoding="utf-8")
 print("index.html → home/ 넘김")
+
+# ═════════════════════════ 클로드 코드 명령어 최신화 알림 ═════════════════════════
+# 동욱 (2026-11-09): 앱을 점검·고칠 때마다 맥 단축키의 「iTerm2 · 클로드 코드」를 지금 클로드 코드와 맞춘다.
+# 맞춘 날은 src/shortcuts.html 의 「클로드 코드 최신화 YYYY-MM-DD」 — 오래되면 빌드 끝에 알려 준다 (멈추진 않는다).
+import datetime
+import re
+m = re.search(r"클로드 코드 최신화 (\d{4}-\d{2}-\d{2})", (root / "src" / "shortcuts.html").read_text(encoding="utf-8"))
+if not m:
+    print("⚠ 맥 단축키: 「클로드 코드 최신화 날짜」를 못 찾았어요 — 클로드 코드 명령어를 맞추고 날짜를 적어 주세요")
+else:
+    age = (datetime.date.today() - datetime.date.fromisoformat(m.group(1))).days
+    print(f"클로드 코드 명령어 최신화 {m.group(1)} ({age}일 전)" + (" — ⚠ 이번에 같이 최신화하세요" if age > 0 else ""))
