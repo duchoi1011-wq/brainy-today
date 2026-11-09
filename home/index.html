@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "1efc2efd36"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=1efc2efd36"></script>
+<script>window.BRAINY_VERSION = "0b0e352ac3"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=0b0e352ac3"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -893,21 +893,72 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     return h;
   }
 
+  // 한 카드가 데이터 모양 때문에 깨져도 몸 탭 전체가 비지 않게 카드마다 따로 그린다
+  function safeCard(name, fn) {
+    try { return fn() || ""; } catch (e) { return '<section class="card"><h2>' + esc(name) + '</h2><p class="small muted">이 카드를 그리지 못했어요 — 데이터 모양이 달라요. 다음 밤 점검 때 Brainy가 맞춰요.</p></section>'; }
+  }
+  function num(v) { var n = typeof v === "string" ? parseFloat(v) : v; return typeof n === "number" && isFinite(n) ? n : null; }
   function viewBody() {
     var m = S.main;
     var h = headView("몸", "턱걸이 20개 · 체중 75kg") + statusNotice();
-    if (!m || !m.health) return h + emptyMain();
-    h += garminView();
-    var x = m.health, w = x.weight;
-    var wr = pct(w.start, w.now, w.goal);
-    h += '<section class="card"><h2>체중</h2><div class="mv" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="big">' + w.now + '<span class="small muted"> kg</span></span><span class="pill accent">남은 ' + (Math.round((w.now - w.goal) * 10) / 10) + 'kg</span></div><div class="track"><div class="fill" style="width:' + wr + '%"></div></div><div class="ends"><span>' + w.start + "kg 시작</span><span>목표 " + w.goal + 'kg</span></div><div class="grid2"><div class="stat"><span class="small muted">체지방</span><span class="v">' + x.bodyFat.pct + '%</span><span class="small muted">' + x.bodyFat.kg + 'kg</span></div><div class="stat"><span class="small muted">골격근</span><span class="v">' + x.muscle.kg + 'kg</span><span class="small muted">인바디 ' + md(w.asOf) + "</span></div></div></section>";
-
-    var pu = x.pullup, ticks = [12, 15, 18, 20];
-    h += '<section class="card"><h2>턱걸이 1세트 최대</h2><span class="big">' + pu.now + '<span class="small muted"> / ' + pu.goal + '개</span></span><div class="track"><div class="fill" style="width:' + (pu.now / pu.goal * 100) + '%"></div>' + ticks.map(function (t) { return '<span class="tick" style="left:calc(' + (t / pu.goal * 100) + '% - 1px)"></span>'; }).join("") + '</div><div class="ends"><span>0</span><span>M1 12 · M2 15 · M3 18 · 20</span></div><p class="small muted">' + md(pu.asOf) + " 기록 · 다음 마일스톤 15개</p></section>";
-
-    var tg = x.targets;
+    var x = (m && m.health) || null;
+    if (!x && !S.garmin && !Object.keys(S.checks).length) return h + emptyMain();
+    h += safeCard("이번 주 운동", bodyWeekView);
+    if (x) {
+      h += safeCard("턱걸이 1세트 최대", function () { return pullupView(x); });
+      h += safeCard("체중", function () { return weightView(x); });
+    }
+    h += safeCard("가민 커넥트", garminView);
+    if (!x) return h + (m ? "" : emptyMain());
+    h += safeCard("최근 7일 식단", function () { return dietView(x); });
+    return h;
+  }
+  function weightView(x) {
+    var w = x.weight || {}, bf = x.bodyFat || {}, mu = x.muscle || {};
+    var now = num(w.now), goal = num(w.goal) || 75, start = num(w.start);
+    if (now == null) return "";
+    var wr = start != null ? pct(start, now, goal) : 0;
+    return '<section class="card"><h2>체중 · 체성분</h2><div class="mv" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="big">' + now + '<span class="small muted"> kg</span></span><span class="pill accent">남은 ' + (Math.round((now - goal) * 10) / 10) + 'kg</span></div><div class="track"><div class="fill" style="width:' + wr + '%"></div></div><div class="ends"><span>' + (start != null ? start + "kg 시작" : "") + "</span><span>목표 " + goal + 'kg</span></div><div class="grid2"><div class="stat"><span class="small muted">체지방</span><span class="v">' + (bf.pct != null ? bf.pct + "%" : "—") + '</span><span class="small muted">' + (bf.kg != null ? bf.kg + "kg" : "") + '</span></div><div class="stat"><span class="small muted">골격근</span><span class="v">' + (mu.kg != null ? mu.kg + "kg" : "—") + '</span><span class="small muted">' + (w.asOf ? "인바디 " + md(w.asOf) : "") + "</span></div></div></section>";
+  }
+  function pullupView(x) {
+    var pu = x.pullup || {}, now = num(pu.now != null ? pu.now : pu.max), goal = num(pu.goal) || 20, ticks = [12, 15, 18, 20];
+    if (now == null) return "";
+    var nextM = ticks.filter(function (t) { return t > now; })[0];
+    return '<section class="card"><h2>턱걸이 1세트 최대</h2><span class="big">' + now + '<span class="small muted"> / ' + goal + '개</span></span><div class="track"><div class="fill" style="width:' + Math.min(100, now / goal * 100) + '%"></div>' + ticks.map(function (t) { return '<span class="tick" style="left:calc(' + Math.min(100, t / goal * 100) + '% - 1px)"></span>'; }).join("") + '</div><div class="ends"><span>0</span><span>M1 12 · M2 15 · M3 18 · 20</span></div><p class="small muted">' + (pu.asOf ? md(pu.asOf) + " 기록" : "") + (nextM ? (pu.asOf ? " · " : "") + "다음 마일스톤 " + nextM + "개" : "") + "</p></section>";
+  }
+  // 이번 주(월~오늘) 운동: 앱 체크 + 가민 활동 + 볼트 건강 기록을 날짜별로 모은다
+  function bodyWeekView() {
+    var m = S.main || {}, wk = ymd(mondayOf(NOW)), end = ymd(new Date(mondayOf(NOW).getTime() + 6 * 86400000));
+    var byDay = {};
+    function add(d, txt) { if (!d || d < wk || d > end || !txt) return; var l = byDay[d] = byDay[d] || []; if (l.indexOf(txt) < 0) l.push(txt); }
+    Object.keys(S.checks).forEach(function (d) {
+      var c = S.checks[d] || {}, n = (c.notes && c.notes.workout) || {};
+      if (n.type === "쉼") return;
+      if (n.type || n.sets || n.min) add(d, [n.type, String(n.sets || "").trim().replace(/\n+/g, " · "), n.min ? n.min + "분" : ""].filter(Boolean).join(" · "));
+      else if (c.items && c.items.workout) add(d, "운동 체크");
+    });
+    var G = S.garmin || {}, acts = (G.activities || []).slice();
+    S.gups.forEach(function (u) { (u.activities || []).forEach(function (a) { acts.push(a); }); });
+    var seen = {};
+    acts.forEach(function (a) {
+      if (!a || !a.date) return; var k = a.date + "|" + a.type + "|" + a.km; if (seen[k]) return; seen[k] = 1;
+      add(a.date, [a.type, a.km ? a.km + "km" : "", a.sets ? a.sets + "세트" : "", a.min ? a.min + "분" : ""].filter(Boolean).join(" · ") + " (가민)");
+    });
+    ((m.health && m.health.days) || []).forEach(function (d) { if (d.exercise) add(d.date, String(d.exercise)); });
+    var dates = Object.keys(byDay).sort();
+    var pr = (m.promises || []).filter(function (p) { return keyForPromise(p.key) === "workout" || /운동|workout/i.test((p.key || "") + " " + (p.label || "")); })[0];
+    var done = pr ? weekCount(pr).done : 0;
+    if (!pr) Object.keys(S.checks).forEach(function (d) { if (d >= wk && d <= end && S.checks[d].items && S.checks[d].items.workout) done++; });
+    var goal = pr ? pr.goal : null;
+    var h = '<section class="card"><div class="progress-row"><div><h2>이번 주 운동</h2><p class="small muted">' + md(wk) + "~" + md(end) + " · 앱 체크 + 가민 기록</p></div>" + (goal ? '<div class="ring" style="--p:' + Math.round(Math.min(1, done / goal) * 100) + '"><span>' + done + "/" + goal + "</span></div>" : '<span class="num">' + done + "회</span>") + "</div>";
+    if (dates.length) h += '<div class="tablewrap"><table class="days"><tbody>' + dates.map(function (d) { return "<tr><td style='white-space:nowrap;width:64px'>" + md(d) + " " + DOW[parse(d).getDay()] + "</td><td>" + byDay[d].map(esc).join("<br>") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    else h += '<p class="small muted">이번 주 운동 기록이 아직 없어요. 기록 탭 운동 칸에 적으면 여기 모여요.</p>';
+    return h + "</section>";
+  }
+  function dietView(x) {
+    var tg = x.targets || { kcal: 1800, protein: 160 }, h = "";
     h += '<section class="card"><h2>최근 7일 식단</h2><p class="small">하루 목표 <span class="num">' + tg.kcal.toLocaleString() + '</span>kcal · 단백질 <span class="num">' + tg.protein + '</span>g</p><div class="tablewrap"><table class="days"><thead><tr><th>날짜</th><th class="n">섭취</th><th class="n">단백질</th><th>운동</th></tr></thead><tbody>';
-    var rows = (x.days || []).map(function (d) { return Object.assign({}, d); });
+    var rows = (x.days || []).filter(function (d) { return d && d.date; }).map(function (d) { return Object.assign({}, d); });
     var have = {}; rows.forEach(function (r) { have[r.date] = r; });
     Object.keys(S.checks).sort().forEach(function (dt) { if (!have[dt] && dt > (rows.length ? rows[rows.length - 1].date : "")) { var r = { date: dt, kcal: null, protein: null, exercise: "" }; rows.push(r); have[dt] = r; } });
     rows = rows.slice(-7);
@@ -930,7 +981,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var base = S.garmin || { metrics: [], activities: [], sleepDays: [] };
     var mets = {}, acts = [], seenA = {}, sleep = {};
     function addM(x, src) { if (!x || !x.key) return; var cur = mets[x.key]; if (!cur || (x.date || "") >= (cur.date || "")) { var y = Object.assign({}, x, { src: src }); if (cur && cur.value !== x.value && !x.prev) y.prev = cur.value + (cur.date ? " (" + md(cur.date) + ")" : ""); mets[x.key] = y; } }
-    function addA(a) { var k = a.date + "|" + a.type + "|" + a.km; if (seenA[k]) return; seenA[k] = 1; acts.push(a); }
+    function addA(a) { if (!a) return; var k = a.date + "|" + a.type + "|" + a.km; if (seenA[k]) return; seenA[k] = 1; acts.push(a); }
     (base.metrics || []).forEach(function (x) { addM(x, "seed"); });
     (base.activities || []).forEach(addA);
     (base.sleepDays || []).forEach(function (s) { sleep[s.date] = s.score; });
@@ -957,9 +1008,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function garminView() {
     var G = S.garmin;
     if (!G) return '<section class="card"><h2>가민 커넥트</h2><p class="muted small">불러오는 중이에요…</p></section>';
-    if (!G.days) return legacyGarminView();
-    var gm = garminMerged(), now = G.now || {}, days = G.days || [], acts = (G.activities || []).slice();
-    S.gups.forEach(function (u) { (u.activities || []).forEach(function (x) { if (!acts.some(function (y) { return y.date === x.date && y.km === x.km && y.type === x.type; })) acts.push(Object.assign({ source: "캡처" }, x)); }); });
+    if (!Array.isArray(G.days) || !G.days.length) return legacyGarminView();
+    var gm = garminMerged(), now = G.now || {}, days = G.days.filter(function (d) { return d && d.d; }), acts = (G.activities || []).filter(function (a) { return a && a.date; });
+    if (!days.length) return legacyGarminView();
+    if (!G.range || !G.range[0]) G = Object.assign({}, G, { range: [days[0].d, days[days.length - 1].d] });
+    S.gups.forEach(function (u) { (u.activities || []).forEach(function (x) { if (x && x.date && !acts.some(function (y) { return y.date === x.date && y.km === x.km && y.type === x.type; })) acts.push(Object.assign({ source: "캡처" }, x)); }); });
     acts.sort(function (x, y) { return (y.date + (y.time || "")).localeCompare(x.date + (x.time || "")); });
     var last = days[days.length - 1] || {};
     var h = '<section class="card"><div class="progress-row"><div><h2>가민 커넥트</h2><p class="small muted">' + esc(G.source || "") + " · " + md(G.range[0]) + "~" + md(G.range[1]) + (daysBetween(G.range[1], TODAY) > 2 ? ' · <span style="color:var(--warn)">' + daysBetween(G.range[1], TODAY) + "일 전 데이터</span>" : "") + "</p></div></div>";
@@ -1020,7 +1073,19 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (S.gups.length) h += '<p class="small muted">올린 캡처에서 읽은 지표: ' + gm.metrics.filter(function (x) { return x.src === "up"; }).map(function (x) { return x.label + " " + x.value + (x.unit || ""); }).join(" · ") + "</p>";
     return h + "</section>";
   }
-  function legacyGarminView() { return '<section class="card"><h2>가민 커넥트</h2><p class="muted small">이전 형식 데이터예요. 새로 읽어 오면 바뀌어요.</p></section>'; }
+  // 일별 기록(days) 없이 지표·활동만 있는 데이터(캡처로 읽은 것 포함)도 그대로 보여 준다
+  function legacyGarminView() {
+    var gm = garminMerged();
+    var h = '<section class="card"><h2>가민 커넥트</h2>' + (gm.last ? '<p class="small muted">마지막 데이터 ' + md(gm.last) + "</p>" : "");
+    if (gm.coach) h += '<p class="small">' + esc(gm.coach) + "</p>";
+    if (!gm.metrics.length && !gm.activities.length) h += '<p class="muted small">아직 가민 데이터가 없어요. 아래에서 캡처를 올리거나 다음 결산 때 채워져요.</p>';
+    if (gm.metrics.length) h += '<div class="grid2">' + gm.metrics.map(function (x) { return '<div class="stat"><span class="small muted">' + esc(x.label || x.key) + '</span><span class="v">' + esc(x.value) + '<span class="small muted"> ' + esc(x.unit || "") + '</span></span><span class="small muted">' + esc([x.status, x.date ? md(x.date) : "", x.prev ? "전 " + x.prev : ""].filter(Boolean).join(" · ")) + "</span></div>"; }).join("") + "</div>";
+    h += "</section>";
+    var sd = Object.keys(gm.sleep).sort().slice(-14);
+    if (sd.length) h += '<section class="card"><h2>수면 점수 (최근 14일)</h2>' + bars(sd.map(function (d) { var v = +gm.sleep[d] || 0; return { label: parse(d).getDate() + "", v: v, top: v || "", color: v >= 80 ? "var(--good)" : v >= 60 ? "var(--accent)" : "var(--warn)", title: d }; }), { h: 120, max: 100 }) + "</section>";
+    if (gm.activities.length) h += '<details class="fold"><summary><span>활동 기록 ' + gm.activities.length + '개</span></summary><div class="md"><table><thead><tr><th>날짜</th><th>종류</th><th>거리·시간</th><th>심박</th><th>kcal</th></tr></thead><tbody>' + gm.activities.map(function (x) { return "<tr><td>" + (x.date ? md(x.date) : "") + "</td><td>" + esc(x.type) + "</td><td>" + (x.km ? esc(x.km) + "km<br>" : "") + esc(x.min ? x.min + "분" : x.time || "") + "</td><td>" + esc(x.hr || "") + "</td><td>" + esc(x.kcal || "") + "</td></tr>"; }).join("") + "</tbody></table></div></details>";
+    return h;
+  }
   function uploadGarmin(files) {
     if (!files || !files.length || !S.sample || !S.db) return;
     var list = Array.prototype.slice.call(files, 0, S.maxImages || 5);
