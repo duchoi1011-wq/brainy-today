@@ -39,8 +39,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "f40ea5c6f9"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=f40ea5c6f9"></script>
+<script>window.BRAINY_VERSION = "1efc2efd36"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=1efc2efd36"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -607,7 +607,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function dest(t) { return '<p class="dest">자동으로 → ' + t + "</p>"; }
   var WTYPES = ["풀", "푸시", "컨디셔닝", "쉼"];
   var SKIN = ["토너", "로션", "세럼", "영양크림", "선크림"];
-  var WCHK = ["7up 말씀", "묵상", "기도하기", "성경읽기"];
+  var WCHK = ["7up 음성 듣기", "묵상", "기도하기", "성경읽기"];
   var WQ = ["성령님, 이 말씀을 통하여 저에게 무엇을 말씀하시길 원하십니까?", "성령님, 주신 말씀에 따라 제가 구체적으로 어떻게 하기를 원하십니까?", "성령님, 그것을 위해 제가 무엇을 기도하기 원하십니까?", "왜 이 기도제목들이 내게 필요했는가?", "오늘의 말씀을 통해 내 삶에 어떤 변화가 일어났는가? 기도응답은 있는가?"];
   var QNA = ["오늘 깨달은 것", "아직 안 풀린 질문은?", "내일 놓치기 싫은 것은?", "감사할 부분", "칭찬할 부분", "SOC — 오늘 하나님 앞에서 훈련된 영역", "기도가 필요한 부분"];
   function stepChips(key, list, on, w) {
@@ -617,7 +617,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     saveDay(function (b) {
       b.notes[key] = Object.assign({}, b.notes[key] || {});
       var f = key === "skin" ? "steps" : "chk";
-      var o = Object.assign({}, b.notes[key][f] || {}); if (o[v]) delete o[v]; else o[v] = true; b.notes[key][f] = o;
+      var o = Object.assign({}, b.notes[key][f] || {}); if (key === "worship" && o["7up 말씀"]) { delete o["7up 말씀"]; o["7up 음성 듣기"] = true; } if (o[v]) delete o[v]; else o[v] = true; b.notes[key][f] = o;
       var any = Object.keys(o).length > 0;
       if (key === "skin") { if (any) b.items.skin = true; else delete b.items.skin; }
       if (key === "worship" && Object.keys(o).length === WCHK.length) b.items.worship = true;
@@ -638,9 +638,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   }
   var DETAIL = {
     worship: function (d, w) {
-      var n = d.notes.worship || {}, c = n.chk || {};
+      var n = d.notes.worship || {}, c = Object.assign({}, n.chk || {});
+      if (c["7up 말씀"]) c["7up 음성 듣기"] = true;
       var h = stepChips("worship", WCHK, c, w);
-      h += '<div class="fields"><label class="small muted" for="f-worship-verse">● 7up — 주시는 말씀 (구절과 말씀 그대로)</label>' + ta("worship", "verse", "예: 시 145:17 — 여호와는 그의 모든 행위에 의로우시며…", n.verse, w) +
+      h += '<div class="fields"><label class="small muted" for="f-worship-verse">● 7up — 기도하며 듣는 하나님의 음성 (들은 그대로 적어요)</label>' + ta("worship", "verse", "기도하는 동안 마음에 주시는 하나님의 음성을 들은 그대로 적어요.", n.verse, w) +
         '<label class="small muted" for="f-worship-passage">● 묵상 본문 — 본문을 통째로 붙여 넣어도 돼요</label>' + ta("worship", "passage", "예: 요 1:29-34\n29 이틀날 요한이 예수께서 자기에게 나아오시는 것을 보고…", n.passage, w, true) +
         '<label class="small muted" for="f-worship-pray">● 기도 (분)</label>' + li("worship", "pray", "60", n.pray, "number", w) +
         '<label class="small muted" for="f-worship-title">● 묵상 제목</label>' + li("worship", "title", "내 말로 한 줄", n.title, "text", w);
@@ -649,7 +650,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (n.prayer) h += '<label class="small muted" for="f-worship-prayer">기도 (앞서 쓴 글)</label>' + ta("worship", "prayer", "", n.prayer, w);
       h += '<label class="small muted" for="f-worship-bible">● 성경읽기 — 읽은 범위</label>' + li("worship", "bible", "예: 창 1-3장", n.bible, "text", w) +
         '<label class="small muted" for="f-worship-bibleNote">● 성경읽기 노트 — 읽으면서 느낀 것 · 기억할 구절</label>' + ta("worship", "bibleNote", "자유롭게 적어요. 비워 두면 노트에 붙지 않아요.", n.bibleNote, w) + "</div>";
-      return h + doneBar("worship", w, d) + dest("그날 경건생활 노트 — 7up · 묵상 본문 · 제목 · 1~5번 질문 · 기도하기 · 성경읽기 칸 그대로 (노트는 범위 다음 줄에)");
+      return h + doneBar("worship", w, d) + dest("그날 경건생활 노트 — 7up(들은 음성) · 묵상 본문 · 제목 · 1~5번 질문 · 기도하기 · 성경읽기 칸 그대로 (노트는 범위 다음 줄에)");
     },
     qna: function (d, w) {
       var n = d.notes.qna || {}, h = '<div class="fields">';
@@ -2243,7 +2244,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         execute: function (i) { var dd = String(i.date || ""); act("🔎 " + dd + " 기록 읽음"); var c = S.checks[dd]; if (!c) return "그날 앱 기록 없음"; return clip(JSON.stringify(c), 20000); } },
       { name: "check_item", description: "오늘 체크 항목을 완료하거나 취소한다. key: worship(경건생활) qna(QnA) journal(저널·기도일기) sentence(오늘의 글) workout(운동) content(이벤트랩 콘텐츠) meal(식단) spend(지출) skin(스킨케어).", inputSchema: { type: "object", properties: { key: keyEnum, done: { type: "boolean" } }, required: ["key", "done"] },
         execute: function (i) { var k = String(i.key), on = i.done !== false; if (ITEM_KEYS.indexOf(k) < 0) throw new Error("알 수 없는 key"); saveDay(function (b) { if (on) b.items[k] = true; else delete b.items[k]; }); act((on ? "✓ 체크 · " : "↺ 체크 취소 · ") + labelOf(k)); return "ok"; } },
-      { name: "write_today", description: "오늘 체크 항목의 글 칸에 쓴다. key별 field — worship: verse(7up 말씀) passage(묵상 본문) title(묵상 제목) q1~q5(묵상 질문 1~5번 답) pray(기도 분) bible(성경읽기 범위) bibleNote(성경읽기 노트 — 느낀 것·기억할 구절) · qna: a1~a7(1 깨달은 것 2 안 풀린 질문 3 내일 놓치기 싫은 것 4 감사 5 칭찬 6 SOC 7 기도 필요) · journal: text(기도일기) · sentence: text(오늘의 글, 첫 줄=오늘 한 일 내 문장) · workout: type(풀|푸시|컨디셔닝|쉼) sets(세트·느낌) min(분) · content: text · skin: note. append=true면 기존 글 뒤에 줄을 바꿔 이어 쓴다. 동욱이 말한 내용을 그의 말투 그대로 적는다.", inputSchema: { type: "object", properties: { key: keyEnum, field: { type: "string" }, text: { type: "string" }, append: { type: "boolean" } }, required: ["key", "field", "text"] },
+      { name: "write_today", description: "오늘 체크 항목의 글 칸에 쓴다. key별 field — worship: verse(7up — 기도 중 들은 하나님의 음성, 성경 구절 아님) passage(묵상 본문) title(묵상 제목) q1~q5(묵상 질문 1~5번 답) pray(기도 분) bible(성경읽기 범위) bibleNote(성경읽기 노트 — 느낀 것·기억할 구절) · qna: a1~a7(1 깨달은 것 2 안 풀린 질문 3 내일 놓치기 싫은 것 4 감사 5 칭찬 6 SOC 7 기도 필요) · journal: text(기도일기) · sentence: text(오늘의 글, 첫 줄=오늘 한 일 내 문장) · workout: type(풀|푸시|컨디셔닝|쉼) sets(세트·느낌) min(분) · content: text · skin: note. append=true면 기존 글 뒤에 줄을 바꿔 이어 쓴다. 동욱이 말한 내용을 그의 말투 그대로 적는다.", inputSchema: { type: "object", properties: { key: keyEnum, field: { type: "string" }, text: { type: "string" }, append: { type: "boolean" } }, required: ["key", "field", "text"] },
         execute: function (i) {
           var k = String(i.key), f = String(i.field), tx = String(i.text || ""); var ok = { worship: ["verse", "passage", "pray", "title", "q1", "q2", "q3", "q4", "q5", "bible", "bibleNote", "med", "prayer"], qna: ["a1", "a2", "a3", "a4", "a5", "a6", "a7"], journal: ["text"], sentence: ["text"], workout: ["type", "sets", "min"], content: ["text"], skin: ["note"] };
           if (!ok[k] || ok[k].indexOf(f) < 0) throw new Error("쓸 수 있는 칸: " + JSON.stringify(ok));
