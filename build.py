@@ -130,7 +130,6 @@ patch('''if (writing && DETAIL[x.key]) h += '<div class="fbody"><div class="fin"
       '''if (writing && DETAIL[x.key]) h += '<div class="fbody"><div class="fin"><div class="detail">' + (vrev_ ? '<p class="notice warn">볼트에 못 넣은 칸이 있어요 — ' + esc(vrev_) + '</p>' : "") + vaultFold(x.key)''')
 patch('db.doc("config/main").onSnapshot(function (s) { S.cfg = s.exists ? s.data() : {}; softRender(); }, fail);',
       'db.doc("config/main").onSnapshot(function (s) { S.cfg = s.exists ? s.data() : {}; softRender(); }, fail);\n    db.doc("sync/" + TODAY).onSnapshot(function (s) { S.vsync = s.exists ? s.data() : null; softRender(); }, fail);')
-patch("앱에서 쓴 건 2분 안에 같은 노트로 들어가요", "앱에서 쓴 건 몇 초 안에 같은 노트로 들어가요")
 
 # 2) Claude 가 해야 하는 명령 — cmd 문서를 "보내는 중"으로 두면 맥 동기화(cmd_runner.py)가 몇 초 안에 이 맥의 Claude 를 깨운다.
 #    Claude 가 집으면 "처리 중" → "끝" 으로 바꾼다. ("처리 중"을 앱이 먼저 쓰면 30분 동안 안 집으므로 쓰지 않는다)
@@ -490,7 +489,7 @@ patch("""data-src="' + k + '">💬 Brainy와 대화</button>""", """data-src="' 
 patch(""">로그만</button>""", """>로그</button>""", 2)
 # 오늘 쓰기 칸: 칸 아래 [로그] [Brainy와 진행] — 로그는 지금 바로 저장, 진행은 쓴 내용으로 그 칸에서 Brainy와
 patch("""DETAIL[x.key](day, w) + icHtml("fd:" + x.key, true) + "</div></div></div>";""",
-      """DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button><button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button></div>' + icHtml("fd:" + x.key) + "</div></div></div>";""")
+      """DETAIL[x.key](day, w) + '<div class="row end"><span class="small muted" id="fdlog-' + x.key + '"></span><button class="btn" data-act="fdlog" data-key="' + x.key + '">로그</button>' + (EDIT_DAY ? "" : '<button class="btn primary" data-act="fdgo" data-key="' + x.key + '"' + (S.icBusy["fd:" + x.key] ? " disabled" : "") + '>Brainy와 진행</button>') + '</div>' + (EDIT_DAY ? "" : icHtml("fd:" + x.key)) + "</div></div></div>";""")
 # 아침 제안: 「로그」(쓴 대로 반영) · 「Brainy와 진행」
 patch("""'<textarea class="grow" data-mo="1" rows=""", """'<textarea id="mo-input" class="grow" data-mo="1" rows=""")
 patch(""">" + (S.moBusy ? "보내는 중…" : "Brainy에게 보내기") + "</button></div>";""", """>" + (S.moBusy ? "보내는 중…" : "로그") + '</button><button class="btn" data-act="ictalk" data-k="mo" data-src="mo-input">Brainy와 진행</button></div>' + icHtml("mo");""")
