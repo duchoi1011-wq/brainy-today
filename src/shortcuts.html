@@ -405,7 +405,7 @@ var D = [
     빠졌거나 바뀐 것을 고친 뒤 GROUPS 「iTerm2 · 클로드 코드」 lead 의 「클로드 코드 최신화 YYYY-MM-DD」 날짜도 바꾼다.
     날짜가 오래되면 build.py 가 알려 준다. id 는 바꾸지 않는다 — ✓·★ 표시가 id 에 붙어 있다. */
  {id:"cc-start",k:[["claude"],["claude -c"]],t:"클로드 코드 시작 / 마지막 대화 이어서",d:"claude -r은 지난 대화를 골라서 이어 간다",g:"iTerm2 · 클로드 코드",x:"claude code start continue resume 시작 이어서 명령어"},
- {id:"cc-esc",k:[["esc"],["esc","esc"]],t:"하던 일 멈추기 / 되돌릴 지점 고르기",d:"esc 두 번 = /rewind — 대화·코드를 그 지점으로",g:"iTerm2 · 클로드 코드",x:"claude code escape stop interrupt rewind 멈추기 되돌리기"},
+ {id:"cc-esc",k:[["esc"],["esc","esc"]],t:"하던 일 멈추기 / 되돌릴 지점 고르기",d:"esc 두 번 = /rewind — 직전 입력·변경을 그 지점으로 되돌린다",g:"iTerm2 · 클로드 코드",x:"claude code escape stop interrupt rewind 멈추기 되돌리기 esc 두번 esc esc 직전 입력 취소"},
  {id:"cc-mode",k:[["⇧","Tab"]],t:"모드 바꾸기 — 자동 수락 / 계획 모드",d:"계획 모드는 고치기 전에 계획부터 보여 준다",g:"iTerm2 · 클로드 코드",x:"claude code shift tab plan mode auto accept 계획 모드"},
  {id:"cc-newline",k:[["⇧","↩"]],t:"보내지 않고 줄바꿈",d:"안 먹으면 /terminal-setup 한 번",g:"iTerm2 · 클로드 코드",x:"claude code newline shift enter 줄바꿈"},
  {id:"cc-at",k:[["@"],["!"]],t:"파일 집어 넣기 / 셸 명령 바로 실행",d:"@ 뒤에 파일 이름, Tab으로 완성. ! 뒤 명령은 바로 돈다",g:"iTerm2 · 클로드 코드",x:"claude code mention file bash mode 파일 명령"},
@@ -421,6 +421,7 @@ var D = [
  {id:"cc-review",k:[["/code-review"],["/simplify"]],t:"고친 코드 점검 / 다듬기",d:"/security-review는 보안만 따로",g:"iTerm2 · 클로드 코드",x:"claude code slash review simplify security 점검 리뷰 명령"},
  {id:"cc-loop",k:[["/loop"]],t:"같은 일을 간격 두고 되풀이",d:"예: /loop 5m 배포 상태 확인",g:"iTerm2 · 클로드 코드",x:"claude code slash loop repeat 반복 명령"},
  {id:"cc-help",k:[["/help"],["/doctor"]],t:"명령어 전체 보기 / 설치 점검",d:"/ 만 쳐도 지금 쓸 수 있는 명령이 뜬다",g:"iTerm2 · 클로드 코드",x:"claude code slash help doctor 도움말 점검 명령"},
+ {id:"cc-exit",k:[["/exit"],["⌃","D"]],t:"클로드 코드 끝내기",d:"⌃C 두 번으로도 나간다 — 다음에 claude -c로 이어서",g:"iTerm2 · 클로드 코드",x:"claude code slash exit quit 종료 끝내기 나가기 명령"},
  {id:"cc-update",k:[["claude update"]],t:"클로드 코드 업데이트",d:"/release-notes로 바뀐 것 확인",g:"iTerm2 · 클로드 코드",x:"claude code update release notes 업데이트 명령어"},
 
  // 프리미어 프로

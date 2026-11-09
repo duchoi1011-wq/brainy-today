@@ -541,11 +541,34 @@ VO_BRAINY = "\n" + (root / "src" / "vo-brainy.js").read_text(encoding="utf-8")
 load("shortcuts.html")
 # 목록은 볼트 `4_Outputs/단축키 앱/단축키 데이터.json` → 맥 동기화(app_data.py) → sc.data/main. 코드 안 목록은 처음 뜰 때만 쓴다.
 # ✓패스·★즐겨찾기는 sc.marks/main 에 — 모든 기기에서 같다.
+# 「iTerm2 · 클로드 코드」는 코드 안 목록이 기준 (2026-11-09 동욱: 맥 동기화 목록이 옛것이라 새 명령이 안 보였다)
+# — 같은 id 는 코드 것으로, 없는 것은 넣고, 코드에서 뺀 옛 클로드 코드 항목은 버린다. 그룹 안내·「터미널·클로드 코드」 모드도 코드 것으로.
 patch('''    DB = d;
 ''', '''    DB = d;
+    var CC_G = "iTerm2 · 클로드 코드";
+    var CC_ITEMS = D.filter(function(x){ return x.g===CC_G });
+    var CC_GROUP = GROUPS.filter(function(x){ return x.g===CC_G })[0];
+    var CC_MODE = MODES.filter(function(x){ return x.id==="term" })[0];
+    function ccMerge(v){
+      var ids = {}; CC_ITEMS.forEach(function(x){ ids[x.id] = 1 });
+      var keep = v.items.filter(function(x){ return !ids[x.id] && !(x.g===CC_G && /^cc-/.test(x.id)) });
+      var at = keep.length; keep.forEach(function(x, i){ if(x.g===CC_G) at = i + 1 });
+      v.items = keep.slice(0, at).concat(CC_ITEMS, keep.slice(at));
+      var groups = Array.isArray(v.groups) ? v.groups.slice() : GROUPS.slice();
+      var gi = groups.map(function(x){ return x.g }).indexOf(CC_G);
+      if(gi >= 0) groups[gi] = CC_GROUP; else groups.push(CC_GROUP);
+      v.groups = groups;
+      var modes = Array.isArray(v.modes) ? v.modes.slice() : MODES.slice();
+      var mi = modes.map(function(x){ return x.id }).indexOf("term");
+      if(CC_MODE){ if(mi >= 0) modes[mi] = CC_MODE; else modes.push(CC_MODE); }
+      v.modes = modes;
+      if(!Array.isArray(v.projects)) v.projects = PROJECTS;
+      return v;
+    }
     DB.doc("sc.data/main").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
       if(!v || !Array.isArray(v.items) || !v.items.length) return;
+      v = ccMerge(v);
       GROUPS = v.groups; D = v.items; MODES = v.modes; PROJECTS = v.projects;
       STARTER = D.filter(function(x){ return x.starter });
       repaint(); renderBoard();
