@@ -543,12 +543,15 @@ load("shortcuts.html")
 # ✓패스·★즐겨찾기는 sc.marks/main 에 — 모든 기기에서 같다.
 # 「iTerm2 · 클로드 코드」는 코드 안 목록이 기준 (2026-11-09 동욱: 맥 동기화 목록이 옛것이라 새 명령이 안 보였다)
 # — 같은 id 는 코드 것으로, 없는 것은 넣고, 코드에서 뺀 옛 클로드 코드 항목은 버린다. 그룹 안내·「터미널·클로드 코드」 모드도 코드 것으로.
+# PIN_IDS 의 다른 그룹 항목도 코드 것이 기준 (2026-11-10 동욱: 크롬 새로고침 ⌘R·⇧⌘R) — 같은 id 는 바꾸고, 없으면 그 그룹 끝에 넣는다.
 patch('''    DB = d;
 ''', '''    DB = d;
     var CC_G = "iTerm2 · 클로드 코드";
     var CC_ITEMS = D.filter(function(x){ return x.g===CC_G });
     var CC_GROUP = GROUPS.filter(function(x){ return x.g===CC_G })[0];
     var CC_MODE = MODES.filter(function(x){ return x.id==="term" })[0];
+    var PIN_IDS = ["ch-reload"];
+    var PIN_ITEMS = D.filter(function(x){ return PIN_IDS.indexOf(x.id) >= 0 });
     function ccMerge(v){
       var ids = {}; CC_ITEMS.forEach(function(x){ ids[x.id] = 1 });
       var keep = v.items.filter(function(x){ return !ids[x.id] && !(x.g===CC_G && /^cc-/.test(x.id)) });
@@ -563,6 +566,12 @@ patch('''    DB = d;
       if(CC_MODE){ if(mi >= 0) modes[mi] = CC_MODE; else modes.push(CC_MODE); }
       v.modes = modes;
       if(!Array.isArray(v.projects)) v.projects = PROJECTS;
+      PIN_ITEMS.forEach(function(p){
+        var ix = v.items.map(function(x){ return x.id }).indexOf(p.id);
+        if(ix >= 0){ v.items[ix] = p; return; }
+        var at = -1; v.items.forEach(function(x, i){ if(x.g===p.g) at = i });
+        if(at < 0) v.items.push(p); else v.items.splice(at + 1, 0, p);
+      });
       return v;
     }
     DB.doc("sc.data/main").onSnapshot(function(s){
