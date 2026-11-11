@@ -7,7 +7,7 @@
   var SB_KEY = "sb_publishable_MQ2J5s-lyDG9ftsZpWMZuQ_jPuCC31q"; // 공개용 키
   // 같은 주소 아래 앱 셋(Brainy 홈 · 맥 단축키 · 체화 단어장)이 이 받침을 같이 쓴다. 앱마다 자기 컬렉션만 읽는다.
   var APP = window.BRAINY_APP || { key: "home", name: "Brainy 홈", icon: "icon.svg" };
-  var OTHER = ["ai", "ai_out", "sc.data", "sc.marks", "additions", "requests", "vo.data", "vo.ids", "progress", "ctx"]; // 홈이 안 읽는 것
+  var OTHER = ["ai", "ai_out", "sc.data", "sc.marks", "additions", "requests", "vo.data", "vo.ids", "progress", "ctx", "mac"]; // 홈이 안 읽는 것 (mac = 맥 동기화 신호, 새로고침 버튼이 따로 본다)
   function mine(coll) { return APP.colls ? APP.colls.indexOf(coll) >= 0 : OTHER.indexOf(coll) < 0; }
   function inList(a) { return "(" + a.map(function (x) { return '"' + x + '"'; }).join(",") + ")"; }
   var CACHE_KEY = "brainy-docs-v1" + (APP.key === "home" ? "" : ":" + APP.key);
@@ -127,6 +127,7 @@
     var first = true;
     chan = sb.channel("brainy-docs").on("postgres_changes", { event: "*", schema: "public", table: "docs" }, function (p) {
       var path = (p.new && p.new.path) || (p.old && p.old.path); if (!path) return;
+      if (path === MAC_PATH || path.indexOf("cmd/") === 0) bsEvent(path, p);
       if (path.indexOf("ai_out/") === 0) { if (p.new && p.new.data) aiOut(path.slice(7), p.new.data); else aiPoll(path.slice(7)); return; }
       if (!mine(collOf(path))) return;            // 다른 앱 것·내가 보낸 질문 — 이 화면 데이터가 아니다
       if (pending[path] > 0) return;             // 내가 방금 쓴 것의 메아리 — 화면 값이 더 새롭다
@@ -302,6 +303,104 @@
   function hideGate() { if (gate) gate.hidden = true; }
   function setDot(s) { var d = document.getElementById("rtdot"); if (d) { d.className = s; d.title = s === "on" ? "실시간 연결됨" : s === "off" ? "연결이 끊겼어요 — 다시 잇는 중" : "연결 중"; } }
 
+
+  /* ---------- 새로고침 버튼 (세 앱 공통 · 2026-11-11 동욱) ----------
+     누르면 (a) Supabase 를 통째로 다시 읽어 화면을 최신으로 + (b) 「밀린 것 반영」 cmd 한 장 → 맥이 켜져 있으면 cmd_runner 가 집는다.
+     「마지막 동기화」= 맥 동기화가 마지막으로 돈 시각 (mac/main.seenAt, 맥이 30초마다 적음). 90초 넘게 없으면 맥 꺼짐.
+     scope 는 지금 "밀린 것" — 나중에 "전체"(중간 결산 전체)로 넓힐 자리. 맥에서만 되는 일이 안 되면 따로 표시하지 않는다. */
+  var MAC_PATH = "mac/main", MAC_FRESH = 90 * 1000, BS_SCOPE = "밀린 것";
+  var bs = { mac: null, cmd: null, busy: false, err: "", el: null, txt: null, tip: null, tipT: 0, read: false };
+  function p2(n) { return (n < 10 ? "0" : "") + n; }
+  function hm(iso) { var d = new Date(iso || ""); return isNaN(d) ? "" : p2(d.getHours()) + ":" + p2(d.getMinutes()); }
+  function macOn() { return !!(bs.mac && Date.now() - Date.parse(bs.mac.seenAt || 0) < MAC_FRESH); }
+  function bsOpen(c) { return !!c && /보내는 중|처리 중|맥 대기/.test(c.status || ""); }
+  function bsRecent(c, ms) { return !!c && !bsOpen(c) && Date.now() - Date.parse(c.doneAt || c.createdAt || 0) < ms; }
+  function bsMount() {
+    if (bs.el || !document.body) return;
+    var b = document.createElement("button");
+    b.id = "bsync"; b.type = "button"; b.hidden = true;
+    var dot = document.getElementById("rtdot") || document.createElement("span");
+    dot.id = "rtdot"; dot.setAttribute("aria-hidden", "true");
+    var ic = document.createElement("span"); ic.className = "bs-ic"; ic.setAttribute("aria-hidden", "true"); ic.textContent = "↻";
+    var tx = document.createElement("span"); tx.className = "bs-tx";
+    b.appendChild(dot); b.appendChild(ic); b.appendChild(tx);
+    var tip = document.createElement("div"); tip.id = "bsync-tip"; tip.hidden = true; tip.setAttribute("role", "status");
+    b.addEventListener("click", bsPress);
+    document.body.appendChild(b); document.body.appendChild(tip);
+    bs.el = b; bs.txt = tx; bs.tip = tip;
+  }
+  function bsShow(on) { bsMount(); if (bs.el) bs.el.hidden = !on; if (!on && bs.tip) bs.tip.hidden = true; }
+  function bsSay(msg, ms) {
+    bsMount(); if (!bs.tip) return;
+    clearTimeout(bs.tipT); bs.tip.textContent = msg; bs.tip.hidden = !msg;
+    if (msg) bs.tipT = setTimeout(function () { bs.tip.hidden = true; }, ms || 7000);
+  }
+  function bsPaint() {
+    bsMount(); if (!bs.el) return;
+    var c = bs.cmd, on = macOn(), last = bs.mac && bs.mac.seenAt ? hm(bs.mac.seenAt) : "", t, busy = false;
+    if (bs.busy) { t = "읽는 중…"; busy = true; }
+    else if (bsOpen(c) && on) {
+      var st = c.steps || {}; busy = true;
+      t = st.total ? "반영 " + (st.n || 0) + "/" + st.total + (st.now ? " · " + st.now : "") : c.status === "보내는 중" ? "반영 대기" : "반영 중";
+    }
+    else if (bsOpen(c)) t = "맥 꺼짐 · 켜지면 반영";
+    else if (bsRecent(c, 10 * 60 * 1000) && c.status === "끝") t = "반영 끝 " + hm(c.doneAt);
+    else if (bsRecent(c, 10 * 60 * 1000) && c.status === "멈춤") t = "반영 멈춤";
+    else if (bs.err) t = bs.err;
+    else t = last ? "동기화 " + last + (on ? "" : " · 맥 꺼짐") : bs.read ? "맥 신호 없음" : "동기화";
+    bs.txt.textContent = t;
+    bs.el.classList.toggle("busy", busy);
+    bs.el.classList.toggle("macoff", !!bs.read && !on);
+    var full = "새로고침 — 다시 읽고 밀린 것 반영 · 마지막 동기화 " + (last || "모름") + " · 맥 " + (on ? "켜짐" : "꺼짐");
+    bs.el.setAttribute("aria-label", full); bs.el.title = full;
+  }
+  function bsCmd(row) { return row ? Object.assign({ id: row.id }, row.data) : null; }
+  function bsRead() {
+    if (!sb || !uid) return Promise.resolve();
+    return Promise.all([
+      sb.from("docs").select("data").eq("path", MAC_PATH).maybeSingle(),
+      sb.from("docs").select("id,data").eq("coll", "cmd").eq("data->>from", "refresh").order("updated_at", { ascending: false }).limit(1)
+    ]).then(function (r) {
+      if (!r[0].error) bs.mac = r[0].data ? r[0].data.data : null;
+      if (!r[1].error) bs.cmd = bsCmd(r[1].data && r[1].data[0]);
+      bs.read = true; bsPaint();
+    }, function () {});
+  }
+  function bsEvent(path, p) {
+    var d = p.new && p.new.data;
+    if (path === MAC_PATH) { if (d) { bs.mac = d; bsPaint(); } else if (p.eventType !== "DELETE") bsRead(); return; }
+    if (!d) { if (bs.cmd && path === "cmd/" + bs.cmd.id && p.eventType !== "DELETE") bsRead(); return; }
+    if (d.from !== "refresh") return;
+    var id = path.slice(4);
+    if (bs.cmd && bs.cmd.id !== id && String(d.createdAt || "") < String(bs.cmd.createdAt || "")) return;
+    var was = bs.cmd && bs.cmd.id === id ? bs.cmd.status : "";
+    bs.cmd = Object.assign({ id: id }, d); bsPaint();
+    if (was && was !== d.status && (d.status === "끝" || d.status === "멈춤")) bsSay((d.status === "끝" ? "반영 끝 — " : "반영 멈춤 — ") + String(d.result || "").split("\n")[0].slice(0, 90), 10000);
+  }
+  function bsPress() {
+    if (bs.busy || !sb || !uid) return;
+    bs.busy = true; bs.err = ""; bsPaint();
+    var a = (state.live ? loadAll() : Promise.resolve()).then(function () { return true; }, function () { return false; });
+    var b = bsRead().then(function () {
+      if (bsOpen(bs.cmd)) return "이미 요청함";
+      var id = "c" + Date.now().toString(36), at = new Date().toISOString();
+      var data = { text: "밀린 것 반영 (새로고침 버튼)", scope: BS_SCOPE, from: "refresh", app: APP.key, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
+      bs.cmd = Object.assign({ id: id }, data);
+      return sb.from("docs").upsert({ path: "cmd/" + id, coll: "cmd", id: id, data: data }).then(function (r) { if (r.error) throw r.error; return "보냄"; });
+    });
+    Promise.all([a, b]).then(function (r) {
+      bs.busy = false; bsPaint();
+      var on = macOn();
+      bsSay((r[0] ? "다시 읽었어요" : "다시 읽기 실패 — 인터넷 확인") + " · " +
+        (r[1] === "이미 요청함" ? (on ? "밀린 것 반영이 이미 도는 중이에요" : "반영 요청이 이미 기다리는 중 — 맥이 켜지면 해요")
+          : on ? "밀린 것 반영을 맥에 보냈어요" : "맥이 꺼져 있어요 — 켜지면 밀린 것을 반영해요"));
+    }, function () {
+      bs.busy = false; bs.err = "못 보냄"; bsPaint(); bsSay("반영 요청을 못 보냈어요 — 인터넷을 확인하고 다시 눌러 주세요");
+      setTimeout(function () { bs.err = ""; bsPaint(); }, 15000);
+    });
+  }
+  setInterval(function () { if (bs.el && !bs.el.hidden) bsPaint(); }, 30000);   // 맥 신호가 끊긴 걸 시간으로도 알아챈다
+
   /* ---------- 시작 ---------- */
   var uid;
   function start(ses) {
@@ -310,7 +409,7 @@
     if (!ses) {
       state.live = false; docs = {}; try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
       if (chan) { sb.removeChannel(chan); chan = null; }
-      showGate("login"); return;
+      bsShow(false); showGate("login"); return;
     }
     // 지난번 화면을 먼저 보여 주고(바로 뜸) 최신으로 바꾼다
     try { var c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); if (c && typeof c === "object") { docs = c; state.cached = true; notifyAll(true); hideGate(); } } catch (e) {}
@@ -318,7 +417,7 @@
     sb.from("owners").select("user_id").eq("user_id", id).maybeSingle().then(function (o) {
       if (o.error) throw o.error;
       if (!o.data) { docs = {}; try { localStorage.removeItem(CACHE_KEY); } catch (e) {} showGate("owner"); return; }
-      return loadAll().then(function () { hideGate(); subscribe(); readyResolve(); });
+      return loadAll().then(function () { hideGate(); subscribe(); readyResolve(); bsShow(true); bsRead(); });
     }).catch(function () { if (!state.cached) showGate("wait", "연결이 안 돼요 — 인터넷을 확인하고 새로고침해 주세요."); else readyResolve(); });
   }
   var dbReady = new Promise(function (resolve) {
@@ -334,7 +433,7 @@
       if (document.visibilityState !== "visible") return;
       if (new Date().toDateString() !== loadedDay) { location.reload(); return; }   // 날짜가 바뀌면 오늘로
       checkVersion();
-      if (uid && state.live && Date.now() - lastFresh > 3000) { lastFresh = Date.now(); loadDelta().catch(function () {}); }
+      if (uid && state.live && Date.now() - lastFresh > 3000) { lastFresh = Date.now(); loadDelta().catch(function () {}); bsRead(); }
     }
     function checkVersion() {
       var mine = window.BRAINY_VERSION; if (!mine) return;
@@ -361,5 +460,5 @@
       return Promise.resolve(null);
     }
   };
-  window.BRAINY = { signOut: function () { return sb.auth.signOut(); }, oldApp: OLD_APP, reload: loadAll, delta: loadDelta };
+  window.BRAINY = { signOut: function () { return sb.auth.signOut(); }, oldApp: OLD_APP, reload: loadAll, delta: loadDelta, refresh: bsPress };
 })();

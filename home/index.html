@@ -31,16 +31,27 @@ html,body{max-width:100%;overflow-x:clip}
 #gate button{font:inherit;font-weight:600;cursor:pointer;margin-top:8px;padding:11px 14px;border-radius:999px;border:1px solid var(--g-line);background:var(--g-card);color:var(--g-fg)}
 #gate button[type=submit]{background:var(--g-acc);border-color:var(--g-acc);color:var(--g-acc-ink)}
 #gate .gerr{color:var(--g-warn);font-size:13px;min-height:18px}
-#rtdot{position:fixed;z-index:11;top:calc(8px + env(safe-area-inset-top,0px));right:10px;width:7px;height:7px;border-radius:50%;background:var(--g-line)}
+/* 새로고침 버튼 (세 앱 공통, shim.js) — 오른쪽 위 작은 알약: 실시간 점 · ↻ · 마지막 동기화/반영 상태 */
+#bsync{position:fixed;z-index:11;top:calc(8px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));display:inline-flex;align-items:center;gap:6px;max-width:min(62vw,240px);height:30px;padding:0 11px 0 9px;border-radius:999px;border:1px solid var(--g-line);background:var(--g-card);color:var(--g-mut);font:inherit;font-size:12px;font-weight:600;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#bsync:hover{color:var(--g-fg)}#bsync:focus-visible{outline:2px solid var(--g-acc);outline-offset:2px}
+#bsync .bs-tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+#bsync .bs-ic{font-size:14px;color:var(--g-acc)}
+#bsync.busy{color:var(--g-fg);border-color:var(--g-acc)}#bsync.busy .bs-ic{animation:bsspin 1s linear infinite}
+#bsync.macoff{border-style:dashed}
+@keyframes bsspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#bsync.busy .bs-ic{animation:none}}
+#rtdot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--g-line)}
 #rtdot.on{background:var(--g-ok)}#rtdot.off{background:var(--g-warn)}
-.app{padding-top:calc(20px + env(safe-area-inset-top,0px))!important}
+#bsync-tip{position:fixed;z-index:11;top:calc(44px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));max-width:min(86vw,340px);padding:8px 12px;border-radius:12px;border:1px solid var(--g-line);background:var(--g-card);color:var(--g-fg);font-size:13px;line-height:1.45;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+header>.brand{padding-right:min(46vw,190px)}
+.app{padding-top:calc(48px + env(safe-area-inset-top,0px))!important}
 </style>
 </head>
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "14425f4eb3"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=14425f4eb3"></script>
+<script>window.BRAINY_VERSION = "24c6ac7f94"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=24c6ac7f94"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
