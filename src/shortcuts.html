@@ -470,7 +470,7 @@ function groupInfo(g){
   }
   return GROUPS.filter(function(x){ return x.g === g })[0] || null;
 }
-var TERM_RE = /iterm|아이템|터미널|terminal|claude|클로드|셸|shell|zsh|bash/i;
+var TERM_RE = /iterm|아이템|아이텀|터미널|terminal|claude|클로드|셸|shell|zsh|bash/i;
 function catOf(g){ var G = groupInfo(g); return (G && G.cat) || CAT_OF[g] || (TERM_RE.test(g) ? "터미널·AI" : "앱에서 넣은 것") }
 function areaList(){
   var names = [];

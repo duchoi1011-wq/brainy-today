@@ -40,8 +40,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "086a1807f4"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
-<script src="../shim.js?v=086a1807f4"></script>
+<script>window.BRAINY_VERSION = "19e0a63b67"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
+<script src="../shim.js?v=19e0a63b67"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="맥 단축키">
@@ -513,7 +513,7 @@ function groupInfo(g){
   }
   return GROUPS.filter(function(x){ return x.g === g })[0] || null;
 }
-var TERM_RE = /iterm|아이템|터미널|terminal|claude|클로드|셸|shell|zsh|bash/i;
+var TERM_RE = /iterm|아이템|아이텀|터미널|terminal|claude|클로드|셸|shell|zsh|bash/i;
 function catOf(g){ var G = groupInfo(g); return (G && G.cat) || CAT_OF[g] || (TERM_RE.test(g) ? "터미널·AI" : "앱에서 넣은 것") }
 function areaList(){
   var names = [];
