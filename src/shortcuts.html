@@ -460,11 +460,22 @@ var CAT_OF = {"맥 공통":"맥 기본","창·화면":"맥 기본","캡처":"맥
   "크롬":"웹·구글","Gmail":"웹·구글","구글 문서":"웹·구글","구글 시트":"웹·구글",
   "프리미어 프로":"영상·녹화","캡컷":"영상·녹화","녹화·미리보기":"영상·녹화",
   "iTerm2 · 클로드 코드":"터미널·AI"};
-function groupInfo(g){ return GROUPS.filter(function(x){ return x.g === g })[0] || null }
-function catOf(g){ var G = groupInfo(g); return (G && G.cat) || CAT_OF[g] || "앱에서 넣은 것" }
+// 「iTerm2 · 클로드 코드」 한 그룹을 화면에선 둘로 — 클로드 코드(cc-…)가 칩 이름에 바로 보이게 (2026-11-11 동욱: "클로드 단축키가 안 보여")
+var CC_SPLIT = "iTerm2 · 클로드 코드", A_CC = "클로드 코드", A_TERM = "iTerm2 · 터미널";
+function areaOf(s){ return s.g === CC_SPLIT ? (/^cc-/.test(s.id) ? A_CC : A_TERM) : s.g }
+function groupInfo(g){
+  if(g === A_CC || g === A_TERM){
+    var G = GROUPS.filter(function(x){ return x.g === CC_SPLIT })[0] || {};
+    return g === A_CC ? { g: g, cat: "터미널·AI", lead: G.lead || G.hint } : { g: g, cat: "터미널·AI", hint: "창 분할·이동과 터미널 기본 명령. 한 창에 claude, 한 창에 결과." };
+  }
+  return GROUPS.filter(function(x){ return x.g === g })[0] || null;
+}
+var TERM_RE = /iterm|아이템|터미널|terminal|claude|클로드|셸|shell|zsh|bash/i;
+function catOf(g){ var G = groupInfo(g); return (G && G.cat) || CAT_OF[g] || (TERM_RE.test(g) ? "터미널·AI" : "앱에서 넣은 것") }
 function areaList(){
-  var names = GROUPS.map(function(G){ return G.g });
-  ADDED.forEach(function(s){ if(names.indexOf(s.g) < 0) names.push(s.g) });
+  var names = [];
+  GROUPS.forEach(function(G){ if(G.g === CC_SPLIT) names.push(A_CC, A_TERM); else names.push(G.g) });
+  ADDED.forEach(function(s){ var a = areaOf(s); if(names.indexOf(a) < 0) names.push(a) });
   return names;
 }
 function catList(){
@@ -475,7 +486,7 @@ function catList(){
 function areaLead(name){
   var G = groupInfo(name);
   if(G && (G.lead || G.hint)) return G.lead || G.hint;
-  if(ADDED.some(function(s){ return s.g === name }))
+  if(ADDED.some(function(s){ return areaOf(s) === name }))
     return "앱에서 채운 영역이에요. <b>공식 문서로 검증한 값이 아니에요</b> — 눌러 보고 안 먹으면 ✕로 빼요.";
   return "";
 }
@@ -526,7 +537,7 @@ function row(s, o){
     "<div class=\"it-h\"><b>" + s.t + "</b>" + (s.tag ? "<span class=\"tag" + (s.unver ? " unver" : "") + "\">" + s.tag + "</span>" : "") + "</div>" +
     (s.d ? "<div class=\"it-d\">" + s.d + "</div>" : "") +
     "<div class=\"it-k\">" + combo(s.k) + "</div>" +
-    (o && o.src ? "<button type=\"button\" class=\"it-src\" data-goarea=\"" + esc(s.g) + "\">" + esc(catOf(s.g)) + " · " + esc(s.g) + "</button>" : "") +
+    (o && o.src ? "<button type=\"button\" class=\"it-src\" data-goarea=\"" + esc(areaOf(s)) + "\">" + esc(catOf(areaOf(s))) + " · " + esc(areaOf(s)) + "</button>" : "") +
     "</div>" + mkBtns("data-mark", s.id, m, esc(s.t)) + "</div>";
 }
 function card(title, inner, o){
@@ -650,11 +661,11 @@ function viewField(){
   var names = areaList(); if(names.indexOf(area) < 0) area = names[0];
   var h = catList().map(function(c){
     return "<div><p class=\"lbl\">" + esc(c) + "</p><div class=\"chips\">" + names.filter(function(g){ return catOf(g) === c }).map(function(g){
-      var left = ITEMS.filter(function(s){ return s.g === g && !gone(marks[s.id]) }).length;
+      var left = ITEMS.filter(function(s){ return areaOf(s) === g && !gone(marks[s.id]) }).length;
       return "<button type=\"button\" class=\"chip" + (g === area ? " on" : "") + "\" data-area=\"" + esc(g) + "\">" + esc(g) + "<span>" + left + "</span></button>";
     }).join("") + "</div></div>";
   }).join("");
-  var all = ITEMS.filter(function(s){ return s.g === area });
+  var all = ITEMS.filter(function(s){ return areaOf(s) === area });
   h += "<div class=\"chips\">" + ST.map(function(x){
     var n = all.filter(function(s){ return stOk(s, x[0]) }).length;
     return "<button type=\"button\" class=\"chip" + (st === x[0] ? " on" : "") + "\" data-st=\"" + x[0] + "\">" + x[1] + "<span>" + n + "</span></button>";
@@ -679,13 +690,13 @@ function fillAll(){
   if(!t){
     out.innerHTML = legend() + catList().map(function(c){
       return "<p class=\"lbl\" style=\"margin-top:6px\">" + esc(c) + "</p>" + areaList().filter(function(g){ return catOf(g) === c }).map(function(g){
-        return listCard(esc(g), ITEMS.filter(function(s){ return s.g === g }), {});
+        return listCard(esc(g), ITEMS.filter(function(s){ return areaOf(s) === g }), {});
       }).join("");
     }).join("");
     return;
   }
   var res = ITEMS.filter(function(s){
-    var hay = (s.t + " " + (s.d || "") + " " + (s.x || "") + " " + s.g + " " + catOf(s.g) + " " + s.k.map(function(c){ return c.join("") }).join(" ")).toLowerCase();
+    var hay = (s.t + " " + (s.d || "") + " " + (s.x || "") + " " + s.g + " " + areaOf(s) + " " + catOf(areaOf(s)) + " " + s.k.map(function(c){ return c.join("") }).join(" ")).toLowerCase();
     return hay.indexOf(t) > -1;
   });
   var cs = typeof courseSearch === "function" ? courseSearch(t) : "";
@@ -709,7 +720,7 @@ var MK_LEAD = {
 function viewMarked(kind){
   var h = "", any = false;
   areaList().forEach(function(g){
-    var list = ITEMS.filter(function(s){ return s.g === g && marks[s.id] === kind });
+    var list = ITEMS.filter(function(s){ return areaOf(s) === g && marks[s.id] === kind });
     if(list.length){ any = true; h += listCard(esc(g), list, { right: "<span class=\"n\">" + esc(catOf(g)) + " · " + list.length + "</span>" }) }
   });
   var cs = typeof csMarkedBlock === "function" ? csMarkedBlock(kind) : "";
