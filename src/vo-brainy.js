@@ -33,7 +33,11 @@
         execute: function (i) {
           var t = i.term ? findTerm(i.term) : null;
           if (t) { S.detail = t.id; location.hash = "list"; render(); return t.term; }
-          location.hash = i.view || "review"; return i.view || "review";
+          var ko = { "복습": "review", "강의": "lec", "분야": "field", "홈": "home", "알기": "learn", "실행하기": "do", "전체": "list" };
+          var v = String(i.view || "review").replace(/^#/, "").trim(); v = ko[v] || v.toLowerCase();
+          if (!/^(review|lec|field|home|learn|do|list)$/.test(v)) v = "review";
+          if (view() === v) render(); else location.hash = v;   // 이미 그 화면이면 hashchange 가 안 생기니 바로 다시 그린다
+          return v;
         } }
     ]
   };

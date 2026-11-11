@@ -11,9 +11,9 @@ LM.ok = LM.ok || {}; LM.fav = LM.fav || {}; LM.pk = LM.pk || {};
 let lecFilt = "all", LSTUDY = null, LDET = null;   // LSTUDY: 바로 익히기 {list,i,flip,again,ok,title} · LDET: 맥락 보는 용어
 function lmSave(){ lsPut("vo.lecm", LM); if (db) db.doc("vo.marks/lec").set({ ...LM, updatedAt: nowIso() }).catch(() => {}); }
 const lecKey = t => "t|" + String(t.t).toLowerCase().replace(/\s+/g, "");
-const lecList = () => (LEC.courses || []).filter(c => c.chapters.some(ch => (ch.terms || []).length));
+const lecList = () => (LEC.courses || []).filter(c => (c.chapters || []).some(ch => (ch.terms || []).length));
 const lecCur = () => { const L = lecList(); return L.find(c => c.id === LM.cur) || L[0] || null; };
-const lecChs = c => c.chapters.filter(ch => (ch.terms || []).length);
+const lecChs = c => c ? (c.chapters || []).filter(ch => (ch.terms || []).length) : [];
 const lecKeep = t => lecFilt === "all" || (lecFilt === "todo" ? !LM.ok[lecKey(t)] : lecFilt === "ok" ? !!LM.ok[lecKey(t)] : !!LM.fav[lecKey(t)]);
 const FIELDS = [["영상 편집", ["편집·구성", "촬영", "오디오", "색", "자막", "모션"]],
   ["AI·일", ["AI·Claude 활용", "자동화·에이전트", "터미널·개발 환경", "지식관리·PKM", "비즈니스·기획", "콘텐츠·마케팅", "디자인·이미지"]]];
@@ -24,7 +24,7 @@ let _allLec = null, _allAll = null, _all = [], _byKey = {};
 function allTerms(){
   if (_allLec === LEC && _allAll === ALL) return _all;   // 데이터가 새로 오면(새 객체) 다시 만든다
   const out = [], by = {}, refd = new Set();
-  (LEC.courses || []).forEach(c => c.chapters.forEach(ch => (ch.terms || []).forEach(t => {
+  (LEC.courses || []).forEach(c => (c.chapters || []).forEach(ch => (ch.terms || []).forEach(t => {
     const k = lecKey(t); if (by[k]) return;
     const o = { ...t, src: `${c.tag ? c.tag + " · " : ""}${ch.title}`, cid: c.id, chid: ch.id };
     by[k] = o; out.push(o); if (t.ref) refd.add(t.ref);
@@ -125,7 +125,7 @@ function renderStudy(){
   return h;
 }
 function lecGrade(r){
-  const s = LSTUDY, t = s.list[s.i]; if (!t) return;
+  const s = LSTUDY, t = s?.list[s.i]; if (!t) return;
   const k = lecKey(t);
   if (r === "ok") { s.ok++; LM.ok[k] = 1; lmSave(); if (t.ref && BYID[t.ref] && lv(t.ref) < 2) save(t.ref, { level: 2, fuzzy: false, lastSeen: nowIso() }, "강의·분야 익히기: 알았음"); }
   else if (!s.again.has(k)) { s.again.add(k); s.list.splice(Math.min(s.list.length, s.i + 4), 0, t); }
@@ -205,4 +205,5 @@ document.addEventListener("click", e => {
   if (m[k]) delete m[k]; else m[k] = 1;
   lmSave(); render();
 });
-window.addEventListener("hashchange", () => { LSTUDY = null; LDET = null; });
+// 탭을 옮기면 익히기·맥락 화면을 닫고 다시 그린다 (단어장의 hashchange 가 먼저 그려서, 닫은 뒤 한 번 더 그려야 옛 화면이 안 남는다)
+window.addEventListener("hashchange", () => { if (LSTUDY || LDET) { LSTUDY = null; LDET = null; render(); } });
