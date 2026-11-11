@@ -539,11 +539,13 @@ VO_BRAINY = "\n" + (root / "src" / "vo-brainy.js").read_text(encoding="utf-8")
 
 # ═════════════════════════ 맥 단축키 ═════════════════════════
 load("shortcuts.html")
+# 2026-11-11 단어장처럼 다시 정리 — 화면(탭·분야·카드·표시 셋 ★✓✕)은 src/shortcuts.html 에 다 있다. 여기선 Supabase 연결만 끼운다.
 # 목록은 볼트 `4_Outputs/단축키 앱/단축키 데이터.json` → 맥 동기화(app_data.py) → sc.data/main. 코드 안 목록은 처음 뜰 때만 쓴다.
-# ✓패스·★즐겨찾기는 sc.marks/main 에 — 모든 기기에서 같다.
+# 표시(marks: id → fav ★ · pass ✓외웠어 · no ✕필요없어)는 sc.marks/main 에 — 모든 기기에서 같다.
 # 「iTerm2 · 클로드 코드」는 코드 안 목록이 기준 (2026-11-09 동욱: 맥 동기화 목록이 옛것이라 새 명령이 안 보였다)
 # — 같은 id 는 코드 것으로, 없는 것은 넣고, 코드에서 뺀 옛 클로드 코드 항목은 버린다. 그룹 안내·「터미널·클로드 코드」 모드도 코드 것으로.
 # PIN_IDS 의 다른 그룹 항목도 코드 것이 기준 (2026-11-10 동욱: 크롬 새로고침 ⌘R·⇧⌘R) — 같은 id 는 바꾸고, 없으면 그 그룹 끝에 넣는다.
+patch("/*@@COURSE@@*/", (root / "src" / "sc-course.js").read_text(encoding="utf-8"))
 patch('''    DB = d;
 ''', '''    DB = d;
     var CC_G = "iTerm2 · 클로드 코드";
@@ -580,104 +582,27 @@ patch('''    DB = d;
       v = ccMerge(v);
       GROUPS = v.groups; D = v.items; MODES = v.modes; PROJECTS = v.projects;
       STARTER = D.filter(function(x){ return x.starter });
-      repaint(); renderBoard();
-      if(current==="fav") renderList("fav"); if(current==="pass") renderList("pass");
+      repaint();
     }, function(){});
-    DB.doc("sc.marks/main").onSnapshot(function(s){
-      var v = s.exists ? s.data() : null;
-      if(v && v.marks){ marks = v.marks; save("mk.marks", marks); repaint(); if(current==="fav") renderList("fav"); if(current==="pass") renderList("pass"); }
-      else if(Object.keys(marks).length){ DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){}); }
-    }, function(){});
-''')
-patch('''    if(marks[id]===kind) delete marks[id]; else marks[id]=kind;
-    save("mk.marks", marks);''', '''    if(marks[id]===kind) delete marks[id]; else marks[id]=kind;
-    save("mk.marks", marks);
-    if(DB) DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){});''')
-patch('statusMsg("찾는 중… (처음 한 번은 허용할지 묻는다)");', 'statusMsg("맥의 Brainy가 찾는 중… (보통 10~20초)");')
-patch('''<p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''',
-      '''<p><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" data-brainy="out" style="font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></p>
-  <p>볼트 <code>2_LLMWiki/wiki/자기경영/맥 핵심 단축키</code>''')
-# ✓ 는 「외운 것」 — 탭 이름·안내도 그 말로 (2026-11-07 동욱). ★ 즐겨찾기에서 ✓ 누르면 외운 것으로 넘어간다(표시는 하나만)
-patch('''aria-controls="view-pass">패스</button>''', '''aria-controls="view-pass">외운 것</button>''')
-patch('''<span><i class="dotp">✓</i> 패스 — 아는 것, 목록에서 빠진다</span>''', '''<span><i class="dotp">✓</i> 외운 것 — 목록에서 빠지고 「외운 것」 탭으로</span>''')
-patch('''var title = kind==="fav" ? "즐겨찾기" : "패스한 것";''', '''var title = kind==="fav" ? "즐겨찾기" : "외운 것";''')
-patch('''aria-label=\\""+s.t+" 패스\\" title=\\"패스 — 아는 것\\"''', '''aria-label=\\""+s.t+" 외웠어\\" title=\\"외웠어 — 「외운 것」 탭으로\\"''')
-patch('''(passed?" · 패스 "+passed:"")''', '''(passed?" · 외운 것 "+passed:"")''')
-patch('''다 패스했다 — 「패스」 탭에 있다.''', '''다 외웠다 — 「외운 것」 탭에 있다.''')
-patch('''btn.textContent = "패스한 " + n + "개 보기 →";''', '''btn.textContent = "외운 것 " + n + "개 보기 →";''')
-patch('''"<p class=\\"lead\\">패스한 "+hidden+"개는 뺐다 — 「패스」 탭에 있다.</p>"''', '''"<p class=\\"lead\\">외운 것 "+hidden+"개는 뺐다 — 「외운 것」 탭에 있다.</p>"''')
-# 「강의」 탭: 강의 교안 순서대로 누르고 치는 것 — 볼트 `4_Outputs/단축키 앱/강의 순서.json` → sc.data/course, 진도 → sc.marks/course
-patch('''<button id="tab-now" role="tab" aria-selected="true" aria-controls="view-now">지금</button>''',
-      '''<button id="tab-now" role="tab" aria-selected="true" aria-controls="view-now">지금</button>
-        <button id="tab-course" role="tab" aria-selected="false" aria-controls="view-course">강의</button>''')
-patch('''  <div id="view-fav" role="tabpanel" aria-labelledby="tab-fav" hidden></div>''',
-      '''  <div id="view-course" role="tabpanel" aria-labelledby="tab-course" hidden></div>
-  <div id="view-fav" role="tabpanel" aria-labelledby="tab-fav" hidden></div>''')
-patch('''var VIEWS = {now:"view-now", home:"view-home", fav:"view-fav", pass:"view-pass"};''',
-      '''var VIEWS = {now:"view-now", course:"view-course", home:"view-home", fav:"view-fav", pass:"view-pass"};''')
-patch('''  if(name==="now") renderNow();''', '''  if(name==="now") renderNow();
-  if(name==="course") renderCourse();
-  save("sc.tab", name);''')
-patch('''document.addEventListener("click", function(e){
-  var mk = e.target.closest("[data-mark]");''', (root / "src" / "sc-course.js").read_text(encoding="utf-8") + '''
-document.addEventListener("click", function(e){
-  var mk = e.target.closest("[data-mark]");''')
-patch('''renderChips(); renderSections(); renderBoard(); renderNow();
-document.getElementById("chips").hidden = true;''', '''renderChips(); renderSections(); renderBoard(); renderNow();
-document.getElementById("chips").hidden = true;
-var lastTab = load("sc.tab", "now"); if(lastTab !== "now" && VIEWS[lastTab]) show(lastTab);   // 마지막에 보던 탭으로 연다''')
-patch('''    DB.doc("sc.marks/main").onSnapshot(function(s){''', '''    DB.doc("sc.data/course").onSnapshot(function(s){
+    DB.doc("sc.data/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
       if(!v || !Array.isArray(v.courses) || !v.courses.length) return;
-      COURSE = v; save("sc.course.data", v);
-      if(current==="course") renderCourse(); if(current==="fav") renderList("fav");
+      COURSE = v; save("sc.course.data", v); refresh();
     }, function(){});
     DB.collection("sc.creq").onSnapshot(function(q){ csSetReqs(q.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); })); }, function(){});
     DB.doc("sc.marks/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
-      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {}, cf: v.cf || {}, pk: v.pk || {} }; save("sc.course", CPROG); if(current==="course") renderCourse(); if(current==="fav") renderList("fav"); }
+      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {}, cf: v.cf || {}, cn: v.cn || {}, pk: v.pk || {} }; save("sc.course", CPROG); refresh(); }
       else if(CPROG.cur || Object.keys(CPROG.at).length) csSave();
     }, function(){});
-    DB.doc("sc.marks/main").onSnapshot(function(s){''')
-patch('''<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1''',
-      '''<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1''')
-SC_CSS = (".cs-pick{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.cs-pick .mode b{font-family:var(--f-mono);font-size:.72rem;color:var(--accent)}.cs-pick .mode[aria-pressed=true] b{color:inherit}.cs-pick .n{font-family:var(--f-mono);font-size:.68rem;opacity:.7;margin-left:3px}"
-  ".cs-now{scroll-margin-top:130px;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px 18px 14px;margin-bottom:34px}.cs-now .block-head h2{color:var(--accent)}"
-  ".cs-part-l{margin:10px 0 2px;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.06em;color:var(--faint)}.cs-h{margin:0 0 10px;font-family:var(--f-disp);font-size:1.08rem;letter-spacing:-.015em}"
-  ".cs-steps{list-style:none;margin:0;padding:0;display:grid;gap:2px}.cs-step{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:10px 4px;border-bottom:1px solid var(--hair)}.cs-step:last-child{border-bottom:0}"
-  ".cs-num{width:28px;height:28px;border-radius:50%;border:1px solid var(--cap-line);background:var(--raised);color:var(--dim);font:600 .75rem var(--f-mono);cursor:pointer;padding:0}.cs-step.ok .cs-num{background:var(--ok-dim);color:var(--ok);border-color:transparent}.cs-step.ok .cs-t{color:var(--faint)}"
-  ".cs-main{min-width:0;display:grid;gap:6px}.cs-t{font-size:.92rem;font-weight:500}.cs-kind{font-family:var(--f-mono);font-size:.62rem;font-weight:600;letter-spacing:.04em;color:var(--faint);margin-right:8px;white-space:nowrap}"
-  ".k-cmd .cs-kind,.k-slash .cs-kind{color:var(--ok)}.k-say .cs-kind{color:var(--accent)}.k-key .cs-kind{color:var(--fg)}"
-  ".cs-body{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.cs-body .combo{justify-content:flex-start}"
-  ".cs-code{font-family:var(--f-mono);font-size:.8rem;line-height:1.5;background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:7px 10px;flex:1 1 220px;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}.cs-code i{color:var(--faint);font-style:normal}"
-  ".k-say .cs-code{font-family:var(--f-body);font-size:.86rem;border-left:3px solid var(--accent)}.cs-path{font-size:.84rem;color:var(--dim);line-height:1.55}"
-  ".cs-copy{font:inherit;font-size:.74rem;color:var(--dim);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap}.cs-copy:hover{color:var(--fg);border-color:var(--cap-line)}"
-  ".cs-why{font-size:.78rem;color:var(--dim);line-height:1.5}.cs-empty{color:var(--faint);font-size:.86rem;margin:4px 0 10px}"
-  ".cs-nav{display:flex;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}.cs-src{display:block;margin-top:8px;font-size:.7rem;color:var(--faint)}"
-  ".cs-ch{border-bottom:1px solid var(--hair)}.cs-ch>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:10px 4px;font-size:.88rem}.cs-ch>summary::-webkit-details-marker{display:none}"
-  ".cs-ch.done .cs-title{color:var(--faint)}.cs-ch.here>summary{color:var(--accent);font-weight:600}.cs-mark{font-size:.75rem;color:var(--ok);text-align:center}.cs-ch.here .cs-mark{color:var(--accent)}"
-  ".cs-cnt{display:flex;gap:6px;font-family:var(--f-mono);font-size:.66rem;color:var(--faint)}.cs-cnt i{font-style:normal}.cs-in{padding:2px 0 14px 30px}"
-  ".cs-hit{display:grid;gap:5px;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-bottom:1px solid var(--hair);padding:10px 4px;cursor:pointer}.cs-hit:hover{background:var(--surface)}.cs-hit .combo{justify-content:flex-start}"
-  ".cs-seg{display:inline-flex;background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px;margin:0 0 14px}.cs-seg button{font:inherit;font-size:.84rem;color:var(--dim);background:none;border:0;border-radius:7px;padding:7px 13px;cursor:pointer;white-space:nowrap}.cs-seg button[aria-pressed=true]{background:var(--raised);color:var(--fg);font-weight:600;box-shadow:var(--shadow)}"
-  ".cs-cheat{display:grid;margin-top:6px}.cs-crow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--hair)}.cs-crow:last-child{border-bottom:0}"
-  ".cs-cbody{display:flex;gap:6px;align-items:center;justify-content:flex-end;min-width:0;flex-wrap:wrap}.cs-cbody .cs-code{flex:0 1 auto;max-width:420px;padding:5px 9px}.cs-crow.ok .cs-t,.cs-crow.ok .cs-code,.cs-crow.ok kbd{opacity:.45}"
-  ".cs-sort{display:flex;gap:6px;align-items:center;margin:4px 0 8px;font-size:.78rem;color:var(--faint)}.cs-sort button{font:inherit;font-size:.78rem;color:var(--dim);background:none;border:1px solid var(--rule);border-radius:99px;padding:4px 11px;cursor:pointer}.cs-sort button[aria-pressed=true]{color:var(--bg);background:var(--fg);border-color:var(--fg)}"
-  ".cs-goto{display:flex;gap:10px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--fg);background:var(--accent-dim);border:1px solid transparent;border-radius:12px;padding:12px 14px;margin:8px 0 26px;cursor:pointer}.cs-goto span:first-child{font-size:.74rem;font-weight:700;color:var(--accent);white-space:nowrap}.cs-goto b{flex:1;min-width:0;font-weight:600;font-size:.9rem}.cs-goto .n{font-family:var(--f-mono);font-size:.72rem;color:var(--dim);white-space:nowrap}"
-  ".cs-lec{scroll-margin-top:130px}.cs-lec.here .block-head h2{color:var(--accent)}.cs-lec.done .block-head h2{color:var(--faint)}"
-  ".cs-basics{margin:-14px 0 30px;border:1px solid var(--rule);border-radius:12px;padding:0 12px;background:var(--surface)}.cs-basics>summary{font-weight:600}.cs-basics .cs-mark{color:var(--ok);font-family:var(--f-mono)}.cs-basics .cs-in{padding:0 0 10px}"
-  ".cs-cbody .marks{margin-left:2px}.cs-legend{margin:6px 0 4px;font-size:.78rem;color:var(--dim)}"
-  ".cs-chlink{font:inherit;font-size:.7rem;color:var(--faint);background:none;border:0;padding:0 0 0 6px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}.cs-chlink:hover{color:var(--accent)}"
-  "@media (max-width:560px){.cs-crow{grid-template-columns:1fr}.cs-cbody{justify-content:flex-start}.cs-cbody .cs-code{flex:1 1 200px;max-width:none}.cs-seg{display:flex}.cs-seg button{flex:1}}"
-  "@media (max-width:560px){.tabs{width:100%;overflow-x:auto}.cs-now{padding:14px 12px}.cs-in{padding-left:0}.cs-cnt{display:none}.cs-ch>summary{grid-template-columns:22px 1fr}}")
-
-SC_CSS += (".cs-addbtn{border-style:dashed!important;color:var(--accent)!important}"
-           ".cs-add{border:1px solid var(--rule);border-radius:12px;background:var(--surface);padding:12px 14px;margin:0 0 14px}"
-           ".cs-addf{display:flex;gap:8px}.cs-addf input{flex:1;min-width:0;font:inherit;font-size:.9rem;padding:9px 11px;border:1px solid var(--rule);border-radius:9px;background:var(--bg);color:var(--fg)}"
-           ".cs-sub{font-size:.74rem;color:var(--faint);margin:12px 0 6px}"
-           ".cs-lpick{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 14px}.cs-lpick label{font-size:.78rem;color:var(--faint)}"
-           ".cs-lpick select{flex:1;min-width:0;max-width:100%;font:inherit;font-size:.9rem;padding:9px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--surface);color:var(--fg)}"
-           ".cs-req{font-size:.82rem;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cs-req span{color:var(--faint)}.cs-req.ok{color:var(--accent)}.cs-req.bad{color:#c0563b}.cs-x{padding:2px 8px}")
+    DB.doc("sc.marks/main").onSnapshot(function(s){
+      var v = s.exists ? s.data() : null;
+      if(v && v.marks){ marks = v.marks; save("mk.marks", marks); refresh(); }
+      else if(Object.keys(marks).length){ DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){}); }
+    }, function(){});
+''')
+patch('statusMsg("찾는 중… (처음 한 번은 허용할지 물어요)");', 'statusMsg("맥의 Brainy가 찾는 중… (보통 10~20초)");')
+SC_CSS = ""
 
 emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a1f"),
      "--g-bg:var(--bg);--g-fg:var(--fg);--g-mut:var(--dim);--g-card:var(--surface);--g-line:var(--rule);--g-acc:var(--accent);--g-acc-ink:var(--bg);--g-warn:var(--accent);--g-ok:var(--ok)",
