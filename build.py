@@ -535,12 +535,56 @@ patch("""/* 결산 대기 — 칸 안 대화 */""", """.sd { display: block; fon
 .now .sd { margin-top: 4px; }
 /* 결산 대기 — 칸 안 대화 */""")
 
+# 입력과 함께 최신화 (2026-11-11 동욱) — 맥 동기화(live_sync.py)가 morning/main.live 에 데일리 노트 「오늘의 계획」·태스크 진행을,
+# reports.auto 에 끝난 태스크를 적는다. 오늘 계획 체크는 plan/<날짜> 로 보내면 몇 초 안에 데일리 노트에 들어간다.
+patch("""  function morningCard(canCmd) {
+    var mo = S.morning;""", """  function liveOf() { var lv = S.morning && S.morning.live; return lv && lv.date === TODAY ? lv : null; }
+  function taskMark(task) {
+    var lv = liveOf(), k = String(task || "").replace(/^T-/, "").trim(), t = lv && lv.tasks && lv.tasks[k];
+    if (!t) return "";
+    if (t.status === "완료") return '<span class="pill good">✓ 완료</span>';
+    return t.total ? '<span class="pill">' + t.done + "/" + t.total + "</span>" : "";
+  }
+  function planCard() {
+    var lv = liveOf(), p = lv.plan, n = p.filter(function (x) { return x.done; }).length, w = S.db && !S.readOnly;
+    var h = '<section class="card brief"><div class="progress-row"><h2>☀️ 오늘 계획</h2><span class="pill' + (n === p.length ? " good" : " accent") + '">✓ ' + n + "/" + p.length + '</span></div><div class="plan">';
+    h += p.map(function (x, i) {
+      return (x.head ? '<p class="small muted plh">' + esc(x.head) + "</p>" : "") + '<button type="button" class="planrow' + (x.done ? " on" : "") + '" data-act="plantoggle" data-i="' + i + '"' + (w ? "" : " disabled") + ' aria-pressed="' + !!x.done + '"><span class="pbox">' + (x.done ? "✓" : "") + '</span><span class="ptx">' + esc(x.text) + "</span>" + (x.task ? taskMark(x.task) : "") + "</button>";
+    }).join("");
+    return h + '</div><p class="small muted">데일리 노트 「오늘의 계획」 그대로 · 누르면 몇 초 안에 노트에도 · ' + esc(whenKo(lv.at)) + "</p></section>";
+  }
+  function planToggle(i) {
+    var lv = liveOf(); if (!lv || !S.db || S.readOnly) return; var x = lv.plan[+i]; if (!x) return;
+    x.done = !x.done; softRender();
+    var tg = Object.assign({}, (S.planDoc && S.planDoc.date === TODAY && S.planDoc.toggles) || {});
+    tg[x.key] = { done: x.done, at: new Date().toISOString() };
+    S.planDoc = { date: TODAY, toggles: tg, updatedAt: new Date().toISOString() };
+    S.db.doc("plan/" + TODAY).set(S.planDoc).catch(function () {});
+  }
+  function morningCard(canCmd) {
+    var lv = liveOf();
+    if (lv && (lv.plan || []).length) return planCard() + (S.morning && S.morning.date === TODAY && S.morning.status !== "올림" ? '<section class="card">' + foldHtml("moProp", "아침 제안 · Brainy와 주고받은 것", morningProposal(canCmd), { flat: true }) + "</section>" : "");
+    return morningProposal(canCmd);
+  }
+  function morningProposal(canCmd) {
+    var mo = S.morning;""")
+patch("""esc(r.what || "") + (r.task ? '<br><span class="small muted">' + esc(r.task) + "</span>" : "")""",
+      """esc(r.what || "") + (r.task ? " " + taskMark(r.task) + '<br><span class="small muted">' + esc(r.task) + "</span>" : "")""")
+patch("""    if (act === "moyes") {""", """    if (act === "plantoggle") { planToggle(t.getAttribute("data-i")); return; }
+    if (act === "moyes") {""")
+patch("""h += ansBox(scope, r.items || []) + "</div>";""",
+      """h += ansBox(scope, (r.items || []).map(function (it) { var a = r.auto && r.auto[it.n]; return a ? Object.assign({}, it, { text: it.text + "  ✓ " + a }) : it; })) + "</div>";""")
+patch("""rs.slice(0, 6).map(function (r, i) { return reportCard(r, i === 0 && r.status !== "답함"); }).join("") + "</section>";""",
+      """(function () { var kd = {}, cur = [], old = []; rs.slice(0, 12).forEach(function (r) { if (!kd[r.kind]) { kd[r.kind] = 1; cur.push(r); } else old.push(r); }); return cur.map(function (r, i) { return reportCard(r, i === 0 && r.status !== "답함"); }).join("") + (old.length ? foldHtml("rpold", "지난 점검 " + old.length + " — 새 점검이 나와 접어 둠", old.map(function (r) { return reportCard(r, false); }).join(""), { flat: true }) : ""); })() + "</section>";""")
+patch("""var fresh = rs.filter(function (r) { return r.status !== "답함"; }).length;""",
+      """var kf = {}, fresh = rs.filter(function (r) { if (kf[r.kind]) return false; kf[r.kind] = 1; return r.status !== "답함"; }).length;""")
+
 emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--good)",
      '<link rel="icon" href="icon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="icon-180.png">',
      '{key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"}',
      '{"id":"/brainy-today/home/","name":"Brainy 홈","short_name":"Brainy 홈","start_url":"./","scope":"./","display":"standalone","background_color":"#eef0ec","theme_color":"#1f5e52","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]}',
-     ".app{padding-top:calc(48px + env(safe-area-inset-top,0px))!important}")
+     ".app{padding-top:calc(48px + env(safe-area-inset-top,0px))!important}.plan{display:grid;gap:6px;margin:6px 0 8px}.plh{margin:8px 0 0}.planrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.planrow .ptx{flex:1;min-width:0;line-height:1.45}.planrow .pbox{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:7px;border:1.5px solid var(--muted);font-size:13px;font-weight:700}.planrow.on .pbox{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.planrow.on .ptx{color:var(--muted);text-decoration:line-through}")
 
 # Brainy 대화창 — 맥 단축키·체화 단어장 안에서 묻기·이 앱 고쳐 달라기 (클라우드 Brainy 의 app_edit_* 도구)
 BRAINY_CHAT = "\n" + (root / "src" / "brainy-chat.js").read_text(encoding="utf-8")

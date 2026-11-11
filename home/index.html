@@ -44,14 +44,14 @@ html,body{max-width:100%;overflow-x:clip}
 #rtdot.on{background:var(--g-ok)}#rtdot.off{background:var(--g-warn)}
 #bsync-tip{position:fixed;z-index:11;top:calc(44px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));max-width:min(86vw,340px);padding:8px 12px;border-radius:12px;border:1px solid var(--g-line);background:var(--g-card);color:var(--g-fg);font-size:13px;line-height:1.45;box-shadow:0 4px 14px rgba(0,0,0,.12)}
 header>.brand{padding-right:min(46vw,190px)}
-.app{padding-top:calc(48px + env(safe-area-inset-top,0px))!important}
+.app{padding-top:calc(48px + env(safe-area-inset-top,0px))!important}.plan{display:grid;gap:6px;margin:6px 0 8px}.plh{margin:8px 0 0}.planrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.planrow .ptx{flex:1;min-width:0;line-height:1.45}.planrow .pbox{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:7px;border:1.5px solid var(--muted);font-size:13px;font-weight:700}.planrow.on .pbox{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.planrow.on .ptx{color:var(--muted);text-decoration:line-through}
 </style>
 </head>
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "24c6ac7f94"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=24c6ac7f94"></script>
+<script>window.BRAINY_VERSION = "cde8d6225d"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=cde8d6225d"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1853,7 +1853,35 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
   /* ---------- 아침 제안 카드 (오늘 탭 맨 위 · 기록 탭 공용) ---------- */
   function morningTrigger() { return trigList().filter(function (t) { return /아침/.test(t.name || "") && t.enabled !== false; })[0]; }
+  function liveOf() { var lv = S.morning && S.morning.live; return lv && lv.date === TODAY ? lv : null; }
+  function taskMark(task) {
+    var lv = liveOf(), k = String(task || "").replace(/^T-/, "").trim(), t = lv && lv.tasks && lv.tasks[k];
+    if (!t) return "";
+    if (t.status === "완료") return '<span class="pill good">✓ 완료</span>';
+    return t.total ? '<span class="pill">' + t.done + "/" + t.total + "</span>" : "";
+  }
+  function planCard() {
+    var lv = liveOf(), p = lv.plan, n = p.filter(function (x) { return x.done; }).length, w = S.db && !S.readOnly;
+    var h = '<section class="card brief"><div class="progress-row"><h2>☀️ 오늘 계획</h2><span class="pill' + (n === p.length ? " good" : " accent") + '">✓ ' + n + "/" + p.length + '</span></div><div class="plan">';
+    h += p.map(function (x, i) {
+      return (x.head ? '<p class="small muted plh">' + esc(x.head) + "</p>" : "") + '<button type="button" class="planrow' + (x.done ? " on" : "") + '" data-act="plantoggle" data-i="' + i + '"' + (w ? "" : " disabled") + ' aria-pressed="' + !!x.done + '"><span class="pbox">' + (x.done ? "✓" : "") + '</span><span class="ptx">' + esc(x.text) + "</span>" + (x.task ? taskMark(x.task) : "") + "</button>";
+    }).join("");
+    return h + '</div><p class="small muted">데일리 노트 「오늘의 계획」 그대로 · 누르면 몇 초 안에 노트에도 · ' + esc(whenKo(lv.at)) + "</p></section>";
+  }
+  function planToggle(i) {
+    var lv = liveOf(); if (!lv || !S.db || S.readOnly) return; var x = lv.plan[+i]; if (!x) return;
+    x.done = !x.done; softRender();
+    var tg = Object.assign({}, (S.planDoc && S.planDoc.date === TODAY && S.planDoc.toggles) || {});
+    tg[x.key] = { done: x.done, at: new Date().toISOString() };
+    S.planDoc = { date: TODAY, toggles: tg, updatedAt: new Date().toISOString() };
+    S.db.doc("plan/" + TODAY).set(S.planDoc).catch(function () {});
+  }
   function morningCard(canCmd) {
+    var lv = liveOf();
+    if (lv && (lv.plan || []).length) return planCard() + (S.morning && S.morning.date === TODAY && S.morning.status !== "올림" ? '<section class="card">' + foldHtml("moProp", "아침 제안 · Brainy와 주고받은 것", morningProposal(canCmd), { flat: true }) + "</section>" : "");
+    return morningProposal(canCmd);
+  }
+  function morningProposal(canCmd) {
     var mo = S.morning;
     if (!mo || mo.date !== TODAY) {
       var mt = morningTrigger(), fs = mt && S.fired[mt.id];
@@ -1869,7 +1897,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var b = "";
     if (mo.coach) b += '<p class="line">' + esc(mo.coach) + "</p>";
     var rows = mo.rows || [];
-    if (rows.length) b += (fold ? "<h2>아침 제안</h2>" : "") + '<div class="tablewrap"><table class="days"><tbody>' + rows.map(function (r) { return "<tr><td class='n' style='text-align:left;width:64px'>" + esc(r.time || "") + "</td><td>" + esc(r.what || "") + (r.task ? '<br><span class="small muted">' + esc(r.task) + "</span>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    if (rows.length) b += (fold ? "<h2>아침 제안</h2>" : "") + '<div class="tablewrap"><table class="days"><tbody>' + rows.map(function (r) { return "<tr><td class='n' style='text-align:left;width:64px'>" + esc(r.time || "") + "</td><td>" + esc(r.what || "") + (r.task ? " " + taskMark(r.task) + '<br><span class="small muted">' + esc(r.task) + "</span>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
     if (mo.skipped && mo.skipped.length) b += foldHtml("moskip", "오늘 안 들어간 것 " + mo.skipped.length, '<div class="md"><ul>' + mo.skipped.map(function (x) { return "<li>" + esc(x.what) + (x.why ? " — " + esc(x.why) : "") + (x.when ? " → " + esc(x.when) : "") + "</li>"; }).join("") + "</ul></div>");
     b += threadHtml(cmdsWhere(function (t) { return /^아침 계획/.test(t) || t.indexOf(MO_FOLLOW) === 0; }), function (t) { return t.replace(MO_FOLLOW, "").replace(/^아침 계획 고침:\s*/, "").replace(/^아침 계획 응$/, "응 — 이대로 진행"); }, "mo");
     b += '<textarea id="mo-input" class="grow" data-mo="1" rows="2" placeholder="' + (up ? "✍ Brainy에게 이어서 쓰기 — 예: 운동도 넣어줘, 브랜드 정의는 내일로" : "✍ Brainy에게 바로 쓰기 — 예: EP3는 오후 2시로 옮기고, 운동은 푸시로") + '">' + esc(S.moDraft || "") + "</textarea>";
@@ -1919,14 +1947,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (r.lines && r.lines.length) h += '<div class="md"><ul>' + r.lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></div>";
     if (r.body) h += '<div class="md">' + mdHtml(r.body) + "</div>";
     h += threadHtml(cmdsWhere(function (t) { return t.indexOf("reports/" + r.id + ")") >= 0; }), function (t) { return t.split("\n").slice(1).join("\n").replace(/^전체:\s*/m, ""); }, "rp:" + r.id);
-    h += ansBox(scope, r.items || []) + "</div>";
+    h += ansBox(scope, (r.items || []).map(function (it) { var a = r.auto && r.auto[it.n]; return a ? Object.assign({}, it, { text: it.text + "  ✓ " + a }) : it; })) + "</div>";
     return foldHtml("rpf:" + r.id, ic + " " + esc(r.title || r.kind) + ' <span class="small muted">' + esc(r.date ? md(r.date) : "") + "</span>", h, { open: open, extra: r.status === "답함" ? '<span class="pill good">답함</span>' : '<span class="pill accent">새로</span>' });
   }
   function viewReports() {
     var rs = (S.reports || []).filter(function (r) { return r.kind !== "morning" || r.date !== TODAY; });
     if (!rs.length) return '<section class="card"><h2>📋 점검 결과</h2><p class="muted small">아침 제안·하루 결산·주간·월간 점검이 끝나면 결과가 여기 자동으로 떠요. 항목마다 Brainy에게 바로 쓸 수 있어요.</p></section>';
-    var fresh = rs.filter(function (r) { return r.status !== "답함"; }).length;
-    return '<section class="section"><div class="progress-row"><h2>📋 점검 결과' + (fresh ? " · 새로 " + fresh : "") + '</h2><span class="small muted">예약이 끝날 때마다 자동으로</span></div>' + rs.slice(0, 6).map(function (r, i) { return reportCard(r, i === 0 && r.status !== "답함"); }).join("") + "</section>";
+    var kf = {}, fresh = rs.filter(function (r) { if (kf[r.kind]) return false; kf[r.kind] = 1; return r.status !== "답함"; }).length;
+    return '<section class="section"><div class="progress-row"><h2>📋 점검 결과' + (fresh ? " · 새로 " + fresh : "") + '</h2><span class="small muted">예약이 끝날 때마다 자동으로</span></div>' + (function () { var kd = {}, cur = [], old = []; rs.slice(0, 12).forEach(function (r) { if (!kd[r.kind]) { kd[r.kind] = 1; cur.push(r); } else old.push(r); }); return cur.map(function (r, i) { return reportCard(r, i === 0 && r.status !== "답함"); }).join("") + (old.length ? foldHtml("rpold", "지난 점검 " + old.length + " — 새 점검이 나와 접어 둠", old.map(function (r) { return reportCard(r, false); }).join(""), { flat: true }) : ""); })() + "</section>";
   }
 
   /* ---------- 예약 · 결산 대기 · 명령 ---------- */
@@ -2688,6 +2716,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "chatresume") { var rid0 = t.getAttribute("data-id"), th0 = (S.threads || []).filter(function (x) { return x.id === rid0; })[0]; if (th0 && !S.chat.busy) { resumeChat(th0); renderChat(); } return; }
     if (act === "mofollow") { var mf = String(S.moDraft || "").trim(); if (!mf) { var mfe = document.querySelector('textarea[data-mo]'); if (mfe) mfe.focus(); return; } moSend(MO_FOLLOW + mf); return; }
     if (act === "cmdretry") { retryCmd(t.getAttribute("data-id")); return; }
+    if (act === "plantoggle") { planToggle(t.getAttribute("data-i")); return; }
     if (act === "moyes") { var mt2 = String(S.moDraft || "").trim(); moSend(mt2 ? "아침 계획 고침: " + mt2 : "아침 계획 응"); return; }
     if (act === "lgclear") { S.lgSel = {}; S.lgAll = ""; render(); return; }
     if (act === "lgsend") { lgSend(); return; }
