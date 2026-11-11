@@ -40,8 +40,8 @@ html,body{max-width:100%;overflow-x:clip}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "9e5cb10810"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
-<script src="../shim.js?v=9e5cb10810"></script>
+<script>window.BRAINY_VERSION = "81c2513275"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
+<script src="../shim.js?v=81c2513275"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="web-icon-180.png">
@@ -497,7 +497,7 @@ var D = [
  {id:"ch-num",k:[["⌘","1"],["⌘","9"]],t:"그 탭으로 / 마지막 탭",d:"⌘1~⌘8이 순서대로",g:"크롬",x:"chrome jump tab 번호"},
  {id:"ch-url",k:[["⌘","L"]],t:"주소창으로",d:"검색어를 바로 입력",g:"크롬",x:"chrome address bar url 주소창"},
  {id:"ch-find",k:[["⌘","F"]],t:"페이지에서 찾기",d:"",g:"크롬",x:"chrome find 찾기"},
- {id:"ch-reload",k:[["⇧","⌘","R"]],t:"캐시 무시하고 새로고침",d:"",g:"크롬",x:"chrome hard reload 새로고침"},
+ {id:"ch-reload",k:[["⌘","R"],["⇧","⌘","R"]],t:"새로고침 / 강력 새로고침(캐시 무시)",d:"고친 게 안 보이면 ⇧⌘R",g:"크롬",x:"chrome reload refresh hard reload 새로고침 강력 새로고침 캐시 무시 리로드"},
  {id:"ch-bm",k:[["⌘","D"],["⇧","⌘","B"]],t:"북마크 추가 / 북마크바",d:"",g:"크롬",x:"chrome bookmark 북마크"},
  {id:"ch-dl",k:[["⇧","⌘","J"],["⌘","Y"]],t:"다운로드 / 방문 기록",d:"",g:"크롬",x:"chrome downloads history 다운로드"},
  {id:"ch-dev",k:[["⌥","⌘","I"]],t:"개발자 도구",d:"",g:"크롬",x:"chrome devtools 개발자"},
@@ -1286,6 +1286,8 @@ var capReady;   // sample·db 준비가 끝나면 resolve
     var CC_ITEMS = D.filter(function(x){ return x.g===CC_G });
     var CC_GROUP = GROUPS.filter(function(x){ return x.g===CC_G })[0];
     var CC_MODE = MODES.filter(function(x){ return x.id==="term" })[0];
+    var PIN_IDS = ["ch-reload"];
+    var PIN_ITEMS = D.filter(function(x){ return PIN_IDS.indexOf(x.id) >= 0 });
     function ccMerge(v){
       var ids = {}; CC_ITEMS.forEach(function(x){ ids[x.id] = 1 });
       var keep = v.items.filter(function(x){ return !ids[x.id] && !(x.g===CC_G && /^cc-/.test(x.id)) });
@@ -1300,6 +1302,12 @@ var capReady;   // sample·db 준비가 끝나면 resolve
       if(CC_MODE){ if(mi >= 0) modes[mi] = CC_MODE; else modes.push(CC_MODE); }
       v.modes = modes;
       if(!Array.isArray(v.projects)) v.projects = PROJECTS;
+      PIN_ITEMS.forEach(function(p){
+        var ix = v.items.map(function(x){ return x.id }).indexOf(p.id);
+        if(ix >= 0){ v.items[ix] = p; return; }
+        var at = -1; v.items.forEach(function(x, i){ if(x.g===p.g) at = i });
+        if(at < 0) v.items.push(p); else v.items.splice(at + 1, 0, p);
+      });
       return v;
     }
     DB.doc("sc.data/main").onSnapshot(function(s){
