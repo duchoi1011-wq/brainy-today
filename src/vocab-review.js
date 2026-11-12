@@ -72,7 +72,7 @@ function rvGrade(r){
 /* 3단계 — 내가 쓴 명령(외국어는 영어 문장)을 Claude가 본다. Claude를 못 쓰면 예시와 직접 비교 */
 function rvCmdPrompt(t, txt){
   if (t.dom === "외국어 단어장") return foreignPrompt(t, txt);
-  return `너는 ${t.cat === "AI 편집 자동화" ? "AI 도구" : "영상 편집"} 용어를 가르치는 코치다. 학습자(동욱)가 아래 용어를 넣어 자기 작업(행사·부스 영상)에서 Claude에게 내릴 편집 명령을 한두 문장 썼다. 위키 정의를 기준으로 판정하라.
+  return `너는 「${fieldLabel(t)}」 단어를 가르치는 코치다. 학습자(동욱 — 이벤트랩 행사 영상·흑염소 진액 사업을 하고 일은 Claude에게 말로 맡긴다)가 아래 단어를 넣어 ${isVideo(t) ? "자기 작업(행사·부스 영상)에서 Claude에게 내릴 편집 명령" : "자기 일·생활에서 Claude에게 내리거나 실제로 할 명령·말"}을 한두 문장 썼다. 정의를 기준으로 판정하라.
 
 용어: ${t.term}
 위키 정의: ${t.def.replace(/`/g,"")}
@@ -80,7 +80,7 @@ function rvCmdPrompt(t, txt){
 학습자 명령: ${txt}
 
 판정 기준:
-- 용어를 뜻에 맞게 썼고, 받는 쪽이 무엇을 할지 알 수 있는 구체적인 명령이면 통과.
+- 단어를 뜻에 맞게 썼고, 받는 쪽이 무엇을 할지 알 수 있는 구체적인 명령·말이면 통과.
 - 용어가 여러 개(· 또는 /로 묶임)면 하나 이상을 맞게 쓰면 통과.
 - 용어를 틀린 뜻으로 썼거나, 용어가 없거나, 명령이 아니면 불통과.
 
@@ -117,7 +117,7 @@ function rvFront(t, dir, step){
   }
   if (step === 3) return `<h3 style="font-size:24px">${esc(t.term)}</h3>
     ${c?.scene ? `<div class="scene"><span class="lbl">이럴 때</span>${esc(c.scene)}</div>` : ""}
-    <p class="small">${fg ? "이 단어를 넣어, 내가 실제로 할 말을 영어 한 문장으로 써 보세요." : "이 용어를 넣어, 내 작업에서 Claude에게 내릴 명령을 한 문장으로 써 보세요."}</p>
+    <p class="small">${fg ? "이 단어를 넣어, 내가 실제로 할 말을 영어 한 문장으로 써 보세요." : isVideo(t) ? "이 용어를 넣어, 내 작업에서 Claude에게 내릴 명령을 한 문장으로 써 보세요." : "이 단어를 넣어, 내 일·생활에서 Claude에게 시키거나 실제로 할 말을 한 문장으로 써 보세요."}</p>
     ${RV.flipped ? `<p class="small muted">내가 쓴 ${fg ? "문장" : "명령"} · ${esc(RV.drafts[t.id] || "")}</p>`
       : `<textarea id="rvTxt" data-id="${t.id}" placeholder="${fg ? "예: 이 단어를 넣은 짧은 영어 문장" : "예: 이 용어를 넣어 무엇을 어떻게 해 달라는 명령"}">${esc(RV.drafts[t.id] || "")}</textarea>
       ${RV.err ? `<p class="note">${esc(RV.err)}</p>` : ""}`}`;
@@ -238,7 +238,7 @@ function stageStart(ids, from){
 const PICK_MAX = 30;
 function pickRow(t){
   return `<div class="pick"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
-    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}</div>`;
+    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>`;
 }
 function pickList(list, max = 80){
   if (!list.length) return "";
@@ -249,7 +249,7 @@ function pickBar(){
   const ids = [...S.pick].filter(id => BYID[id]); if (!ids.length || view() === "review" || S.batch) return "";
   const n = [1, 2, 3, 4].map(L => ids.filter(id => lv(id) === L).length), all3 = n[2] === ids.length;
   return `<div id="pickbar"><span><b class="mono">${ids.length}</b>개 고름 <span class="small muted">${[1, 2, 3, 4].filter(L => n[L - 1]).map(L => LV[L] + " " + n[L - 1]).join(" · ")}</span></span>
-    <button class="btn ghost" data-pickclear="1" style="padding:8px 12px">✕</button><button class="btn primary" data-picktest="1" style="padding:8px 14px">▶ ${all3 ? "명령 시험 한 번에" : "시험 보기"}</button></div>`;
+    <button class="btn ghost" data-pickclear="1" style="padding:8px 12px">✕</button><button class="btn" data-pickup="1" style="padding:8px 12px">▲ 바로 올리기</button><button class="btn primary" data-picktest="1" style="padding:8px 14px">▶ ${all3 ? "명령 시험" : "시험"}</button></div>`;
 }
 function pickTest(){
   const ids = [...S.pick].filter(id => BYID[id] && lv(id) < 4); S.pick = new Set();
@@ -277,7 +277,7 @@ function renderBatch(){
   h += B.ids.map(id => { const t = BYID[id]; if (!t) return ""; const r = B.res[id], fg = t.dom === "외국어 단어장";
     return `<div class="bt"><div class="meta"><b style="font-size:17px">${esc(t.term)}</b>${r ? (r.pass ? pill(4) : `<span class="pill">조금만 더</span>`) : `<span class="small muted">${esc(t.cat)}</span>`}</div>
       <p class="small muted">${rich(t.def)}</p>${ctxOk(id) ? `<p class="small"><span class="muted">이럴 때</span> · ${esc(CTX[id].scene)}</p>` : ""}
-      ${r?.pass ? `<p class="small">내 ${fg ? "문장" : "명령"} · ${esc(B.drafts[id] || "")}</p>` : `<textarea class="bt-in" data-bid="${id}" placeholder="${fg ? "이 단어를 넣은 영어 한 문장" : "이 용어를 넣어 Claude에게 내릴 명령 한 문장"}">${esc(B.drafts[id] || "")}</textarea>`}
+      ${r?.pass ? `<p class="small">내 ${fg ? "문장" : "명령"} · ${esc(B.drafts[id] || "")}</p>` : `<textarea class="bt-in" data-bid="${id}" placeholder="${fg ? "이 단어를 넣은 영어 한 문장" : "이 단어를 넣어 Claude에게 시키거나 실제로 할 말 한 문장"}">${esc(B.drafts[id] || "")}</textarea>`}
       ${r && !r.self ? `${r.good ? `<p class="small"><span class="muted">잘한 점</span> · ${esc(r.good)}</p>` : ""}${r.fix ? `<p class="small"><span class="muted">${r.pass ? "더하면 좋은 점" : "고칠 점"}</span> · ${esc(r.fix)}</p>` : ""}${r.example ? `<p class="small"><span class="muted">이렇게 써요</span> · ${esc(r.example)}</p>` : ""}` : ""}
       ${B.self && !r?.pass && (B.drafts[id] || "").trim() ? `<div class="btns"><button class="btn" data-bself="${id}" data-ok="0">아직</button><button class="btn primary" data-bself="${id}" data-ok="1">뜻에 맞게 썼어요 → ④</button></div>` : ""}
     </div>`; }).join("");
@@ -287,7 +287,7 @@ function renderBatch(){
   return h;
 }
 function batchPrompt(items){
-  return `너는 단어를 가르치는 코치다. 학습자(동욱)가 단어마다 그 단어를 넣어 문장을 하나씩 썼다. 영상·AI 용어면 자기 작업(행사·부스 영상, Claude에게 일 맡기기)에서 Claude에게 내릴 명령이고, 영어 단어면 실제로 할 영어 문장이다. 위키 정의를 기준으로 하나씩 판정하라.
+  return `너는 단어를 가르치는 코치다. 학습자(동욱 — 이벤트랩 행사 영상·흑염소 진액 사업을 하고 일은 Claude에게 말로 맡긴다)가 단어마다 그 단어를 넣어 문장을 하나씩 썼다. 영어 단어면 실제로 할 영어 문장이고, 그 밖에는 자기 일·생활에서 Claude에게 내리거나 실제로 할 명령·말이다. 단어마다 적힌 분야와 정의를 기준으로 하나씩 판정하라.
 
 판정 기준:
 - 단어를 뜻에 맞게 썼고, 받는 쪽이 무엇을 할지 알 수 있는 명령(영어는 말이 되는 문장)이면 통과.
@@ -310,7 +310,7 @@ function batchPass(id, by){
 async function batchCheck(){
   const B = S.batch; if (B.busy) return;
   const todo = B.ids.filter(id => !B.res[id]?.pass && BYID[id]);
-  const items = todo.filter(id => (B.drafts[id] || "").trim().length >= 6).map(id => ({ id, term: BYID[id].term, def: BYID[id].def, cat: BYID[id].cat, txt: B.drafts[id].trim() }));
+  const items = todo.filter(id => (B.drafts[id] || "").trim().length >= 6).map(id => ({ id, term: BYID[id].term, def: BYID[id].def, cat: fieldLabel(BYID[id]), txt: B.drafts[id].trim() }));
   if (!items.length) { B.err = "단어마다 명령을 한 문장씩 써 주세요."; render(); return; }
   B.err = items.length < todo.length ? `안 쓴 단어 ${todo.length - items.length}개는 빼고 채점해요.` : "";
   if (!sample) { B.self = true; render(); return; }
@@ -329,8 +329,10 @@ async function batchCheck(){
   B.busy = false; render();
 }
 document.addEventListener("click", e => {
-  const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;
+  const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-pickup],[data-up],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;
   const d = b.dataset;
+  if (d.up) { const L = lv(d.up); if (L < 4) save(d.up, { level: L + 1, fuzzy: false }, "바로 올림 (시험 없이)"); return; }
+  if (d.pickup) { const ids = [...S.pick].filter(id => BYID[id] && lv(id) < 4); S.pick = new Set(); ids.forEach(id => save(id, { level: lv(id) + 1, fuzzy: false }, "바로 올림 (시험 없이)")); render(); return; }
   if (d.stage) { S.stage = +d.stage; S.batch = null; render(); return; }
   if (d.stagetest) { const L = +d.stagetest; stageStart(stagePool(L).slice(0, STAGE_MAX).map(t => t.id), L); return; }
   if (d.pickall) { d.pickall.split(",").filter(Boolean).forEach(id => { if (S.pick.size < PICK_MAX) S.pick.add(id); }); if (d.thentest) { pickTest(); return; } render(); return; }

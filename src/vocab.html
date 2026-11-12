@@ -121,6 +121,7 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .pick input{width:22px;height:22px;accent-color:var(--accent);flex:none;cursor:pointer}.pick .t{all:unset;flex:1;min-width:0;cursor:pointer}.pick .t b{display:block;font-weight:600}.pick .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom, 0px));z-index:7;width:min(620px, calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.15)}
 #pickbar>span:first-child{flex:1;min-width:0}
+.upbtn{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--l4);font-size:13px;cursor:pointer}.upbtn:active{background:var(--l4);color:#fff}
 .fseg{display:flex;gap:6px;margin:0 0 10px}
 .stagegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .stagebox{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;text-align:left}
@@ -366,7 +367,11 @@ function sceneHtml(t){
   return `<div class="scene"><span class="lbl">장면</span>${t.dom === "외국어 단어장" ? "이 단어를 꺼내 말할 장면을 하나 떠올려 보세요." : "이 단어가 필요했던 내 작업의 한 순간을 떠올려 보세요. 무엇이 보이고 들렸나요?"}</div>`;
 }
 /* ---------- 맥락 만들기 (Claude, 단어당 한 번 만들어 저장) ---------- */
-const CTXV = 2; const ctxOk = id => CTX[id]?.v === CTXV && !!CTX[id].scene;
+/* 단어가 어느 판인지 — 영상 편집 용어(학습 단어장의 영상 7분야)만 영상 작업 장면, 나머지는 그 분야에 맞는 장면 (2026-11-13) */
+const VIDEO_CATS = ["편집·구성","촬영","오디오","색","자막","모션","AI 편집 자동화"];
+const isVideo = t => !!t && t.dom !== "외국어 단어장" && t.dom !== "위키 개념" && VIDEO_CATS.includes(t.cat);
+const fieldLabel = t => t.dom === "위키 개념" ? "위키 개념(" + t.cat + ")" : t.cat;
+const CTXV = 3; const ctxOk = id => { const c = CTX[id], t = BYID[id]; return !!c?.scene && c.v >= (isVideo(t) ? 2 : CTXV); };
 let CTX = {}; let ctxReady = false; const genBusy = new Set(); const genErr = {}; let genChain = Promise.resolve();
 function loadCtxLocal(){ try { CTX = JSON.parse(localStorage.getItem(LSCTX) || "{}") || {}; } catch(e) { CTX = {}; } }
 function saveCtxLocal(){ try { localStorage.setItem(LSCTX, JSON.stringify(CTX)); } catch(e) {} }
@@ -384,6 +389,18 @@ ${style}
 예시(friend): {"scene":"부스에 온 외국인이 '같이 온 사람이에요'라고 소개해요. 뭐라고 할까요?","easy":"편하게 지내는 사람","why":"사람을 소개할 때 말이 막혀요","ask":"This is my friend, Jin. (제 친구 진이에요)"}
 
 {"scene": "이 단어를 꺼낼 순간 한 문장 + 짧은 질문", "easy": "일상 비유로 쉽게 말하면", "why": "모르면 생기는 일", "ask": "그 순간 할 쉬운 영어 한 문장 (뜻)"}`;
+  if (!isVideo(t)) return `동욱이 「${fieldLabel(t)}」 분야의 단어를 정의가 아니라 장면으로 익히게 돕는다.
+동욱: 행사 콘텐츠 브랜드 이벤트랩과 흑염소 진액 브랜드를 운영하고, 일은 Claude에게 말로 맡기며, 운동·신앙·관계도 가꾸는 중이다.
+단어: ${t.term}
+뜻: ${t.def.replace(/`/g,"")}
+
+${style}
+- scene은 이 단어가 「${fieldLabel(t)}」에서 실제로 쓰이는 한 순간을 눈·귀에 보이는 것으로 — 동욱의 일·생활에 맞으면 그쪽으로. 단어 이름은 넣지 말고 "이건 뭘까요?" 또는 "어떻게 할까요?"로 끝내라.
+- easy는 그 분야를 모르는 사람도 아는 일상 비유.
+- ask는 이 단어를 넣어 동욱이 Claude에게 하거나 실제로 할 짧은 말 한 문장.
+예시(메타인지 · 심리학): {"scene":"시험 전날, 다 안다고 생각했는데 막상 설명하려니 막혀요. 이건 뭘까요?","easy":"내 머릿속 지도를 위에서 내려다보는 눈","why":"모르는 걸 안다고 착각해 엉뚱한 데 시간을 써요","ask":"내가 이 내용에서 모르는 부분을 질문으로 짚어 줘"}
+
+{"scene": "...", "easy": "...", "why": "...", "ask": "..."}`;
   return `동욱이 영상 편집 용어를 정의가 아니라 장면으로 익히게 돕는다.
 동욱의 작업: 행사·부스 영상(지금은 오토살롱 부스 미드폼 EP3)을 만들고, 편집은 Claude에게 말로 맡긴다.
 용어: ${t.term}
@@ -403,7 +420,7 @@ function ensureCtx(id, force){
   genChain = genChain.then(async () => {
     try {
       const r = await sample.json(ctxPrompt(BYID[id]), { modelTier: "quick", cache: false });
-      const c = { v: CTXV, scene: String(r?.scene || ""), easy: String(r?.easy || ""), why: String(r?.why || ""), ask: String(r?.ask || ""), at: nowIso() };
+      const c = { v: isVideo(BYID[id]) ? 2 : CTXV, scene: String(r?.scene || ""), easy: String(r?.easy || ""), why: String(r?.why || ""), ask: String(r?.ask || ""), at: nowIso() };
       if (!c.scene) throw { code: "empty" };
       CTX = { ...CTX, [id]: c };
       if (mode === "db" && db) db.doc("ctx/" + id).set(c).catch(() => {}); else saveCtxLocal();
