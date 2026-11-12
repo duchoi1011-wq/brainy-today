@@ -225,7 +225,7 @@ document.addEventListener("keydown", e => {
 
 /* ── 단계별 탭: ① 낯섦 · ② 만남 · ③ 소화 · ④ 실행을 한 화면에 나누고, 칸마다 승급 시험 (2026-11-13 동욱) ──
    ①→② · ②→③ 은 복습 카드로 10개씩, ③→④ 명령 시험은 채점이 길어 여러 개를 골라 한 번에 쓰고 Claude 채점도 한 번에 받는다 */
-const STAGE_TEST = { 1: "뜻 보고 단어 맞히기", 2: "맥락 보고 단어 맞히기", 3: "단어로 명령하기 — 여러 개 골라 한 번에 채점" };
+const STAGE_TEST = { 1: "뜻 보고 단어 맞히기", 2: "맥락 보고 단어 맞히기", 3: "단어로 명령하기 — 고른 것을 한 번에 채점" };
 const STAGE_MAX = 10, BATCH_MAX = 20;
 const ro = w => { const c = (w || "").charCodeAt(w.length - 1) - 0xAC00, j = c >= 0 && c < 11172 ? c % 28 : 0; return w + (j && j !== 8 ? "으로" : "로"); };   // 만남으로 · 소화로 · 실행으로
 function stagePool(L){ return TERMS.filter(t => lv(t.id) === L).sort((a, b) => conceptFirst(a, b) || newerFirst(a, b) || String(prog[a.id]?.lastSeen || "").localeCompare(String(prog[b.id]?.lastSeen || ""))); }
@@ -234,27 +234,39 @@ function stageStart(ids, from){
   RV.mode = "stage"; RV.from = from; RV.up = 0; RV.queue = ids; RV.i = 0; RV.flipped = false; RV.res = null; RV.err = ""; RV.again = new Set();
   location.hash = "review";
 }
-const termRow = t => `<div class="t"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></div>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}`;
+/* 체크해서 고르기 (2026-11-13 동욱) — 단계별·새 개념·분야·전체 어디서든 보이는 단어를 골라 밑 바에서 바로 시험 */
+const PICK_MAX = 30;
+function pickRow(t){
+  return `<div class="pick"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
+    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}</div>`;
+}
+function pickList(list, max = 80){
+  if (!list.length) return "";
+  return `<div class="btns" style="gap:6px;margin:2px 0 6px"><button class="btn ghost" data-pickall="${list.slice(0, PICK_MAX).map(t => t.id).join(",")}" style="padding:6px 12px">보이는 것 고르기 (최대 ${PICK_MAX})</button>${S.pick.size ? `<button class="btn ghost" data-pickclear="1" style="padding:6px 12px">고른 것 지우기</button>` : ""}</div>
+    <div class="list">${list.slice(0, max).map(pickRow).join("")}</div>${list.length > max ? `<p class="small muted">외 ${list.length - max}개 — 분야를 골라 좁혀 보세요</p>` : ""}`;
+}
+function pickBar(){
+  const ids = [...S.pick].filter(id => BYID[id]); if (!ids.length || view() === "review" || S.batch) return "";
+  const n = [1, 2, 3, 4].map(L => ids.filter(id => lv(id) === L).length), all3 = n[2] === ids.length;
+  return `<div id="pickbar"><span><b class="mono">${ids.length}</b>개 고름 <span class="small muted">${[1, 2, 3, 4].filter(L => n[L - 1]).map(L => LV[L] + " " + n[L - 1]).join(" · ")}</span></span>
+    <button class="btn ghost" data-pickclear="1" style="padding:8px 12px">✕</button><button class="btn primary" data-picktest="1" style="padding:8px 14px">▶ ${all3 ? "명령 시험 한 번에" : "시험 보기"}</button></div>`;
+}
+function pickTest(){
+  const ids = [...S.pick].filter(id => BYID[id] && lv(id) < 4); S.pick = new Set();
+  if (!ids.length) { render(); return; }
+  if (ids.every(id => lv(id) === 3)) { S.batch = { ids: ids.slice(0, BATCH_MAX), drafts: {}, res: {}, busy: false, err: "", self: false }; location.hash = "stage"; render(); window.scrollTo({ top: 0, behavior: "instant" }); return; }
+  stageStart(ids, 0);   // 섞여 있으면 단어마다 다음 단계 시험 (③은 명령 카드)
+}
 function renderStage(){
   if (S.batch) return renderBatch();
   const L = S.stage || 1, n = [1, 2, 3, 4].map(k => TERMS.filter(t => lv(t.id) === k).length);
   let h = `${statusNote()}<div class="stagegrid">${[1, 2, 3, 4].map(k => `<button class="stagebox${k === L ? " on" : ""}" data-stage="${k}">
     ${pill(k)}<b class="mono">${n[k - 1]}</b><span class="small muted">${k < 4 ? "시험 → " + LV[k + 1] : "명령까지 통과"}</span></button>`).join("")}</div>`;
   const list = stagePool(L);
-  if (L === 3) {
-    const picked = list.filter(t => S.pick.has(t.id));
-    h += `<section class="card stack"><div class="meta"><h3 style="margin:0">${pill(3)} ${list.length}개</h3>
-      <button class="btn primary" data-batchstart="1" ${picked.length ? "" : "disabled"}>▶ 고른 ${picked.length}개 한 번에 명령 시험</button></div>
-      <p class="small muted">승급 시험: <b>단어로 명령하기</b> — 고른 단어마다 명령을 한 줄씩 쓰고, Claude 채점을 한 번에 받아요. 통과한 단어는 ${ro(pill(4).replace(/<[^>]*>/g, "").trim())} 올라가요. 한 번에 ${BATCH_MAX}개까지.</p>
-      ${list.length ? `<div class="btns" style="gap:6px"><button class="btn ghost" data-pickn="10" style="padding:6px 12px">위에서 10개 고르기</button><button class="btn ghost" data-pickclear="1" style="padding:6px 12px">고른 것 지우기</button></div>
-      <div class="list">${list.slice(0, 80).map(t => `<label class="pick"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""}>${termRow(t)}</label>`).join("")}</div>${list.length > 80 ? `<p class="small muted">외 ${list.length - 80}개</p>` : ""}`
-      : `<p class="empty">③ 소화 단어가 없어요. ② 만남 칸에서 맥락 시험을 보면 여기로 와요.</p>`}</section>`;
-    return h;
-  }
   h += `<section class="card stack"><div class="meta"><h3 style="margin:0">${pill(L)} ${list.length}개</h3>
-    ${L < 4 && list.length ? `<button class="btn primary" data-stagetest="${L}">▶ 시험 보고 ${ro(LV[L + 1])} · ${Math.min(STAGE_MAX, list.length)}개</button>` : ""}</div>
-    <p class="small muted">${L < 4 ? `승급 시험: <b>${STAGE_TEST[L]}</b> — 통과한 단어는 바로 ${ro(pill(L + 1).replace(/<[^>]*>/g, "").trim())} 올라가요. 한 번에 ${STAGE_MAX}개씩.` : "명령 시험까지 통과했거나 실제 작업에 쓴 단어예요. 복습으로 잊지 않게 이어 가요."}</p>
-    ${list.length ? `<div class="list">${list.slice(0, 60).map(t => `<button class="row" data-detail="${t.id}">${termRow(t)}</button>`).join("")}</div>${list.length > 60 ? `<p class="small muted">외 ${list.length - 60}개</p>` : ""}` : `<p class="empty">이 단계에 있는 단어가 없어요.</p>`}
+    ${L < 4 && list.length ? (L === 3 ? `<button class="btn primary" data-pickall="${list.slice(0, 10).map(t => t.id).join(",")}" data-thentest="1">▶ 위에서 10개 명령 시험</button>` : `<button class="btn primary" data-stagetest="${L}">▶ 위에서 ${Math.min(STAGE_MAX, list.length)}개 시험</button>`) : ""}</div>
+    <p class="small muted">${L < 4 ? `승급 시험: <b>${STAGE_TEST[L]}</b> — 통과한 단어는 바로 ${ro(pill(L + 1).replace(/<[^>]*>/g, "").trim())} 올라가요. 체크해서 고르면 밑 바에서 고른 것만 바로 시험해요.` : "명령 시험까지 통과했거나 실제 작업에 쓴 단어예요. 복습으로 잊지 않게 이어 가요."}</p>
+    ${list.length ? pickList(list) : `<p class="empty">${L === 1 ? "이 단어장엔 아직 단어가 없어요." : "이 단계에 있는 단어가 없어요."}</p>`}
   </section>`;
   return h;
 }
@@ -317,16 +329,17 @@ async function batchCheck(){
   B.busy = false; render();
 }
 document.addEventListener("click", e => {
-  const b = e.target.closest("[data-stage],[data-stagetest],[data-pickn],[data-pickclear],[data-batchstart],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;
+  const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;
   const d = b.dataset;
   if (d.stage) { S.stage = +d.stage; S.batch = null; render(); return; }
   if (d.stagetest) { const L = +d.stagetest; stageStart(stagePool(L).slice(0, STAGE_MAX).map(t => t.id), L); return; }
-  if (d.pickn) { stagePool(3).slice(0, +d.pickn).forEach(t => S.pick.add(t.id)); render(); return; }
+  if (d.pickall) { d.pickall.split(",").filter(Boolean).forEach(id => { if (S.pick.size < PICK_MAX) S.pick.add(id); }); if (d.thentest) { pickTest(); return; } render(); return; }
   if (d.pickclear) { S.pick = new Set(); render(); return; }
-  if (d.batchstart) { const ids = stagePool(3).filter(t => S.pick.has(t.id)).slice(0, BATCH_MAX).map(t => t.id); if (ids.length) { S.batch = { ids, drafts: {}, res: {}, busy: false, err: "", self: false }; render(); window.scrollTo({ top: 0, behavior: "instant" }); } return; }
+  if (d.picktest) { pickTest(); return; }
   if (d.batchend) { S.batch = null; S.pick = new Set(); render(); return; }
   if (d.batchcheck) { batchCheck(); return; }
   if (d.bself) { const id = d.bself; if (d.ok === "1") { S.batch.res[id] = { pass: true, self: true }; batchPass(id, "직접 비교"); } else { S.batch.res[id] = { pass: false, self: true }; render(); } }
 });
-document.addEventListener("change", e => { const id = e.target?.dataset?.pickid; if (!id) return; if (e.target.checked) S.pick.add(id); else S.pick.delete(id); render(); });
+document.addEventListener("change", e => { const id = e.target?.dataset?.pickid; if (!id) return; if (e.target.checked && S.pick.size < PICK_MAX) S.pick.add(id); else S.pick.delete(id); e.target.checked = S.pick.has(id); paintPickBar(); });
+function paintPickBar(){ const old = document.getElementById("pickbar"); const h = pickBar(); if (old) old.outerHTML = h || ""; else if (h) document.body.insertAdjacentHTML("beforeend", h); }
 document.addEventListener("input", e => { if (e.target.classList?.contains("bt-in") && S.batch) S.batch.drafts[e.target.dataset.bid] = e.target.value; });

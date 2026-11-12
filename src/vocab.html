@@ -117,8 +117,11 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .sched b{font-family:var(--f-mono);font-size:13px;color:var(--ink)}
 .bt{border-top:1px solid var(--line);padding:12px 0;display:flex;flex-direction:column;gap:6px}.bt:first-of-type{border-top:0}
 .bt textarea{min-height:64px}
-.pick{display:flex;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line);cursor:pointer}.pick:first-child{border-top:0}
-.pick input{width:20px;height:20px;accent-color:var(--accent);flex:none}.pick .t{flex:1;min-width:0}.pick .t b{display:block;font-weight:600}.pick .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick{display:flex;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}.pick:first-child{border-top:0}
+.pick input{width:22px;height:22px;accent-color:var(--accent);flex:none;cursor:pointer}.pick .t{all:unset;flex:1;min-width:0;cursor:pointer}.pick .t b{display:block;font-weight:600}.pick .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom, 0px));z-index:7;width:min(620px, calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.15)}
+#pickbar>span:first-child{flex:1;min-width:0}
+.fseg{display:flex;gap:6px;margin:0 0 10px}
 .stagegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .stagebox{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;text-align:left}
 .stagebox b{font-size:24px;line-height:1.1}.stagebox.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
@@ -198,7 +201,7 @@ function setDomain(d){
   S.domain = DOMAINS[d] ? d : "학습 단어장";
   TERMS = ALL.filter(t => t.dom === S.domain);
   CATS = DOMAINS[S.domain].filter(c => TERMS.some(t => t.cat === c));
-  S.listCat = "all"; S.detail = null; S.pick = new Set(); S.batch = null;
+  S.listCat = "all"; S.detail = null; S.pick = new Set(); S.batch = null; S.fieldCat = ""; S.fieldMode = "";
   try { localStorage.setItem(DOMKEY, S.domain); } catch(e) {}
 }
 const epOf = t => t.ep ? "EP " + esc(t.ep) : "볼트 단어장";
@@ -264,7 +267,7 @@ let mode = "loading";   // loading | db | local
 let note = "";
 let db = null, sample = null, sampleChecked = false;
 let pendingRender = false;
-const S = { scen: 0, listCat: "all", listQ: "", detail: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null };
+const S = { scen: 0, listCat: "all", listQ: "", detail: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null, fieldCat: "", fieldMode: "" };
 
 const lv = id => prog[id]?.level || 1;
 const isCore = id => (typeof prog[id]?.core === "boolean") ? prog[id].core : CORE.has(id);
@@ -412,22 +415,29 @@ function ensureCtx(id, force){
   });
 }
 
-/* 새 개념 — 최근 2주 안에 위키에 새로 정리되거나 고쳐진 개념 · 단어장에 새로 들어온 용어, 최신순 (2026-11-12 동욱) */
+/* 새 개념 — 최근 2주 안에 위키에 새로 정리된 개념 · 단어장에 새로 들어온 단어, 고른 단어장 안에서 최신순 (2026-11-12·13 동욱) */
 function renderNew(){
-  const list = ALL.filter(t => isFresh(t)).sort((a, b) => newerFirst(a, b) || conceptFirst(a, b));
-  if (!list.length) return `<section class="card"><p class="empty">최근 2주 안에 위키에 새로 정리된 개념이 없어요.<br>위키에 개념이 생기거나 고쳐지면 여기 맨 위에 떠요.</p></section>`;
-  const todo = list.filter(t => lv(t.id) < 4);
-  let h = `<section class="card stack"><div class="meta"><h3 style="margin:0">새로 정리된 개념 <span class="mono muted" style="font-size:14px">${list.length}</span></h3>
-    <button class="btn primary" data-newstudy="1">▶ 최신순으로 시험 · ${Math.min(STAGE_MAX, (todo.length ? todo : list).length)}개</button></div>
-    <p class="small muted">위키에 새로 정리되거나 고쳐진 날짜 순이에요. 오래된 것보다 이것부터 봐요.</p></section>`;
-  let day = null, rows = "";
-  const flush = () => { if (rows) h += `<section class="card"><h2>${esc(day)}</h2><div class="list">${rows}</div></section>`; rows = ""; };
-  list.forEach(t => {
-    if (t.at !== day) { flush(); day = t.at; }
-    rows += `<button class="row" data-detail="${t.id}"><div class="t"><b>${esc(t.term)}</b><span>${esc(t.dom === "위키 개념" ? "위키 · " + t.cat : t.cat)} · ${esc(t.def)}</span></div>${pill(lv(t.id))}</button>`;
-  });
+  const list = TERMS.filter(t => isFresh(t)).sort((a, b) => newerFirst(a, b) || conceptFirst(a, b));
+  const head = `<section class="card stack"><div class="meta"><h3 style="margin:0">새로 들어온 단어 <span class="mono muted" style="font-size:14px">${list.length}</span></h3>
+    ${list.length ? `<button class="btn primary" data-newstudy="1">▶ 최신순으로 시험 · ${Math.min(STAGE_MAX, list.filter(t => lv(t.id) < 4).length || list.length)}개</button>` : ""}</div>
+    <p class="small muted">${esc(S.domain)}에 최근 2주 안에 새로 정리되거나 들어온 단어예요. 체크해서 고르면 밑 바에서 바로 시험해요.</p></section>`;
+  if (!list.length) return head + `<section class="card"><p class="empty">${esc(S.domain)}에는 최근 2주 안에 새로 들어온 단어가 없어요.<br>위키·단어장에 새로 정리되면 여기 맨 위에 떠요.</p></section>`;
+  let h = head, day = null, rows = [];
+  const flush = () => { if (rows.length) h += `<section class="card"><h2>${esc(day || "날짜 없음")}</h2>${pickList(rows, 200)}</section>`; rows = []; };
+  list.forEach(t => { if (t.at !== day) { flush(); day = t.at; } rows.push(t); });
   flush();
   return h;
+}
+/* 분야 — 고른 단어장의 분야별로. 학습 단어장은 「강의 용어 분야」(vocab-lec)로도 바꿔 볼 수 있다 */
+function renderDomField(){
+  const seg = S.domain === "학습 단어장" ? `<div class="fseg"><button class="chip on">단어장 분야</button><button class="chip" data-fmode="lec">강의 용어 분야</button></div>` : "";
+  if (!CATS.length) return seg + `<section class="card"><p class="empty">${esc(S.domain)}에는 아직 분야가 없어요.<br>단어가 들어오면 분야가 저절로 생겨요.</p></section>`;
+  const cur = CATS.includes(S.fieldCat) ? S.fieldCat : CATS[0];
+  const list = TERMS.filter(t => t.cat === cur).sort((a, b) => conceptFirst(a, b) || newerFirst(a, b));
+  return seg + `<div class="chips" style="margin-bottom:12px">${CATS.map(c => `<button class="chip${c === cur ? " on" : ""}" data-fcat="${esc(c)}">${esc(c)} <span>${TERMS.filter(t => t.cat === c).length}</span></button>`).join("")}</div>
+    <section class="card stack"><div class="meta"><h3 style="margin:0">${esc(cur)} <span class="mono muted" style="font-size:14px">${list.length}</span></h3></div>
+    <div class="cats">${(() => { const c = counts(list.map(t => t.id)); return barHtml(c, list.length || 1); })()}</div>
+    ${pickList(list, 200)}</section>`;
 }
 function renderList(){
   const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}</div>`;
@@ -439,8 +449,8 @@ function renderList(){
 function listRows(){
   const q = S.listQ.trim().toLowerCase();
   const items = TERMS.filter(t => (S.listCat === "all" || t.cat === S.listCat) && (!q || (t.term + " " + t.def).toLowerCase().includes(q)));
-  if (!items.length) return `<p class="empty">찾는 단어가 없어요.</p>`;
-  return `<div class="list">${items.map(t => `<button class="row" data-detail="${t.id}"><div class="t"><b>${esc(t.term)}</b><span>${esc(t.def.replace(/`/g,""))}</span></div>${coreTag(t.id)}${pill(lv(t.id))}</button>`).join("")}</div>`;
+  if (!items.length) return `<p class="empty">${TERMS.length ? "찾는 단어가 없어요." : esc(S.domain) + "에는 아직 단어가 없어요."}</p>`;
+  return pickList(items, 300);
 }
 function detailHtml(t){
   const p = prog[t.id] || {};
@@ -468,8 +478,9 @@ function render(){
   const main = document.getElementById("view");
   const searchFocused = ae && ae.id === "listQ";
   if (v === "list" && searchFocused) { document.getElementById("listOut").innerHTML = listRows(); return; }
-  main.innerHTML = v === "stage" ? renderStage() : v === "new" ? renderNew() : v === "lec" ? renderLec() : v === "field" ? renderField() : v === "review" ? renderReview() : v === "list" ? renderList() : renderHome();
+  main.innerHTML = v === "stage" ? renderStage() : v === "new" ? renderNew() : v === "lec" ? (S.domain === "학습 단어장" ? renderLec() : `<section class="card"><p class="empty">강의 용어는 학습 단어장에만 있어요.<br>${esc(S.domain)}에는 아직 강의가 없어요.</p></section>`) : v === "field" ? (S.domain === "학습 단어장" && S.fieldMode === "lec" ? `<div class="fseg"><button class="chip" data-fmode="">단어장 분야</button><button class="chip on">강의 용어 분야</button></div>` + renderField() : renderDomField()) : v === "review" ? renderReview() : v === "list" ? renderList() : renderHome();
   document.getElementById("dom").innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
+  const pb = document.getElementById("pickbar"), pbh = pickBar(); if (pb) pb.remove(); if (pbh) document.body.insertAdjacentHTML("beforeend", pbh);
   document.getElementById("sub").textContent = `${S.domain} ${TERMS.length}개 · 목표 달성 ${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}`;
 }
 
@@ -488,13 +499,15 @@ JSON 하나만 답하라. good·fix는 한국어 존댓말로 짧게, example은
 /* ---------- events ---------- */
 document.addEventListener("click", e => {
   if (e.target.closest("[data-newstudy]")) {
-    const list = ALL.filter(t => isFresh(t)).sort((a, b) => newerFirst(a, b) || conceptFirst(a, b));
+    const list = TERMS.filter(t => isFresh(t)).sort((a, b) => newerFirst(a, b) || conceptFirst(a, b));
     const todo = list.filter(t => lv(t.id) < 4);
     stageStart((todo.length ? todo : list).slice(0, STAGE_MAX).map(t => t.id), 0); return;
   }
   const one = e.target.closest("[data-onetest]"); if (one) { stageStart([one.dataset.onetest], 0); return; }
   const dm = e.target.closest("[data-dom]");
   if (dm) { setDomain(dm.dataset.dom); render(); return; }
+  const fc = e.target.closest("[data-fcat],[data-fmode]");
+  if (fc) { if (fc.dataset.fcat !== undefined) S.fieldCat = fc.dataset.fcat; else S.fieldMode = fc.dataset.fmode; render(); return; }
   const el = e.target.closest("[data-act],[data-listcat],[data-detail]");
   if (!el) return;
   const d = el.dataset;
