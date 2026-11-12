@@ -701,13 +701,13 @@ patch("\ninit();\n", "\n" + (root / "src" / "vocab-review.js").read_text(encodin
 patch('''      <a href="#review" data-v="review">복습</a>''', '''      <a href="#review" data-v="review">복습</a>
       <a href="#lec" data-v="lec">강의</a>
       <a href="#field" data-v="field">분야</a>''')
-# 설명하기는 뺀다 (2026-11-07 동욱: "설명하기는 굳이 필요 없을 것 같아") — ③ 소화는 복습에서 2주 넘게 떠올리면
+# 설명하기는 뺀다 (2026-11-07 동욱: "설명하기는 굳이 필요 없을 것 같아") — ③ 소화는 복습 시험 3단계(단어로 명령 내리기)를 통과하면 (2026-11-12)
 patch('''      <a href="#talk" data-v="talk">설명하기</a>\n''', "")
 patch('''<button class="btn" data-go="talk" data-id="${t.id}">설명하기</button>''', "")
 patch('''장면이 그려진 단어는 설명하기에서 내 말로 풀어 보세요.''', '''장면이 그려진 단어는 복습에서 이어 가요.''')
 patch(" 설명하기는 그 단어로 영어 문장을 만드는 연습이에요.", "")
-patch("설명하기를 통과한 체화할 단어가 여기 올라와요.", "복습에서 2주 넘게 떠올린(③ 소화) 체화할 단어가 여기 올라와요.")
-patch("체화할 단어를 설명하기에서 통과하면 여기 나타나요.", "체화할 단어를 복습에서 2주 넘게 떠올리면(③ 소화) 여기 나타나요.")
+patch("설명하기를 통과한 체화할 단어가 여기 올라와요.", "복습 시험 3단계(단어로 명령 내리기)를 통과한(③ 소화) 체화할 단어가 여기 올라와요.")
+patch("체화할 단어를 설명하기에서 통과하면 여기 나타나요.", "체화할 단어가 복습 시험 3단계(단어로 명령 내리기)를 통과하면(③ 소화) 여기 나타나요.")
 patch('''"이 분야는 모두 소화 이상이에요. 설명하기나 실행하기로 가 보세요."''', '''"이 분야는 모두 소화 이상이에요. 실행하기로 가 보세요."''')
 patch('''<a class="btn primary" href="#talk" style="text-align:center;text-decoration:none">설명하기로</a>''', '''<a class="btn primary" href="#review" style="text-align:center;text-decoration:none">복습으로</a>''')
 patch('''main.innerHTML = v === "review" ? renderReview() :''', '''main.innerHTML = v === "lec" ? renderLec() : v === "field" ? renderField() : v === "review" ? renderReview() :''')
