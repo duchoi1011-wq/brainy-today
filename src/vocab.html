@@ -106,6 +106,10 @@ textarea{min-height:120px;resize:vertical}
 .stack{display:flex;flex-direction:column;gap:12px}
 .rule{font-size:13px;color:var(--muted);display:grid;grid-template-columns:auto 1fr;gap:4px 10px}
 .empty{padding:22px 4px;text-align:center;color:var(--muted)}
+.stagegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stagebox{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;text-align:left}
+.stagebox b{font-size:24px;line-height:1.1}.stagebox.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+@media (max-width:480px){.stagegrid{grid-template-columns:repeat(2,1fr)}}
 .stages{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
 .stages span{height:6px;border-radius:3px;background:var(--surface-2);border:1px solid var(--line)}
 .stages span.on{background:var(--accent);border-color:var(--accent)}
@@ -147,6 +151,7 @@ textarea{min-height:120px;resize:vertical}
     <nav id="nav">
       <a href="#review" data-v="review">복습</a>
       <a href="#new" data-v="new">새 개념</a>
+      <a href="#stage" data-v="stage">단계</a>
       <a href="#lec" data-v="lec">강의</a>
       <a href="#field" data-v="field">분야</a>
       <a href="#home" data-v="home">홈</a>
@@ -566,7 +571,7 @@ function render(){
   const main = document.getElementById("view");
   const searchFocused = ae && ae.id === "listQ";
   if (v === "list" && searchFocused) { document.getElementById("listOut").innerHTML = listRows(); return; }
-  main.innerHTML = v === "new" ? renderNew() : v === "lec" ? renderLec() : v === "field" ? renderField() : v === "review" ? renderReview() : v === "learn" ? renderLearn() : v === "talk" ? renderTalk() : v === "do" ? renderDo() : v === "list" ? renderList() : renderHome();
+  main.innerHTML = v === "stage" ? renderStage() : v === "new" ? renderNew() : v === "lec" ? renderLec() : v === "field" ? renderField() : v === "review" ? renderReview() : v === "learn" ? renderLearn() : v === "talk" ? renderTalk() : v === "do" ? renderDo() : v === "list" ? renderList() : renderHome();
   document.getElementById("dom").innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
   document.getElementById("sub").textContent = `${S.domain} ${TERMS.length}개 · 목표 달성 ${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}`;
 }
