@@ -25,15 +25,15 @@
         "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록) · vo.marks/lec(강의 탭 표시) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");
     },
     tools: [
-      { name: "vocab_set_level", description: "단어 하나의 단계를 올린다 (2 만남 · 3 소화 · 4 실행). 동욱이 그 단어를 알게 됐다·설명했다·실제로 썼다고 분명히 말했을 때만. 단계는 내려가지 않는다.",
+      { name: "vocab_set_level", description: "단어 하나의 단계를 올린다 (2 만남 = 뜻 보고 맞힘 · 3 소화 = 맥락 보고 맞힘 · 4 실행 = 단어로 명령·실제로 씀). 동욱이 그 수준에 왔다고 분명히 말했을 때만. 단계는 내려가지 않는다.",
         inputSchema: { type: "object", properties: { term: { type: "string" }, level: { type: "integer", enum: [2, 3, 4] }, why: { type: "string" } }, required: ["term", "level"] },
         execute: function (i) { var t = findTerm(i.term); if (!t) throw new Error("「" + i.term + "」 단어를 못 찾았어요"); save(t.id, { level: i.level }, "Brainy: " + (i.why || "대화에서")); return t.term + " → " + LV[i.level]; } },
-      { name: "vocab_open", description: "단어장 화면을 연다: review(복습) · lec(강의) · field(분야) · home · learn(알기) · do(실행하기) · list(전체). term 을 주면 전체에서 그 단어를 펼친다.",
+      { name: "vocab_open", description: "단어장 화면을 연다: home(홈 대시보드) · review(복습·복습 주기) · stage(단계별 — 네 단계와 승급 시험) · new(새 개념) · lec(강의) · field(분야) · list(전체). term 을 주면 전체에서 그 단어를 펼친다.",
         inputSchema: { type: "object", properties: { view: { type: "string" }, term: { type: "string" } } },
         execute: function (i) {
           var t = i.term ? findTerm(i.term) : null;
           if (t) { S.detail = t.id; location.hash = "list"; render(); return t.term; }
-          location.hash = i.view || "review"; return i.view || "review";
+          var v = i.view === "learn" || i.view === "do" ? "stage" : (i.view || "home"); location.hash = v; return v;
         } }
     ]
   };

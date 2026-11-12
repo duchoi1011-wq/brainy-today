@@ -2,8 +2,9 @@
    떠올리기 먼저 → 뒤집기 → 몰랐음 / 헷갈림 / 알았음. 간격은 /memory-check 와 같다 (단계 0:1일 1:3일 2:7일 3:14일 4:30일 5:60일).
    기록은 progress/<id>.srs = {box, due, first, last, n, lapses, log:[{at,r}], pending:[{at,r}]}
    - 영어 단어의 pending 은 맥 동기화가 볼트 「영어 단어장」 표(단계·다음 복습·기록 ✓△✗)에 넣고 비운다.
-   시험 3단계 (2026-11-12 동욱): 1 설명 보고 단어 맞히기(통과해도 ① 낯섦, progress.t1) → 2 상황(이럴 때) 보고 맞히기 = ② 만남
-   → 3 그 단어로 내 작업 명령 내리기 = ③ 소화. ③ 이상은 예전처럼 알아보기/꺼내기 복습. ④ 실행은 실제로 썼을 때만. 단계는 내려가지 않는다. */
+   단계 시험 (2026-11-13 동욱, 매일 복습·단계별 승급 시험 같은 기준): ① 낯섦 → 뜻 보고 단어 맞히기 → ② 만남
+   → 맥락(상황) 보고 단어 맞히기 → ③ 소화 → 그 단어로 명령 쓰기(Claude 채점) → ④ 실행. ④는 알아보기/꺼내기 복습만.
+   맥에서 실제 작업에 쓴 게 잡혀도 ④ (vocab_use.py). 단계는 내려가지 않는다. ③→④는 단계별 탭에서 여러 개를 골라 한 번에 채점받는다. */
 const RV_GAP = [1, 3, 7, 14, 30, 60];
 const RV_NEW = 5, RV_MAX = 40;
 const RV = { queue: null, i: 0, flipped: false, again: new Set(), stats: { ok: 0, mid: 0, bad: 0 }, dom: null, day: null, drafts: {}, res: null, busy: false, err: "" };
@@ -13,9 +14,7 @@ const isConcept = t => !!(t && t.wiki);
 const conceptFirst = (a, b) => isConcept(b) - isConcept(a);
 const newerFirst = (a, b) => String(b.at || "").localeCompare(String(a.at || ""));
 const isFresh = t => !!(t && t.at && t.at >= kday(-14));
-/* 승급 시험 (2026-11-13 동욱): 「단계」 탭에서 고른 단계의 단어만 모아 바로 다음 단계 시험 — ①→② 상황 보고 맞히기 · ②→③ 명령 쓰기 · ③→④ 실제로 쓴 장면 적기 */
-const stageStep = id => lv(id) >= 4 ? 0 : lv(id) === 3 ? 4 : lv(id) === 2 ? 3 : 2;
-const rvStep = id => RV.mode === "stage" ? stageStep(id) : lv(id) >= 3 ? 0 : lv(id) === 2 ? 3 : prog[id]?.t1 ? 2 : 1;
+const rvStep = id => lv(id) >= 4 ? 0 : lv(id);   // 1 뜻 보고 맞히기 · 2 맥락 보고 맞히기 · 3 명령 쓰기 · 0 ④ 복습만
 const kday = (off = 0) => { const d = new Date(Date.now() + 9 * 3600e3 + off * 86400e3); return d.toISOString().slice(0, 10); };
 const vaultSrs = t => (t.stage !== undefined && t.stage !== "" && t.due) ? { box: Math.max(0, Math.min(5, parseInt(t.stage, 10) || 0)), due: t.due } : null;
 const srsOf = id => prog[id]?.srs || vaultSrs(BYID[id] || {}) || null;
@@ -61,11 +60,10 @@ function rvGrade(r){
   const step = rvStep(id);
   let how = r === "ok" ? "복습: 떠올림" : r === "mid" ? "복습: 헷갈림" : "복습: 몰랐음";
   if (r === "ok") {
-    patch.fuzzy = false;   // 단계는 시험으로만 오른다 — 1단계는 낯섦 그대로, 2단계 ② 만남, 3단계 ③ 소화
-    if (step === 1) { patch.t1 = now; how = "시험 1단계 통과: 설명 보고 맞힘"; }
-    else if (step === 2) { patch.level = 2; how = "시험 2단계 통과: 상황 보고 맞힘"; }
-    else if (step === 3) { patch.level = 3; patch.cmd = { text: (RV.drafts[id] || "").trim(), at: now, by: RV.res?.id === id && !RV.res.self ? "Claude 확인" : "직접 비교" }; how = "시험 3단계 통과: 단어로 명령 내림 (" + patch.cmd.by + ")"; }
-    else if (step === 4) { patch.level = 4; patch.action = { note: (RV.drafts[id] || "").trim(), at: now }; how = "승급 시험: 실제로 쓴 장면 기록"; }
+    patch.fuzzy = false;   // 단계는 시험으로만 오른다
+    if (step === 1) { patch.level = 2; how = "시험 통과: 뜻 보고 맞힘"; }
+    else if (step === 2) { patch.level = 3; how = "시험 통과: 맥락 보고 맞힘"; }
+    else if (step === 3) { patch.level = 4; patch.cmd = { text: (RV.drafts[id] || "").trim(), at: now, by: RV.res?.id === id && !RV.res.self ? "Claude 확인" : "직접 비교" }; how = "시험 통과: 단어로 명령 (" + patch.cmd.by + ")"; }
     if (RV.mode === "stage" && step) RV.up = (RV.up || 0) + 1;
   } else if (r === "bad") patch.fuzzy = true;
   RV.i++; RV.flipped = false; RV.res = null; RV.err = "";
@@ -123,10 +121,6 @@ function rvFront(t, dir, step){
     ${RV.flipped ? `<p class="small muted">내가 쓴 ${fg ? "문장" : "명령"} · ${esc(RV.drafts[t.id] || "")}</p>`
       : `<textarea id="rvTxt" data-id="${t.id}" placeholder="${fg ? "예: 이 단어를 넣은 짧은 영어 문장" : "예: 이 용어를 넣어 무엇을 어떻게 해 달라는 명령"}">${esc(RV.drafts[t.id] || "")}</textarea>
       ${RV.err ? `<p class="note">${esc(RV.err)}</p>` : ""}`}`;
-  if (step === 4) return `<h3 style="font-size:24px">${esc(t.term)}</h3><p class="small">${rich(t.def)}</p>
-    <p class="small">이 ${fg ? "단어" : "용어"}를 <b>실제 작업·대화에서 언제, 어떻게 썼는지</b> 한 줄로 적어요. 썼으면 ④ 실행이에요.</p>
-    <textarea id="rvTxt" data-id="${t.id}" placeholder="예: 오늘 Claude에게 영상 편집을 맡기면서 이 말을 넣어 지시했다">${esc(RV.drafts[t.id] || "")}</textarea>
-    ${RV.err ? `<p class="note">${esc(RV.err)}</p>` : ""}`;
   if (dir === "recall") return `<div class="scene"><span class="lbl">${fg ? "이 순간, 영어로" : "이 장면"}</span>${esc(c.scene)}</div>
     ${fg ? `<p class="small muted">뜻 · ${esc(t.def)}</p>` : ""}
     <p class="muted small">${fg ? "어떤 영어 단어를 쓸지" : "어떤 용어인지"} 떠올린 뒤 뒤집어요.</p>`;
@@ -135,7 +129,7 @@ function rvFront(t, dir, step){
 function rvBack(t, dir, step){
   const c = CTX[t.id] || {}, fg = t.dom === "외국어 단어장", r = RV.res?.id === t.id ? RV.res : null;
   const res = step !== 3 || !r ? "" : r.self ? `<div class="result fail"><b>예시와 비교해 보세요</b><p class="small">단어를 뜻에 맞게 넣어 ${fg ? "말이 되는 문장" : "무엇을 할지 알 수 있는 명령"}이면 「통과」예요.</p></div>`
-    : `<div class="result ${r.pass ? "pass" : "fail"}"><b>${r.pass ? "통과 · ③ 소화로 올라가요" : "조금만 더"}</b>
+    : `<div class="result ${r.pass ? "pass" : "fail"}"><b>${r.pass ? "통과 · ④ 실행으로 올라가요" : "조금만 더"}</b>
       ${r.good ? `<p><span class="muted small">잘한 점</span><br>${esc(r.good)}</p>` : ""}
       ${r.fix ? `<p><span class="muted small">${r.pass ? "더하면 좋은 점" : "고칠 점"}</span><br>${esc(r.fix)}</p>` : ""}
       ${r.example ? `<p><span class="muted small">이렇게 써요</span><br>${esc(r.example)}</p>` : ""}</div>`;
@@ -154,11 +148,11 @@ function renderReview(){
   const head = `${statusNote()}
     <div class="meta small muted"><span>오늘 복습 <b class="mono">${dueN}</b> · 새 단어 <b class="mono">${Math.max(0, RV_NEW - firstToday())}</b>/${RV_NEW}</span><span>익힌 단어 <span class="mono">${learned}</span>/${TERMS.length}</span></div>`;
   if (RV.mode === "stage") {
-    const from = RV.from, to = from + 1;
-    const top = `<div class="meta" style="margin:2px"><span class="tc">승급 시험 · ${pill(from)} → ${pill(to)}</span><button class="btn ghost" data-rv="stageend" style="padding:6px 12px">그만</button></div>`;
-    if (RV.i >= RV.queue.length) return `${top}<section class="card stack"><h3>승급 시험 끝</h3>
-      <p>${RV.queue.length}개 중 <b>${RV.up || 0}개</b>가 ${ro(LV[to])} 올라갔어요.</p>
-      <div class="btns"><button class="btn primary" data-rv="stageend">단계로 돌아가기</button></div></section>`;
+    const from = RV.from, title = from ? `승급 시험 · ${pill(from)} → ${pill(from + 1)}` : "시험 · 단어마다 다음 단계로";
+    const top = `<div class="meta" style="margin:2px"><span class="tc">${title}</span><button class="btn ghost" data-rv="stageend" style="padding:6px 12px">그만</button></div>`;
+    if (RV.i >= RV.queue.length) return `${top}<section class="card stack"><h3>시험 끝</h3>
+      <p>${new Set(RV.queue).size}개 중 <b>${RV.up || 0}개</b>가 다음 단계로 올라갔어요.</p>
+      <div class="btns"><button class="btn primary" data-rv="stageend">단계별로 돌아가기</button></div></section>`;
     return top + rvCard();
   }
   if (RV.i >= RV.queue.length) {
@@ -168,21 +162,32 @@ function renderReview(){
       ${did ? `<p>✓ ${st.ok} · △ ${st.mid} · ✗ ${st.bad} — 내일 볼 단어 ${tmr}개</p>` : `<p class="muted">새 단어는 하루 ${RV_NEW}개까지예요. 내일 볼 단어 ${tmr}개.</p>`}
 
       <div class="btns"><button class="btn" data-rv="more">새 단어 5개 더</button></div>
-    </section>`;
+    </section>${rvSchedule()}`;
   }
-  return head + rvCard();
+  return head + rvCard() + rvSchedule();
+}
+/* 복습 주기 — 다음 7일 동안 차례가 오는 단어 수, 간격 단계(상자)별 단어 수 */
+function rvSchedule(){
+  const days = [...Array(7)].map((_, k) => kday(k)), by = days.map(() => 0), box = [0, 0, 0, 0, 0, 0];
+  TERMS.forEach(t => { const x = srsOf(t.id); if (!x) return; box[Math.max(0, Math.min(5, x.box || 0))]++;
+    const k = x.due <= days[0] ? 0 : days.indexOf(x.due); if (k >= 0) by[k]++; });
+  const mx = Math.max(1, ...by), wd = ["일", "월", "화", "수", "목", "금", "토"];
+  return `<section class="card stack"><h2>복습 주기</h2>
+    <div class="sched">${days.map((d, k) => `<div><b>${by[k]}</b><i style="height:${Math.round(by[k] / mx * 56) + 3}px;${k ? "" : "background:var(--accent)"}"></i>${k ? wd[new Date(d + "T00:00:00+09:00").getDay()] : "오늘"}</div>`).join("")}</div>
+    <div class="rule">${RV_GAP.map((g, b) => `<span class="mono">상자 ${b}</span><span>${g}일 뒤 다시 · <b class="mono">${box[b]}</b>개</span>`).join("")}</div>
+    <p class="small muted">알았음이면 다음 상자로(간격이 길어짐), 헷갈림이면 그대로, 몰랐음이면 상자 0으로 돌아가 내일 다시 봐요. 새 단어는 하루 ${RV_NEW}개.</p></section>`;
 }
 function rvCard(){
   const t = BYID[RV.queue[RV.i]];
   if (!t) { RV.i++; return renderReview(); }
   const step = rvStep(t.id), dir = rvDir(t), pv = rvPreview(t), s = srsOf(t.id);
   const r = RV.res?.id === t.id ? RV.res : null, fail3 = step === 3 && r && !r.self && !r.pass;
-  const STEPN = { 1: "설명 보고 맞히기", 2: "상황 보고 맞히기 → ② 만남", 3: "단어로 명령 내리기 → ③ 소화", 4: "실제로 쓴 장면 적기 → ④ 실행" };
+  const STEPN = { 1: "뜻 보고 맞히기 → ② 만남", 2: "맥락 보고 맞히기 → ③ 소화", 3: "단어로 명령하기 → ④ 실행" };
   return `
   <div class="prog" aria-label="진행 ${RV.i + 1}/${RV.queue.length}"><span style="width:${RV.i / RV.queue.length * 100}%"></span></div>
   <section class="card flash" ${step >= 3 ? "" : `data-rv="flip"`} style="cursor:${RV.flipped || step >= 3 ? "default" : "pointer"}">
     <div class="meta"><span class="tc">${esc(t.cat)} · ${s ? "단계 " + s.box : "새 단어"}${RV.again.has(t.id) ? " · 다시" : ""}</span><span class="btns" style="gap:6px">${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isConcept(t) ? `<span class="pill">개념</span>` : ""}${coreTag(t.id)}${pill(lv(t.id))}</span></div>
-    ${step ? `<p class="small mono" style="margin:0;color:var(--accent)">${RV.mode === "stage" ? "승급 시험" : "시험 " + step + "/3"} · ${STEPN[step]}</p>` : ""}
+    ${step ? `<p class="small mono" style="margin:0;color:var(--accent)">시험 ${step}/3 · ${STEPN[step]}</p>` : ""}
     <div class="stack">${rvFront(t, dir, step)}${RV.flipped ? `<hr style="border:0;border-top:1px solid var(--line);margin:4px 0">` + rvBack(t, dir, step) : ""}</div>
     ${RV.flipped
       ? fail3 ? `<div class="btns">
@@ -193,7 +198,6 @@ function rvCard(){
           <button class="btn" data-rv="bad">몰랐음<br><span class="small muted">${pv.bad}</span></button>
           <button class="btn" data-rv="mid">헷갈림<br><span class="small muted">${pv.mid}</span></button>
           <button class="btn primary" data-rv="ok">${step === 3 ? "통과" : "알았음"}<br><span class="small" style="opacity:.8">${pv.ok}</span></button></div>`
-      : step === 4 ? `<div class="btns"><button class="btn" data-rv="skip">아직 안 써 봤어요</button><button class="btn primary" data-rv="used">실제로 썼어요 → ④</button></div>`
       : step === 3 ? `<div class="btns"><button class="btn primary" data-rv="check" ${RV.busy ? "disabled" : ""}>${RV.busy ? "Claude가 읽는 중…" : sample ? "Claude에게 확인받기" : "예시와 비교하기"}</button></div>`
       : `<div class="btns"><button class="btn primary" data-rv="flip">뒤집기</button></div>`}
   </section>
@@ -206,8 +210,6 @@ document.addEventListener("click", e => {
   const step3 = rvStep(RV.queue?.[RV.i]) >= 3;
   if (a === "flip") { if (!RV.flipped && !step3) { RV.flipped = true; render(); } return; }
   if (a === "stageend") { RV.mode = null; RV.queue = null; RV.up = 0; location.hash = "stage"; return; }
-  if (a === "skip") { RV.i++; RV.err = ""; render(); return; }
-  if (a === "used") { const id = RV.queue[RV.i]; if ((RV.drafts[id] || "").trim().length < 4) { RV.err = "언제, 어떻게 썼는지 한 줄 적어 주세요."; render(); return; } RV.flipped = true; rvGrade("ok"); return; }
   if (a === "check") { rvCheck(); return; }
   if (a === "retry") { RV.flipped = false; RV.res = null; render(); return; }
   if (a === "more") { const extra = rvFresh().filter(t => !RV.queue.includes(t.id)).slice(0, RV_NEW).map(t => t.id); RV.queue = RV.queue.concat(extra); render(); return; }
@@ -221,28 +223,110 @@ document.addEventListener("keydown", e => {
   if (RV.flipped && ["1", "2", "3"].includes(e.key) && !(e.key === "3" && step3 && r && !r.self && !r.pass)) rvGrade(e.key === "1" ? "bad" : e.key === "2" ? "mid" : "ok");
 });
 
-/* ── 단계 탭: ① 낯섦 · ② 만남 · ③ 소화 · ④ 실행을 한 화면에 나누고, 칸마다 승급 시험 (2026-11-13 동욱) ── */
-const STAGE_TEST = { 1: "상황 보고 맞히기", 2: "단어로 명령 쓰기", 3: "실제로 쓴 장면 적기" };
-const STAGE_MAX = 10;
+/* ── 단계별 탭: ① 낯섦 · ② 만남 · ③ 소화 · ④ 실행을 한 화면에 나누고, 칸마다 승급 시험 (2026-11-13 동욱) ──
+   ①→② · ②→③ 은 복습 카드로 10개씩, ③→④ 명령 시험은 채점이 길어 여러 개를 골라 한 번에 쓰고 Claude 채점도 한 번에 받는다 */
+const STAGE_TEST = { 1: "뜻 보고 단어 맞히기", 2: "맥락 보고 단어 맞히기", 3: "단어로 명령하기 — 여러 개 골라 한 번에 채점" };
+const STAGE_MAX = 10, BATCH_MAX = 20;
 const ro = w => { const c = (w || "").charCodeAt(w.length - 1) - 0xAC00, j = c >= 0 && c < 11172 ? c % 28 : 0; return w + (j && j !== 8 ? "으로" : "로"); };   // 만남으로 · 소화로 · 실행으로
-function stagePool(L){ return TERMS.filter(t => (lv(t.id) || 1) === L).sort((a, b) => conceptFirst(a, b) || newerFirst(a, b) || String(prog[a.id]?.lastSeen || "").localeCompare(String(prog[b.id]?.lastSeen || ""))); }
+function stagePool(L){ return TERMS.filter(t => lv(t.id) === L).sort((a, b) => conceptFirst(a, b) || newerFirst(a, b) || String(prog[a.id]?.lastSeen || "").localeCompare(String(prog[b.id]?.lastSeen || ""))); }
+function stageStart(ids, from){
+  if (!ids.length) return;
+  RV.mode = "stage"; RV.from = from; RV.up = 0; RV.queue = ids; RV.i = 0; RV.flipped = false; RV.res = null; RV.err = ""; RV.again = new Set();
+  location.hash = "review";
+}
+const termRow = t => `<div class="t"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></div>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}`;
 function renderStage(){
-  const L = S.stage || 1, n = [1, 2, 3, 4].map(k => TERMS.filter(t => (lv(t.id) || 1) === k).length);
+  if (S.batch) return renderBatch();
+  const L = S.stage || 1, n = [1, 2, 3, 4].map(k => TERMS.filter(t => lv(t.id) === k).length);
   let h = `${statusNote()}<div class="stagegrid">${[1, 2, 3, 4].map(k => `<button class="stagebox${k === L ? " on" : ""}" data-stage="${k}">
-    ${pill(k)}<b class="mono">${n[k - 1]}</b><span class="small muted">${k < 4 ? "시험 → " + LV[k + 1] : "실제로 쓴 단어"}</span></button>`).join("")}</div>`;
+    ${pill(k)}<b class="mono">${n[k - 1]}</b><span class="small muted">${k < 4 ? "시험 → " + LV[k + 1] : "명령까지 통과"}</span></button>`).join("")}</div>`;
   const list = stagePool(L);
+  if (L === 3) {
+    const picked = list.filter(t => S.pick.has(t.id));
+    h += `<section class="card stack"><div class="meta"><h3 style="margin:0">${pill(3)} ${list.length}개</h3>
+      <button class="btn primary" data-batchstart="1" ${picked.length ? "" : "disabled"}>▶ 고른 ${picked.length}개 한 번에 명령 시험</button></div>
+      <p class="small muted">승급 시험: <b>단어로 명령하기</b> — 고른 단어마다 명령을 한 줄씩 쓰고, Claude 채점을 한 번에 받아요. 통과한 단어는 ${ro(pill(4).replace(/<[^>]*>/g, "").trim())} 올라가요. 한 번에 ${BATCH_MAX}개까지.</p>
+      ${list.length ? `<div class="btns" style="gap:6px"><button class="btn ghost" data-pickn="10" style="padding:6px 12px">위에서 10개 고르기</button><button class="btn ghost" data-pickclear="1" style="padding:6px 12px">고른 것 지우기</button></div>
+      <div class="list">${list.slice(0, 80).map(t => `<label class="pick"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""}>${termRow(t)}</label>`).join("")}</div>${list.length > 80 ? `<p class="small muted">외 ${list.length - 80}개</p>` : ""}`
+      : `<p class="empty">③ 소화 단어가 없어요. ② 만남 칸에서 맥락 시험을 보면 여기로 와요.</p>`}</section>`;
+    return h;
+  }
   h += `<section class="card stack"><div class="meta"><h3 style="margin:0">${pill(L)} ${list.length}개</h3>
     ${L < 4 && list.length ? `<button class="btn primary" data-stagetest="${L}">▶ 시험 보고 ${ro(LV[L + 1])} · ${Math.min(STAGE_MAX, list.length)}개</button>` : ""}</div>
-    <p class="small muted">${L < 4 ? `승급 시험: <b>${STAGE_TEST[L]}</b> — 통과한 단어는 바로 ${ro(pill(L + 1).replace(/<[^>]*>/g, "").trim())} 올라가요. 한 번에 ${STAGE_MAX}개씩.` : "실제 작업·대화에서 쓴 단어예요."}</p>
-    ${list.length ? `<div class="list">${list.slice(0, 60).map(t => `<button class="row" data-go="learn" data-id="${t.id}"><div class="t"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></div>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}</button>`).join("")}</div>${list.length > 60 ? `<p class="small muted">외 ${list.length - 60}개</p>` : ""}` : `<p class="empty">이 단계에 있는 단어가 없어요.</p>`}
+    <p class="small muted">${L < 4 ? `승급 시험: <b>${STAGE_TEST[L]}</b> — 통과한 단어는 바로 ${ro(pill(L + 1).replace(/<[^>]*>/g, "").trim())} 올라가요. 한 번에 ${STAGE_MAX}개씩.` : "명령 시험까지 통과했거나 실제 작업에 쓴 단어예요. 복습으로 잊지 않게 이어 가요."}</p>
+    ${list.length ? `<div class="list">${list.slice(0, 60).map(t => `<button class="row" data-detail="${t.id}">${termRow(t)}</button>`).join("")}</div>${list.length > 60 ? `<p class="small muted">외 ${list.length - 60}개</p>` : ""}` : `<p class="empty">이 단계에 있는 단어가 없어요.</p>`}
   </section>`;
   return h;
 }
+/* ③→④ 한 번에 명령 시험 */
+function renderBatch(){
+  const B = S.batch, done = Object.keys(B.res).length, up = B.ids.filter(id => B.res[id]?.pass).length;
+  let h = `<div class="meta" style="margin:2px"><span class="tc">명령 시험 · ${pill(3)} → ${pill(4)} · ${B.ids.length}개</span><button class="btn ghost" data-batchend="1" style="padding:6px 12px">그만</button></div><section class="card">`;
+  h += B.ids.map(id => { const t = BYID[id]; if (!t) return ""; const r = B.res[id], fg = t.dom === "외국어 단어장";
+    return `<div class="bt"><div class="meta"><b style="font-size:17px">${esc(t.term)}</b>${r ? (r.pass ? pill(4) : `<span class="pill">조금만 더</span>`) : `<span class="small muted">${esc(t.cat)}</span>`}</div>
+      <p class="small muted">${rich(t.def)}</p>${ctxOk(id) ? `<p class="small"><span class="muted">이럴 때</span> · ${esc(CTX[id].scene)}</p>` : ""}
+      ${r?.pass ? `<p class="small">내 ${fg ? "문장" : "명령"} · ${esc(B.drafts[id] || "")}</p>` : `<textarea class="bt-in" data-bid="${id}" placeholder="${fg ? "이 단어를 넣은 영어 한 문장" : "이 용어를 넣어 Claude에게 내릴 명령 한 문장"}">${esc(B.drafts[id] || "")}</textarea>`}
+      ${r && !r.self ? `${r.good ? `<p class="small"><span class="muted">잘한 점</span> · ${esc(r.good)}</p>` : ""}${r.fix ? `<p class="small"><span class="muted">${r.pass ? "더하면 좋은 점" : "고칠 점"}</span> · ${esc(r.fix)}</p>` : ""}${r.example ? `<p class="small"><span class="muted">이렇게 써요</span> · ${esc(r.example)}</p>` : ""}` : ""}
+      ${B.self && !r?.pass && (B.drafts[id] || "").trim() ? `<div class="btns"><button class="btn" data-bself="${id}" data-ok="0">아직</button><button class="btn primary" data-bself="${id}" data-ok="1">뜻에 맞게 썼어요 → ④</button></div>` : ""}
+    </div>`; }).join("");
+  h += `</section>${B.err ? `<p class="note">${esc(B.err)}</p>` : ""}
+    <div class="btns">${done ? `<span class="small" style="align-self:center">${B.ids.length}개 중 <b>${up}개</b>가 ${ro(LV[4])} 올라갔어요</span>` : ""}
+      ${B.ids.some(id => !B.res[id]?.pass) ? (B.self ? "" : `<button class="btn primary" data-batchcheck="1" ${B.busy ? "disabled" : ""}>${B.busy ? "Claude가 한 번에 채점하는 중…" : sample ? "한 번에 채점받기" : "예시와 직접 비교하기"}</button>`) : `<button class="btn primary" data-batchend="1">단계별로 돌아가기</button>`}</div>`;
+  return h;
+}
+function batchPrompt(items){
+  return `너는 단어를 가르치는 코치다. 학습자(동욱)가 단어마다 그 단어를 넣어 문장을 하나씩 썼다. 영상·AI 용어면 자기 작업(행사·부스 영상, Claude에게 일 맡기기)에서 Claude에게 내릴 명령이고, 영어 단어면 실제로 할 영어 문장이다. 위키 정의를 기준으로 하나씩 판정하라.
+
+판정 기준:
+- 단어를 뜻에 맞게 썼고, 받는 쪽이 무엇을 할지 알 수 있는 명령(영어는 말이 되는 문장)이면 통과.
+- 단어가 여러 개(· 또는 /로 묶임)면 하나 이상을 맞게 쓰면 통과.
+- 단어를 틀린 뜻으로 썼거나, 단어가 없거나, 명령·문장이 아니면 불통과.
+
+${items.map((x, k) => `[${k + 1}] id: ${x.id}
+단어: ${x.term}
+정의: ${x.def.replace(/`/g, "")}
+분야: ${x.cat}
+학습자: ${x.txt}`).join("\n\n")}
+
+JSON 하나만 답하라. results 는 위 순서 그대로, 한국어 존댓말로 짧게:
+{"results": [{"id": "위 id 그대로", "pass": true 또는 false, "good": "잘한 점 한 문장", "fix": "고칠 점 한 문장, 없으면 빈 문자열", "example": "더 좋은 명령(영어면 예문) 한 문장"}]}`;
+}
+function batchPass(id, by){
+  const B = S.batch, now = nowIso();
+  save(id, { level: 4, fuzzy: false, cmd: { text: (B.drafts[id] || "").trim(), at: now, by } }, "명령 시험 통과 (" + by + ")");
+}
+async function batchCheck(){
+  const B = S.batch; if (B.busy) return;
+  const todo = B.ids.filter(id => !B.res[id]?.pass && BYID[id]);
+  const items = todo.filter(id => (B.drafts[id] || "").trim().length >= 6).map(id => ({ id, term: BYID[id].term, def: BYID[id].def, cat: BYID[id].cat, txt: B.drafts[id].trim() }));
+  if (!items.length) { B.err = "단어마다 명령을 한 문장씩 써 주세요."; render(); return; }
+  B.err = items.length < todo.length ? `안 쓴 단어 ${todo.length - items.length}개는 빼고 채점해요.` : "";
+  if (!sample) { B.self = true; render(); return; }
+  B.busy = true; render();
+  try {
+    const r = await sample.json(batchPrompt(items), { modelTier: "quick", cache: false });
+    (Array.isArray(r?.results) ? r.results : []).forEach((x, k) => {
+      const id = items.some(it => it.id === x?.id) ? x.id : items[k]?.id; if (!id) return;
+      B.res[id] = { pass: !!x.pass, good: String(x.good || ""), fix: String(x.fix || ""), example: String(x.example || "") };
+      if (x.pass) batchPass(id, "Claude 확인");
+    });
+  } catch (e) {
+    if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)) { sample = null; sampleChecked = true; B.self = true; }
+    else B.err = e?.code === "rate_limited" ? "요청이 많아요. 잠시 뒤 다시 눌러 주세요." : "채점하지 못했어요. 다시 눌러 주세요.";
+  }
+  B.busy = false; render();
+}
 document.addEventListener("click", e => {
-  const b = e.target.closest("[data-stage],[data-stagetest]"); if (!b) return;
-  if (b.dataset.stage) { S.stage = +b.dataset.stage; render(); return; }
-  const L = +b.dataset.stagetest, ids = stagePool(L).slice(0, STAGE_MAX).map(t => t.id);
-  if (!ids.length) return;
-  RV.mode = "stage"; RV.from = L; RV.up = 0; RV.queue = ids; RV.i = 0; RV.flipped = false; RV.res = null; RV.err = ""; RV.again = new Set();
-  location.hash = "review";
+  const b = e.target.closest("[data-stage],[data-stagetest],[data-pickn],[data-pickclear],[data-batchstart],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;
+  const d = b.dataset;
+  if (d.stage) { S.stage = +d.stage; S.batch = null; render(); return; }
+  if (d.stagetest) { const L = +d.stagetest; stageStart(stagePool(L).slice(0, STAGE_MAX).map(t => t.id), L); return; }
+  if (d.pickn) { stagePool(3).slice(0, +d.pickn).forEach(t => S.pick.add(t.id)); render(); return; }
+  if (d.pickclear) { S.pick = new Set(); render(); return; }
+  if (d.batchstart) { const ids = stagePool(3).filter(t => S.pick.has(t.id)).slice(0, BATCH_MAX).map(t => t.id); if (ids.length) { S.batch = { ids, drafts: {}, res: {}, busy: false, err: "", self: false }; render(); window.scrollTo({ top: 0, behavior: "instant" }); } return; }
+  if (d.batchend) { S.batch = null; S.pick = new Set(); render(); return; }
+  if (d.batchcheck) { batchCheck(); return; }
+  if (d.bself) { const id = d.bself; if (d.ok === "1") { S.batch.res[id] = { pass: true, self: true }; batchPass(id, "직접 비교"); } else { S.batch.res[id] = { pass: false, self: true }; render(); } }
 });
+document.addEventListener("change", e => { const id = e.target?.dataset?.pickid; if (!id) return; if (e.target.checked) S.pick.add(id); else S.pick.delete(id); render(); });
+document.addEventListener("input", e => { if (e.target.classList?.contains("bt-in") && S.batch) S.batch.drafts[e.target.dataset.bid] = e.target.value; });
