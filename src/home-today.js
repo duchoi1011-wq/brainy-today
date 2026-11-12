@@ -15,7 +15,7 @@
     var items = todayItems(), list = todayList(), done = list.filter(function (x) { return items[x.key]; }).length;
     var p = list.length ? Math.round(done / list.length * 100) : 0;
     var day = curDay(), w = S.db && !S.readOnly;
-    h += '<section class="section"><div class="progress-row"><div><h2>오늘 체크</h2><p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 Brainy와 대화</p></div><div class="ring" style="--p:' + p + '"><span>' + done + "/" + list.length + "</span></div></div><div class='checks'>" + checkRows(list, day, w, true) + "</div></section>";
+    h += '<section class="section"><div class="progress-row"><div><h2>오늘 체크</h2><p class="small muted">항목을 누르면 여기서 바로 써요 · 칸마다 「로그」 또는 「Brainy와 진행」</p></div><div class="ring" style="--p:' + p + '"><span>' + done + "/" + list.length + "</span></div></div><div class='checks'>" + checkRows(list, day, w, true) + "</div></section>";
     return h;
   }
 

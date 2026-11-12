@@ -3,16 +3,15 @@
 
 ## 저장소
 
-- `src/brainy-home.html` → Brainy 홈, `src/shortcuts.html` (+ `src/sc-course.js`) → 맥 단축키, `src/vocab.html` (+ `src/vocab-review.js`) → 체화 단어장. 화면 코드의 원본이다.
-- `build.py` 가 원본에 받침 코드와 패치를 끼워 `home/` `shortcuts/` `vocab/` 의 `index.html` 을 만든다. **이 세 폴더는 손으로 고치지 않는다** — 빌드가 다시 만든다.
-- `shim.js` 는 세 앱이 같이 쓰는 받침이다: 로그인, Supabase `docs` 표 저장소(`window.claude.use("db")`), Claude 부르기(`sample`).
-- `build.py` 의 `patch(a, b)` 는 원본에서 `a` 를 정확히 한 곳 찾아 바꾼다. 원본을 고치다 패치 자리 `a` 가 바뀌면 빌드가 "패치 자리 0곳" 으로 멈춘다 — 그러면 그 `patch` 의 `a` 도 같이 맞춘다.
+- `src/brainy-home.html` → Brainy 홈, `src/shortcuts.html` → 맥 단축키, `src/vocab.html` → 체화 단어장. **원본이 그대로 앱이다** — 고칠 땐 원본을 직접 고친다. `/*@include 파일*/` 자리에는 `src/` 의 그 파일(`sc-course.js` · `vocab-review.js` 등)이 끼워진다.
+- `build.py` 는 원본에 머리말(로그인·받침)만 붙여 `home/` `shortcuts/` `vocab/` 의 `index.html` 을 만든다. **이 세 폴더는 손으로 고치지 않는다.** `build.py` 의 `patch()` 로 원본을 덧대지 않는다 (기준 0개, 쓰면 빌드가 경고한다).
+- **단축키·용어 같은 목록은 볼트가 정본이라 이 저장소에 없다** (Supabase `sc.data/*` · `vo.data/*` 로 들어온다). 목록을 바꾸는 부탁이면 코드에 넣지 말고, 요약에 「볼트에도 반영할 것: …」으로 무엇을 어떻게 바꿀지 적는다.
 - 데이터는 Supabase `docs` 표의 컬렉션/문서다(`checks/<날짜>`, `cmd`, `inbox`, `proj/*` …). 표 구조·RLS·Edge Function(`supabase/`)·`.github/` 는 바꾸지 않는다.
 
 ## 할 일
 
 1. 부탁을 읽고 고칠 곳을 찾는다 (Grep 으로 먼저 찾고, 큰 파일은 필요한 부분만 읽는다).
-2. 원본(`src/`)·`shim.js`·`build.py` 만 고친다. 기존 말투(한국어 해요체)·색·구성을 따른다. 부탁하지 않은 것은 바꾸지 않는다.
+2. 원본(`src/`)·`shim.js` 만 고친다 (`build.py` 는 조립 설정이 바뀔 때만). 기존 말투(한국어 해요체)·색·구성을 따른다. 부탁하지 않은 것은 바꾸지 않는다.
 3. `python3 build.py` 를 돌려 빌드가 성공하는지 본다. 실패하면 고쳐서 다시 돌린다.
 4. `node --check shim.js` 로 받침 문법을 본다 (빌드 결과물 검사는 이 작업이 끝난 뒤 따로 한다).
 5. 끝나면 마지막 답으로 **바꾼 내용 요약만** 쓴다. 한국어로 3~6줄, 동욱이 폰에서 읽고 "적용"할지 정할 수 있게: 무엇이 어떻게 달라지는지, 어디서 보이는지. 할 수 없었던 부분이 있으면 그 이유도. 코드·파일 경로는 넣지 않는다.
