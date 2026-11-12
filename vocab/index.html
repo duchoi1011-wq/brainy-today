@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "edcf3021bb"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]};</script>
-<script src="../shim.js?v=edcf3021bb"></script>
+<script>window.BRAINY_VERSION = "634abd324c"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]};</script>
+<script src="../shim.js?v=634abd324c"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -223,8 +223,8 @@ const DOMAINS = {
   "외국어 단어장": ["영어 단어","영어 회화","중국어 회화"]
 };
 const domOf = cat => Object.keys(DOMAINS).find(d => DOMAINS[d].includes(cat)) || "학습 단어장";
-/* 「위키 개념」 단어장은 볼트가 위키 페이지에서 만들어 보낸다 (dom: "위키 개념", cat: 위키 영역) — 새 영역이 오면 분야가 저절로 는다 */
-function wikiCats(){ ALL.forEach(t => { if (t.dom === "위키 개념" && !DOMAINS["위키 개념"].includes(t.cat)) DOMAINS["위키 개념"].push(t.cat); }); }
+/* 단어장·분야는 볼트(위키)가 정한다 — 「위키 개념」(위키 영역별)과 분야 단어장(심리학·개발 용어 …)이 새로 오면 그 단어장의 분야 칩이 저절로 는다 */
+function wikiCats(){ ALL.forEach(t => { const d = DOMAINS[t.dom]; if (d && !d.includes(t.cat)) d.push(t.cat); }); }
 let ALL = DATA.terms.concat(FOREIGN).map(t => ({ ...t, dom: t.dom || domOf(t.cat) }));
 let BYID = Object.fromEntries(ALL.map(t => [t.id, t]));
 const DOMKEY = "chewha-vocab-domain";
