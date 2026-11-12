@@ -712,7 +712,7 @@ patch('''"이 분야는 모두 소화 이상이에요. 설명하기나 실행하
 patch('''<a class="btn primary" href="#talk" style="text-align:center;text-decoration:none">설명하기로</a>''', '''<a class="btn primary" href="#review" style="text-align:center;text-decoration:none">복습으로</a>''')
 patch('''main.innerHTML = v === "review" ? renderReview() :''', '''main.innerHTML = v === "lec" ? renderLec() : v === "field" ? renderField() : v === "review" ? renderReview() :''')
 patch("\ninit();\n", "\n" + (root / "src" / "vocab-lec.js").read_text(encoding="utf-8") + "\ninit();\n")
-patch('''  db.collection("ctx").onSnapshot(snap => {''', '''  db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = v; lsPut("vo.lec", v); if (view() === "lec") render(); } }, () => {});
+patch('''  db.collection("ctx").onSnapshot(snap => {''', '''  db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = lecNorm(v); lsPut("vo.lec", LEC); if (view() === "lec") render(); } }, () => {});
   db.doc("vo.marks/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { LM = { ...v, ok: v.ok || {}, fav: v.fav || {}, pk: v.pk || {} }; lsPut("vo.lecm", LM); if (view() === "lec") render(); } }, () => {});
   db.collection("ctx").onSnapshot(snap => {''')
 patch("</style>\n\n<div class=\"wrap\">", """.lc-pick{margin:4px 0 12px}.lc-pick .chip b{font-family:var(--f-mono);font-size:11px;color:var(--accent)}.lc-pick .chip.on b{color:inherit}.chips .chip span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-left:3px}

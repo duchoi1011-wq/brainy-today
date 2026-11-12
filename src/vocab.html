@@ -516,7 +516,7 @@ function detailHtml(t){
     ${!ctxOk(t.id) && sample ? `<button class="btn ghost" data-act="regen" data-id="${t.id}" ${genBusy.has(t.id)?"disabled":""}>${genBusy.has(t.id) ? "장면 만드는 중…" : "장면·맥락 만들기"}</button>` : ""}
     ${p.explain?.passed ? `<p class="small"><span class="muted">내 설명</span><br>${esc(p.explain.text)}</p>` : ""}
     ${p.action?.note ? `<p class="small"><span class="muted">써 본 기록</span><br>${esc(p.action.note)}</p>` : ""}
-    ${p.history?.length ? `<div class="hist">${p.history.map(h => `<span class="mono">${esc(h.at.slice(0,10))} · ${h.level} ${LV[h.level]} · ${esc(h.how)}</span>`).join("")}</div>` : ""}
+    ${p.history?.length ? `<div class="hist">${p.history.map(h => `<span class="mono">${esc(String(h.at || "").slice(0,10))} · ${h.level} ${LV[h.level]} · ${esc(h.how)}</span>`).join("")}</div>` : ""}
     <div class="btns"><button class="btn" data-go="learn" data-id="${t.id}">장면으로 알기</button><button class="btn" data-go="talk" data-id="${t.id}">설명하기</button>${lv(t.id)===3 && isCore(t.id)?`<button class="btn" data-go="do" data-id="${t.id}">실행하기</button>`:""}</div>
     <button class="btn ghost" data-act="core" data-id="${t.id}">${isCore(t.id) ? "소통용으로 바꾸기 (소화까지만)" : "체화할 단어로 바꾸기 (실행까지)"}</button>
   </section>`;
@@ -531,7 +531,13 @@ function render(){
   const main = document.getElementById("view");
   const searchFocused = ae && ae.id === "listQ";
   if (v === "list" && searchFocused) { document.getElementById("listOut").innerHTML = listRows(); return; }
+  /* 한 화면이 그리다 멈추면 탭 전체가 굳으므로, 그 화면만 안내로 바꾼다 */
+  try {
   main.innerHTML = v === "learn" ? renderLearn() : v === "talk" ? renderTalk() : v === "do" ? renderDo() : v === "list" ? renderList() : renderHome();
+  } catch (err) {
+    console.error(err);
+    main.innerHTML = `<section class="card stack"><p class="note">이 화면을 여는 중 문제가 생겼어요. 다른 탭으로 갔다 오거나 새로고침해 주세요.</p><div class="btns"><a class="btn primary" href="#review" style="text-align:center;text-decoration:none">복습으로</a></div></section>`;
+  }
   document.getElementById("dom").innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
   document.getElementById("sub").textContent = `${S.domain} ${TERMS.length}개 · 목표 달성 ${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}`;
 }

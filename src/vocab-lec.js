@@ -5,8 +5,16 @@
    맥락(장면·쉽게·정확히·모르면·Claude에게): 누르면 맥의 Brainy가 만들어 ctx/lt-<번호> 에 둔다 (사전 용어는 기존 ctx/<id>) */
 function lsGet(k, d){ try { return JSON.parse(localStorage.getItem(k) || "null") || d; } catch (e) { return d; } }
 function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-let LEC = lsGet("vo.lec", { courses: [] });
+/* 강의 데이터 다듬기 — 챕터·용어가 빠졌거나 모양이 다른 항목이 있으면 강의 탭이 그리다 멈추므로 걸러 낸다 */
+function lecNorm(v){
+  const cs = v && Array.isArray(v.courses) ? v.courses : [];
+  return { ...(v || {}), courses: cs.filter(c => c && typeof c === "object").map(c => ({ ...c, id: String(c.id ?? c.name ?? ""), name: String(c.name ?? c.id ?? ""),
+    chapters: (Array.isArray(c.chapters) ? c.chapters : []).filter(ch => ch && typeof ch === "object").map(ch => ({ ...ch, id: String(ch.id ?? ch.title ?? ""), title: String(ch.title ?? ch.id ?? ""),
+      terms: (Array.isArray(ch.terms) ? ch.terms : []).filter(t => t && t.t).map(t => ({ ...t, t: String(t.t), d: String(t.d ?? "") })) })) })) };
+}
+let LEC = lecNorm(lsGet("vo.lec", { courses: [] }));
 let LM = lsGet("vo.lecm", {});
+if (!LM || typeof LM !== "object") LM = {};
 LM.ok = LM.ok || {}; LM.fav = LM.fav || {}; LM.pk = LM.pk || {};
 let lecFilt = "all", LSTUDY = null, LDET = null;   // LSTUDY: 바로 익히기 {list,i,flip,again,ok,title} · LDET: 맥락 보는 용어
 function lmSave(){ lsPut("vo.lecm", LM); if (db) db.doc("vo.marks/lec").set({ ...LM, updatedAt: nowIso() }).catch(() => {}); }
@@ -205,4 +213,5 @@ document.addEventListener("click", e => {
   if (m[k]) delete m[k]; else m[k] = 1;
   lmSave(); render();
 });
-window.addEventListener("hashchange", () => { LSTUDY = null; LDET = null; });
+/* 탭을 옮기면 익히기·맥락 화면을 닫고 다시 그린다 (이 처리는 화면 그리기보다 늦게 와서, 그냥 두면 옛 화면이 남아 멈춘 듯 보였다) */
+window.addEventListener("hashchange", () => { if (LSTUDY || LDET) { LSTUDY = null; LDET = null; render(); } });

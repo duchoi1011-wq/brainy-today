@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "815a99a12e"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]};</script>
-<script src="../shim.js?v=815a99a12e"></script>
+<script>window.BRAINY_VERSION = "374b3137c4"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]};</script>
+<script src="../shim.js?v=374b3137c4"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -587,7 +587,7 @@ function detailHtml(t){
     ${!ctxOk(t.id) && sample ? `<button class="btn ghost" data-act="regen" data-id="${t.id}" ${genBusy.has(t.id)?"disabled":""}>${genBusy.has(t.id) ? "장면 만드는 중…" : "장면·맥락 만들기"}</button>` : ""}
     ${p.explain?.passed ? `<p class="small"><span class="muted">내 설명</span><br>${esc(p.explain.text)}</p>` : ""}
     ${p.action?.note ? `<p class="small"><span class="muted">써 본 기록</span><br>${esc(p.action.note)}</p>` : ""}
-    ${p.history?.length ? `<div class="hist">${p.history.map(h => `<span class="mono">${esc(h.at.slice(0,10))} · ${h.level} ${LV[h.level]} · ${esc(h.how)}</span>`).join("")}</div>` : ""}
+    ${p.history?.length ? `<div class="hist">${p.history.map(h => `<span class="mono">${esc(String(h.at || "").slice(0,10))} · ${h.level} ${LV[h.level]} · ${esc(h.how)}</span>`).join("")}</div>` : ""}
     <div class="btns"><button class="btn" data-go="learn" data-id="${t.id}">장면으로 알기</button>${lv(t.id)===3 && isCore(t.id)?`<button class="btn" data-go="do" data-id="${t.id}">실행하기</button>`:""}</div>
     <button class="btn ghost" data-act="core" data-id="${t.id}">${isCore(t.id) ? "소통용으로 바꾸기 (소화까지만)" : "체화할 단어로 바꾸기 (실행까지)"}</button>
   </section>`;
@@ -602,7 +602,13 @@ function render(){
   const main = document.getElementById("view");
   const searchFocused = ae && ae.id === "listQ";
   if (v === "list" && searchFocused) { document.getElementById("listOut").innerHTML = listRows(); return; }
+  /* 한 화면이 그리다 멈추면 탭 전체가 굳으므로, 그 화면만 안내로 바꾼다 */
+  try {
   main.innerHTML = v === "lec" ? renderLec() : v === "field" ? renderField() : v === "review" ? renderReview() : v === "learn" ? renderLearn() : v === "talk" ? renderTalk() : v === "do" ? renderDo() : v === "list" ? renderList() : renderHome();
+  } catch (err) {
+    console.error(err);
+    main.innerHTML = `<section class="card stack"><p class="note">이 화면을 여는 중 문제가 생겼어요. 다른 탭으로 갔다 오거나 새로고침해 주세요.</p><div class="btns"><a class="btn primary" href="#review" style="text-align:center;text-decoration:none">복습으로</a></div></section>`;
+  }
   document.getElementById("dom").innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
   document.getElementById("sub").textContent = `${S.domain} ${TERMS.length}개 · 목표 달성 ${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}`;
 }
@@ -745,7 +751,7 @@ async function init(){
     if (S.queue) S.queue = S.queue.filter(id => BYID[id]);
     render();
   }, () => {});
-  db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = v; lsPut("vo.lec", v); if (view() === "lec") render(); } }, () => {});
+  db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = lecNorm(v); lsPut("vo.lec", LEC); if (view() === "lec") render(); } }, () => {});
   db.doc("vo.marks/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { LM = { ...v, ok: v.ok || {}, fav: v.fav || {}, pk: v.pk || {} }; lsPut("vo.lecm", LM); if (view() === "lec") render(); } }, () => {});
   db.collection("ctx").onSnapshot(snap => {
     const m = {}; snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); });
@@ -766,31 +772,53 @@ async function init(){
    기록은 progress/<id>.srs = {box, due, first, last, n, lapses, log:[{at,r}], pending:[{at,r}]}
    - 영어 단어의 pending 은 맥 동기화가 볼트 「영어 단어장」 표(단계·다음 복습·기록 ✓△✗)에 넣고 비운다.
    시험 3단계 (2026-11-12 동욱): 1 설명 보고 단어 맞히기(통과해도 ① 낯섦, progress.t1) → 2 상황(이럴 때) 보고 맞히기 = ② 만남
-   → 3 그 단어로 내 작업 명령 내리기 = ③ 소화. ③ 이상은 예전처럼 알아보기/꺼내기 복습. ④ 실행은 실제로 썼을 때만. 단계는 내려가지 않는다. */
+   → 3 그 단어로 내 작업 명령 내리기 = ③ 소화. ③ 이상은 예전처럼 알아보기/꺼내기 복습. ④ 실행은 실제로 썼을 때만. 단계는 내려가지 않는다.
+   복습 목록은 영역(학습·외국어)과 상관없이 모든 단어에서 짠다 (2026-11-12 동욱: alliance도 오늘 복습에).
+   기록(progress)이 오기 전엔 목록을 짜지 않고, 아직 손대지 않은 목록은 기록·단어가 새로 오면 다시 짠다. */
 const RV_GAP = [1, 3, 7, 14, 30, 60];
 const RV_NEW = 5, RV_MAX = 40;
-const RV = { queue: null, i: 0, flipped: false, again: new Set(), stats: { ok: 0, mid: 0, bad: 0 }, dom: null, day: null, drafts: {}, res: null, busy: false, err: "" };
+const RV = { queue: null, i: 0, flipped: false, again: new Set(), stats: { ok: 0, mid: 0, bad: 0 }, day: null, drafts: {}, res: null, busy: false, err: "", touched: false, prog: null, all: null };
 /* 위키 페이지 하나로 따로 설 만한 개념 먼저 — 볼트가 t.wiki 를 주면 그걸 따르고, 없으면
    이름이 하나뿐인 단어(「A · B」「A / B」처럼 묶인 짝·목록이 아님)이고 "용어만 등장"이 아닌 단어 */
 const isConcept = t => (t && typeof t.wiki === "boolean") ? t.wiki : !!t && tokens(t.term).length === 1 && !/용어만 등장/.test(t.def || "");
 const conceptFirst = (a, b) => isConcept(b) - isConcept(a);
 const rvStep = id => lv(id) >= 3 ? 0 : lv(id) === 2 ? 3 : prog[id]?.t1 ? 2 : 1;
 const kday = (off = 0) => { const d = new Date(Date.now() + 9 * 3600e3 + off * 86400e3); return d.toISOString().slice(0, 10); };
-const vaultSrs = t => (t.stage !== undefined && t.stage !== "" && t.due) ? { box: Math.max(0, Math.min(5, parseInt(t.stage, 10) || 0)), due: t.due } : null;
-const srsOf = id => prog[id]?.srs || vaultSrs(BYID[id] || {}) || null;
+/* 날짜 읽기 — 「2026-11-12」「2026.11.12(목)」「2026년 11월 12일」「11/12」, 숫자(ms)·Date·{seconds} 모두 YYYY-MM-DD 로. 못 읽으면 "" */
+function ymd(v){
+  if (v == null || v === "") return "";
+  if (typeof v === "object" && !(v instanceof Date)) v = typeof v.toDate === "function" ? v.toDate() : typeof v.seconds === "number" ? v.seconds * 1000 : String(v);
+  if (typeof v === "number" || v instanceof Date) { const d = new Date(+v); return isNaN(d) ? "" : new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 10); }
+  const s = String(v), p2 = n => String(n).padStart(2, "0");
+  let m = s.match(/(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})/);
+  if (m) return `${m[1]}-${p2(m[2])}-${p2(m[3])}`;
+  m = s.match(/^\s*(\d{1,2})\s*[/.월]\s*(\d{1,2})/);
+  return m ? `${kday().slice(0, 4)}-${p2(m[1])}-${p2(m[2])}` : "";
+}
+/* 볼트 표의 단계·다음 복습 — 단계만 있고 날짜를 못 읽으면 오늘 복습으로 */
+const vaultSrs = t => (t.stage === undefined || t.stage === null || String(t.stage).trim() === "") ? null
+  : { box: Math.max(0, Math.min(5, parseInt((String(t.stage).match(/\d+/) || ["0"])[0], 10))), due: ymd(t.due) || kday() };
+const srsOf = id => { const s = prog[id]?.srs; return s ? { ...s, box: Number.isFinite(+s.box) ? +s.box : 0, due: ymd(s.due) || kday() } : vaultSrs(BYID[id] || {}) || null; };
 const isNewCard = id => !srsOf(id);
-const firstToday = () => TERMS.filter(t => prog[t.id]?.srs?.first === kday()).length;
+const firstToday = () => ALL.filter(t => ymd(prog[t.id]?.srs?.first) === kday()).length;
 
 function rvBuild(){
   const today = kday();
-  const due = TERMS.filter(t => { const s = srsOf(t.id); return s && s.due <= today; })
+  const due = ALL.filter(t => { const s = srsOf(t.id); return s && s.due <= today; })
     .sort((a, b) => conceptFirst(a, b) || srsOf(a.id).due.localeCompare(srsOf(b.id).due) || srsOf(a.id).box - srsOf(b.id).box).slice(0, RV_MAX);
   const room = Math.max(0, RV_NEW - firstToday());
   const fresh = rvFresh().slice(0, room);
   RV.queue = due.map(t => t.id).concat(fresh.map(t => t.id));
-  RV.i = 0; RV.flipped = false; RV.again = new Set(); RV.stats = { ok: 0, mid: 0, bad: 0 }; RV.dom = S.domain; RV.day = today; RV.res = null; RV.err = "";
+  RV.i = 0; RV.flipped = false; RV.again = new Set(); RV.stats = { ok: 0, mid: 0, bad: 0 }; RV.day = today; RV.res = null; RV.err = "";
+  RV.touched = false; RV.prog = prog; RV.all = ALL;
 }
-function rvFresh(){ return TERMS.filter(t => isNewCard(t.id)).sort((a, b) => conceptFirst(a, b) || (isCore(b.id) - isCore(a.id)) || 0); }
+/* 새 단어 — 개념 먼저, 그 안에서 학습·외국어를 번갈아 (한 영역만 몰리지 않게) */
+function rvFresh(){
+  const rank = {}, by = {};
+  ALL.filter(t => isNewCard(t.id)).sort((a, b) => conceptFirst(a, b) || (isCore(b.id) - isCore(a.id)) || 0)
+    .forEach(t => { by[t.dom] = (by[t.dom] || 0) + 1; rank[t.id] = by[t.dom]; });
+  return ALL.filter(t => rank[t.id]).sort((a, b) => conceptFirst(a, b) || rank[a.id] - rank[b.id] || (isCore(b.id) - isCore(a.id)));
+}
 /* 방향: 새 단어는 용어→뜻(알아보기), 한 번 넘긴 단어는 장면→용어(꺼내기)와 번갈아 */
 function rvDir(t){
   const s = srsOf(t.id), c = CTX[t.id];
@@ -813,7 +841,7 @@ function rvGrade(r){
   if (r === "ok") { s.box = Math.min(5, (s0.box ?? -1) + 1); s.due = kday(rvNext(s.box)); RV.stats.ok++; }
   else if (r === "mid") { s.box = Math.max(0, s0.box ?? 0); s.due = kday(Math.max(1, Math.floor(rvNext(s.box) / 2))); RV.stats.mid++; }
   else { s.box = 0; s.due = kday(1); s.lapses = (s.lapses || 0) + 1; RV.stats.bad++; if (!RV.again.has(id)) { RV.again.add(id); RV.queue.splice(Math.min(RV.queue.length, RV.i + 4), 0, id); } }
-  s.n = (s.n || 0) + 1; s.last = now;
+  s.n = (s.n || 0) + 1; s.last = now; RV.touched = true;
   s.log = [...(s.log || []), { at: now, r }].slice(-30);
   if (t.cat === "영어 단어") s.pending = [...(s.pending || []), { at: now, r, box: s.box, due: s.due }];
   const patch = { srs: s, lastSeen: now, seen: (prog[id]?.seen || 0) + 1 };
@@ -899,20 +927,22 @@ function rvBack(t, dir, step){
     <details class="small"><summary class="muted">더 보기 — 장면·쉽게·헷갈리는 짝·강의 원문</summary><div class="stack" style="margin-top:10px">${sceneHtml(t)}${ctxLayers(t)}${stageHtml(t)}</div></details>`;
 }
 function renderReview(){
-  if (!RV.queue || RV.dom !== S.domain || RV.day !== kday()) rvBuild();
+  if (mode === "loading") return `${statusNote()}<section class="card"><p class="empty">복습 목록을 짜는 중이에요.</p></section>`;
+  if (!RV.queue || RV.day !== kday() || (!RV.touched && (RV.prog !== prog || RV.all !== ALL))) rvBuild();
   const today = kday();
-  const dueN = TERMS.filter(t => { const s = srsOf(t.id); return s && s.due <= today; }).length;
-  const learned = TERMS.filter(t => srsOf(t.id)).length;
-  const tmr = TERMS.filter(t => { const s = srsOf(t.id); return s && s.due <= kday(1); }).length;
+  const dueN = ALL.filter(t => { const s = srsOf(t.id); return s && s.due <= today; }).length;
+  const learned = ALL.filter(t => srsOf(t.id)).length;
+  const tmr = ALL.filter(t => { const s = srsOf(t.id); return s && s.due <= kday(1); }).length;
   const head = `${statusNote()}
-    <div class="meta small muted"><span>오늘 복습 <b class="mono">${dueN}</b> · 새 단어 <b class="mono">${Math.max(0, RV_NEW - firstToday())}</b>/${RV_NEW}</span><span>익힌 단어 <span class="mono">${learned}</span>/${TERMS.length}</span></div>`;
+    <div class="meta small muted"><span>오늘 복습 <b class="mono">${dueN}</b> · 새 단어 <b class="mono">${Math.max(0, RV_NEW - firstToday())}</b>/${RV_NEW}</span><span>익힌 단어 <span class="mono">${learned}</span>/${ALL.length} · 학습·외국어 함께</span></div>`;
   if (RV.i >= RV.queue.length) {
+    const left = rvFresh().filter(t => !RV.queue.includes(t.id)).length;
     const st = RV.stats, did = st.ok + st.mid + st.bad;
     return `${head}<section class="card stack">
       <h3>${did ? "오늘 복습 끝" : "오늘은 복습할 게 없어요"}</h3>
       ${did ? `<p>✓ ${st.ok} · △ ${st.mid} · ✗ ${st.bad} — 내일 볼 단어 ${tmr}개</p>` : `<p class="muted">새 단어는 하루 ${RV_NEW}개까지예요. 내일 볼 단어 ${tmr}개.</p>`}
 
-      <div class="btns"><button class="btn" data-rv="more">새 단어 5개 더</button></div>
+      ${left ? `<div class="btns"><button class="btn" data-rv="more">새 단어 ${Math.min(RV_NEW, left)}개 더</button></div>` : `<p class="small muted">새 단어는 다 꺼냈어요.</p>`}
     </section>`;
   }
   const t = BYID[RV.queue[RV.i]];
@@ -945,17 +975,21 @@ document.addEventListener("click", e => {
   if (e.target.closest("details,summary,a,[data-go]") && el.dataset.rv === "flip") return;
   const a = el.dataset.rv;
   const step3 = rvStep(RV.queue?.[RV.i]) === 3;
+  if (a === "more") { e.stopPropagation(); if (!RV.queue) rvBuild(); const extra = rvFresh().filter(t => !RV.queue.includes(t.id)).slice(0, RV_NEW).map(t => t.id);
+    RV.touched = true; RV.i = Math.min(RV.i, RV.queue.length); RV.queue = RV.queue.concat(extra); RV.flipped = false; RV.res = null; RV.err = ""; render(); window.scrollTo(0, 0); return; }
+  if (!RV.queue) return;
+  RV.touched = true;
   if (a === "flip") { if (!RV.flipped && !step3) { RV.flipped = true; render(); } return; }
   if (a === "check") { rvCheck(); return; }
   if (a === "retry") { RV.flipped = false; RV.res = null; render(); return; }
-  if (a === "more") { const extra = rvFresh().filter(t => !RV.queue.includes(t.id)).slice(0, RV_NEW).map(t => t.id); RV.queue = RV.queue.concat(extra); render(); return; }
   if (RV.flipped && (a === "ok" || a === "mid" || a === "bad")) { e.stopPropagation(); rvGrade(a); }
 });
-document.addEventListener("input", e => { if (e.target.id === "rvTxt") RV.drafts[e.target.dataset.id] = e.target.value; });
+document.addEventListener("input", e => { if (e.target.id === "rvTxt") { RV.touched = true; RV.drafts[e.target.dataset.id] = e.target.value; } });
 document.addEventListener("keydown", e => {
   if (view() !== "review" || e.isComposing || /input|textarea|select/i.test(document.activeElement?.tagName || "")) return;
   const step3 = rvStep(RV.queue?.[RV.i]) === 3, r = RV.res;
-  if (e.key === " " || e.key === "Enter") { if (!RV.flipped && !step3) { e.preventDefault(); RV.flipped = true; render(); } return; }
+  if (!RV.queue || RV.i >= RV.queue.length) return;
+  if (e.key === " " || e.key === "Enter") { if (!RV.flipped && !step3) { e.preventDefault(); RV.touched = true; RV.flipped = true; render(); } return; }
   if (RV.flipped && ["1", "2", "3"].includes(e.key) && !(e.key === "3" && step3 && r && !r.self && !r.pass)) rvGrade(e.key === "1" ? "bad" : e.key === "2" ? "mid" : "ok");
 });
 
@@ -966,8 +1000,16 @@ document.addEventListener("keydown", e => {
    맥락(장면·쉽게·정확히·모르면·Claude에게): 누르면 맥의 Brainy가 만들어 ctx/lt-<번호> 에 둔다 (사전 용어는 기존 ctx/<id>) */
 function lsGet(k, d){ try { return JSON.parse(localStorage.getItem(k) || "null") || d; } catch (e) { return d; } }
 function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-let LEC = lsGet("vo.lec", { courses: [] });
+/* 강의 데이터 다듬기 — 챕터·용어가 빠졌거나 모양이 다른 항목이 있으면 강의 탭이 그리다 멈추므로 걸러 낸다 */
+function lecNorm(v){
+  const cs = v && Array.isArray(v.courses) ? v.courses : [];
+  return { ...(v || {}), courses: cs.filter(c => c && typeof c === "object").map(c => ({ ...c, id: String(c.id ?? c.name ?? ""), name: String(c.name ?? c.id ?? ""),
+    chapters: (Array.isArray(c.chapters) ? c.chapters : []).filter(ch => ch && typeof ch === "object").map(ch => ({ ...ch, id: String(ch.id ?? ch.title ?? ""), title: String(ch.title ?? ch.id ?? ""),
+      terms: (Array.isArray(ch.terms) ? ch.terms : []).filter(t => t && t.t).map(t => ({ ...t, t: String(t.t), d: String(t.d ?? "") })) })) })) };
+}
+let LEC = lecNorm(lsGet("vo.lec", { courses: [] }));
 let LM = lsGet("vo.lecm", {});
+if (!LM || typeof LM !== "object") LM = {};
 LM.ok = LM.ok || {}; LM.fav = LM.fav || {}; LM.pk = LM.pk || {};
 let lecFilt = "all", LSTUDY = null, LDET = null;   // LSTUDY: 바로 익히기 {list,i,flip,again,ok,title} · LDET: 맥락 보는 용어
 function lmSave(){ lsPut("vo.lecm", LM); if (db) db.doc("vo.marks/lec").set({ ...LM, updatedAt: nowIso() }).catch(() => {}); }
@@ -1166,7 +1208,8 @@ document.addEventListener("click", e => {
   if (m[k]) delete m[k]; else m[k] = 1;
   lmSave(); render();
 });
-window.addEventListener("hashchange", () => { LSTUDY = null; LDET = null; });
+/* 탭을 옮기면 익히기·맥락 화면을 닫고 다시 그린다 (이 처리는 화면 그리기보다 늦게 와서, 그냥 두면 옛 화면이 남아 멈춘 듯 보였다) */
+window.addEventListener("hashchange", () => { if (LSTUDY || LDET) { LSTUDY = null; LDET = null; render(); } });
 
 init();
 </script>
@@ -1204,8 +1247,15 @@ init();
         inputSchema: { type: "object", properties: { view: { type: "string" }, term: { type: "string" } } },
         execute: function (i) {
           var t = i.term ? findTerm(i.term) : null;
-          if (t) { S.detail = t.id; location.hash = "list"; render(); return t.term; }
-          location.hash = i.view || "review"; return i.view || "review";
+          // 익히기·맥락 화면이 열려 있으면 닫고 연다 (안 닫으면 강의·분야 탭이 옛 화면에 멈춘다)
+          if (typeof LSTUDY !== "undefined") { LSTUDY = null; LDET = null; }
+          if (i.term && !t) throw new Error("「" + i.term + "」 단어를 못 찾았어요");
+          if (t) { if (t.dom !== S.domain) setDomain(t.dom); S.detail = t.id; location.hash = "list"; render(); setTimeout(function () { var el = document.getElementById("detail"); if (el) el.scrollIntoView({ block: "start" }); }, 50); return t.term; }
+          var ALIAS = { "복습": "review", "강의": "lec", "분야": "field", "홈": "home", "알기": "learn", "실행": "do", "실행하기": "do", "전체": "list", "목록": "list", "talk": "review", "설명하기": "review" };
+          var v = String(i.view || "review").trim().replace(/^#/, ""); v = ALIAS[v] || v.toLowerCase();
+          if (["review", "lec", "field", "home", "learn", "do", "list"].indexOf(v) < 0) v = "review";
+          if (view() === v) render(); else location.hash = v;
+          return v;
         } }
     ]
   };

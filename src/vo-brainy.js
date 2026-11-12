@@ -32,8 +32,15 @@
         inputSchema: { type: "object", properties: { view: { type: "string" }, term: { type: "string" } } },
         execute: function (i) {
           var t = i.term ? findTerm(i.term) : null;
-          if (t) { S.detail = t.id; location.hash = "list"; render(); return t.term; }
-          location.hash = i.view || "review"; return i.view || "review";
+          // 익히기·맥락 화면이 열려 있으면 닫고 연다 (안 닫으면 강의·분야 탭이 옛 화면에 멈춘다)
+          if (typeof LSTUDY !== "undefined") { LSTUDY = null; LDET = null; }
+          if (i.term && !t) throw new Error("「" + i.term + "」 단어를 못 찾았어요");
+          if (t) { if (t.dom !== S.domain) setDomain(t.dom); S.detail = t.id; location.hash = "list"; render(); setTimeout(function () { var el = document.getElementById("detail"); if (el) el.scrollIntoView({ block: "start" }); }, 50); return t.term; }
+          var ALIAS = { "복습": "review", "강의": "lec", "분야": "field", "홈": "home", "알기": "learn", "실행": "do", "실행하기": "do", "전체": "list", "목록": "list", "talk": "review", "설명하기": "review" };
+          var v = String(i.view || "review").trim().replace(/^#/, ""); v = ALIAS[v] || v.toLowerCase();
+          if (["review", "lec", "field", "home", "learn", "do", "list"].indexOf(v) < 0) v = "review";
+          if (view() === v) render(); else location.hash = v;
+          return v;
         } }
     ]
   };
