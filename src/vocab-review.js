@@ -7,10 +7,12 @@
 const RV_GAP = [1, 3, 7, 14, 30, 60];
 const RV_NEW = 5, RV_MAX = 40;
 const RV = { queue: null, i: 0, flipped: false, again: new Set(), stats: { ok: 0, mid: 0, bad: 0 }, dom: null, day: null, drafts: {}, res: null, busy: false, err: "" };
-/* 위키 페이지 하나로 따로 설 만한 개념 먼저 — 볼트가 t.wiki 를 주면 그걸 따르고, 없으면
-   이름이 하나뿐인 단어(「A · B」「A / B」처럼 묶인 짝·목록이 아님)이고 "용어만 등장"이 아닌 단어 */
-const isConcept = t => (t && typeof t.wiki === "boolean") ? t.wiki : !!t && tokens(t.term).length === 1 && !/용어만 등장/.test(t.def || "");
+/* 위키 개념 먼저, 그 안에서는 최근에 생기거나 고쳐진 것 먼저 (2026-11-12 동욱).
+   wiki(위키 페이지가 있는 개념)·at(위키 날짜, 없으면 단어장에 처음 들어온 날)은 볼트가 붙여 보낸다. */
+const isConcept = t => !!(t && t.wiki);
 const conceptFirst = (a, b) => isConcept(b) - isConcept(a);
+const newerFirst = (a, b) => String(b.at || "").localeCompare(String(a.at || ""));
+const isFresh = t => !!(t && t.at && t.at >= kday(-14));
 const rvStep = id => lv(id) >= 3 ? 0 : lv(id) === 2 ? 3 : prog[id]?.t1 ? 2 : 1;
 const kday = (off = 0) => { const d = new Date(Date.now() + 9 * 3600e3 + off * 86400e3); return d.toISOString().slice(0, 10); };
 const vaultSrs = t => (t.stage !== undefined && t.stage !== "" && t.due) ? { box: Math.max(0, Math.min(5, parseInt(t.stage, 10) || 0)), due: t.due } : null;
@@ -27,7 +29,7 @@ function rvBuild(){
   RV.queue = due.map(t => t.id).concat(fresh.map(t => t.id));
   RV.i = 0; RV.flipped = false; RV.again = new Set(); RV.stats = { ok: 0, mid: 0, bad: 0 }; RV.dom = S.domain; RV.day = today; RV.res = null; RV.err = "";
 }
-function rvFresh(){ return TERMS.filter(t => isNewCard(t.id)).sort((a, b) => conceptFirst(a, b) || (isCore(b.id) - isCore(a.id)) || 0); }
+function rvFresh(){ return TERMS.filter(t => isNewCard(t.id)).sort((a, b) => conceptFirst(a, b) || newerFirst(a, b) || (isCore(b.id) - isCore(a.id)) || 0); }
 /* 방향: 새 단어는 용어→뜻(알아보기), 한 번 넘긴 단어는 장면→용어(꺼내기)와 번갈아 */
 function rvDir(t){
   const s = srsOf(t.id), c = CTX[t.id];
@@ -160,7 +162,7 @@ function renderReview(){
   return `${head}
   <div class="prog" aria-label="진행 ${RV.i + 1}/${RV.queue.length}"><span style="width:${RV.i / RV.queue.length * 100}%"></span></div>
   <section class="card flash" ${step === 3 ? "" : `data-rv="flip"`} style="cursor:${RV.flipped || step === 3 ? "default" : "pointer"}">
-    <div class="meta"><span class="tc">${esc(t.cat)} · ${s ? "단계 " + s.box : "새 단어"}${RV.again.has(t.id) ? " · 다시" : ""}</span><span class="btns" style="gap:6px">${isConcept(t) ? `<span class="pill">개념</span>` : ""}${coreTag(t.id)}${pill(lv(t.id))}</span></div>
+    <div class="meta"><span class="tc">${esc(t.cat)} · ${s ? "단계 " + s.box : "새 단어"}${RV.again.has(t.id) ? " · 다시" : ""}</span><span class="btns" style="gap:6px">${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isConcept(t) ? `<span class="pill">개념</span>` : ""}${coreTag(t.id)}${pill(lv(t.id))}</span></div>
     ${step ? `<p class="small mono" style="margin:0;color:var(--accent)">시험 ${step}/3 · ${STEPN[step]}</p>` : ""}
     <div class="stack">${rvFront(t, dir, step)}${RV.flipped ? `<hr style="border:0;border-top:1px solid var(--line);margin:4px 0">` + rvBack(t, dir, step) : ""}</div>
     ${RV.flipped

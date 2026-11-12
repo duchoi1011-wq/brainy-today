@@ -146,6 +146,7 @@ textarea{min-height:120px;resize:vertical}
     <div class="seg" id="dom" role="tablist" aria-label="영역"></div>
     <nav id="nav">
       <a href="#review" data-v="review">복습</a>
+      <a href="#new" data-v="new">새 개념</a>
       <a href="#lec" data-v="lec">강의</a>
       <a href="#field" data-v="field">분야</a>
       <a href="#home" data-v="home">홈</a>
@@ -164,10 +165,13 @@ let DATA = { terms: [], pairs: [] };
 let FOREIGN = [];
 const DOMAINS = {
   "학습 단어장": ["편집·구성","촬영","오디오","색","자막","모션","AI 편집 자동화"],
+  "위키 개념": [],   // 위키 영역(관계·자기경영 …) — 볼트가 보내는 대로 wikiCats() 가 채운다
   "외국어 단어장": ["영어 단어","영어 회화","중국어 회화"]
 };
 const domOf = cat => Object.keys(DOMAINS).find(d => DOMAINS[d].includes(cat)) || "학습 단어장";
-let ALL = DATA.terms.concat(FOREIGN).map(t => ({ ...t, dom: domOf(t.cat) }));
+/* 「위키 개념」 단어장은 볼트가 위키 페이지에서 만들어 보낸다 (dom: "위키 개념", cat: 위키 영역) — 새 영역이 오면 분야가 저절로 는다 */
+function wikiCats(){ ALL.forEach(t => { if (t.dom === "위키 개념" && !DOMAINS["위키 개념"].includes(t.cat)) DOMAINS["위키 개념"].push(t.cat); }); }
+let ALL = DATA.terms.concat(FOREIGN).map(t => ({ ...t, dom: t.dom || domOf(t.cat) }));
 let BYID = Object.fromEntries(ALL.map(t => [t.id, t]));
 const DOMKEY = "chewha-vocab-domain";
 let TERMS = ALL, CATS = [];
@@ -260,7 +264,6 @@ function save(id, patch, how){
   const next = { ...cur, ...patch, term: BYID[id].term, cat: BYID[id].cat, updatedAt: nowIso() };
   next.level = Math.max(cur.level || 1, patch.level || 1);
   if (next.level > (cur.level || 1)) {
-    next.synced = false;
     next.history = [ ...(cur.history || []), { at: nowIso(), level: next.level, how } ].slice(-10);
   }
   prog = { ...prog, [id]: next };
@@ -299,7 +302,6 @@ function todaySet(){
 /* ---------- views ---------- */
 function renderHome(){
   const all = counts(TERMS.map(t => t.id));
-  const pend = Object.values(prog).filter(p => p.synced === false).length;
   const ts = todaySet();
   return `
   ${statusNote()}
@@ -322,12 +324,12 @@ function renderHome(){
   <section class="card">
     <h2>분야별 이해도</h2>
     <div class="cats">${CATS.map(c => { const ids = TERMS.filter(t => t.cat === c).map(t => t.id); return `<div class="catrow"><span class="small">${esc(c)} <span class="muted mono">${ids.length}</span></span>${barHtml(counts(ids), ids.length)}${pill(catLevel(c))}</div>`; }).join("")}</div>
-    <p class="small muted" style="margin-top:12px">분야 이해도는 그 분야 단어의 60% 이상이 도달한 단계예요. 볼트 위키의 이해도와 같은 1~4단계를 써요.</p>
+    <p class="small muted" style="margin-top:12px">분야 이해도는 그 분야 단어의 60% 이상이 도달한 단계예요. 단어장 단계는 볼트 위키의 이해도와 따로 올라요.</p>
     <p class="small" style="margin-top:8px"><b>목표</b> · 체화할 단어 <span class="mono">${TERMS.filter(t => isCore(t.id)).length}</span>개는 ④ 실행(작업에 나타남)까지, 소통용 단어는 ③ 소화(꺼내 말할 수 있음)까지가 끝이에요. 지금 <span class="mono">${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}</span>/${TERMS.length} 달성.</p>
   </section>
   <section class="card stack">
-    <h2>볼트 반영 대기 <span class="mono">${pend}</span></h2>
-    <p class="small">단계가 오른 단어는 바로 볼트에 쓰지 않아요. <b>/log</b>를 돌리면 Claude가 이 기록을 읽어 위키 「이해도 기록」에 올릴 후보로 보여 드리고, 확인한 것만 반영돼요. Brainy 대화·태스크 작업실에서 익힌 용어를 실제로 쓰면 ④ 실행으로 저절로 올라가요.</p>
+    <h2>단계가 오르는 길</h2>
+    <p class="small">단어장 단계는 이 단어장 안에서만 따로 올라요 — 볼트 위키의 이해도에는 넣지 않아요. Brainy 대화·태스크 작업실에서 익힌 용어를 실제로 쓰면 ④ 실행으로 저절로 올라가요.</p>
     <div class="rule">${[1,2,3,4].map(L => `<span>${pill(L)}</span><span>${LVHOW[L]}</span>`).join("")}</div>
   </section>`;
 }
@@ -508,6 +510,23 @@ function renderDo(){
   ${done.length ? `<section class="card"><h2>실행한 단어 <span class="mono">${done.length}</span></h2><div class="list">${done.map(x => `<button class="row" data-detail="${x.id}"><div class="t"><b>${esc(x.term)}</b><span>${esc(prog[x.id]?.action?.note || "")}</span></div>${pill(4)}</button>`).join("")}</div></section>` : ""}`;
 }
 
+/* 새 개념 — 최근 2주 안에 위키에 새로 정리되거나 고쳐진 개념 · 단어장에 새로 들어온 용어, 최신순 (2026-11-12 동욱) */
+function renderNew(){
+  const list = ALL.filter(t => isFresh(t)).sort((a, b) => newerFirst(a, b) || conceptFirst(a, b));
+  if (!list.length) return `<section class="card"><p class="empty">최근 2주 안에 위키에 새로 정리된 개념이 없어요.<br>위키에 개념이 생기거나 고쳐지면 여기 맨 위에 떠요.</p></section>`;
+  const todo = list.filter(t => lv(t.id) < 3);
+  let h = `<section class="card stack"><div class="meta"><h3 style="margin:0">새로 정리된 개념 <span class="mono muted" style="font-size:14px">${list.length}</span></h3>
+    <button class="btn primary" data-newstudy="1">▶ 최신순으로 익히기 · ${(todo.length ? todo : list).length}개</button></div>
+    <p class="small muted">위키에 새로 정리되거나 고쳐진 날짜 순이에요. 오래된 것보다 이것부터 봐요.</p></section>`;
+  let day = null, rows = "";
+  const flush = () => { if (rows) h += `<section class="card"><h2>${esc(day)}</h2><div class="list">${rows}</div></section>`; rows = ""; };
+  list.forEach(t => {
+    if (t.at !== day) { flush(); day = t.at; }
+    rows += `<button class="row" data-go="learn" data-id="${t.id}"><div class="t"><b>${esc(t.term)}</b><span>${esc(t.dom === "위키 개념" ? "위키 · " + t.cat : t.cat)} · ${esc(t.def)}</span></div>${pill(lv(t.id))}</button>`;
+  });
+  flush();
+  return h;
+}
 function renderList(){
   const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}</div>`;
   return `<input type="search" id="listQ" placeholder="단어나 뜻으로 찾기" value="${esc(S.listQ)}" aria-label="단어 찾기">
@@ -547,7 +566,7 @@ function render(){
   const main = document.getElementById("view");
   const searchFocused = ae && ae.id === "listQ";
   if (v === "list" && searchFocused) { document.getElementById("listOut").innerHTML = listRows(); return; }
-  main.innerHTML = v === "lec" ? renderLec() : v === "field" ? renderField() : v === "review" ? renderReview() : v === "learn" ? renderLearn() : v === "talk" ? renderTalk() : v === "do" ? renderDo() : v === "list" ? renderList() : renderHome();
+  main.innerHTML = v === "new" ? renderNew() : v === "lec" ? renderLec() : v === "field" ? renderField() : v === "review" ? renderReview() : v === "learn" ? renderLearn() : v === "talk" ? renderTalk() : v === "do" ? renderDo() : v === "list" ? renderList() : renderHome();
   document.getElementById("dom").innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
   document.getElementById("sub").textContent = `${S.domain} ${TERMS.length}개 · 목표 달성 ${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}`;
 }
@@ -627,6 +646,12 @@ JSON 하나만, 한국어 존댓말로: {"action": "구체적인 행동 한 문�
 
 /* ---------- events ---------- */
 document.addEventListener("click", e => {
+  if (e.target.closest("[data-newstudy]")) {
+    const list = ALL.filter(t => isFresh(t)).sort((a, b) => newerFirst(a, b) || conceptFirst(a, b));
+    const todo = list.filter(t => lv(t.id) < 3);
+    S.queue = (todo.length ? todo : list).slice(0, 15).map(t => t.id); S.qi = 0; S.flipped = false;
+    location.hash = "learn"; return;
+  }
   const dm = e.target.closest("[data-dom]");
   if (dm) { setDomain(dm.dataset.dom); if (view() !== "review") location.hash = "review"; render(); return; }
   const el = e.target.closest("[data-act],[data-go],[data-lcat],[data-listcat],[data-detail],[data-pickdo],[data-do]");
@@ -683,8 +708,9 @@ async function init(){
     if (!v || !Array.isArray(v.terms) || !v.terms.length) return;
     DATA = { terms: v.terms, pairs: Array.isArray(v.pairs) ? v.pairs : DATA.pairs };
     FOREIGN = Array.isArray(v.foreign) ? v.foreign : FOREIGN;
-    ALL = DATA.terms.concat(FOREIGN).map(t => ({ ...t, dom: domOf(t.cat) }));
+    ALL = DATA.terms.concat(FOREIGN).map(t => ({ ...t, dom: t.dom || domOf(t.cat) }));
     BYID = Object.fromEntries(ALL.map(t => [t.id, t]));
+    wikiCats();
     TERMS = ALL.filter(t => t.dom === S.domain);
     CATS = DOMAINS[S.domain].filter(c => TERMS.some(t => t.cat === c));
     if (S.queue) S.queue = S.queue.filter(id => BYID[id]);

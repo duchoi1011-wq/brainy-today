@@ -399,7 +399,8 @@
       setTimeout(function () { bs.err = ""; bsPaint(); }, 15000);
     });
   }
-  setInterval(function () { if (bs.el && !bs.el.hidden) bsPaint(); }, 30000);   // 맥 신호가 끊긴 걸 시간으로도 알아챈다
+  // 맥 신호가 끊긴 걸 시간으로도 알아챈다 — 낡았으면 「맥 꺼짐」이라 하기 전에 한 번 더 직접 읽는다 (실시간 알림을 놓쳐도 틀리지 않게, 2026-11-12)
+  setInterval(function () { if (bs.el && !bs.el.hidden) { if (bs.read && !macOn()) bsRead(); else bsPaint(); } }, 30000);
 
   /* ---------- 시작 ---------- */
   var uid;
