@@ -50,8 +50,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "1c9dd778db"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=1c9dd778db"></script>
+<script>window.BRAINY_VERSION = "9f39a44127"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=9f39a44127"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -336,6 +336,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .fab svg { width: 18px; height: 18px; }
 .sheet { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; grid-template-rows: auto 1fr auto; padding-top: env(safe-area-inset-top, 0px); }
 .sheet[hidden] { display: none !important; }
+/* 대화창은 보이는 화면(키보드 위)에 딱 맞춘다 — 아이폰에서 입력창이 키보드 뒤로 숨거나 가운데 뜨지 않게 */
+.sheet { bottom: auto; height: 100vh; height: 100dvh; overscroll-behavior: contain; }
+.sheet .msgs { min-height: 0; overscroll-behavior: contain; }
+.sheet.kb .composer2 { padding-bottom: 10px; }
+html.chat-open, html.chat-open body { overflow: hidden; overscroll-behavior: none; }
 .sheet .bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--line); background: var(--surface); }
 .sheet .bar { flex-wrap: wrap; row-gap: 8px; }
 .sheet .bar > div:first-child { flex: 1 1 220px; min-width: 0; word-break: keep-all; overflow-wrap: break-word; }
@@ -2482,12 +2487,24 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (!S.sample || S.sampleOff) { S.chatUnavailable = true; }
     if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }
     if (!S.chat.turns.length && !S.chat.task && !q) { var rec = (S.threads || []).filter(function (x) { return (x.project || null) === (S.chat.project || null) && !x.task && (x.turns || []).length && Date.now() - Date.parse(x.updatedAt || 0) < 6 * 3600e3; })[0]; if (rec) resumeChat(rec); }
-    sheet.hidden = false; document.getElementById("fab").hidden = true;
+    sheet.hidden = false; document.getElementById("fab").hidden = true; document.documentElement.classList.add("chat-open"); fitSheet();
     document.getElementById("chat-ctx").textContent = S.chat.project ? "보고 있는 프로젝트: " + S.chat.project + " · 볼트 전체도 함께 봐요" : "내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요";
     renderChat();
     if (q) { chatInput.value = q; sendChat(); } else setTimeout(function () { try { chatInput.focus(); } catch (e) {} }, 50);
   }
-  function closeChat() { sheet.hidden = true; document.getElementById("fab").hidden = false; render(); }
+  function closeChat() { sheet.hidden = true; document.getElementById("fab").hidden = false; document.documentElement.classList.remove("chat-open"); sheet.style.top = sheet.style.height = ""; sheet.classList.remove("kb"); render(); }
+  /* 아이폰 키보드: 보이는 화면(visualViewport)의 높이·위치에 대화창을 맞춰 입력창이 늘 화면 아래(키보드 바로 위)에 붙게 한다 */
+  function fitSheet() {
+    if (sheet.hidden) return;
+    var vv = window.visualViewport, box = document.getElementById("msgs"), atEnd = box && box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    if (vv) { sheet.style.top = Math.max(0, vv.offsetTop) + "px"; sheet.style.height = vv.height + "px"; sheet.classList.toggle("kb", window.innerHeight - vv.height > 120); }
+    else { sheet.style.top = "0px"; sheet.style.height = window.innerHeight + "px"; }
+    if (atEnd) box.scrollTop = box.scrollHeight;
+  }
+  if (window.visualViewport) { window.visualViewport.addEventListener("resize", fitSheet); window.visualViewport.addEventListener("scroll", fitSheet); }
+  window.addEventListener("resize", fitSheet);
+  chatInput.addEventListener("focus", function () { setTimeout(fitSheet, 60); setTimeout(fitSheet, 350); });
+  chatInput.addEventListener("blur", function () { setTimeout(fitSheet, 60); });
   function bubHtml(key, t, cls, attrs, live) {
     var txt = t.content || "", long = !live && txt.length > 260, open = !!S.exp[key];
     var h = '<div class="bub ' + cls + (long && !open ? " clamp" : "") + '"' + (attrs || "") + ">" + esc(txt) + "</div>";
