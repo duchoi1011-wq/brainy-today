@@ -11,13 +11,22 @@ function buildRefCell(n){
   return "<a class=\"bd-ref\" href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\">" + (r.vid ? "<img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(r.vid) + "/mqdefault.jpg\">" : "") +
     "<span><b>" + esc(r.title) + "</b><br><span class=\"muted\">" + esc([r.channel, r.ratio != null ? "조회÷구독 " + r.ratio + "배" : "", "[조사] " + r.row + "행"].filter(Boolean).join(" · ")) + "</span></span></a>";
 }
+/* 욕구 결 검증 (2026-11-16 동욱: "시청자의 욕구의 본질과 내 상품의 구매의 본질이 동일하냐") — 행 이름은 구축 틀.json 의 rows */
+function buildFit(f, v){
+  if(!v || typeof v !== "object") return "<span class=\"bd-empty\">비어 있음</span>";
+  var cls = { "같음": "v-same", "비슷": "v-near", "다름": "v-diff" }[String(v.verdict || "").split(" ")[0]] || "";
+  return "<table class=\"bd-fit\">" + (f.rows || []).map(function(r){
+    var val = v[r.id];
+    return "<tr><th>" + esc(r.label) + "</th><td" + (r.id === "verdict" ? " class=\"" + cls + "\"" : "") + ">" + (val ? esc(val) : "<span class=\"bd-empty\">비어 있음</span>") + "</td></tr>" }).join("") + "</table>";
+}
 function buildVal(f, v){
+  if(f.type === "fit") return buildFit(f, v);
   if(f.type === "refs") return Array.isArray(v) && v.length ? v.map(buildRefCell).join("") : "<span class=\"bd-empty\">비어 있음</span>";
   return v ? esc(v) : "<span class=\"bd-empty\">비어 있음</span>";
 }
 function buildFilled(doc){
   var n = 0, all = 0, vals = doc.values || {};
-  buildDef().sections.forEach(function(s){ s.fields.forEach(function(f){ all++; var v = vals[f.id]; if(Array.isArray(v) ? v.length : v) n++ }) });
+  buildDef().sections.forEach(function(s){ s.fields.forEach(function(f){ all++; var v = vals[f.id]; if(Array.isArray(v) ? v.length : (v && typeof v === "object") ? v.verdict : v) n++ }) });
   return [n, all];
 }
 function buildDocHtml(doc){

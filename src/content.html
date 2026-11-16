@@ -153,8 +153,11 @@ body.wide .wrap{max-width:1440px}
 .bd-empty{color:var(--muted);font-size:13px}
 .bd-ref{display:flex;gap:8px;align-items:flex-start;text-decoration:none;color:var(--ink);margin:4px 0;font-size:13px;line-height:1.4}
 .bd-ref img{width:96px;height:54px;object-fit:cover;border-radius:7px;flex:none}
-.bd-sheet table{min-width:0;width:100%;table-layout:fixed}.bd-sheet th:nth-child(1){width:96px}.bd-sheet th:nth-child(2){width:210px}.bd-sheet td{max-width:none;overflow-wrap:anywhere}.bd-sheet td.o-topic{min-width:0;max-width:none}
+.orig.bd-sheet table{min-width:0;width:100%;table-layout:fixed}.bd-sheet th:nth-child(1){width:96px}.bd-sheet th:nth-child(2){width:210px}.bd-sheet td{max-width:none;overflow-wrap:anywhere}.bd-sheet td.o-topic{min-width:0;max-width:none}
 @media (max-width:560px){.bd-sheet th:nth-child(1){width:64px}.bd-sheet th:nth-child(2){width:110px}}
+/* 욕구 결 검증 표 — 시청자 욕구 vs 구매 욕구 */
+.bd-fit{width:100%;border-collapse:collapse;font-size:13px;line-height:1.5}.bd-fit th,.bd-fit td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+.bd-fit th{background:var(--surface-2);width:110px;font-weight:700}.bd-fit .v-same{color:var(--ok);font-weight:800}.bd-fit .v-near{color:var(--prod);font-weight:800}.bd-fit .v-diff{color:#C0392B;font-weight:800}
 .bd-idea{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-top:1px solid var(--line)}
 .bd-idea b{font-size:14px;line-height:1.4}
 @media (max-width:1100px){.bd{grid-template-columns:minmax(0,1fr)}.bd-left,.bd-right{position:static;max-height:none}.bd-left{order:0}.bd-main{order:1}.bd-right{order:2}}
