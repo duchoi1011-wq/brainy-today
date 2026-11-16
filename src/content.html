@@ -319,13 +319,14 @@ function render(){
 }
 
 document.addEventListener("click", function(e){
-  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel],[data-rpok],[data-rpmore]");
+  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel],[data-rpok],[data-rpmore],[data-rpsync]");
   if(!t) return;
   var d = t.dataset;
   if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
   if(d.brand){ pickBrand(d.brand); return }
   if(d.tpl){ if(d.tpl !== mixTpl().id && (!Object.keys((SETS[cur] || {}).mixer || {}).length || confirm("템플릿을 바꾸면 이 브랜드에서 바꾼 값이 템플릿 값으로 돌아가요. 바꿀까요?"))) setS({ template: d.tpl, mixer: {} }); return }
   if(d.rpok){ var ro = Object.assign({}, (SETS[cur] || {}).refok || {}); if(ro[d.rpok]) delete ro[d.rpok]; else ro[d.rpok] = 1; setS({ refok: ro }); return }
+  if(d.rpsync){ send("refpage", "참고 페이지 — 바뀐 브랜드 레퍼런스에 다시 맞추기 — " + d.rpsync, { ids: [d.rpsync], note: "브랜드 레퍼런스(채널 목록·새 영상·잘 된 채널)가 바뀌었다 — 지금 브랜드.json·채널.json 에 맞춰 다시 찾아 고친다" }); return }
   if(d.rpmore){ var nt = (document.getElementById("rp-note-" + d.rpmore).value || "").trim(); if(!nt){ alert("무엇이 모자란지 한 줄 적어 주세요."); return }
     send("refpage", "참고 페이지 더 찾기 — " + d.rpmore, { ids: [d.rpmore], note: nt }); return }
   if(d.fbdel){ setS({ feedback: ((SETS[cur] || {}).feedback || []).filter(function(f){ return f.at !== d.fbdel }) }); return }
