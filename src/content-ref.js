@@ -20,12 +20,27 @@ function daily(x){
   var a = h[h.length - 2], b = h[h.length - 1], days = Math.max(1, Math.round((Date.parse(b[0]) - Date.parse(a[0])) / 86400000));
   return Math.round((b[1] - a[1]) / days);
 }
+/* 믹서 점수 (0~100) = 판정 믹서의 「레퍼런스 고르기」 비중으로 여섯 가지를 가중 평균. 성과 근거가 안 되는 영상(기준 배수 미만 · 광고 추정)은 조회 쪽 점수를 0으로 본다 */
+var VT = { Great: 100, Good: 80, Normal: 50, Bad: 25, Worst: 0 };
+function isProof(x){ var m = M(); return x.ratio != null && x.ratio >= (m.th_ratio || 1) && !x.ad }
+function refScore(x){
+  var m = M(), o = outlier(x), ok = isProof(x);
+  var age = x.published ? (Date.now() - Date.parse(x.published)) / (365 * 86400000) : 3;
+  return Math.round(wsum([
+    [m.ref_ratio || 0, ok ? Math.min(1, Math.log10(x.ratio + 1) / 3) * 100 : 0],
+    [o == null ? 0 : (m.ref_outlier || 0), ok && o != null ? Math.min(1, Math.log10(o + 1) / 2) * 100 : 0],
+    [m.ref_comment || 0, x.buyer === "✓" ? 100 : x.buyer === "△" ? 40 : 0],
+    [VT[x.vtPerf] == null ? 0 : (m.ref_viewtrap || 0), VT[x.vtPerf] || 0],          // 뷰트랩 등급이 없는 영상은 이 항목을 빼고 계산
+    [m.ref_wave || 0, /많이 다시 본 구간/.test(x.wave || "") && !/생성 안 됨|만들지 않음/.test(x.wave || "") ? 100 : 0],
+    [m.ref_fresh || 0, Math.max(0, Math.min(1, (3 - age) / 2)) * 100]
+  ]));
+}
 function refCard(x){
-  var bd = band(x.ratio), g = growth(x), proof = x.ratio != null && x.ratio >= 1 && !x.ad, o = outlier(x), dv = daily(x);
+  var bd = band(x.ratio), g = growth(x), proof = isProof(x), o = outlier(x), dv = daily(x);
   return "<div class=\"ref\">" + (x.vid ? "<a href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(x.vid) + "/mqdefault.jpg\"></a>" : "") +
     "<div class=\"ref-m\"><a class=\"t\" href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title) + "</a>" +
     "<div class=\"it-d\">" + esc(x.channel) + " · 구독 " + esc(x.subs || "—") + " · 조회 " + (g ? fmt(g.now) + (g.pct > 0 ? " <span class=\"up\">(+" + g.pct + "%)</span>" : "") : esc(x.views || "—")) + " · " + esc(x.len) + " · " + esc(x.published) + "</div>" +
-    "<div><span class=\"tag fill\">" + esc(x.role) + "</span> <span class=\"tag p\">" + esc(x.product) + "</span> <span class=\"tag\">" + esc(x.form) + "</span> " +
+    "<div><span class=\"tag fill\">" + esc(x.role) + "</span> <span class=\"tag\" style=\"border-color:var(--accent);color:var(--accent)\">믹서 " + refScore(x) + "점</span> <span class=\"tag p\">" + esc(x.product) + "</span> <span class=\"tag\">" + esc(x.form) + "</span> " +
     "<span class=\"tag " + bd[1] + "\">" + (x.ratio != null ? "조회÷구독 " + x.ratio + "배 · " : "") + bd[0] + "</span> " +
     (o != null ? "<span class=\"tag " + (o >= 3 ? "ok" : "") + "\">채널 평소의 " + o + "배</span> " : "") + (dv ? "<span class=\"tag " + (dv > 0 ? "ok" : "") + "\">하루 +" + fmt(dv) + "</span> " : "") +
     (x.buyer ? "<span class=\"tag " + (x.buyer === "✓" ? "ok" : "") + "\">구매자 " + x.buyer + "</span> " : "") +
@@ -48,16 +63,16 @@ function viewRef(){
   if(!r) return h + "<p class=\"empty\">아직 레퍼런스가 없어요. ③ 키워드에서 조사를 돌리면 채워져요.</p>";
   var list = r.items.filter(function(x){
     return (ui.refRole === "all" || x.role === ui.refRole) && (ui.refForm === "all" || x.form === ui.refForm) &&
-      (!ui.refBuyer || (x.buyer === "✓" && x.ratio != null && x.ratio >= 1 && !x.ad));
+      (!ui.refBuyer || (x.buyer === "✓" && isProof(x)));
   });
-  var by = { ratio: function(a, c){ return (c.ratio || 0) - (a.ratio || 0) }, out: function(a, c){ return (outlier(c) || 0) - (outlier(a) || 0) }, grow: function(a, c){ return ((growth(c) || {}).pct || 0) - ((growth(a) || {}).pct || 0) }, date: function(a, c){ return c.row - a.row } }[ui.refSort];
+  var by = { mix: function(a, c){ return refScore(c) - refScore(a) }, ratio: function(a, c){ return (c.ratio || 0) - (a.ratio || 0) }, out: function(a, c){ return (outlier(c) || 0) - (outlier(a) || 0) }, grow: function(a, c){ return ((growth(c) || {}).pct || 0) - ((growth(a) || {}).pct || 0) }, date: function(a, c){ return c.row - a.row } }[ui.refSort];
   list.sort(by);
   function chip(key, val, label){ return "<button class=\"chip" + (ui[key] === val ? " on" : "") + "\" data-ui=\"" + key + "=" + val + "\">" + label + "</button>" }
   h += "<section class=\"card\"><div class=\"card-h\"><h3>잘 되는 콘텐츠</h3><span class=\"n\">" + list.length + " / " + r.items.length + "</span></div>" +
     "<div class=\"chips\">" + chip("refRole", "all", "역할 전체") + chip("refRole", "풀링", "풀링") + chip("refRole", "신뢰", "신뢰") + chip("refRole", "키", "키") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\">" + chip("refForm", "all", "형식 전체") + chip("refForm", "숏폼", "숏폼") + chip("refForm", "미드폼", "미드폼") +
     "<button class=\"chip" + (ui.refBuyer ? " on" : "") + "\" data-ui=\"refBuyer=" + !ui.refBuyer + "\">구매자 ✓ · 성과 근거만</button></div>" +
-    "<div class=\"chips\" style=\"margin-top:6px\">" + chip("refSort", "ratio", "조회÷구독순") + chip("refSort", "out", "채널 평소 대비순") + chip("refSort", "grow", "요즘 조회 늘어난 순") + chip("refSort", "date", "최근 조사순") + "</div>" +
+    "<div class=\"chips\" style=\"margin-top:6px\">" + chip("refSort", "mix", "믹서 점수순") + chip("refSort", "ratio", "조회÷구독순") + chip("refSort", "out", "채널 평소 대비순") + chip("refSort", "grow", "요즘 조회 늘어난 순") + chip("refSort", "date", "최근 조사순") + "</div>" +
     (ui.refSort === "out" ? "<p class=\"lead\" style=\"margin-top:8px\">채널 평소 = 그 채널 일반 영상 최근 30개의 가운데 조회수예요. 쇼츠는 일반 영상과 견주게 돼 배수가 크게 나올 수 있어요.</p>" : "") +
     "<div style=\"margin-top:6px\">" + (list.slice(0, ui.refMore).map(refCard).join("") || "<p class=\"empty\">조건에 맞는 레퍼런스가 없어요.</p>") + "</div>" +
     (list.length > ui.refMore ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"refMore=" + (ui.refMore + 30) + "\">더 보기 (" + (list.length - ui.refMore) + "개 남음)</button></div>" : "") + "</section>";

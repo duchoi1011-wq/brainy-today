@@ -1,8 +1,8 @@
 /* ── ③ 키워드 — 점수 매기기 · 비율대로 후보 뽑기 · 화면 ──
-   점수(0~100)는 종류마다 다르게 본다 (화면 아래 「점수 계산」에 같은 설명):
-     상품    = 검색량 60% + 광고 클릭률 25% + 상승세 15%   (사려는 사람이 찾는 말인지가 중요)
+   점수(0~100)는 종류마다 다르게 본다. 무엇을 얼마나 볼지는 판정 믹서 값이다 (content-mixer.js · 볼트 믹서.json) — 여기에 비중을 적지 않는다:
+     상품    = 검색량(kw_vol) · 광고 클릭률(kw_ctr) · 상승세(kw_rise) 의 가중 평균   (사려는 사람이 찾는 말인지가 중요)
                클릭률은 월 검색 200 미만이면 그만큼 덜 믿는다 (검색 20에 클릭 4번이면 20%가 나오므로)
-     정체성  = 검색량 70% + 상승세 30%                    (채널 성격에 맞는 넓은 주제 — 클릭률은 안 본다)
+     정체성  = 검색량(id_vol) · 상승세(id_rise) 의 가중 평균   (채널 성격에 맞는 넓은 주제 — 클릭률은 안 본다)
    검색량은 로그로 눌러 큰 키워드 하나가 다 가져가지 않게 한다. 상승세 = 구글 트렌드 최근 4주 ÷ 그 앞 8주. */
 /* 다른 도구에서 가져온 보는 법 (자료는 네이버 검색광고 값 그대로 — 새로 추정하지 않는다)
      난이도 (Ahrefs 키워드 난이도) = 광고 경쟁: 경쟁정도 높음 + 노출 광고 9개 이상 → 어려움 · 노출 광고 5개 이하나 경쟁정도 낮음 → 쉬움 · 그 사이 보통
@@ -25,13 +25,14 @@ function scored(){
   var k = part("kw"); if(!k || !k.items) return [];
   var max = { "상품": 0, "정체성": 0 };
   k.items.forEach(function(x){ if(x.total > (max[x.kind] || 0)) max[x.kind] = x.total });
-  var cov = coveredText();
+  var cov = coveredText(), m = M();
+  function w(id, d){ return m[id] != null ? m[id] : d }
   return k.items.map(function(x){
     var tr = riseOf(x.kw), rise = tr ? tr.rise : null;
     var vol = max[x.kind] ? Math.log10(x.total + 1) / Math.log10(max[x.kind] + 1) * 100 : 0;
     var ctr = Math.min(x.ctr || 0, 10) * 10 * Math.min(1, x.total / 200);
     var up = rise == null ? 50 : Math.max(0, Math.min(1, (rise - 0.5) / 1.5)) * 100;
-    var score = x.kind === "상품" ? vol * .60 + ctr * .25 + up * .15 : vol * .70 + up * .30;
+    var score = x.kind === "상품" ? wsum([[w("kw_vol", 6), vol], [w("kw_ctr", 3), ctr], [w("kw_rise", 2), up]]) : wsum([[w("id_vol", 7), vol], [w("id_rise", 3), up]]);
     return Object.assign({}, x, { rise: rise, w: tr ? tr.w : null, score: Math.round(score), buy: /^구매/.test(x.intent || "") && !/경쟁사 이름/.test(x.intent || ""), diff: diffOf(x), cluster: clusterOf(x.kw) });
   }).map(function(x){ return Object.assign(x, { gap: x.kind === "상품" && x.buy && !x.surveyed && x.total >= 10 && cov.indexOf(x.kw) < 0 });
   }).sort(function(a, b){ return b.score - a.score || b.total - a.total });
@@ -100,8 +101,9 @@ function viewKw(){
     "<div class=\"list\" style=\"margin-top:6px\">" + list.slice(0, ui.kwMore).map(function(x){ return kwRow(x, s, true) }).join("") + "</div>" +
     (list.length > ui.kwMore ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"kwMore=" + (ui.kwMore + 100) + "\">더 보기 (" + (list.length - ui.kwMore) + "개 남음)</button></div>" : "") + "</section>";
   h += "<section class=\"card\"><details><summary>점수 계산 · 자료 출처</summary><div class=\"small\" style=\"margin-top:8px;display:grid;gap:6px\">" +
-    "<p><span class=\"tag p\">상품</span> 검색량 60% + 광고 클릭률 25% + 상승세 15%. 클릭률이 높을수록 사려는 사람이 찾는 말이에요. 월 검색 200 미만이면 클릭률을 그만큼 덜 믿어요.</p>" +
-    "<p><span class=\"tag i\">정체성</span> 검색량 70% + 상승세 30%. 채널 성격에 맞는 넓은 주제라 클릭률은 안 봐요.</p>" +
+    "<p><span class=\"tag p\">상품</span> 검색량 " + M().kw_vol + " : 광고 클릭률 " + M().kw_ctr + " : 상승세 " + M().kw_rise + " 비중. 클릭률이 높을수록 사려는 사람이 찾는 말이에요. 월 검색 200 미만이면 클릭률을 그만큼 덜 믿어요.</p>" +
+    "<p><span class=\"tag i\">정체성</span> 검색량 " + M().id_vol + " : 상승세 " + M().id_rise + " 비중. 채널 성격에 맞는 넓은 주제라 클릭률은 안 봐요.</p>" +
+    "<p>비중은 <button class=\"chip\" data-tab=\"mixer\">믹서 탭</button>에서 바꿔요 (지금 템플릿: " + esc(mixTpl().name) + ").</p>" +
     "<p>검색량·클릭률: " + esc(k.source || "") + " · " + day(k.updatedAt) + "</p>" +
     "<p>상승세(최근 4주 ÷ 그 앞 8주): " + (t ? esc(t.source || "") + " · " + day(t.updatedAt) + " · " + Object.keys(t.items || {}).length + "개 키워드" : "아직 받지 않음") + ". 검색이 적은 키워드는 구글이 값을 0으로 줘서 「값 적음」으로 두고 점수에서는 중간값으로 봐요.</p>" +
     "<p>경쟁(난이도): 네이버 경쟁정도와 월평균 노출 광고 수로 봐요 — 높음 + 광고 9개 이상이면 어려움, 광고 5개 이하면 쉬움. 주제 묶음: 같은 주제 말이 든 키워드의 검색량을 더한 값. 빈 곳: 구매 결인데 아직 조사·추천에 안 나온 키워드.</p>" +

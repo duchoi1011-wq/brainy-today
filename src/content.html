@@ -106,6 +106,8 @@ input[type=range]{width:100%;accent-color:var(--ink);margin:14px 0 2px}
 .step{display:inline-flex;align-items:center;gap:6px}
 .step button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
 .step b{min-width:26px;text-align:center;font-family:var(--f-mono)}
+.knobs{display:grid;gap:16px}.knob-h{display:flex;justify-content:space-between;align-items:baseline}.knob input[type=range]{margin:6px 0 2px;accent-color:var(--accent)}
+.row2{display:flex;gap:8px;align-items:center}.row2>input,.row2>select{flex:1;min-width:0}
 .rows{display:grid;gap:8px;margin-top:6px}.rows>div{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
 /* 맥에 보낸 명령 상태 */
 .run{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:12px 14px;border-radius:14px;background:var(--blue-bg);line-height:1.5}
@@ -151,9 +153,9 @@ var SETS = {};                      // 브랜드 id → 설정
 var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부터)
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드 — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "brand");
-var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "ratio", refBuyer: true, refView: "videos", refMore: 20, newBrand: false, hide: load("ct.hide", {}) };
-var TABS = [["brand", "브랜드"], ["mix", "비율"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["script", "대본"]];
-var PARTS = { kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", script: ".script", log: ".log" };
+var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, newBrand: false, hide: load("ct.hide", {}) };
+var TABS = [["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["script", "대본"]];
+var PARTS = { mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", script: ".script", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -164,7 +166,7 @@ function ago(iso){ var m = Math.round((Date.now() - Date.parse(iso || 0)) / 6000
 function day(iso){ return String(iso || "").slice(0, 10) }
 
 /* ── 데이터 꺼내기 ── */
-function brands(){ return Object.keys(RAW).filter(function(id){ return id.indexOf(".") < 0 }).map(function(id){ return RAW[id] }).sort(function(a, b){ return (a.order || 9) - (b.order || 9) }) }
+function brands(){ return Object.keys(RAW).filter(function(id){ return id.indexOf(".") < 0 && RAW[id].name }).map(function(id){ return RAW[id] }).sort(function(a, b){ return (a.order || 9) - (b.order || 9) }) }
 function pickBrand(id){
   cur = id; save("ct.brand", cur);
   try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){}
@@ -222,6 +224,7 @@ function runHtml(kinds){
   return out;
 }
 
+/*@include content-mixer.js*/
 /*@include content-kw.js*/
 /*@include content-ref.js*/
 /*@include content-plan.js*/
@@ -308,17 +311,19 @@ function render(){
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
   document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:linear-gradient(135deg," + esc((x.kit || {}).accent || "#3B5BFF") + "," + esc((x.kit || {}).accent2 || (x.kit || {}).accent || "#8A6BFF") + ")\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
-  var v = { brand: viewBrand, mix: viewMix, kw: viewKw, ref: viewRef, rec: viewRec, script: viewScript }[tab] || viewBrand;
+  var v = { brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, script: viewScript }[tab] || viewBrand;
   document.getElementById("view").innerHTML = v();
   if(tab === "mix") paintMix();
 }
 
 document.addEventListener("click", function(e){
-  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy]");
+  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel]");
   if(!t) return;
   var d = t.dataset;
   if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
   if(d.brand){ pickBrand(d.brand); return }
+  if(d.tpl){ if(d.tpl !== mixTpl().id && (!Object.keys((SETS[cur] || {}).mixer || {}).length || confirm("템플릿을 바꾸면 이 브랜드에서 바꾼 값이 템플릿 값으로 돌아가요. 바꿀까요?"))) setS({ template: d.tpl, mixer: {} }); return }
+  if(d.fbdel){ setS({ feedback: ((SETS[cur] || {}).feedback || []).filter(function(f){ return f.at !== d.fbdel }) }); return }
   if(d.hide){ ui.hide[d.hide] = 1; save("ct.hide", ui.hide); render(); return }
   if(d.ui){ var kv = d.ui.split("="); ui[kv[0]] = kv[1] === "true" ? true : kv[1] === "false" ? false : isNaN(+kv[1]) ? kv[1] : +kv[1]; render(); return }
   if(d.set){ var p = {}, sv = d.set.split("="); p[sv[0]] = sv[1] === "true"; setS(p); return }
@@ -341,9 +346,11 @@ document.addEventListener("click", function(e){
 });
 document.addEventListener("input", function(e){
   if(e.target.id === "ratio"){ SETS[cur] = Object.assign({}, SETS[cur] || {}, { ratio: +e.target.value }); paintMix() }
+  if(e.target.dataset.knob){ var kb = mixDef().knobs.filter(function(k){ return k.id === e.target.dataset.knob })[0], lab = document.getElementById("kv-" + e.target.dataset.knob); if(kb && lab) lab.textContent = knobText(kb, +e.target.value) }
 });
 document.addEventListener("change", function(e){
   if(e.target.id === "ratio") setS({ ratio: +e.target.value });
+  if(e.target.dataset.knob){ var mx = Object.assign({}, (SETS[cur] || {}).mixer || {}); mx[e.target.dataset.knob] = +e.target.value; var y = window.scrollY; setS({ mixer: mx }); window.scrollTo(0, y) }
   if(e.target.dataset.plan){ var pl = Object.assign({}, S().plan); if(e.target.value) pl[e.target.dataset.plan] = e.target.value; else delete pl[e.target.dataset.plan]; setS({ plan: pl }) }
   if(e.target.id === "nb-file" && e.target.files[0]){
     var f = e.target.files[0], rd = new FileReader();
@@ -362,6 +369,9 @@ function act(name, el){
   if(name === "discover"){ var c = candidates(s); send("discover", "키워드·레퍼런스 조사 (상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " · " + c.length + "개)",
     { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, short: s.short, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
   if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }
+  if(name === "resetmixer"){ setS({ mixer: {} }); return }
+  if(name === "fbadd"){ var tx = (document.getElementById("fb-text").value || "").trim(); if(!tx) return;
+    setS({ feedback: ((SETS[cur] || {}).feedback || []).concat([{ at: new Date().toISOString(), knob: document.getElementById("fb-knob").value, text: tx.slice(0, 400) }]) }); return }
   if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
