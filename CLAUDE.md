@@ -12,7 +12,7 @@
   - 체화 단어장 용어·외국어: 볼트 위키 표 → `vo.data/main`. 강의 용어: `4_Outputs/체화 단어장/강의 용어.json` → `vo.data/lec`.
   - 맥의 동기화(볼트 `.claude/scripts/app_data.py`)가 몇 초 안에 올린다. 「앱 고치기」(GitHub)처럼 볼트에 손이 안 닿으면 코드에 내용을 박지 말고 요약에 「볼트에도 반영할 것: …」을 적는다.
   - 맥 단축키의 클로드 코드 목록은 앱을 점검·고칠 때마다 지금 클로드 코드와 맞춘다 — 볼트 데이터와 위키 「맥 핵심 단축키」 5-1의 「클로드 코드 최신화 날짜」를 같이 고친다 (2026-11-09 동욱).
-  - 콘텐츠 기획(`src/content.html` + `content-kw.js` 점수·후보 · `content-ref.js` 레퍼런스·채널 · `content-plan.js` 추천·대본 · `content-mixer.js` 판정 믹서 — 조절값 정의·템플릿은 볼트 `믹서.json` → `ct.data/mixer.def`, 점수 비중을 코드에 적지 않는다): 볼트 `4_Outputs/콘텐츠 기획 앱/<브랜드>/*.json` → `ct.data/<브랜드>[.kw·.trend·.ref·.live·.chan·.rec·.script]`. 앱이 쓰는 것은 `ct.set/<브랜드>`(비율·고정·고른 추천)와 `cmd`(`from: "content"` — 맥의 Claude가 콘텐츠 스킬 셋을 돌림)뿐. 점수 식을 바꾸면 `content-kw.js` 머리말과 화면의 「점수 계산」 글을 같이 고친다.
+  - 콘텐츠 기획(`src/content.html` + `content-kw.js` 점수·후보 · `content-ref.js` 레퍼런스·채널 · `content-plan.js` 추천·대본 · `content-refpage.js` 참고 페이지(추천 → 참고 확정 → 대본) · `content-mixer.js` 판정 믹서 — 조절값 정의·템플릿은 볼트 `믹서.json` → `ct.data/mixer.def`, 점수 비중을 코드에 적지 않는다): 볼트 `4_Outputs/콘텐츠 기획 앱/<브랜드>/*.json` → `ct.data/<브랜드>[.kw·.trend·.ref·.live·.chan·.rec·.script]`. 앱이 쓰는 것은 `ct.set/<브랜드>`(비율·고정·고른 추천)와 `cmd`(`from: "content"` — 맥의 Claude가 콘텐츠 스킬 셋을 돌림)뿐. 점수 식을 바꾸면 `content-kw.js` 머리말과 화면의 「점수 계산」 글을 같이 고친다.
 - 표시·진도·기록은 Supabase `docs` 표 (로그인한 주인만, RLS). 표 구조·RLS·`supabase/`·`.github/` 는 부탁 없이 바꾸지 않는다.
 
 ## 순서

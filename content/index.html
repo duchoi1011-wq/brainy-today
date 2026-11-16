@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "ed11b7ad7d"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=ed11b7ad7d"></script>
+<script>window.BRAINY_VERSION = "c3dcde1e3e"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=c3dcde1e3e"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -65,7 +65,7 @@ header>.brand{padding-right:min(46vw,190px)}
 /* 틀: 좁은 한 줄 기둥, 위에 탭, 아래 카드 (맥 단축키·체화 단어장과 같은 뼈대·같은 이름).
    색은 밝은 한 벌만 쓴다 (2026-11-16 동욱: 편집 믹서가 어두우니 이 앱은 밝고 세련되게) — 종이색 바탕 · 흰 카드 · 코발트 강조,
    상품 = 코랄(--prod) · 정체성 = 청록(--iden). 색·그림자·둥글기는 :root 값만 고친다.
-   이 앱은 조종판이다: 브랜드 → 비율 → 믹서 → 키워드 → 잘 되는 콘텐츠 → 추천 → 대본 초안 (탭 순서는 TABS). 데이터는 볼트 파일이 정본이고 여기서는 읽기만,
+   이 앱은 조종판이다: 브랜드 → 비율 → 믹서 → 키워드 → 잘 되는 콘텐츠 → 추천 → 참고 페이지 → 대본 초안 (탭 순서는 TABS). 데이터는 볼트 파일이 정본이고 여기서는 읽기만,
    앱이 쓰는 것은 설정(ct.set)과 맥에 보내는 명령(cmd)뿐이다. */
 :root{
   color-scheme:light;
@@ -177,7 +177,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 @media (pointer:coarse){.mk{width:44px;height:44px}.step button{width:42px;height:42px}.chip{padding:10px 14px}.btn.sm{padding:10px 14px}}
 @media (max-width:480px){
   .card{padding:16px 16px;border-radius:18px}
-  nav button{padding:8px 4px;font-size:13.5px;flex:1 1 0}nav button span{display:none}
+  nav button{padding:8px 2px;font-size:13px;flex:1 1 0}nav button span{display:none}
   .ref img{width:96px;height:54px}
 }
 @media (prefers-reduced-motion:no-preference){main>.card{animation:fade .18s ease-out}@keyframes fade{from{opacity:.5}to{opacity:1}}}
@@ -207,8 +207,8 @@ var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부�
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드 — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "brand");
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, newBrand: false, hide: load("ct.hide", {}) };
-var TABS = [["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["script", "대본"]];
-var PARTS = { mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", script: ".script", log: ".log" };
+var TABS = [["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["refpage", "참고"], ["script", "대본"]];
+var PARTS = { refpage: ".refpage", mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", script: ".script", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -251,7 +251,7 @@ function setS(patch){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", refpage: "참고 페이지", script: "대본 초안", brief: "새 브랜드 프로필" };
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -600,11 +600,12 @@ function viewRec(){
   if(!r || !r.rounds || !r.rounds.length)
     return h + "<section class=\"card\"><p class=\"empty\">아직 추천이 없어요.</p><div class=\"acts\"><button class=\"btn primary\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole || !part("ref") ? " disabled" : "") + ">추천 받기</button></div><p class=\"lead\" style=\"margin-top:8px\">추천은 조사한 레퍼런스로 만들어요. 레퍼런스가 없으면 키워드 탭에서 조사부터 돌리세요.</p><div></div></section>";
   var rd = r.rounds[r.rounds.length - 1], picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
+  var need = picked.filter(function(id){ return !pageOf(id) });
   h += "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
     "<p>" + esc(rd.summary) + "</p>" + (rd.order ? "<p class=\"lead\" style=\"margin-top:8px\">바로 찍을 수 있는 순서 · " + esc(rd.order) + "</p>" : "") +
-    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!picked.length || openCmd("script") ? " disabled" : "") + ">고른 " + picked.length + "개 대본 초안 만들기</button>" +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"refpage\"" + (!need.length || openCmd("refpage") ? " disabled" : "") + ">고른 " + need.length + "개 참고 페이지 만들기</button>" +
     "<button class=\"btn\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole ? " disabled" : "") + ">추천 새로 받기</button></div>" +
-    "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋를 눌러 고르면 맥의 Claude가 제작 발굴 스킬로 대본 뼈대·촬영표를 만들어 대본 탭에 올려요. 새 추천은 비율 탭의 역할 수(풀링 " + s.roles["풀링"] + " · 신뢰 " + s.roles["신뢰"] + " · 키 " + s.roles["키"] + ")대로 받아요.</p></section>";
+    "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋로 고른 뒤 「참고 페이지 만들기」를 누르면, 맥의 Claude가 이 채널 결에 맞는 참고 영상을 찾아 참고 탭에 정리해요. 거기서 확정한 것만 대본으로 넘어가요. 새 추천은 비율 탭의 역할 수(풀링 " + s.roles["풀링"] + " · 신뢰 " + s.roles["신뢰"] + " · 키 " + s.roles["키"] + ")대로 받아요.</p></section>";
   h += planHtml(rd, s);
   ["풀링", "신뢰", "키"].forEach(function(role){
     var items = rd.items.filter(function(x){ return x.role.indexOf(role) === 0 });
@@ -614,7 +615,7 @@ function viewRec(){
       items.map(function(x){
         var sc = scriptOf(x.id);
         return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"num muted\">" + esc(x.id) + "</span> <b>" + esc(x.title) + "</b></div>" +
-          "<div class=\"it-d\">" + [x.product, x.format, x.from === "카드" ? "모아 둔 카드에서" : ""].filter(Boolean).map(esc).join(" · ") + (sc ? " · <span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "") + (s.plan[x.id] ? " · <span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : "") + "</div>" +
+          "<div class=\"it-d\">" + [x.product, x.format, x.from === "카드" ? "모아 둔 카드에서" : ""].filter(Boolean).map(esc).join(" · ") + (pageOf(x.id) ? " · <span class=\"tag " + (pageOk(pageOf(x.id)) ? "ok" : "") + "\">참고 " + (pageOk(pageOf(x.id)) ? "확정" : "초안") + "</span>" : "") + (sc ? " · <span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "") + (s.plan[x.id] ? " · <span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : "") + "</div>" +
           (x.structure ? "<div class=\"apply\">" + esc(x.structure) + "</div>" : "") +
           "<details><summary>근거 · 다음 연결 · 이어 쓸 카드</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
           (x.scene ? "<dt>찍을 장면</dt><dd>" + esc(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + esc(x.basis) + "</dd>" +
@@ -627,7 +628,7 @@ function viewRec(){
 function viewScript(){
   var b = B(), sc = part("script"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var h = "";
-  if(!sc || !sc.items || !sc.items.length) return "<p class=\"empty\">아직 대본 초안이 없어요. 추천 탭에서 고르고 「대본 초안 만들기」를 누르세요.</p>";
+  if(!sc || !sc.items || !sc.items.length) return "<p class=\"empty\">아직 대본 초안이 없어요. 추천 탭에서 고르고 → 참고 탭에서 참고 페이지를 확정한 뒤 「대본 초안 만들기」를 누르세요.</p>";
   h += "<p class=\"lead\">여기까지가 편집 믹서 바로 앞 단계예요. 편집 믹서가 생기면 이 대본 자료(볼트 「콘텐츠 기획 앱/" + esc(b.id) + "/대본.json」)를 그대로 읽어 템플릿에 맞춰요. 본문 정본은 각 카드입니다.</p>";
   sc.items.forEach(function(x, i){
     h += "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(x.title) + "</h3><span class=\"n\">" + esc(x.rec || "") + " · " + esc(x.status || "") + "</span></div>" +
@@ -637,6 +638,61 @@ function viewScript(){
       (x.script ? "<details open><summary>대본 뼈대</summary><div class=\"pre\" id=\"sc-" + i + "\" style=\"margin-top:6px\">" + md(x.script) + "</div></details>" : "") +
       (x.todo ? "<details><summary>아직 정해야 할 것</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.todo) + "</div></details>" : "") +
       "<div class=\"acts\">" + (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
+  });
+  return h;
+}
+
+/* ── 참고 탭 — 추천 하나를 대본으로 만들기 전에, 그 채널의 결에 맞는 레퍼런스를 찾아 정리한 참고 페이지 ──
+   흐름: 추천 탭에서 고름 → 「참고 페이지 만들기」(맥의 Claude가 채널 결·레퍼런스 채널·내 채널을 뒤져 칸마다 채움) → 여기서 읽고
+        모자라면 한 줄 적어 「더 찾기」, 됐으면 「이 참고로 확정」 → 확정한 것만 「대본 초안 만들기」.
+   자료는 볼트 `<브랜드>/참고.json` (ct.data/<브랜드>.refpage) — content-production 스킬이 쓴다. 확정 여부는 앱이 ct.set refok 에 둔다
+   (스킬이 쓴 status 가 「확정」이면 이미 확정된 것으로 본다). 칸 이름·순서는 스킬이 쓴 slot 값을 그대로 묶는다. */
+function pageOf(id){ var p = part("refpage"); return p && p.items ? p.items.filter(function(x){ return x.rec === id })[0] : null }
+function pageOk(p){ return p.status === "확정" || !!((SETS[cur] || {}).refok || {})[p.rec] }
+function toneHtml(b){
+  var t = b.tone; if(!t) return "";
+  return "<section class=\"card\"><details><summary>이 채널의 결 — 참고를 고르는 기준</summary>" +
+    "<div class=\"list\" style=\"margin-top:6px\">" + (t.rules || []).map(function(r){ return "<div class=\"it\"><div class=\"it-m\">" + esc(r) + "</div></div>" }).join("") + "</div>" +
+    "<dl class=\"kv small\" style=\"margin-top:8px\">" + [["쓰는 말", t.words], ["화면", t.screen], ["하지 않는 것", t.avoid]].filter(function(r){ return r[1] }).map(function(r){ return "<dt>" + r[0] + "</dt><dd>" + esc(r[1]) + "</dd>" }).join("") + "</dl>" +
+    (t.todo ? "<p class=\"note\" style=\"margin-top:8px\">" + esc(t.todo) + "</p>" : "") + "<p class=\"lead\" style=\"margin-top:8px\">정본 · <span class=\"mono\">" + esc(t.source || "") + "</span></p></details></section>";
+}
+function viewRefpage(){
+  var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
+  var pg = part("refpage"), s = S(), items = (pg && pg.items) || [], rc = part("rec"), rd = rc && rc.rounds && rc.rounds[rc.rounds.length - 1];
+  var waiting = rd ? rd.items.filter(function(x){ return s.pick[x.id] && !pageOf(x.id) }) : [];
+  var ready = items.filter(function(p){ return pageOk(p) && !scriptOf(p.rec) });
+  var h = "<section class=\"card\"><div class=\"card-h\"><h3>참고 페이지</h3><span class=\"n\">" + items.length + "개 · 확정 " + items.filter(pageOk).length + "</span></div>" +
+    "<p class=\"lead\">대본을 쓰기 전에, 추천마다 이 채널 결에 맞는 참고 영상을 찾아 「무엇을 가져올지」를 한 장으로 정리해요. 읽어 보고 됐으면 확정, 모자라면 한 줄 적어 더 찾게 하세요. 확정한 것만 대본으로 넘어가요.</p>" +
+    (waiting.length ? "<p class=\"small\" style=\"margin-top:6px\">고른 추천 중 참고 페이지가 아직 없는 것 · " + waiting.map(function(x){ return esc(x.id) + " " + esc(x.title) }).join(" / ") + "</p>" : "") +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"refpage\"" + (!waiting.length || openCmd("refpage") ? " disabled" : "") + ">고른 " + waiting.length + "개 참고 페이지 만들기</button>" +
+    "<button class=\"btn\" data-act=\"script\"" + (!ready.length || openCmd("script") ? " disabled" : "") + ">확정한 " + ready.length + "개 대본 초안 만들기</button></div>" +
+    (!items.length && !waiting.length ? "<p class=\"lead\" style=\"margin-top:10px\">아직 고른 추천이 없어요. <button class=\"chip\" data-tab=\"rec\">추천 탭</button>에서 ＋로 고르세요.</p>" : "") + "</section>";
+  h += toneHtml(b);
+  items.forEach(function(p){
+    var ok = pageOk(p), sm = p.summary || {}, sc = scriptOf(p.rec), groups = {}, order = [];
+    (p.refs || []).forEach(function(r){ if(!groups[r.slot]){ groups[r.slot] = []; order.push(r.slot) } groups[r.slot].push(r) });
+    h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"num muted\">" + esc(p.rec) + "</span> " + esc(p.title) + "</h3><span class=\"n\">" + (p.refs || []).length + "개</span></div>" +
+      "<div><span class=\"tag fill\">" + esc(p.role || "") + "</span> <span class=\"tag " + (ok ? "ok" : "p") + "\">" + (ok ? "확정" : esc(p.status || "초안")) + "</span>" + (sc ? " <span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "") + "</div>" +
+      "<h4>가져올 것 — 한 장 요약</h4><dl class=\"kv\">" + [["첫 3초 훅", sm.hook], ["구성", sm.structure], ["화면", sm.screen], ["말투", sm.voice], ["CTA", sm.cta]].filter(function(r){ return r[1] })
+        .map(function(r){ return "<dt>" + r[0] + "</dt><dd>" + esc(r[1]) + "</dd>" }).join("") + "</dl>" +
+      order.map(function(slot){
+        return "<h4>" + esc(slot) + " <span class=\"num muted\">" + groups[slot].length + "</span></h4>" + groups[slot].map(function(r){
+          return "<div class=\"ref\">" + (r.vid ? "<a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(r.vid) + "/mqdefault.jpg\"></a>" : "") +
+            "<div class=\"ref-m\"><a class=\"t\" href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(r.title || r.channel) + "</a>" +
+            "<div class=\"it-d\">" + [r.title ? r.channel : "", r.published, r.len, r.perf].filter(Boolean).map(esc).join(" · ") + "</div>" +
+            (r.take ? "<div class=\"apply\"><b>가져올 것</b> " + esc(r.take) + "</div>" : "") +
+            (r.fit ? "<div class=\"it-d\"><b>결에 맞는 이유</b> " + esc(r.fit) + "</div>" : "") +
+            "<details><summary>첫 3초 · 구조 · 화면 · 댓글 · 권리</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+            [["첫 3초 훅", r.hook], ["구조", r.structure], ["화면", r.screen], ["댓글", r.comments], ["권리", r.rights], ["더 본 영상", r.more]].filter(function(x){ return x[1] }).map(function(x){ return "<dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd>" }).join("") +
+            "</dl></details></div></div>";
+        }).join("");
+      }).join("") +
+      ((p.gaps || []).length ? "<h4>찾았지만 없던 것</h4><p class=\"small\">" + p.gaps.map(esc).join(" / ") + "</p>" : "") +
+      ((p.queries || []).length ? "<details style=\"margin-top:8px\"><summary>어디서 어떻게 찾았나</summary><p class=\"small\" style=\"margin-top:6px\">" + p.queries.map(esc).join(" · ") + "</p></details>" : "") +
+      (p.note ? "<p class=\"lead\" style=\"margin-top:8px\">" + esc(p.note) + "</p>" : "") +
+      "<div class=\"row2\" style=\"margin-top:12px\"><input type=\"text\" id=\"rp-note-" + esc(p.rec) + "\" maxlength=\"300\" placeholder=\"모자란 점 한 줄 (예: 말하는 방식이 더 차분한 영상으로)\"><button class=\"btn sm\" data-rpmore=\"" + esc(p.rec) + "\"" + (openCmd("refpage") ? " disabled" : "") + ">더 찾기</button></div>" +
+      "<div class=\"acts\">" + (p.status === "확정" ? "" : "<button class=\"btn sm" + (ok ? "" : " primary") + "\" data-rpok=\"" + esc(p.rec) + "\">" + (ok ? "확정 풀기" : "이 참고로 확정") + "</button>") +
+      "<span class=\"lead\" style=\"margin:0\">" + (p.card ? "카드 · " + esc(String(p.card).split("/").pop().replace(/\.md$/, "")) : "") + (p.confirmedBy ? " · " + esc(p.confirmedBy) : "") + "</span></div></section>";
   });
   return h;
 }
@@ -721,7 +777,7 @@ function render(){
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
   document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
-  var v = { brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, script: viewScript }[tab] || viewBrand;
+  var v = { brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, refpage: viewRefpage, script: viewScript }[tab] || viewBrand;
   var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.id ? "#" + act0.id : "");
   document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();   // 맥에 보낸 일의 상태는 어느 탭에서나 맨 위에
   if(tab === "mix") paintMix();
@@ -729,12 +785,15 @@ function render(){
 }
 
 document.addEventListener("click", function(e){
-  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel]");
+  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel],[data-rpok],[data-rpmore]");
   if(!t) return;
   var d = t.dataset;
   if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
   if(d.brand){ pickBrand(d.brand); return }
   if(d.tpl){ if(d.tpl !== mixTpl().id && (!Object.keys((SETS[cur] || {}).mixer || {}).length || confirm("템플릿을 바꾸면 이 브랜드에서 바꾼 값이 템플릿 값으로 돌아가요. 바꿀까요?"))) setS({ template: d.tpl, mixer: {} }); return }
+  if(d.rpok){ var ro = Object.assign({}, (SETS[cur] || {}).refok || {}); if(ro[d.rpok]) delete ro[d.rpok]; else ro[d.rpok] = 1; setS({ refok: ro }); return }
+  if(d.rpmore){ var nt = (document.getElementById("rp-note-" + d.rpmore).value || "").trim(); if(!nt){ alert("무엇이 모자란지 한 줄 적어 주세요."); return }
+    send("refpage", "참고 페이지 더 찾기 — " + d.rpmore, { ids: [d.rpmore], note: nt }); return }
   if(d.fbdel){ setS({ feedback: ((SETS[cur] || {}).feedback || []).filter(function(f){ return f.at !== d.fbdel }) }); return }
   if(d.hide){ ui.hide[d.hide] = 1; save("ct.hide", ui.hide); render(); return }
   if(d.ui){ var kv = d.ui.split("="); ui[kv[0]] = kv[1] === "true" ? true : kv[1] === "false" ? false : (kv[1] === "" || isNaN(+kv[1])) ? kv[1] : +kv[1]; render();
@@ -793,7 +852,9 @@ function act(name, el){
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
   if(name === "recommend"){ send("recommend", "콘텐츠 추천 (풀링 " + s.roles["풀링"] + " · 신뢰 " + s.roles["신뢰"] + " · 키 " + s.roles["키"] + ")", { roles: s.roles, ratio: s.ratio }); return }
-  if(name === "script"){ var ids = Object.keys(s.pick); if(!ids.length) return; send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); return }
+  if(name === "refpage"){ var need = Object.keys(s.pick).filter(function(id){ return !pageOf(id) }); if(!need.length) return; send("refpage", "참고 페이지 만들기 — " + need.join(" · "), { ids: need }); tab = "refpage"; save("ct.tab", tab); render(); return }
+  if(name === "script"){ var ids = ((part("refpage") || {}).items || []).filter(function(p){ return pageOk(p) && !scriptOf(p.rec) }).map(function(p){ return p.rec }); if(!ids.length) return;
+    send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); return }   // 참고 페이지를 확정한 추천만 대본으로 간다
 }
 
 /* ── 시작: 저장소 붙이기 ── */
