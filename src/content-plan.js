@@ -31,11 +31,11 @@ var ORIG_COLS = ["주제 (우리 적용)", "썸네일", "문구 / 배경", "제�
 var VT_GRADE = /^(Great|Good|Normal|Bad|Worst)$/;
 function refByRow(n){ var r = part("ref"); return r && r.items ? r.items.filter(function(x){ return x.row === n })[0] : null }
 function topicCell(x, s){
-  var sc = scriptOf(x.id), pg = pageOf(x.id);
+  var sc = scriptOf(x.id);
   return "<div class=\"o-top\"><span class=\"num muted\">" + esc(x.id) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>" +
     "<b>" + ([x.product, x.format].filter(Boolean).length ? "[" + [x.product, x.format].filter(Boolean).map(esc).join(" · ") + "] " : "") + esc(x.title) + "</b>" +
     (x.structure ? "<div class=\"apply\">" + esc(x.structure) + "</div>" : "") +
-    "<div class=\"it-d\">" + [pg ? "<span class=\"tag " + (pageOk(pg) ? "ok" : "") + "\">참고 " + (pageOk(pg) ? "확정" : "초안") + "</span>" : "", sc ? "<span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "", s.plan[x.id] ? "<span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : ""].filter(Boolean).join(" ") + "</div>" +
+    "<div class=\"it-d\">" + [sc ? "<span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "", s.plan[x.id] ? "<span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : ""].filter(Boolean).join(" ") + "</div>" +
     "<details><summary>근거 · 다음 연결 · 이어 쓸 카드</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
     (x.scene ? "<dt>찍을 장면</dt><dd>" + esc(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + esc(x.basis) + "</dd>" +
     (x.next ? "<dt>다음 연결</dt><dd>" + esc(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + esc(x.bank) + "</dd>" : "") + "</dl></details>";
@@ -60,12 +60,12 @@ function viewRec(){
   if(!r || !r.rounds || !r.rounds.length)
     return h + "<section class=\"card\"><p class=\"empty\">아직 추천이 없어요.</p><div class=\"acts\"><button class=\"btn primary\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole || !part("ref") ? " disabled" : "") + ">추천 받기</button></div><p class=\"lead\" style=\"margin-top:8px\">추천은 조사한 레퍼런스로 만들어요. 레퍼런스가 없으면 키워드 탭에서 조사부터 돌리세요.</p><div></div></section>";
   var rd = r.rounds[r.rounds.length - 1], picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
-  var need = picked.filter(function(id){ return !pageOf(id) });
+  var need = picked.filter(function(id){ return !scriptOf(id) });
   h += "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
     "<p>" + esc(rd.summary) + "</p>" + (rd.order ? "<p class=\"lead\" style=\"margin-top:8px\">바로 찍을 수 있는 순서 · " + esc(rd.order) + "</p>" : "") +
-    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"refpage\"" + (!need.length || openCmd("refpage") ? " disabled" : "") + ">고른 " + need.length + "개 참고 페이지 만들기</button>" +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!need.length || openCmd("script") ? " disabled" : "") + ">고른 " + need.length + "개 대본 초안 만들기</button>" +
     "<button class=\"btn\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole ? " disabled" : "") + ">추천 새로 받기</button></div>" +
-    "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋로 고른 뒤 「참고 페이지 만들기」를 누르면, 맥의 Claude가 이 채널 결에 맞는 참고 영상을 찾아 참고 탭에 정리해요. 거기서 확정한 것만 대본으로 넘어가요. 새 추천은 비율 탭의 역할 수(" + roleNames().map(function(n){ return esc(n) + " " + s.roles[n] }).join(" · ") + ")대로 받아요.</p></section>";
+    "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋로 고른 뒤 「대본 초안 만들기」를 누르면, 맥의 Claude가 대본을 쓰면서 이 주제로 잘된 영상과 레퍼런스 채널에서 가져온 구성을 같이 붙여요. 새 추천은 비율 탭의 역할 수(" + roleNames().map(function(n){ return esc(n) + " " + s.roles[n] }).join(" · ") + ")대로 받아요.</p></section>";
   h += planHtml(rd, s);
   roleNames().forEach(function(role){
     var items = rd.items.filter(function(x){ return x.role === role });
@@ -82,7 +82,7 @@ function viewRec(){
 function viewScript(){
   var b = B(), sc = part("script"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var h = "";
-  if(!sc || !sc.items || !sc.items.length) return "<p class=\"empty\">아직 대본 초안이 없어요. 추천 탭에서 고르고 → 참고 탭에서 참고 페이지를 확정한 뒤 「대본 초안 만들기」를 누르세요.</p>";
+  if(!sc || !sc.items || !sc.items.length) return "<p class=\"empty\">아직 대본 초안이 없어요. 추천 탭에서 ＋로 고른 뒤 「대본 초안 만들기」를 누르세요.</p>";
   h += "<p class=\"lead\">여기까지가 편집 믹서 바로 앞 단계예요. 편집 믹서가 생기면 이 대본 자료(볼트 「콘텐츠 기획 앱/" + esc(b.id) + "/대본.json」)를 그대로 읽어 템플릿에 맞춰요. 본문 정본은 각 카드입니다.</p>";
   sc.items.forEach(function(x, i){
     h += "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(x.title) + "</h3><span class=\"n\">" + esc(x.rec || "") + " · " + esc(x.status || "") + "</span></div>" +

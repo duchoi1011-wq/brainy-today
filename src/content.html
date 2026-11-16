@@ -11,7 +11,7 @@
 /* 틀: 좁은 한 줄 기둥, 위에 탭, 아래 카드 (맥 단축키·체화 단어장과 같은 뼈대·같은 이름).
    색은 밝은 한 벌만 쓴다 (2026-11-16 동욱: 편집 믹서가 어두우니 이 앱은 밝고 세련되게) — 종이색 바탕 · 흰 카드 · 코발트 강조,
    상품 = 코랄(--prod) · 정체성 = 청록(--iden). 색·그림자·둥글기는 :root 값만 고친다.
-   이 앱은 조종판이다: 브랜드 → 비율 → 믹서 → 키워드 → 잘 되는 콘텐츠 → 추천 → 참고 페이지 → 대본 초안 (탭 순서는 TABS). 데이터는 볼트 파일이 정본이고 여기서는 읽기만,
+   이 앱은 조종판이다: 브랜드 → 비율 → 믹서 → 키워드 → 잘 되는 콘텐츠 → 추천 → 대본 초안 (탭 순서는 TABS). 데이터는 볼트 파일이 정본이고 여기서는 읽기만,
    앱이 쓰는 것은 설정(ct.set)과 맥에 보내는 명령(cmd)뿐이다. */
 :root{
   color-scheme:light;
@@ -209,8 +209,8 @@ var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부�
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드 — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "sum");
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
-var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["build", "구축"], ["refpage", "참고"], ["script", "대본"]];
-var PARTS = { refpage: ".refpage", mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", log: ".log" };
+var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["build", "구축"], ["script", "대본"]];
+var PARTS = { mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -266,7 +266,7 @@ function setS(patch){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", refpage: "참고 페이지", script: "대본 초안", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", brief: "새 브랜드 프로필" };
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -300,7 +300,7 @@ function runHtml(kinds){
 /*@include content-ref.js*/
 /*@include content-plan.js*/
 /*@include content-build.js*/
-/*@include content-refpage.js*/
+/*@include content-brandrefs.js*/
 /*@include content-sum.js*/
 
 /* ── 브랜드 탭 ── */
@@ -333,6 +333,7 @@ function viewBrand(){
     ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
       b.topicBank.map(function(t){ return "<div class=\"it\"><span class=\"num muted\">" + esc(t.n) + "</span><div class=\"it-m\"><div>" + esc(t.topic) + "</div><div class=\"it-d\">필러 " + esc(t.pillar) + " · " + esc(t.product) + "</div></div></div>" }).join("") + "</div></details>" : "") +
     "</section>";
+  h += brandRefsHtml(b);
   var lg = part("log");
   h += "<section class=\"card\"><div class=\"card-h\"><h3>기록 · 자동 백업</h3><span class=\"n\">" + (lg ? lg.items.length + "개" : "") + "</span></div>" +
     "<p class=\"lead\">단계 자료가 바뀌면 1분 뒤 맥이 그 단계의 PDF와 그날 데이터 사본을 볼트에 남겨요 (같은 날 같은 단계는 최신으로 덮어씀). 볼트라서 구글 드라이브에도 사본이 생겨요. PDF는 맥·드라이브에서 열어요.</p>" +
@@ -383,7 +384,7 @@ function render(){
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
   document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
-  var v = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefpage, script: viewScript }[tab] || viewBrand;
+  var v = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, script: viewScript }[tab] || viewBrand;
   var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.id ? "#" + act0.id : "");
   document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();   // 맥에 보낸 일의 상태는 어느 탭에서나 맨 위에
   if(tab === "mix") paintMix();
@@ -391,17 +392,13 @@ function render(){
 }
 
 document.addEventListener("click", function(e){
-  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel],[data-rpok],[data-rpmore],[data-rpsync],[data-go]");
+  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel],[data-go]");
   if(!t) return;
   var d = t.dataset;
   if(d.go){ var gp = d.go.split("|"); if(gp[1]){ var gk = gp[1].split("="); ui[gk[0]] = gk[1] } tab = gp[0]; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }   // 한눈에 → 그 탭 (필요하면 그 탭의 보기도 맞춘다)
   if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
   if(d.brand){ pickBrand(d.brand); return }
   if(d.tpl){ if(d.tpl !== mixTpl().id && (!Object.keys((SETS[cur] || {}).mixer || {}).length || confirm("템플릿을 바꾸면 이 브랜드에서 바꾼 값이 템플릿 값으로 돌아가요. 바꿀까요?"))) setS({ template: d.tpl, mixer: {} }); return }
-  if(d.rpok){ var ro = Object.assign({}, (SETS[cur] || {}).refok || {}); if(ro[d.rpok]) delete ro[d.rpok]; else ro[d.rpok] = 1; setS({ refok: ro }); return }
-  if(d.rpsync){ send("refpage", "참고 페이지 — 바뀐 브랜드 레퍼런스에 다시 맞추기 — " + d.rpsync, { ids: [d.rpsync], note: "브랜드 레퍼런스(채널 목록·새 영상·잘 된 채널)가 바뀌었다 — 지금 브랜드.json·채널.json 에 맞춰 다시 찾아 고친다" }); return }
-  if(d.rpmore){ var nt = (document.getElementById("rp-note-" + d.rpmore).value || "").trim(); if(!nt){ alert("무엇이 모자란지 한 줄 적어 주세요."); return }
-    send("refpage", "참고 페이지 더 찾기 — " + d.rpmore, { ids: [d.rpmore], note: nt }); return }
   if(d.fbdel){ setS({ feedback: ((SETS[cur] || {}).feedback || []).filter(function(f){ return f.at !== d.fbdel }) }); return }
   if(d.hide){ ui.hide[d.hide] = 1; save("ct.hide", ui.hide); render(); return }
   if(d.ui){ var kv = d.ui.split("="); ui[kv[0]] = kv[1] === "true" ? true : kv[1] === "false" ? false : (kv[1] === "" || isNaN(+kv[1])) ? kv[1] : +kv[1]; render();
@@ -483,9 +480,8 @@ function act(name, el){
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
   if(name === "recommend"){ send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + ")", { roles: s.roles, ratio: s.ratio }); return }
-  if(name === "refpage"){ var need = Object.keys(s.pick).filter(function(id){ return !pageOf(id) }); if(!need.length) return; send("refpage", "참고 페이지 만들기 — " + need.join(" · "), { ids: need }); tab = "refpage"; save("ct.tab", tab); render(); return }
-  if(name === "script"){ var ids = ((part("refpage") || {}).items || []).filter(function(p){ return pageOk(p) && !scriptOf(p.rec) }).map(function(p){ return p.rec }); if(!ids.length) return;
-    send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); return }   // 참고 페이지를 확정한 추천만 대본으로 간다
+  if(name === "script"){ var ids = Object.keys(s.pick).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
+    send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }   // 고른 추천을 바로 대본으로 — 잘된 영상·레퍼런스 채널에서 가져온 구성이 대본에 같이 붙는다 (2026-11-16 참고 탭 없앰)
 }
 
 /* ── 시작: 저장소 붙이기 ── */
