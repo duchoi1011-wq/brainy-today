@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "c97d2e2d74"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=c97d2e2d74"></script>
+<script>window.BRAINY_VERSION = "6d23de9242"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=6d23de9242"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -188,6 +188,14 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .rung-i .chipx{border:1px solid var(--line);border-radius:9px;padding:7px 8px;background:var(--surface)}
 .rung-i .clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rung-i .none{font-size:12px;color:var(--muted);align-self:center}
+/* 원문 칸 표 — 조사 시트 [조사] 콘텐츠 열과 같은 순서. 폰에서는 표만 옆으로 밀린다 */
+.orig{overflow-x:auto;margin-top:12px;border:1px solid var(--line);border-radius:12px}
+.orig table{border-collapse:collapse;min-width:1100px;font-size:13px;line-height:1.5}
+.orig th{position:sticky;top:0;background:var(--ink);color:#fff;font-weight:600;padding:8px 10px;text-align:left;white-space:nowrap}
+.orig td{border-top:1px solid var(--line);padding:10px;vertical-align:top;max-width:220px}
+.orig td img{width:150px;height:84px;object-fit:cover;border-radius:8px;display:block}
+.orig td.o-topic{min-width:240px;max-width:280px;background:var(--surface-2)}
+.orig .o-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}.orig .o-top .mk{margin-left:auto;width:32px;height:32px}
 .ref-m a.t{font-weight:700;font-size:15px;line-height:1.4;text-decoration:none}.ref-m a.t:hover{text-decoration:underline}
 .apply{font-size:13.5px;line-height:1.55;padding:9px 12px;border-radius:12px;background:var(--surface-2)}
 .spark{vertical-align:-3px}
@@ -708,6 +716,36 @@ function planHtml(rd, s){
     "<div class=\"acts\"><button class=\"btn sm\" data-act=\"autoplan\"" + (nPick ? "" : " disabled") + ">날짜 없는 " + nPick + "개 자동 배치</button>" +
     (nSet ? "<button class=\"btn sm\" data-act=\"clearplan\">날짜 모두 비우기</button>" : "") + "<span class=\"lead\" style=\"margin:0\">계획표예요 — 실제 예약 게시는 하지 않아요.</span></div></section>";
 }
+/* 원문 칸 (2026-11-16 동욱 "추천 컨텐츠는 내 원문이 기준") — 조사 시트 [조사] 콘텐츠 E~N열과 같은 순서.
+   주제 칸만 우리 추천이고, 썸네일부터 댓글까지는 그 추천의 근거 레퍼런스(refs = [조사] 행 번호) 칸을 그대로 보여 준다.
+   뷰트랩 기여도·성과도는 등급을 읽은 레퍼런스에만 채널 칸 끝에 붙는다 (연결됐을 때만) */
+var ORIG_COLS = ["주제 (우리 적용)", "썸네일", "문구 / 배경", "제목", "채널", "대본", "파동", "댓글"];
+var VT_GRADE = /^(Great|Good|Normal|Bad|Worst)$/;
+function refByRow(n){ var r = part("ref"); return r && r.items ? r.items.filter(function(x){ return x.row === n })[0] : null }
+function topicCell(x, s){
+  var sc = scriptOf(x.id), pg = pageOf(x.id);
+  return "<div class=\"o-top\"><span class=\"num muted\">" + esc(x.id) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>" +
+    "<b>[" + [x.product, x.format].filter(Boolean).map(esc).join(" · ") + "] " + esc(x.title) + "</b>" +
+    (x.structure ? "<div class=\"apply\">" + esc(x.structure) + "</div>" : "") +
+    "<div class=\"it-d\">" + [pg ? "<span class=\"tag " + (pageOk(pg) ? "ok" : "") + "\">참고 " + (pageOk(pg) ? "확정" : "초안") + "</span>" : "", sc ? "<span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "", s.plan[x.id] ? "<span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : ""].filter(Boolean).join(" ") + "</div>" +
+    "<details><summary>근거 · 다음 연결 · 이어 쓸 카드</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+    (x.scene ? "<dt>찍을 장면</dt><dd>" + esc(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + esc(x.basis) + "</dd>" +
+    (x.next ? "<dt>다음 연결</dt><dd>" + esc(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + esc(x.bank) + "</dd>" : "") + "</dl></details>";
+}
+function refCells(r){
+  var vt = [VT_GRADE.test(r.vtContrib || "") ? "기여도 " + r.vtContrib : "", VT_GRADE.test(r.vtPerf || "") ? "성과도 " + r.vtPerf : ""].filter(Boolean);
+  var ch = [r.channel, "구독 " + (r.subs || "—"), "조회 " + (r.views || "—"), r.ratio != null ? "조회÷구독 " + r.ratio + "배" + (r.ad ? "(광고 집행 추정)" : "") : "", r.published, r.len].concat(vt).filter(Boolean);
+  return "<td>" + (r.vid ? "<a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(r.vid) + "/mqdefault.jpg\"></a>" : "") + "</td>" +
+    "<td>" + esc(r.thumbText || "확인 못 함") + "</td>" +
+    "<td><a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(r.title) + "</a></td>" +
+    "<td>" + esc(ch.join(" · ")) + "</td><td>" + esc(r.structure || "") + "</td><td>" + esc(r.wave || "") + "</td><td>" + esc(r.comments || "") + "</td>";
+}
+function origRows(x, s){
+  var refs = (x.refs || []).map(refByRow).filter(Boolean), n = Math.max(1, refs.length);
+  var first = "<tr><td rowspan=\"" + n + "\" class=\"o-topic\">" + topicCell(x, s) + "</td>" +
+    (refs.length ? refCells(refs[0]) : "<td colspan=\"7\" class=\"muted\">근거 레퍼런스 없음 — " + esc(x.cards ? String(x.cards).replace(/\[\[|\]\]/g, "").slice(0, 80) : "모아 둔 카드에서") + "</td>") + "</tr>";
+  return first + refs.slice(1).map(function(r){ return "<tr>" + refCells(r) + "</tr>" }).join("");
+}
 function viewRec(){
   var b = B(), r = part("rec"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var s = S(), h = "", nRole = roleNames().reduce(function(t, n){ return t + (s.roles[n] || 0) }, 0);
@@ -728,17 +766,8 @@ function viewRec(){
     var order = stageList().map(function(g){ return g.name });
     items = items.slice().sort(function(a, c){ return order.indexOf(c.stage) - order.indexOf(a.stage) });   // 사다리와 같은 순서 — 마지막 단계부터
     h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag fill\">" + esc(role) + "</span> " + esc(what) + "</h3><span class=\"n\">" + items.length + "개</span></div>" +
-      ladderHtml(items, function(x){ return "<span class=\"chipx\"><span class=\"num muted\">" + esc(x.id) + "</span> <span class=\"clip\">" + esc(x.title) + "</span></span>" }) + "<div class=\"list\" style=\"margin-top:10px\">" +
-      items.map(function(x){
-        var sc = scriptOf(x.id);
-        return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"num muted\">" + esc(x.id) + "</span> <b>" + esc(x.title) + "</b></div>" +
-          "<div class=\"it-d\">" + stageTag(x) + " " + [x.product, x.format, x.from === "카드" ? "모아 둔 카드에서" : ""].filter(Boolean).map(esc).join(" · ") + (pageOf(x.id) ? " · <span class=\"tag " + (pageOk(pageOf(x.id)) ? "ok" : "") + "\">참고 " + (pageOk(pageOf(x.id)) ? "확정" : "초안") + "</span>" : "") + (sc ? " · <span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "") + (s.plan[x.id] ? " · <span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : "") + "</div>" +
-          (x.structure ? "<div class=\"apply\">" + esc(x.structure) + "</div>" : "") +
-          "<details><summary>근거 · 다음 연결 · 이어 쓸 카드</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
-          (x.scene ? "<dt>찍을 장면</dt><dd>" + esc(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + esc(x.basis) + "</dd>" +
-          (x.next ? "<dt>다음 연결</dt><dd>" + esc(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + esc(x.bank) + "</dd>" : "") + "</dl></details></div>" +
-          "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>";
-      }).join("") + "</div></section>";
+      ladderHtml(items, function(x){ return "<span class=\"chipx\"><span class=\"num muted\">" + esc(x.id) + "</span> <span class=\"clip\">" + esc(x.title) + "</span></span>" }) + "<div class=\"orig\"><table><thead><tr>" + ORIG_COLS.map(function(c){ return "<th>" + c + "</th>" }).join("") + "</tr></thead><tbody>" +
+      items.map(function(x){ return origRows(x, s) }).join("") + "</tbody></table></div></section>";
   });
   return h;
 }

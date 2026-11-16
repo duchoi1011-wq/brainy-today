@@ -24,6 +24,36 @@ function planHtml(rd, s){
     "<div class=\"acts\"><button class=\"btn sm\" data-act=\"autoplan\"" + (nPick ? "" : " disabled") + ">날짜 없는 " + nPick + "개 자동 배치</button>" +
     (nSet ? "<button class=\"btn sm\" data-act=\"clearplan\">날짜 모두 비우기</button>" : "") + "<span class=\"lead\" style=\"margin:0\">계획표예요 — 실제 예약 게시는 하지 않아요.</span></div></section>";
 }
+/* 원문 칸 (2026-11-16 동욱 "추천 컨텐츠는 내 원문이 기준") — 조사 시트 [조사] 콘텐츠 E~N열과 같은 순서.
+   주제 칸만 우리 추천이고, 썸네일부터 댓글까지는 그 추천의 근거 레퍼런스(refs = [조사] 행 번호) 칸을 그대로 보여 준다.
+   뷰트랩 기여도·성과도는 등급을 읽은 레퍼런스에만 채널 칸 끝에 붙는다 (연결됐을 때만) */
+var ORIG_COLS = ["주제 (우리 적용)", "썸네일", "문구 / 배경", "제목", "채널", "대본", "파동", "댓글"];
+var VT_GRADE = /^(Great|Good|Normal|Bad|Worst)$/;
+function refByRow(n){ var r = part("ref"); return r && r.items ? r.items.filter(function(x){ return x.row === n })[0] : null }
+function topicCell(x, s){
+  var sc = scriptOf(x.id), pg = pageOf(x.id);
+  return "<div class=\"o-top\"><span class=\"num muted\">" + esc(x.id) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>" +
+    "<b>[" + [x.product, x.format].filter(Boolean).map(esc).join(" · ") + "] " + esc(x.title) + "</b>" +
+    (x.structure ? "<div class=\"apply\">" + esc(x.structure) + "</div>" : "") +
+    "<div class=\"it-d\">" + [pg ? "<span class=\"tag " + (pageOk(pg) ? "ok" : "") + "\">참고 " + (pageOk(pg) ? "확정" : "초안") + "</span>" : "", sc ? "<span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "", s.plan[x.id] ? "<span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : ""].filter(Boolean).join(" ") + "</div>" +
+    "<details><summary>근거 · 다음 연결 · 이어 쓸 카드</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+    (x.scene ? "<dt>찍을 장면</dt><dd>" + esc(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + esc(x.basis) + "</dd>" +
+    (x.next ? "<dt>다음 연결</dt><dd>" + esc(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + esc(x.bank) + "</dd>" : "") + "</dl></details>";
+}
+function refCells(r){
+  var vt = [VT_GRADE.test(r.vtContrib || "") ? "기여도 " + r.vtContrib : "", VT_GRADE.test(r.vtPerf || "") ? "성과도 " + r.vtPerf : ""].filter(Boolean);
+  var ch = [r.channel, "구독 " + (r.subs || "—"), "조회 " + (r.views || "—"), r.ratio != null ? "조회÷구독 " + r.ratio + "배" + (r.ad ? "(광고 집행 추정)" : "") : "", r.published, r.len].concat(vt).filter(Boolean);
+  return "<td>" + (r.vid ? "<a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(r.vid) + "/mqdefault.jpg\"></a>" : "") + "</td>" +
+    "<td>" + esc(r.thumbText || "확인 못 함") + "</td>" +
+    "<td><a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(r.title) + "</a></td>" +
+    "<td>" + esc(ch.join(" · ")) + "</td><td>" + esc(r.structure || "") + "</td><td>" + esc(r.wave || "") + "</td><td>" + esc(r.comments || "") + "</td>";
+}
+function origRows(x, s){
+  var refs = (x.refs || []).map(refByRow).filter(Boolean), n = Math.max(1, refs.length);
+  var first = "<tr><td rowspan=\"" + n + "\" class=\"o-topic\">" + topicCell(x, s) + "</td>" +
+    (refs.length ? refCells(refs[0]) : "<td colspan=\"7\" class=\"muted\">근거 레퍼런스 없음 — " + esc(x.cards ? String(x.cards).replace(/\[\[|\]\]/g, "").slice(0, 80) : "모아 둔 카드에서") + "</td>") + "</tr>";
+  return first + refs.slice(1).map(function(r){ return "<tr>" + refCells(r) + "</tr>" }).join("");
+}
 function viewRec(){
   var b = B(), r = part("rec"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var s = S(), h = "", nRole = roleNames().reduce(function(t, n){ return t + (s.roles[n] || 0) }, 0);
@@ -44,17 +74,8 @@ function viewRec(){
     var order = stageList().map(function(g){ return g.name });
     items = items.slice().sort(function(a, c){ return order.indexOf(c.stage) - order.indexOf(a.stage) });   // 사다리와 같은 순서 — 마지막 단계부터
     h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag fill\">" + esc(role) + "</span> " + esc(what) + "</h3><span class=\"n\">" + items.length + "개</span></div>" +
-      ladderHtml(items, function(x){ return "<span class=\"chipx\"><span class=\"num muted\">" + esc(x.id) + "</span> <span class=\"clip\">" + esc(x.title) + "</span></span>" }) + "<div class=\"list\" style=\"margin-top:10px\">" +
-      items.map(function(x){
-        var sc = scriptOf(x.id);
-        return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"num muted\">" + esc(x.id) + "</span> <b>" + esc(x.title) + "</b></div>" +
-          "<div class=\"it-d\">" + stageTag(x) + " " + [x.product, x.format, x.from === "카드" ? "모아 둔 카드에서" : ""].filter(Boolean).map(esc).join(" · ") + (pageOf(x.id) ? " · <span class=\"tag " + (pageOk(pageOf(x.id)) ? "ok" : "") + "\">참고 " + (pageOk(pageOf(x.id)) ? "확정" : "초안") + "</span>" : "") + (sc ? " · <span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "") + (s.plan[x.id] ? " · <span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : "") + "</div>" +
-          (x.structure ? "<div class=\"apply\">" + esc(x.structure) + "</div>" : "") +
-          "<details><summary>근거 · 다음 연결 · 이어 쓸 카드</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
-          (x.scene ? "<dt>찍을 장면</dt><dd>" + esc(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + esc(x.basis) + "</dd>" +
-          (x.next ? "<dt>다음 연결</dt><dd>" + esc(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + esc(x.bank) + "</dd>" : "") + "</dl></details></div>" +
-          "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>";
-      }).join("") + "</div></section>";
+      ladderHtml(items, function(x){ return "<span class=\"chipx\"><span class=\"num muted\">" + esc(x.id) + "</span> <span class=\"clip\">" + esc(x.title) + "</span></span>" }) + "<div class=\"orig\"><table><thead><tr>" + ORIG_COLS.map(function(c){ return "<th>" + c + "</th>" }).join("") + "</tr></thead><tbody>" +
+      items.map(function(x){ return origRows(x, s) }).join("") + "</tbody></table></div></section>";
   });
   return h;
 }
