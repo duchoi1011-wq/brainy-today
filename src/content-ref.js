@@ -1,4 +1,4 @@
-/* ── ④ 잘 되는 콘텐츠 — 레퍼런스 영상 · 레퍼런스 채널 ──
+/* ── 콘텐츠 탭 — 잘 되는 콘텐츠 — 레퍼런스 영상 · 레퍼런스 채널 ──
    성과는 조회수 그 자체로 보지 않는다 (content-recommend §1): 조회÷구독 100배↑ 퍼짐 · 10~100 잘 나감 · 1~10 채널 크기만큼 · 1 미만 약함.
    1배 미만과 광고 집행 추정은 성과 근거로 쓰지 않는다 — 「성과 근거만」을 켜면 빠진다. */
 function band(r){ return r == null ? ["확인 못 함", ""] : r >= 100 ? ["퍼짐", "ok"] : r >= 10 ? ["잘 나감", "ok"] : r >= 1 ? ["채널 크기만큼", ""] : ["약함", ""] }
@@ -54,13 +54,12 @@ function refCard(x){
 function viewRef(){
   var b = B(), r = part("ref"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var live = part("live"), chan = part("chan");
-  var h = runHtml(["refresh"]);
-  h += "<div class=\"chips\"><button class=\"chip" + (ui.refView === "videos" ? " on" : "") + "\" data-ui=\"refView=videos\">레퍼런스 영상<span>" + (r ? r.items.length : 0) + "</span></button>" +
+  var h = "<div class=\"chips\"><button class=\"chip" + (ui.refView === "videos" ? " on" : "") + "\" data-ui=\"refView=videos\">레퍼런스 영상<span>" + (r ? r.items.length : 0) + "</span></button>" +
     "<button class=\"chip" + (ui.refView === "chans" ? " on" : "") + "\" data-ui=\"refView=chans\">레퍼런스 채널<span>" + ((b.channels || []).length) + "</span></button>" +
-    "<button class=\"chip dash\" data-act=\"refresh\"" + (openCmd("refresh") ? " disabled" : "") + ">↻ 지금 최신화</button></div>" +
+    "<button class=\"chip dash\" data-act=\"refresh\"" + (openCmd("refresh") || !r || !r.items.length ? " disabled" : "") + ">↻ 지금 최신화</button></div>" +
     "<p class=\"lead\">반응 최신화 " + (live ? day(live.updatedAt) : "아직 안 함") + " · 채널 새 영상 " + (chan ? day(chan.updatedAt) : "아직 안 함") + "</p>";
   if(ui.refView === "chans") return h + chansHtml(b, chan);
-  if(!r) return h + "<p class=\"empty\">아직 레퍼런스가 없어요. ③ 키워드에서 조사를 돌리면 채워져요.</p>";
+  if(!r) return h + "<p class=\"empty\">아직 레퍼런스가 없어요. 키워드 탭에서 조사를 돌리면 채워져요.</p>";
   var list = r.items.filter(function(x){
     return (ui.refRole === "all" || x.role === ui.refRole) && (ui.refForm === "all" || x.form === ui.refForm) &&
       (!ui.refBuyer || (x.buyer === "✓" && isProof(x)));
@@ -98,7 +97,7 @@ function chansHtml(b, chan){
 }
 /* 게시 요일 — Metricool 의 「올리기 좋은 때」는 내 팔로워 활동으로 계산한다. 그 자료가 없어서 여기서는 성과 근거가 되는 레퍼런스가 올라온 요일을 센다 (참고용) */
 function weekdayHtml(items){
-  var good = items.filter(function(x){ return x.buyer === "✓" && x.ratio != null && x.ratio >= 1 && !x.ad && x.published }), n = [0, 0, 0, 0, 0, 0, 0];
+  var good = items.filter(function(x){ return x.buyer === "✓" && isProof(x) && x.published }), n = [0, 0, 0, 0, 0, 0, 0];
   good.forEach(function(x){ var d = new Date(x.published + "T12:00:00").getDay(); if(!isNaN(d)) n[d]++ });
   var mx = Math.max.apply(null, n) || 1, names = ["일", "월", "화", "수", "목", "금", "토"];
   return "<section class=\"card\"><div class=\"card-h\"><h3>잘 된 영상이 올라온 요일</h3><span class=\"n\">" + good.length + "개</span></div>" +

@@ -1,4 +1,4 @@
-/* ── ③ 키워드 — 점수 매기기 · 비율대로 후보 뽑기 · 화면 ──
+/* ── 키워드 탭 — 점수 매기기 · 비율대로 후보 뽑기 · 화면 ──
    점수(0~100)는 종류마다 다르게 본다. 무엇을 얼마나 볼지는 판정 믹서 값이다 (content-mixer.js · 볼트 믹서.json) — 여기에 비중을 적지 않는다:
      상품    = 검색량(kw_vol) · 광고 클릭률(kw_ctr) · 상승세(kw_rise) 의 가중 평균   (사려는 사람이 찾는 말인지가 중요)
                클릭률은 월 검색 200 미만이면 그만큼 덜 믿는다 (검색 20에 클릭 4번이면 20%가 나오므로)
@@ -26,13 +26,13 @@ function scored(){
   var max = { "상품": 0, "정체성": 0 };
   k.items.forEach(function(x){ if(x.total > (max[x.kind] || 0)) max[x.kind] = x.total });
   var cov = coveredText(), m = M();
-  function w(id, d){ return m[id] != null ? m[id] : d }
+  function w(id){ return m[id] != null ? m[id] : 1 }   // 믹서 정의가 아직 안 왔으면 고르게
   return k.items.map(function(x){
     var tr = riseOf(x.kw), rise = tr ? tr.rise : null;
     var vol = max[x.kind] ? Math.log10(x.total + 1) / Math.log10(max[x.kind] + 1) * 100 : 0;
     var ctr = Math.min(x.ctr || 0, 10) * 10 * Math.min(1, x.total / 200);
     var up = rise == null ? 50 : Math.max(0, Math.min(1, (rise - 0.5) / 1.5)) * 100;
-    var score = x.kind === "상품" ? wsum([[w("kw_vol", 6), vol], [w("kw_ctr", 3), ctr], [w("kw_rise", 2), up]]) : wsum([[w("id_vol", 7), vol], [w("id_rise", 3), up]]);
+    var score = x.kind === "상품" ? wsum([[w("kw_vol"), vol], [w("kw_ctr"), ctr], [w("kw_rise"), up]]) : wsum([[w("id_vol"), vol], [w("id_rise"), up]]);
     return Object.assign({}, x, { rise: rise, w: tr ? tr.w : null, score: Math.round(score), buy: /^구매/.test(x.intent || "") && !/경쟁사 이름/.test(x.intent || ""), diff: diffOf(x), cluster: clusterOf(x.kw) });
   }).map(function(x){ return Object.assign(x, { gap: x.kind === "상품" && x.buy && !x.surveyed && x.total >= 10 && cov.indexOf(x.kw) < 0 });
   }).sort(function(a, b){ return b.score - a.score || b.total - a.total });
@@ -63,41 +63,45 @@ function spark(w){
   var pts = v.map(function(y, i){ return (i / (v.length - 1) * W).toFixed(1) + "," + (H - 1 - y / mx * (H - 2)).toFixed(1) }).join(" ");
   return "<svg class=\"spark\" width=\"" + W + "\" height=\"" + H + "\" viewBox=\"0 0 " + W + " " + H + "\" aria-hidden=\"true\"><polyline points=\"" + pts + "\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" stroke-linejoin=\"round\"/></svg>";
 }
+var RISE_UP = 1.15, RISE_DOWN = 0.85;   // 상승세를 「오르는 중」·「내리는 중」으로 보는 선
+function isUp(x){ return x.rise != null && x.rise >= RISE_UP }
 function riseHtml(x){
   if(x.rise == null) return x.w ? "<span class=\"muted\">" + spark(x.w) + " 값 적음</span>" : "<span class=\"muted\">추세 없음</span>";
-  var cls = x.rise >= 1.15 ? "up" : x.rise <= 0.85 ? "down" : "muted";
-  return "<span class=\"" + cls + "\">" + spark(x.w) + " " + (x.rise >= 1.15 ? "▲" : x.rise <= 0.85 ? "▼" : "") + "×" + x.rise.toFixed(2) + "</span>";
+  var cls = isUp(x) ? "up" : x.rise <= RISE_DOWN ? "down" : "muted";
+  return "<span class=\"" + cls + "\">" + spark(x.w) + " " + (isUp(x) ? "▲" : x.rise <= RISE_DOWN ? "▼" : "") + "×" + x.rise.toFixed(2) + "</span>";
 }
 function kwRow(x, s, mark){
   return "<div class=\"it" + (s.ex[x.kw] ? " off" : "") + "\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b> <span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" +
     esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + (x.gap ? " <span class=\"tag ok\">빈 곳</span>" : "") + "</div>" +
     "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · 경쟁 " + x.diff + " · " + riseHtml(x) + " · <b class=\"num\">" + x.score + "점</b></div>" +
-    "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">구매</span> " : "") + esc(x.intent || "") + "</div></div>" +
+    "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">" + esc(x.intent) + "</span>" : esc(x.intent || "")) + "</div></div>" +
     (mark ? "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"후보에 고정\" aria-label=\"후보에 고정\">★</button>" +
             "<button class=\"mk no\" data-ex=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.ex[x.kw] + "\" title=\"후보에서 빼기\" aria-label=\"후보에서 빼기\">✕</button>" : "") + "</div>";
 }
 function viewKw(){
   var b = B(), k = part("kw"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
-  if(!k) return "<p class=\"empty\">아직 키워드 자료가 없어요. 조사를 한 번 돌리면 채워져요.</p>";
+  if(!k) return "<section class=\"card\"><div class=\"card-h\"><h3>첫 조사</h3></div><p class=\"lead\">이 브랜드는 아직 키워드 자료가 없어요. 첫 조사를 누르면 맥의 Claude가 채널 기획안으로 조사 프로필 초안부터 만들고, 기획안에 없는 칸(키워드 힌트 등)은 지어내지 않고 되물어요. 답한 뒤 다시 누르면 조사가 돌아요.</p>" +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"discover\"" + (openCmd("discover") ? " disabled" : "") + ">첫 조사 시작하기</button></div></section>";
   var s = S(), all = scored(), c = candidates(s), sp = split(s), t = part("trend");
   var nP = c.filter(function(x){ return x.kind === "상품" }).length;
-  var h = runHtml(["discover", "trends"]);
-  h += "<section class=\"card\"><div class=\"card-h\"><h3>이번 조사 후보</h3><span class=\"n\">상품 " + nP + " · 정체성 " + (c.length - nP) + "</span></div>" +
-    "<p class=\"lead\">② 비율(상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + ")대로 점수가 높은 키워드를 뽑았어요. ★은 고정, ✕는 빼기." +
+  var h = "<section class=\"card\"><div class=\"card-h\"><h3>이번 조사 후보</h3><span class=\"n\">상품 " + nP + " · 정체성 " + (c.length - nP) + "</span></div>" +
+    "<p class=\"lead\">비율 탭 값(상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + ")대로 점수가 높은 키워드를 뽑았어요. ★은 고정, ✕는 빼기 — 뺀 것은 아래 「뺀 것」 칩에서 되살려요." +
     (c.length < s.count ? " 조건에 맞는 키워드가 " + (s.count - c.length) + "개 모자라요 — 아래 조건을 풀거나 조사를 돌려 새 키워드를 받으세요." : "") + "</p>" +
     "<div class=\"chips\" style=\"margin-bottom:6px\"><button class=\"chip" + (s.buyOnly ? " on" : "") + "\" data-set=\"buyOnly=" + !s.buyOnly + "\">상품은 구매 결만</button>" +
     "<button class=\"chip" + (s.fresh ? " on" : "") + "\" data-set=\"fresh=" + !s.fresh + "\">이미 조사한 것 빼기</button></div>" +
     "<div class=\"list\">" + (c.map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">후보가 없어요.</p>") + "</div>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"discover\"" + (openCmd("discover") || !c.length ? " disabled" : "") + ">이 구성으로 조사 돌리기</button>" +
     "<button class=\"btn\" data-act=\"trends\"" + (openCmd("trends") ? " disabled" : "") + ">구글 트렌드 다시 받기</button></div>" +
-    "<p class=\"lead\" style=\"margin-top:10px\">조사는 맥의 Claude가 콘텐츠 발굴 스킬로 돌려요 (키워드 검색량 → 경쟁사 → 레퍼런스 20개 → 시트·카드 → 이 앱).</p></section>";
+    "<p class=\"lead\" style=\"margin-top:10px\">조사는 맥의 Claude가 콘텐츠 발굴 스킬로 돌려요 (키워드 검색량 → 경쟁사 → 레퍼런스 20개 → 시트·카드 → 이 앱). 누르면 진행 상태가 화면 맨 위에 떠요.</p></section>";
   h += clustersHtml(all);
-  var list = all.filter(function(x){ return (!ui.kwCluster || x.cluster === ui.kwCluster) && (ui.kwKind === "all" || (ui.kwKind === "up" ? x.rise != null && x.rise >= 1.15 : ui.kwKind === "gap" ? x.gap : x.kind === ui.kwKind)) });
-  var nUp = all.filter(function(x){ return x.rise != null && x.rise >= 1.15 }).length;
-  h += "<section class=\"card\"><div class=\"card-h\"><h3>" + (ui.kwCluster ? esc(ui.kwCluster) + " 묶음" : "전체 키워드") + "</h3><span class=\"n\">" + list.length + "개</span></div><div class=\"chips\">" +
+  var pool = all.filter(function(x){ return !ui.kwCluster || x.cluster === ui.kwCluster });   // 묶음을 골랐으면 칩 숫자도 그 묶음 안에서 센다
+  var KF = { all: function(){ return true }, "상품": function(x){ return x.kind === "상품" }, "정체성": function(x){ return x.kind === "정체성" }, up: isUp, gap: function(x){ return x.gap },
+             pin: function(x){ return s.pin[x.kw] }, ex: function(x){ return s.ex[x.kw] } };
+  var list = pool.filter(KF[ui.kwKind] || KF.all);
+  h += "<section class=\"card\" id=\"kw-list\"><div class=\"card-h\"><h3>" + (ui.kwCluster ? esc(ui.kwCluster) + " 묶음" : "전체 키워드") + "</h3><span class=\"n\">" + list.length + "개</span></div><div class=\"chips\">" +
     (ui.kwCluster ? "<button class=\"chip on\" data-ui=\"kwCluster=\">" + esc(ui.kwCluster) + " ✕</button>" : "") +
-    [["all", "전체", all.length], ["상품", "상품", all.filter(function(x){ return x.kind === "상품" }).length], ["정체성", "정체성", all.filter(function(x){ return x.kind === "정체성" }).length], ["up", "▲ 오르는 중", nUp], ["gap", "빈 곳", all.filter(function(x){ return x.gap }).length]]
-      .map(function(f){ return "<button class=\"chip" + (ui.kwKind === f[0] ? " on" : "") + "\" data-ui=\"kwKind=" + f[0] + "\">" + f[1] + "<span>" + f[2] + "</span></button>" }).join("") + "</div>" +
+    [["all", "전체"], ["상품", "상품"], ["정체성", "정체성"], ["up", "▲ 오르는 중"], ["gap", "빈 곳"], ["pin", "★ 고정"], ["ex", "✕ 뺀 것"]]
+      .map(function(f){ return "<button class=\"chip" + (ui.kwKind === f[0] ? " on" : "") + "\" data-ui=\"kwKind=" + f[0] + "\">" + f[1] + "<span>" + pool.filter(KF[f[0]]).length + "</span></button>" }).join("") + "</div>" +
     "<div class=\"list\" style=\"margin-top:6px\">" + list.slice(0, ui.kwMore).map(function(x){ return kwRow(x, s, true) }).join("") + "</div>" +
     (list.length > ui.kwMore ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"kwMore=" + (ui.kwMore + 100) + "\">더 보기 (" + (list.length - ui.kwMore) + "개 남음)</button></div>" : "") + "</section>";
   h += "<section class=\"card\"><details><summary>점수 계산 · 자료 출처</summary><div class=\"small\" style=\"margin-top:8px;display:grid;gap:6px\">" +
