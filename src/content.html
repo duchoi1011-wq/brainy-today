@@ -16,10 +16,10 @@
 :root{
   color-scheme:light;
   --bg:#F7F6F2; --surface:#FFFFFF; --surface-2:#F4F2EC; --ink:#1B1D22; --muted:#6B6F78; --line:#E7E4DC;
-  --accent:#3B5BFF; --accent-ink:#FFFFFF; --accent-bg:#ECEFFF;
+  --accent:#3B5BFF; --accent2:#8A6BFF; --accent-ink:#FFFFFF; --accent-bg:color-mix(in srgb,var(--accent) 10%,#fff);   /* 브랜드를 고르면 그 브랜드 키트 색으로 바뀐다 (applyKit) */
   --prod:#E4572E; --prod-bg:#FDEEE8; --iden:#0E8F7E; --iden-bg:#E3F5F1;
   --ok:#17915F; --no:#8A8E96; --blue:#3B5BFF;
-  --ok-bg:#E5F6EE; --warn-bg:#FFF4D9; --blue-bg:#ECEFFF;
+  --ok-bg:#E5F6EE; --warn-bg:#FFF4D9; --blue-bg:var(--accent-bg);
   --shadow:0 1px 2px rgba(27,29,34,.04),0 10px 28px rgba(27,29,34,.06);
   --f-body:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
@@ -32,14 +32,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 header{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding-block:16px 10px}
 .brand{display:flex;align-items:baseline;justify-content:space-between;gap:4px 12px;flex-wrap:wrap}
 h1{font-size:22px;font-weight:800;margin:0;letter-spacing:-.03em;display:flex;align-items:center;gap:9px}
-h1::before{content:"";width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#8A6BFF 60%,var(--prod))}
+h1::before{content:"";width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent2))}
 .brand small{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .brand .links{flex-basis:100%;font-family:var(--f-body);font-size:12px}
 .links a,.links button{font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
 nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto;scrollbar-width:none;background:var(--surface);border-radius:14px;padding:4px;box-shadow:var(--shadow)}
 nav::-webkit-scrollbar{display:none}
 nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;color:var(--muted);background:none;border:0;font:inherit;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer}
-nav button.on{background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 12px rgba(59,91,255,.28)}
+nav button.on{background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 30%,transparent)}
 nav button span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-right:4px}
 button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 main{display:flex;flex-direction:column;gap:16px;padding-top:14px}
@@ -59,8 +59,16 @@ p{margin:0}a{color:inherit}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .chip span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-left:3px}
 .chip.dash{border-style:dashed;color:var(--accent)}
+/* 브랜드 고르기 — 편집 믹서의 채널 탭처럼 맨 위에서 고르면 그 브랜드 화면·색으로 열린다 */
+#brands{display:flex;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none}#brands::-webkit-scrollbar{display:none}
+#brands button{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:7px 13px 7px 9px;border-radius:999px;font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;white-space:nowrap}
+#brands button i{width:14px;height:14px;border-radius:50%;flex:none}
+#brands button.on{color:var(--ink);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-bg)}
+.sw{display:inline-block;width:18px;height:18px;border-radius:6px;vertical-align:-4px;margin-right:4px;border:1px solid var(--line)}
+.bars{display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:8px}.bars div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;font-size:12px;color:var(--muted)}.bars i{display:block;width:100%;border-radius:6px 6px 2px 2px;background:var(--accent);min-height:2px}
+input[type=date]{font:inherit;font-size:13px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
 .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 17px;border-radius:12px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 6px 16px rgba(59,91,255,.25)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 26%,transparent)}
 .btn.sm{padding:6px 11px;font-size:13px}
 .btn:disabled{opacity:.5;cursor:default}
 .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
@@ -126,6 +134,7 @@ input[type=range]{width:100%;accent-color:var(--ink);margin:14px 0 2px}
       <h1>콘텐츠 기획</h1><small id="sub"></small>
       <small class="links muted"><a href="../home/">← Brainy 홈</a> · <button type="button" data-brainy="out">로그아웃</button></small>
     </div>
+    <div id="brands" role="tablist" aria-label="브랜드"></div>
     <nav id="nav" role="tablist" aria-label="단계"></nav>
   </header>
   <main id="view"></main>
@@ -140,7 +149,7 @@ var DB = null;
 var RAW = {};                       // ct.data 문서 id → data
 var SETS = {};                      // 브랜드 id → 설정
 var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부터)
-var cur = load("ct.brand", "");     // 지금 브랜드
+var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드 — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "brand");
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "ratio", refBuyer: true, refView: "videos", refMore: 20, newBrand: false, hide: load("ct.hide", {}) };
 var TABS = [["brand", "브랜드"], ["mix", "비율"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["script", "대본"]];
@@ -155,7 +164,17 @@ function ago(iso){ var m = Math.round((Date.now() - Date.parse(iso || 0)) / 6000
 function day(iso){ return String(iso || "").slice(0, 10) }
 
 /* ── 데이터 꺼내기 ── */
-function brands(){ return Object.keys(RAW).filter(function(id){ return id.indexOf(".") < 0 }).map(function(id){ return RAW[id] }) }
+function brands(){ return Object.keys(RAW).filter(function(id){ return id.indexOf(".") < 0 }).map(function(id){ return RAW[id] }).sort(function(a, b){ return (a.order || 9) - (b.order || 9) }) }
+function pickBrand(id){
+  cur = id; save("ct.brand", cur);
+  try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){}
+  render();
+}
+/* 브랜드 키트(브랜드.json kit) → 화면 강조색. 색을 바꾸려면 볼트의 그 브랜드 파일을 고친다 */
+function applyKit(){
+  var k = (B() && B().kit) || {}, st = document.documentElement.style;
+  st.setProperty("--accent", k.accent || "#3B5BFF"); st.setProperty("--accent2", k.accent2 || k.accent || "#8A6BFF");
+}
 function B(){ return RAW[cur] || null }
 function part(name){ return RAW[cur + PARTS[name]] || null }
 function S(){
@@ -163,6 +182,7 @@ function S(){
   var share = {}; ((b && b.products) || []).forEach(function(p){ share[p.name] = (s.share && s.share[p.name] != null) ? s.share[p.name] : p.share });
   return { ratio: s.ratio != null ? s.ratio : (d.ratio != null ? d.ratio : 70), count: s.count || d.count || 20, share: share,
     mid: s.mid != null ? s.mid : (d.mid != null ? d.mid : 10), short: s.short != null ? s.short : (d.short != null ? d.short : 10),
+    perWeek: s.perWeek || d.perWeek || 2, plan: s.plan || {},
     roles: Object.assign({ "풀링": 3, "신뢰": 3, "키": 3 }, d.roles, s.roles), buyOnly: s.buyOnly !== false, fresh: s.fresh !== false,
     pin: s.pin || {}, ex: s.ex || {}, pick: s.pick || {} };
 }
@@ -210,8 +230,8 @@ function runHtml(kinds){
 function viewBrand(){
   var b = B(), h = runHtml(["brief"]);
   h += "<section class=\"card\"><div class=\"card-h\"><h3>브랜드</h3><span class=\"n\">" + brands().length + "개</span></div>" +
-    "<div class=\"chips\">" + brands().map(function(x){ return "<button class=\"chip" + (x.id === cur ? " on" : "") + "\" data-brand=\"" + esc(x.id) + "\">" + esc(x.name) + "</button>" }).join("") +
-    "<button class=\"chip dash\" data-act=\"newbrand\">＋ 기획서로 새 브랜드</button></div>";
+    "<p class=\"lead\">맨 위에서 브랜드를 고르면 그 브랜드의 자료·비율·색으로 열려요. 주소 끝에 <span class=\"mono\">?b=" + esc(cur) + "</span> 가 붙어서, 이 주소를 홈 화면에 추가하면 이 브랜드로 바로 열립니다.</p>" +
+    "<div class=\"chips\"><button class=\"chip dash\" data-act=\"newbrand\">＋ 기획서로 새 브랜드</button></div>";
   if(ui.newBrand){
     h += "<h4>브랜드 기획서 올리기</h4><p class=\"lead\">기획서 글을 붙여 넣거나 파일(.md · .txt)을 고르면, 맥의 Claude가 판매 상품·타깃·채널 정체성·키워드 힌트를 뽑아 프로필 초안을 만들어요. 초안은 여기 브랜드 목록에 「확인 전」으로 뜹니다.</p>" +
       "<input type=\"text\" id=\"nb-name\" placeholder=\"브랜드 이름 (예: 키우고 고르는 생활)\" style=\"margin-bottom:8px\">" +
@@ -222,9 +242,12 @@ function viewBrand(){
   h += "</section>";
   if(!b) return h + "<p class=\"empty\">아직 브랜드 데이터가 없어요. 맥 동기화가 볼트의 「콘텐츠 기획 앱」 폴더를 올리면 여기에 떠요.</p>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + (b.draft ? " <span class=\"tag p\">확인 전</span>" : "") + "</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div>" +
-    "<p>" + esc(b.one) + "</p><dl class=\"kv\" style=\"margin-top:10px\"><dt>타깃</dt><dd>" + esc(b.target) + "</dd><dt>첫 질문</dt><dd>" + esc(b.firstQuestion) + "</dd></dl></section>";
+    "<p>" + esc(b.one) + "</p><dl class=\"kv\" style=\"margin-top:10px\"><dt>타깃</dt><dd>" + esc(b.target) + "</dd><dt>첫 질문</dt><dd>" + esc(b.firstQuestion) + "</dd>" +
+    (b.kit ? "<dt>브랜드 색</dt><dd><span class=\"sw\" style=\"background:" + esc(b.kit.accent) + "\"></span><span class=\"sw\" style=\"background:" + esc(b.kit.accent2 || b.kit.accent) + "\"></span>" + esc(b.kit.note || "") + "</dd>" : "") +
+    (b.cadence ? "<dt>발행</dt><dd>" + esc(b.cadence.note || "") + "</dd>" : "") + "</dl>" +
+    (b.todo ? "<p class=\"note\" style=\"margin-top:12px\">" + esc(b.todo) + "</p>" : "") + "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품</h3><span class=\"n\">" + (b.products || []).length + "개</span></div><div class=\"list\">" +
-    (b.products || []).map(function(p){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what) + "</div><div class=\"it-d\">키워드 힌트 · " + esc((p.hints || []).join(" · ")) + "</div></div></div>" }).join("") + "</div></section>";
+    (b.products || []).map(function(p){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what) + "</div>" + ((p.hints || []).length ? "<div class=\"it-d\">키워드 힌트 · " + esc(p.hints.join(" · ")) + "</div>" : "") + "</div></div>" }).join("") + "</div></section>";
   var id = b.identity || {};
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div><dl class=\"kv\">" +
     "<dt>콘텐츠 축</dt><dd>" + esc((id.axes || []).join(" · ")) + "</dd>" +
@@ -258,7 +281,7 @@ function viewMix(){
   h += "<section class=\"card\"><div class=\"card-h\"><h3>세부 값</h3></div><div class=\"rows\">" +
     stepRow("한 번에 조사할 키워드", "count", s.count, 5) +
     names.map(function(n){ return stepRow("상품 비중 · " + esc(n), "share:" + esc(n), s.share[n], 1) }).join("") +
-    stepRow("레퍼런스 형식 · 미드폼", "mid", s.mid, 1) + stepRow("레퍼런스 형식 · 숏폼", "short", s.short, 1) +
+    stepRow("레퍼런스 형식 · 미드폼", "mid", s.mid, 1) + stepRow("레퍼런스 형식 · 숏폼", "short", s.short, 1) + stepRow("한 주에 올릴 편 수 (발행 달력)", "perWeek", s.perWeek, 1) +
     ["풀링", "신뢰", "키"].map(function(r){ return stepRow("추천 수 · " + r, "role:" + r, s.roles[r], 1) }).join("") +
     "</div><p class=\"lead\" style=\"margin-top:12px\">바꾸면 바로 저장돼요. 다음 조사·추천부터 이 값으로 돌아요 (월·수·금 자동 조사 포함).</p></section>";
   return h;
@@ -280,7 +303,10 @@ function stepRow(label, key, val, by){
 /* ── 그리기 ── */
 function render(){
   var b = B();
-  document.getElementById("sub").textContent = b ? b.name : "";
+  applyKit();
+  document.getElementById("sub").textContent = "";
+  document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
+  document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:linear-gradient(135deg," + esc((x.kit || {}).accent || "#3B5BFF") + "," + esc((x.kit || {}).accent2 || (x.kit || {}).accent || "#8A6BFF") + ")\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
   var v = { brand: viewBrand, mix: viewMix, kw: viewKw, ref: viewRef, rec: viewRec, script: viewScript }[tab] || viewBrand;
   document.getElementById("view").innerHTML = v();
@@ -292,7 +318,7 @@ document.addEventListener("click", function(e){
   if(!t) return;
   var d = t.dataset;
   if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
-  if(d.brand){ cur = d.brand; save("ct.brand", cur); render(); return }
+  if(d.brand){ pickBrand(d.brand); return }
   if(d.hide){ ui.hide[d.hide] = 1; save("ct.hide", ui.hide); render(); return }
   if(d.ui){ var kv = d.ui.split("="); ui[kv[0]] = kv[1] === "true" ? true : kv[1] === "false" ? false : isNaN(+kv[1]) ? kv[1] : +kv[1]; render(); return }
   if(d.set){ var p = {}, sv = d.set.split("="); p[sv[0]] = sv[1] === "true"; setS(p); return }
@@ -306,6 +332,7 @@ document.addEventListener("click", function(e){
     var s2 = S(), by = +d.by, k2 = d.step;
     if(k2 === "count") setS({ count: Math.max(5, Math.min(40, s2.count + by)) });
     else if(k2 === "mid" || k2 === "short"){ var o2 = {}; o2[k2] = Math.max(0, Math.min(20, s2[k2] + by)); setS(o2) }
+    else if(k2 === "perWeek") setS({ perWeek: Math.max(1, Math.min(7, s2.perWeek + by)) });
     else if(k2.indexOf("share:") === 0){ var sh = Object.assign({}, s2.share); sh[k2.slice(6)] = Math.max(0, Math.min(20, sh[k2.slice(6)] + by)); setS({ share: sh }) }
     else if(k2.indexOf("role:") === 0){ var ro = Object.assign({}, s2.roles); ro[k2.slice(5)] = Math.max(0, Math.min(6, ro[k2.slice(5)] + by)); setS({ roles: ro }) }
     return;
@@ -317,6 +344,7 @@ document.addEventListener("input", function(e){
 });
 document.addEventListener("change", function(e){
   if(e.target.id === "ratio") setS({ ratio: +e.target.value });
+  if(e.target.dataset.plan){ var pl = Object.assign({}, S().plan); if(e.target.value) pl[e.target.dataset.plan] = e.target.value; else delete pl[e.target.dataset.plan]; setS({ plan: pl }) }
   if(e.target.id === "nb-file" && e.target.files[0]){
     var f = e.target.files[0], rd = new FileReader();
     rd.onload = function(){ var ta = document.getElementById("nb-doc"); if(ta) ta.value = String(rd.result).slice(0, 60000); var nm = document.getElementById("nb-name"); if(nm && !nm.value) nm.value = f.name.replace(/\.[^.]+$/, "") };
@@ -334,6 +362,8 @@ function act(name, el){
   if(name === "discover"){ var c = candidates(s); send("discover", "키워드·레퍼런스 조사 (상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " · " + c.length + "개)",
     { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, short: s.short, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
   if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }
+  if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
+  if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
   if(name === "recommend"){ send("recommend", "콘텐츠 추천 (풀링 " + s.roles["풀링"] + " · 신뢰 " + s.roles["신뢰"] + " · 키 " + s.roles["키"] + ")", { roles: s.roles, ratio: s.ratio }); return }
   if(name === "script"){ var ids = Object.keys(s.pick); if(!ids.length) return; send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); return }
@@ -347,7 +377,7 @@ function act(name, el){
     DB = d;
     DB.collection("ct.data").onSnapshot(function(q){
       RAW = {}; q.docs.forEach(function(x){ RAW[x.id] = x.data() });
-      if(!RAW[cur]){ var first = brands()[0]; cur = first ? first.id : ""; }
+      if(!RAW[cur]){ var first = brands().filter(function(x){ return RAW[x.id + ".kw"] })[0] || brands()[0]; cur = first ? first.id : ""; }
       render();
     }, function(){});
     DB.collection("ct.set").onSnapshot(function(q){ q.docs.forEach(function(x){ SETS[x.id] = x.data() }); render() }, function(){});
