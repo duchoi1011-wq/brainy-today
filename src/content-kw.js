@@ -8,39 +8,32 @@
      난이도 (Ahrefs 키워드 난이도) = 광고 경쟁: 경쟁정도 높음 + 노출 광고 9개 이상 → 어려움 · 노출 광고 5개 이하나 경쟁정도 낮음 → 쉬움 · 그 사이 보통
      주제 묶음 (Ahrefs 상위 주제) = 브랜드.json clusters 의 말이 든 키워드끼리 묶어 검색량을 더한다 — 키워드 하나가 아니라 주제의 크기를 본다
      빈 곳 (Ahrefs 콘텐츠 갭) = 구매 결인 상품 키워드인데 아직 조사하지 않았고, 레퍼런스 검색어·추천 제목 어디에도 안 나온 것 */
-/* 씨앗 단어 — 정체성 3 · 상품 3. 맥이 씨앗마다 네이버 연관 검색어 중 씨앗이 들어간 것을 검색량 순으로 받아 키워드.json 에 seed 를 달아 둔다 (content_app.py seeds).
-   기본은 브랜드.json seeds, 여기서 바꾸면 ct.set seeds 가 앞서고 맥이 1분 안에 새로 받는다. */
+/* 씨앗 단어 — 정체성 · 상품 단어 (처음엔 3개씩, 동욱이 넣고 빼서 한 쪽에 SEED_MAX 개까지). 맥이 씨앗마다 네이버 연관 검색어 중 씨앗이 들어간 것을 검색량 순으로 받아
+   키워드.json 에 seed 를 달아 둔다 (content_app.py seeds). 기본은 브랜드.json seeds, 여기서 넣고 빼면 ct.set seeds 가 앞서고 맥이 1분 안에 새로 받는다. */
+var SEED_MAX = 10;
 function seedsOf(){ return ((SETS[cur] || {}).seeds || (B() && B().seeds) || []).filter(function(x){ return x.word }) }
 function seedItems(word){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 }).sort(function(a, b){ return b.total - a.total }) }
 function seedRun(word){ var k = part("kw"); return ((k && k.seeds) || []).filter(function(x){ return x.word === word })[0] || null }
 function seedsPending(){ var k = part("kw"), have = ((k && k.seeds) || []).map(function(x){ return x.word }).join("|"); return seedsOf().map(function(x){ return x.word }).join("|") !== have }
 function seedsHtml(){
-  var sd = seedsOf(), b = B(), s = S();
+  var sd = seedsOf(), b = B(), s = S(), prods = (b.products || []).map(function(p){ return p.name });
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>씨앗 단어</h3><span class=\"n\">정체성 " + sd.filter(function(x){ return x.kind === "정체성" }).length + " · 상품 " + sd.filter(function(x){ return x.kind === "상품" }).length + "</span></div>" +
-    "<p class=\"lead\">브랜드 정체성 단어 3개와 판매 상품 단어 3개에서 출발해요. 단어마다 네이버 연관 검색어 중 그 단어가 들어간 것을 검색량 순으로 받아요. 마음에 드는 검색어에 ★을 누르면 「검증한 키워드」가 돼요.</p>";
-  if(ui.seedEdit){
-    var rows = [];
-    ["정체성", "상품"].forEach(function(kind){
-      var cur2 = sd.filter(function(x){ return x.kind === kind });
-      for(var i = 0; i < 3; i++){
-        var x = cur2[i] || {}, prod = kind === "상품" ? ((b.products || [])[i] || {}).name || "" : "";
-        rows.push("<div class=\"row2\" style=\"margin-top:6px\"><span class=\"tag " + (kind === "상품" ? "p" : "i") + "\" style=\"flex:0 0 auto\">" + esc(kind === "상품" ? (x.product || prod || "상품") : "정체성") + "</span>" +
-          "<input type=\"text\" data-seed=\"" + kind + ":" + i + "\" data-prod=\"" + esc(x.product || prod) + "\" maxlength=\"20\" value=\"" + esc(x.word || "") + "\" placeholder=\"" + (kind === "상품" ? "상품 단어" : "정체성 단어") + "\"></div>");
-      }
-    });
-    h += rows.join("") + "<div class=\"acts\"><button class=\"btn sm primary\" data-act=\"seedsave\">저장하고 검색어 새로 받기</button><button class=\"btn sm\" data-act=\"seededit\">그만두기</button></div>";
-  } else {
-    h += "<div class=\"list\">" + sd.map(function(x){
+    "<p class=\"lead\">검색어를 뽑을 출발 단어예요. 원하는 단어를 직접 넣고 빼세요 (한 쪽에 " + SEED_MAX + "개까지). 단어마다 네이버 연관 검색어 중 그 단어가 들어간 것을 검색량 순으로 받고, 쓸 검색어에 ★을 누르면 「검증한 키워드」가 돼요.</p>";
+  ["정체성", "상품"].forEach(function(kind){
+    var list = sd.filter(function(x){ return x.kind === kind }), c = kind === "상품" ? "p" : "i";
+    h += "<h4><span class=\"tag " + c + "\">" + kind + "</span> " + (kind === "상품" ? "판매 상품 단어" : "브랜드 정체성 단어") + " <span class=\"num muted\">" + list.length + "</span></h4><div class=\"list\">" + list.map(function(x){
       var r = seedRun(x.word), n = seedItems(x.word);
-      return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" + esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span> <b>" + esc(x.word) + "</b></div>" +
-        "<div class=\"it-d\">" + (r ? "연관 검색어 " + n.length + "개 · 검색량 합 월 " + fmt(n.reduce(function(a, y){ return a + y.total }, 0)) + " · ★ " + n.filter(function(y){ return s.pin[y.kw] }).length + (r.error ? " · <span class=\"down\">" + esc(r.error) + "</span>" : "") : "아직 안 받음") + "</div></div>" +
-        "<button class=\"btn sm\" data-ui=\"seed=" + esc(x.word) + "\">보기</button></div>" }).join("") + "</div>" +
-      "<div class=\"acts\"><button class=\"btn sm\" data-act=\"seededit\">씨앗 단어 바꾸기</button>" + (b.seedsNote ? "<span class=\"lead\" style=\"margin:0\">" + esc(b.seedsNote) + "</span>" : "") + "</div>" +
-      (seedsPending() ? "<p class=\"note\" style=\"margin-top:10px\">씨앗 단어가 바뀌었어요 — 맥이 네이버에서 연관 검색어를 받는 중이에요 (1분 안팎, 맥이 켜져 있어야 해요).</p>" : "");
-  }
-  h += "</section>";
+      return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b>" + (kind === "상품" && x.product ? " <span class=\"tag p\">" + esc(x.product) + "</span>" : "") + "</div>" +
+        "<div class=\"it-d\">" + (r ? "연관 검색어 " + n.length + "개 · 검색량 합 월 " + fmt(n.reduce(function(a, y){ return a + y.total }, 0)) + " · ★ " + n.filter(function(y){ return s.pin[y.kw] }).length + (r.error ? " · <span class=\"down\">" + esc(r.error) + "</span>" : "") : (seedsPending() ? "맥이 받는 중" : "아직 안 받음")) + "</div></div>" +
+        "<button class=\"btn sm\" data-ui=\"seed=" + esc(x.word) + "\">보기</button><button class=\"mk no\" data-act=\"seeddel\" data-word=\"" + esc(x.word) + "\" aria-label=\"" + esc(x.word) + " 빼기\" title=\"빼기\">✕</button></div>" }).join("") + "</div>" +
+      (list.length < SEED_MAX ? "<div class=\"row2\" style=\"margin-top:6px\"><input type=\"text\" id=\"seed-" + c + "\" data-addseed=\"" + kind + "\" maxlength=\"20\" placeholder=\"" + (kind === "상품" ? "상품 단어 넣기 (예: 포토키오스크)" : "정체성 단어 넣기 (예: 사내행사)") + "\" value=\"" + esc((ui.seedDraft || {})[kind] || "") + "\">" +
+        (kind === "상품" && prods.length ? "<select id=\"seed-prod\" style=\"flex:0 0 32%\">" + prods.map(function(n){ return "<option" + (ui.seedProd === n ? " selected" : "") + ">" + esc(n) + "</option>" }).join("") + "</select>" : "") +
+        "<button class=\"btn sm primary\" data-act=\"seedadd\" data-kind=\"" + kind + "\">넣기</button></div>" : "");
+  });
+  h += (b.seedsNote && !(SETS[cur] || {}).seeds ? "<p class=\"lead\" style=\"margin-top:10px\">" + esc(b.seedsNote) + "</p>" : "") +
+    (seedsPending() ? "<p class=\"note\" style=\"margin-top:10px\">씨앗 단어가 바뀌었어요 — 맥이 네이버에서 연관 검색어를 받는 중이에요 (1분 안팎, 맥이 켜져 있어야 해요).</p>" : "") + "</section>";
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
-  if(pickW && !ui.seedEdit){
+  if(pickW){
     var list = seedItems(pickW), more = ui.seedMore || 15;
     h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">검색량 순 · " + list.length + "개</span></div><div class=\"chips\">" +
       sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\">" + esc(x.word) + "<span>" + seedItems(x.word).length + "</span></button>" }).join("") + "</div>" +

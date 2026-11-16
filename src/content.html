@@ -365,13 +365,14 @@ document.addEventListener("input", function(e){
   if(e.target.id === "ratio"){ SETS[cur] = Object.assign({}, SETS[cur] || {}, { ratio: +e.target.value }); paintMix() }
   if(e.target.id === "fb-text") ui.fbDraft = e.target.value;
   if(e.target.id === "tpl-name") ui.tplName = e.target.value;
+  if(e.target.dataset.addseed){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
   if(e.target.dataset.knob){ var kb = mixDef().knobs.filter(function(k){ return k.id === e.target.dataset.knob })[0], lab = document.getElementById("kv-" + e.target.dataset.knob); if(kb && lab) lab.textContent = knobText(kb, +e.target.value) }
 });
 document.addEventListener("keydown", function(e){
   if(e.key !== "Enter" || e.isComposing) return;
   if(e.target.id === "fb-text"){ e.preventDefault(); act("fbadd") }
   if(e.target.id === "tpl-name"){ e.preventDefault(); act("tplnew") }
-  if(e.target.dataset.seed){ e.preventDefault(); act("seedsave") }
+  if(e.target.dataset.addseed){ e.preventDefault(); act("seedadd", e.target) }
 });
 document.addEventListener("change", function(e){
   if(e.target.id === "ratio") setS({ ratio: +e.target.value });
@@ -398,13 +399,17 @@ function act(name, el){
   if(name === "tplnew"){ saveTpl("new"); return }
   if(name === "tplover"){ saveTpl("over"); return }
   if(name === "toastx"){ ui.toast = ""; render(); return }
-  if(name === "seededit"){ ui.seedEdit = !ui.seedEdit; render(); return }
-  if(name === "seedsave"){
-    var sd = [].slice.call(document.querySelectorAll("[data-seed]")).map(function(el){ var kind = el.dataset.seed.split(":")[0], w = el.value.replace(/\s+/g, "").slice(0, 20);
-      return kind === "상품" ? { kind: kind, word: w, product: el.dataset.prod } : { kind: kind, word: w } }).filter(function(x){ return x.word });
-    if(!sd.length){ alert("씨앗 단어를 하나 이상 적어 주세요."); return }
-    ui.seedEdit = false; setS({ seeds: sd }); return;
+  if(name === "seedadd"){   // 씨앗 단어 넣기 — 띄어쓰기는 빼고(네이버가 붙여 쓴 말로 받는다), 같은 단어는 한 번만
+    var kind = el.dataset.kind || el.dataset.addseed, inp = document.querySelector("[data-addseed=\"" + kind + "\"]"), w = ((inp && inp.value) || "").replace(/\s+/g, "").slice(0, 20), cur3 = seedsOf();
+    if(!w){ alert("넣을 단어를 적어 주세요."); if(inp) inp.focus(); return }
+    if(cur3.some(function(x){ return x.word === w })){ alert("「" + w + "」은 이미 씨앗 단어예요."); return }
+    var ps = document.getElementById("seed-prod"), nx = kind === "상품" ? { kind: kind, word: w, product: ps ? ps.value : "" } : { kind: kind, word: w };
+    if(ps) ui.seedProd = ps.value;
+    ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[kind] = ""; ui.seed = w;
+    setS({ seeds: cur3.concat([nx]) }); return;
   }
+  if(name === "seeddel"){ var wd = el.dataset.word; if(!confirm("씨앗 단어 「" + wd + "」을 뺄까요? 이 단어에서만 나온 검색어는 다음에 받을 때 목록에서 빠져요 (★한 것은 남아요).")) return;
+    setS({ seeds: seedsOf().filter(function(x){ return x.word !== wd }) }); return }
   if(name === "fbadd"){ var tx = (document.getElementById("fb-text").value || "").trim(); if(!tx){ alert("피드백을 한 줄 적어 주세요."); return } ui.fbDraft = "";
     setS({ feedback: ((SETS[cur] || {}).feedback || []).concat([{ at: new Date().toISOString(), knob: document.getElementById("fb-knob").value, text: tx.slice(0, 400) }]) }); return }
   if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
