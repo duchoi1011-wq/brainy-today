@@ -134,6 +134,32 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .rung-i .chipx{border:1px solid var(--line);border-radius:9px;padding:7px 8px;background:var(--surface)}
 .rung-i .clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rung-i .none{font-size:12px;color:var(--muted);align-self:center}
+/* 구축 보드 — 편집기 앱처럼 세 칸 (왼쪽 퍼널 · 가운데 문서 · 오른쪽 다시 착안한 추천). 좁은 화면에선 위아래로 */
+body.wide .wrap{max-width:1440px}
+.bd-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bd{display:grid;grid-template-columns:240px minmax(0,1fr) 300px;gap:16px;align-items:start}
+.bd-left,.bd-right{position:sticky;top:150px;max-height:calc(100vh - 170px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.bd-left h3,.bd-right h3{font-size:15px;margin:0 0 2px}
+.bd-item{display:flex;flex-direction:column;gap:6px;margin-top:10px}.bd-item>b{font-size:13px;color:var(--muted)}
+.bd-doc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;font:inherit;font-size:13px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--ink)}
+.bd-doc.on{border-color:var(--accent);background:var(--accent-bg)}
+.bd-doc .clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:600}
+.bd-main{display:flex;flex-direction:column;gap:12px;min-width:0}
+.bd-head h2{font-size:19px;margin:6px 0 2px;line-height:1.35}
+.bd-kv{display:grid;grid-template-columns:170px minmax(0,1fr);gap:0;margin:8px 0 0;border-top:1px solid var(--line)}
+.bd-kv dt,.bd-kv dd{margin:0;padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px;line-height:1.55}
+.bd-kv dt{font-weight:700;background:var(--surface-2)}.bd-kv dt span{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px}
+.bd-kv dt.bd-group,.bd-kv dd.bd-group{background:var(--ink);color:#fff;padding:5px 10px;font-size:13px}
+.bd-empty{color:var(--muted);font-size:13px}
+.bd-ref{display:flex;gap:8px;align-items:flex-start;text-decoration:none;color:var(--ink);margin:4px 0;font-size:13px;line-height:1.4}
+.bd-ref img{width:96px;height:54px;object-fit:cover;border-radius:7px;flex:none}
+.bd-sheet table{min-width:0;width:100%}.bd-sheet td{max-width:none}
+.bd-idea{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-top:1px solid var(--line)}
+.bd-idea b{font-size:14px;line-height:1.4}
+@media (max-width:1100px){.bd{grid-template-columns:minmax(0,1fr)}.bd-left,.bd-right{position:static;max-height:none}.bd-left{order:0}.bd-main{order:1}.bd-right{order:2}}
+@media (max-width:560px){.bd-kv{grid-template-columns:minmax(0,1fr)}.bd-kv dt{border-bottom:0;padding-bottom:2px}}
+/* 구축 PDF — 인쇄할 때는 가운데 문서만 */
+@media print{body{background:#fff;padding:0}header,.bd-bar,.bd-left,.bd-right,.run,[data-brainy],#brainy-dock{display:none!important}.bd{display:block}.wrap{max-width:none}.card{box-shadow:none;break-inside:avoid}.orig{overflow:visible}.bd-kv dt.bd-group{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 /* 원문 칸 표 — 조사 시트 [조사] 콘텐츠 열과 같은 순서. 폰에서는 표만 옆으로 밀린다 */
 .orig{overflow-x:auto;margin-top:12px;border:1px solid var(--line);border-radius:12px}
 .orig table{border-collapse:collapse;min-width:1100px;font-size:13px;line-height:1.5}
@@ -178,9 +204,9 @@ var SETS = {};                      // 브랜드 id → 설정
 var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부터)
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드 — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "sum");
-var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, newBrand: false, hide: load("ct.hide", {}) };
-var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["refpage", "참고"], ["script", "대본"]];
-var PARTS = { refpage: ".refpage", mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", script: ".script", log: ".log" };
+var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
+var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["build", "구축"], ["refpage", "참고"], ["script", "대본"]];
+var PARTS = { refpage: ".refpage", mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -269,6 +295,7 @@ function runHtml(kinds){
 /*@include content-kw.js*/
 /*@include content-ref.js*/
 /*@include content-plan.js*/
+/*@include content-build.js*/
 /*@include content-refpage.js*/
 /*@include content-sum.js*/
 
@@ -348,10 +375,11 @@ function stepRow(label, key, val, by){
 function render(){
   var b = B();
   applyKit();
+  document.body.classList.toggle("wide", tab === "build");   // 구축 보드는 편집기 앱처럼 넓게 (왼쪽 퍼널 · 가운데 문서 · 오른쪽 다시 착안한 추천)
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
   document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
-  var v = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, refpage: viewRefpage, script: viewScript }[tab] || viewBrand;
+  var v = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefpage, script: viewScript }[tab] || viewBrand;
   var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.id ? "#" + act0.id : "");
   document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();   // 맥에 보낸 일의 상태는 어느 탭에서나 맨 위에
   if(tab === "mix") paintMix();
@@ -373,6 +401,7 @@ document.addEventListener("click", function(e){
   if(d.fbdel){ setS({ feedback: ((SETS[cur] || {}).feedback || []).filter(function(f){ return f.at !== d.fbdel }) }); return }
   if(d.hide){ ui.hide[d.hide] = 1; save("ct.hide", ui.hide); render(); return }
   if(d.ui){ var kv = d.ui.split("="); ui[kv[0]] = kv[1] === "true" ? true : kv[1] === "false" ? false : (kv[1] === "" || isNaN(+kv[1])) ? kv[1] : +kv[1]; render();
+    if(kv[0] === "bdView") save("ct.bdView", kv[1]);   // 구축 보드 세로/시트는 기기마다 기억
     if(kv[0] === "kwCluster" && kv[1]){ var kl = document.getElementById("kw-list"); if(kl) window.scrollTo(0, kl.getBoundingClientRect().top + window.scrollY - 150) }   // 고른 묶음의 목록은 아래 카드에 생긴다
     return }
   if(d.set){ var p = {}, sv = d.set.split("="); p[sv[0]] = sv[1] === "true"; setS(p); return }
@@ -419,6 +448,7 @@ document.addEventListener("change", function(e){
 });
 function act(name, el){
   var s = S();
+  if(name === "buildpdf"){ window.print(); return }   // 구축 문서 PDF — 인쇄 창에서 「PDF로 저장」 (인쇄할 땐 가운데 문서만 남는다)
   if(name === "newbrand"){ ui.newBrand = !ui.newBrand; render(); return }
   if(name === "sendbrief"){
     var nm = (document.getElementById("nb-name").value || "").trim(), doc = (document.getElementById("nb-doc").value || "").trim();
