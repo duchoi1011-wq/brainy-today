@@ -72,7 +72,7 @@ input[type=date]{font:inherit;font-size:13px;color:var(--ink);background:var(--s
 .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
 input[type=text],textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
 textarea{min-height:150px;resize:vertical;line-height:1.5}
-/* 표시 딱지 — 종류(상품·정체성)·역할(풀링·신뢰·키)·판정 */
+/* 표시 딱지 — 종류(상품·정체성)·역할(풀링·키)·단계·판정 */
 .tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;vertical-align:1px}
 .tag.p{color:var(--prod);background:var(--prod-bg);border-color:transparent}
 .tag.i{color:var(--iden);background:var(--iden-bg);border-color:transparent}
@@ -122,6 +122,18 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .ref:first-child{border-top:0}
 .ref img{width:128px;height:72px;object-fit:cover;border-radius:12px;flex:none;background:var(--surface-2)}
 .ref-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+/* 단계 사다리 — 브랜드.json stages 를 위(마지막 단계)에서 아래(첫 단계)로 쌓는다. 칸 색은 아래에서 위로 갈수록 브랜드 강조색이 짙어진다 */
+.ladder{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.rung{position:relative;display:flex;gap:12px;align-items:stretch;border:1px solid var(--line);border-left:4px solid color-mix(in srgb,var(--accent) var(--lv),#fff);border-radius:12px;background:color-mix(in srgb,var(--accent) calc(var(--lv) / 6),#fff);padding:10px 12px;min-height:64px}
+.rung+.rung::before{content:"";position:absolute;top:-13px;left:30px;border:6px solid transparent;border-top:0;border-bottom:8px solid color-mix(in srgb,var(--accent) var(--lv),#fff)}
+.rung-h{flex:none;width:76px;display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid var(--line);padding-right:10px}
+.rung-h b{font-size:14px}.rung-h span{font-size:11px;color:var(--muted);line-height:1.35}
+.rung-i{flex:1;min-width:0;display:flex;gap:10px;overflow-x:auto;align-items:flex-start}
+.rung-i a,.rung-i .chipx{flex:none;width:132px;text-decoration:none;color:var(--ink);font-size:12px;font-weight:600;line-height:1.35}
+.rung-i img{display:block;width:132px;height:74px;object-fit:cover;border-radius:9px;margin-bottom:4px;background:var(--surface-2)}
+.rung-i .chipx{border:1px solid var(--line);border-radius:9px;padding:7px 8px;background:var(--surface)}
+.rung-i .clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rung-i .none{font-size:12px;color:var(--muted);align-self:center}
 .ref-m a.t{font-weight:700;font-size:15px;line-height:1.4;text-decoration:none}.ref-m a.t:hover{text-decoration:underline}
 .apply{font-size:13.5px;line-height:1.55;padding:9px 12px;border-radius:12px;background:var(--surface-2)}
 .spark{vertical-align:-3px}
@@ -191,8 +203,21 @@ function S(){
   return { ratio: s.ratio != null ? s.ratio : (d.ratio != null ? d.ratio : 70), count: s.count || d.count || 20, share: share,
     mid: s.mid != null ? s.mid : (d.mid != null ? d.mid : 10), short: s.short != null ? s.short : (d.short != null ? d.short : 10),
     perWeek: s.perWeek || d.perWeek || 2, plan: s.plan || {},
-    roles: Object.assign({ "풀링": 3, "신뢰": 3, "키": 3 }, d.roles, s.roles), buyOnly: s.buyOnly !== false, fresh: s.fresh !== false,
+    roles: roleNames().reduce(function(o, n){ o[n] = (s.roles && s.roles[n] != null) ? s.roles[n] : ((d.roles && d.roles[n] != null) ? d.roles[n] : 3); return o }, {}), buyOnly: s.buyOnly !== false, fresh: s.fresh !== false,
     pin: s.pin || {}, ex: s.ex || {}, pick: s.pick || {} };
+}
+/* 역할(풀링·키)과 단계(5개)는 브랜드.json 이 정본 — roles · stages 를 읽는다 (2026-11-16 동욱: 신뢰 역할 없앰) */
+function roleNames(){ var b = B(); return ((b && b.roles) || []).map(function(x){ return x.name }) }
+function stageList(){ var b = B(); return (b && b.stages) || [] }
+function stageTag(x){ return x && x.stage ? "<span class=\"tag\">" + esc(x.stage) + "</span>" : "" }
+/* 사다리 — items 를 단계 칸에 나눠 위(마지막 단계)부터 그린다. cell(x) 는 칸 안 한 개의 HTML */
+function ladderHtml(items, cell){
+  var st = stageList(), n = st.length;
+  return "<div class=\"ladder\">" + st.slice().reverse().map(function(g, i){
+    var lv = 100 - Math.round(70 * i / Math.max(1, n - 1)), its = items.filter(function(x){ return x.stage === g.name });   // 맨 위(마지막 단계)가 가장 짙다
+    return "<div class=\"rung\" style=\"--lv:" + lv + "%\"><div class=\"rung-h\"><b>" + esc(g.name) + "</b><span>" + esc(g.what || "") + "</span></div><div class=\"rung-i\">" +
+      (its.length ? its.map(cell).join("") : "<span class=\"none\">아직 없음</span>") + "</div></div>";
+  }).join("") + (items.some(function(x){ return !x.stage }) ? "<p class=\"lead\">단계가 안 붙은 " + items.filter(function(x){ return !x.stage }).length + "개는 사다리에서 빠졌어요.</p>" : "") + "</div>";
 }
 function setS(patch){
   var s = Object.assign({}, SETS[cur] || {}, patch, { updatedAt: new Date().toISOString() });
@@ -284,7 +309,7 @@ function viewMix(){
   var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var s = S(), names = Object.keys(s.share);
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>판매 상품 ↔ 채널 정체성</h3><span class=\"n\" id=\"mix-n\"></span></div>" +
-    "<p class=\"lead\">조사할 주제어를 어느 쪽에서 더 뽑을지 정해요. 상품 쪽으로 밀면 사려는 사람이 찾는 말(키 콘텐츠 재료)이, 정체성 쪽으로 밀면 채널 성격에 맞는 넓은 주제(풀링·신뢰 콘텐츠 재료)가 늘어요.</p>" +
+    "<p class=\"lead\">조사할 주제어를 어느 쪽에서 더 뽑을지 정해요. 상품 쪽으로 밀면 사려는 사람이 찾는 말(키 콘텐츠 재료)이, 정체성 쪽으로 밀면 채널 성격에 맞는 넓은 주제(풀링 콘텐츠 재료)가 늘어요.</p>" +
     "<div class=\"mix\"><div class=\"p\" id=\"mix-p\"></div><div class=\"i\" id=\"mix-i\" style=\"flex:1\"></div></div>" +
     "<input type=\"range\" id=\"ratio\" min=\"0\" max=\"100\" step=\"5\" value=\"" + s.ratio + "\" aria-label=\"판매 상품 비율\">" +
     "<div class=\"ends\"><span>← 채널 정체성만</span><span>판매 상품만 →</span></div>" +
@@ -293,7 +318,7 @@ function viewMix(){
     stepRow("한 번에 조사할 키워드", "count", s.count, 5) +
     names.map(function(n){ return stepRow("상품 비중 · " + esc(n), "share:" + esc(n), s.share[n], 1) }).join("") +
     stepRow("레퍼런스 형식 · 미드폼", "mid", s.mid, 1) + stepRow("레퍼런스 형식 · 숏폼", "short", s.short, 1) + stepRow("한 주에 올릴 편 수 (발행 달력)", "perWeek", s.perWeek, 1) +
-    ["풀링", "신뢰", "키"].map(function(r){ return stepRow("추천 수 · " + r, "role:" + r, s.roles[r], 1) }).join("") +
+    roleNames().map(function(r){ return stepRow("추천 수 · " + esc(r), "role:" + esc(r), s.roles[r], 1) }).join("") +
     "</div><p class=\"lead\" style=\"margin-top:12px\">바꾸면 바로 저장돼요. 다음 조사·추천부터 이 값으로 돌아요 (월·수·금 자동 조사 포함).</p></section>";
   return h;
 }
@@ -356,7 +381,7 @@ document.addEventListener("click", function(e){
     else if(k2 === "mid" || k2 === "short"){ if(lim(s2[k2], 0, 20) !== s2[k2]){ var o2 = {}; o2[k2] = lim(s2[k2], 0, 20); setS(o2) } }
     else if(k2 === "perWeek"){ if(lim(s2.perWeek, 1, 7) !== s2.perWeek) setS({ perWeek: lim(s2.perWeek, 1, 7) }) }
     else if(k2.indexOf("share:") === 0){ var sn = k2.slice(6); if(lim(s2.share[sn], 0, 20) !== s2.share[sn]){ var sh = Object.assign({}, s2.share); sh[sn] = lim(sh[sn], 0, 20); setS({ share: sh }) } }
-    else if(k2.indexOf("role:") === 0){ var rn = k2.slice(5); if(lim(s2.roles[rn], 0, 6) !== s2.roles[rn]){ var ro = Object.assign({}, s2.roles); ro[rn] = lim(ro[rn], 0, 6); setS({ roles: ro }) } }
+    else if(k2.indexOf("role:") === 0){ var rn = k2.slice(5); if(lim(s2.roles[rn], 0, 10) !== s2.roles[rn]){ var ro = Object.assign({}, s2.roles); ro[rn] = lim(ro[rn], 0, 10); setS({ roles: ro }) } }
     return;
   }
   if(d.act) act(d.act, t);
@@ -415,7 +440,7 @@ function act(name, el){
   if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
-  if(name === "recommend"){ send("recommend", "콘텐츠 추천 (풀링 " + s.roles["풀링"] + " · 신뢰 " + s.roles["신뢰"] + " · 키 " + s.roles["키"] + ")", { roles: s.roles, ratio: s.ratio }); return }
+  if(name === "recommend"){ send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + ")", { roles: s.roles, ratio: s.ratio }); return }
   if(name === "refpage"){ var need = Object.keys(s.pick).filter(function(id){ return !pageOf(id) }); if(!need.length) return; send("refpage", "참고 페이지 만들기 — " + need.join(" · "), { ids: need }); tab = "refpage"; save("ct.tab", tab); render(); return }
   if(name === "script"){ var ids = ((part("refpage") || {}).items || []).filter(function(p){ return pageOk(p) && !scriptOf(p.rec) }).map(function(p){ return p.rec }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); return }   // 참고 페이지를 확정한 추천만 대본으로 간다

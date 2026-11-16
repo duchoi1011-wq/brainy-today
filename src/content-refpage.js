@@ -58,7 +58,7 @@ function viewRefpage(){
     var ok = pageOk(p), stale = pageStale(p), sm = p.summary || {}, sc = scriptOf(p.rec), groups = {}, order = [];
     (p.refs || []).forEach(function(r){ if(!groups[r.slot]){ groups[r.slot] = []; order.push(r.slot) } groups[r.slot].push(r) });
     h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"num muted\">" + esc(p.rec) + "</span> " + esc(p.title) + "</h3><span class=\"n\">" + (p.refs || []).length + "개</span></div>" +
-      "<div><span class=\"tag fill\">" + esc(p.role || "") + "</span> <span class=\"tag " + (ok ? "ok" : "p") + "\">" + (ok ? "확정" : esc(p.status || "초안")) + "</span>" + (sc ? " <span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "") + (p.format ? " <span class=\"tag\">포맷 " + esc(p.format) + "</span>" : "") +
+      "<div><span class=\"tag fill\">" + esc(p.role || "") + "</span> " + stageTag(p) + " <span class=\"tag " + (ok ? "ok" : "p") + "\">" + (ok ? "확정" : esc(p.status || "초안")) + "</span>" + (sc ? " <span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "") + (p.format ? " <span class=\"tag\">포맷 " + esc(p.format) + "</span>" : "") +
       (stale ? " <span class=\"tag p\">브랜드 레퍼런스가 바뀜</span>" : "") + "</div>" +
       (stale ? "<div class=\"note\" style=\"margin-top:10px\">이 참고 페이지를 만든 뒤에 브랜드 레퍼런스(카드·잘 된 채널)가 바뀌었어요. <button class=\"chip\" data-rpsync=\"" + esc(p.rec) + "\"" + (openCmd("refpage") ? " disabled" : "") + ">지금 레퍼런스에 다시 맞추기</button></div>" : "") +
       "<h4>가져올 것 — 한 장 요약</h4><dl class=\"kv\">" + [["첫 3초 훅", sm.hook], ["구성", sm.structure], ["화면", sm.screen], ["말투", sm.voice], ["CTA", sm.cta]].filter(function(r){ return r[1] })
