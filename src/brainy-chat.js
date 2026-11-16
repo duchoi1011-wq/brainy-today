@@ -27,7 +27,12 @@
     "#bc .bc-chips{display:flex;flex-wrap:wrap;gap:6px}#bc .bc-hint{font-size:13px;color:var(--g-mut);margin:0}" +
     "#bc .bc-in{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--g-line);background:var(--g-card);align-items:end}" +
     "#bc textarea{font:inherit;font-size:16px;color:var(--g-fg);background:var(--g-bg);border:1px solid var(--g-line);border-radius:12px;padding:10px 12px;resize:none;height:46px;min-height:46px;max-height:140px;box-sizing:border-box}" +
-    "#bc .bc-send{height:46px;border:0;border-radius:12px;padding:0 16px;background:var(--g-acc);color:var(--g-acc-ink);font-weight:600}";
+    "#bc .bc-send{height:46px;border:0;border-radius:12px;padding:0 16px;background:var(--g-acc);color:var(--g-acc-ink);font-weight:600}" +
+    /* 넓은 화면 옆 창 (HOOK.side) — 앱 화면을 가리지 않고 오른쪽에 붙는다. 왼쪽 가장자리를 끌어 폭을 바꾼다 */
+    "#bc.bc-side{left:auto;width:var(--bc-w,400px);border-left:1px solid var(--g-line);box-shadow:-8px 0 24px rgba(0,0,0,.08)}" +
+    "#bc .bc-grip{display:none}#bc.bc-side .bc-grip{display:block;position:absolute;left:-4px;top:0;bottom:0;width:8px;cursor:col-resize;touch-action:none;z-index:1}" +
+    "#bc.bc-side .bc-grip:hover,#bc.bc-side .bc-grip.on{background:var(--g-acc);opacity:.35}" +
+    "#bc.bc-side .bc-bar{padding:10px 12px}#bc.bc-side .bc-msgs{padding:12px}#bc.bc-side .bc-b{max-width:96%}#bc.bc-side .bc-in{padding:10px 12px}";
   document.head.appendChild(css);
 
   var fab = document.createElement("button");
@@ -35,13 +40,37 @@
   fab.setAttribute("aria-label", "Brainy에게 묻거나 이 앱 고쳐 달라기");
   var box = document.createElement("div");
   box.id = "bc"; box.hidden = true;
-  box.innerHTML = '<div class="bc-bar"><b>Brainy<small>' + esc(NAME) + ' — 묻기 · 이 앱 고쳐 달라기</small></b><button type="button" class="bc-q" data-bc="new">새 대화</button><button type="button" class="bc-q" data-bc="close">닫기</button></div>' +
+  box.innerHTML = '<div class="bc-grip" title="끌어서 폭 바꾸기 · 두 번 누르면 처음 폭" aria-hidden="true"></div><div class="bc-bar"><b>Brainy<small>' + esc(NAME) + ' — 묻기 · 이 앱 고쳐 달라기</small></b><button type="button" class="bc-q" data-bc="new">새 대화</button><button type="button" class="bc-q" data-bc="close">닫기</button></div>' +
     '<div class="bc-msgs" id="bc-msgs"></div>' +
     '<div class="bc-in"><textarea id="bc-text" rows="1" placeholder="예: 강의 탭 글씨를 더 크게 고쳐 줘"></textarea><button type="button" class="bc-send" id="bc-send">보내기</button></div>';
   document.body.appendChild(fab); document.body.appendChild(box);
   var msgs = box.querySelector("#bc-msgs"), text = box.querySelector("#bc-text"), send = box.querySelector("#bc-send");
 
-  var HOOK = window.BRAINY_HOOK || {};   // 앱마다: ctx() 지금 상태 · tools 앱 도구 · chips
+  var HOOK = window.BRAINY_HOOK || {};   // 앱마다: ctx() 지금 상태 · tools 앱 도구 · chips · side(넓은 화면에선 옆 창)
+  /* 옆 창: 넓은 화면(900px 이상)에서만. 앱은 --bc-side(열린 폭, 닫히면 0px)만큼 오른쪽을 비운다. 폰은 지금처럼 전체 화면 */
+  var WIDE = window.matchMedia("(min-width: 900px)"), WKEY = KEY + ".w", sideW = 400;
+  try { sideW = parseInt(localStorage.getItem(WKEY), 10) || 400; } catch (e) {}
+  function clampW(w) { return Math.round(Math.max(300, Math.min(w, Math.min(720, window.innerWidth * 0.6)))); }
+  function layout() {
+    var side = !!HOOK.side && WIDE.matches;
+    box.classList.toggle("bc-side", side);
+    box.querySelector('[data-bc="close"]').textContent = side ? "접기" : "닫기";
+    if (side) { sideW = clampW(sideW); box.style.setProperty("--bc-w", sideW + "px"); }
+    document.documentElement.style.setProperty("--bc-side", side && !box.hidden ? sideW + "px" : "0px");
+  }
+  function show(on) { box.hidden = !on; fab.hidden = on; layout(); }
+  if (HOOK.side) {
+    if (WIDE.addEventListener) WIDE.addEventListener("change", layout); else if (WIDE.addListener) WIDE.addListener(layout);
+    window.addEventListener("resize", function () { if (!box.hidden) layout(); });
+    var grip = box.querySelector(".bc-grip");
+    grip.addEventListener("pointerdown", function (e) {
+      e.preventDefault(); grip.classList.add("on"); try { grip.setPointerCapture(e.pointerId); } catch (x) {}
+      function mv(ev) { sideW = clampW(window.innerWidth - ev.clientX); layout(); }
+      function up() { grip.classList.remove("on"); grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); grip.removeEventListener("pointercancel", up); try { localStorage.setItem(WKEY, String(sideW)); } catch (x) {} }
+      grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up); grip.addEventListener("pointercancel", up);
+    });
+    grip.addEventListener("dblclick", function () { sideW = 400; layout(); try { localStorage.setItem(WKEY, "400"); } catch (x) {} });
+  }
   var CHIPS = (HOOK.chips || ["이 앱에서 ○○ 고쳐 줘"]).concat(["맡긴 앱 고치기 어떻게 됐어?"]);
   function render() {
     var h = "";
@@ -85,11 +114,11 @@
       ai.content += (ai.content ? "\n\n" : "") + (e && e.code === "cancelled" ? "멈췄어요." : "⚠ " + ((e && e.message) || "답을 받지 못했어요"));
     }).then(function () { busy = false; ctl = null; keep(); render(); });
   }
-  fab.addEventListener("click", function () { box.hidden = false; fab.hidden = true; render(); setTimeout(function () { try { text.focus(); } catch (e) {} }, 50); });
+  fab.addEventListener("click", function () { show(true); render(); setTimeout(function () { try { text.focus(); } catch (e) {} }, 50); });
   box.addEventListener("click", function (e) {
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");
-    if (a === "close") { box.hidden = true; fab.hidden = false; return; }
+    if (a === "close") { show(false); return; }
     if (a === "new") { if (ctl) ctl.abort(); turns = []; keep(); render(); return; }
     if (a === "old") { openOld = !openOld; render(); return; }
     var c = b.getAttribute("data-bc-chip");
@@ -98,7 +127,7 @@
   send.addEventListener("click", function () { if (busy) { if (ctl) ctl.abort(); } else go(text.value); });
   text.addEventListener("input", function () { text.style.height = "auto"; text.style.height = Math.min(text.scrollHeight, 140) + "px"; });
   text.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing && window.matchMedia("(pointer: fine)").matches) { e.preventDefault(); go(text.value); } });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) { box.hidden = true; fab.hidden = false; } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) show(false); });
   // 로그인돼 Brainy를 부를 수 있을 때만 버튼을 보인다
   if (window.claude && claude.use) claude.use("sample").then(function (s) { sample = s; fab.hidden = !s; }, function () {});
 })();

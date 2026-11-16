@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "a782093bd8"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]};</script>
-<script src="../shim.js?v=a782093bd8"></script>
+<script>window.BRAINY_VERSION = "93ccb5b472"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx"]};</script>
+<script src="../shim.js?v=93ccb5b472"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -174,7 +174,8 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .pick{display:flex;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}.pick:first-child{border-top:0}
 .pick input{width:22px;height:22px;accent-color:var(--accent);flex:none;cursor:pointer}.pick .t{all:unset;flex:1;min-width:0;cursor:pointer}.pick .t b{display:block;font-weight:600}.pick .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom, 0px));z-index:7;width:min(620px, calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.15)}
-#pickbar>span:first-child{flex:1;min-width:0}
+#pickbar>:first-child{flex:1;min-width:0}
+#pickbar .pb-show{all:unset;cursor:pointer;flex:1;min-width:0}#pickbar .pb-show:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .upbtn{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--l4);font-size:13px;cursor:pointer}.upbtn:active{background:var(--l4);color:#fff}
 .fseg{display:flex;gap:6px;margin:0 0 10px}
 .stagegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -212,6 +213,14 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .lc-bar{height:4px;border-radius:2px;background:var(--line);margin:0 0 12px;overflow:hidden}.lc-bar i{display:block;height:100%;background:var(--accent)}
 .lc-flash{cursor:pointer;min-height:180px}.lc-gr{margin-top:12px}.lc-gr .btn{flex:1}
 .lt-mk{display:flex;gap:6px;align-items:flex-start}.lt-mk .mk{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:15px;cursor:pointer}
+/* 넓은 화면에서 Brainy 옆 창이 열리면(--bc-side) 그 폭만큼 오른쪽을 비워 단어장과 나란히 본다 */
+body{padding-right:calc(max(16px, env(safe-area-inset-right, 0px)) + var(--bc-side, 0px))}
+#tabbar{right:var(--bc-side, 0px)}
+#pickbar{left:calc((100% - var(--bc-side, 0px)) / 2);width:min(620px, calc(100% - var(--bc-side, 0px) - 24px))}
+/* 단어를 누르면 그 자리에서 펼쳐 보는 뜻·맥락 */
+.pdet{margin:2px 0 12px;border-color:var(--accent);padding:16px}
+#detail,#picked{scroll-margin-top:170px;scroll-margin-bottom:150px}
+.pick.open .t b{color:var(--accent)}
 .lt-mk .mk.ok[aria-pressed=true]{background:var(--l4);border-color:var(--l4);color:#fff}.lt-mk .mk.fav[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 </style>
 
@@ -256,7 +265,7 @@ function setDomain(d){
   S.domain = DOMAINS[d] ? d : "학습 단어장";
   TERMS = ALL.filter(t => t.dom === S.domain);
   CATS = DOMAINS[S.domain].filter(c => TERMS.some(t => t.cat === c));
-  S.listCat = "all"; S.detail = null; S.pick = new Set(); S.batch = null; S.fieldCat = ""; S.fieldMode = "";
+  S.listCat = "all"; S.detail = null; S.batch = null; S.fieldCat = ""; S.fieldMode = "";   // 시험하려고 모은 단어(S.pick)는 단어장을 바꿔도 남는다
   try { localStorage.setItem(DOMKEY, S.domain); } catch(e) {}
 }
 const epOf = t => t.ep ? "EP " + esc(t.ep) : "볼트 단어장";
@@ -322,7 +331,11 @@ let mode = "loading";   // loading | db | local
 let note = "";
 let db = null, sample = null, sampleChecked = false;
 let pendingRender = false;
-const S = { scen: 0, listCat: "all", listQ: "", detail: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null, fieldCat: "", fieldMode: "" };
+const S = { scen: 0, listCat: "all", listQ: "", detail: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null, fieldCat: "", fieldMode: "", jump: null };
+/* 시험하려고 모은 단어는 이 기기에 남겨 새로고침해도 홈에서 다시 본다 */
+const LSPICK = "chewha-vocab-pick-v1";
+try { S.pick = new Set(JSON.parse(localStorage.getItem(LSPICK) || "[]")); } catch(e) {}
+function savePick(){ try { localStorage.setItem(LSPICK, JSON.stringify([...S.pick])); } catch(e) {} }
 
 const lv = id => prog[id]?.level || 1;
 const isCore = id => (typeof prog[id]?.core === "boolean") ? prog[id].core : CORE.has(id);
@@ -365,6 +378,7 @@ function renderHome(){
   const all = counts(TERMS.map(t => t.id)), d = kday();
   const due = TERMS.filter(t => { const x = srsOf(t.id); return x && x.due <= d; }).length;
   const fresh = ALL.filter(t => isFresh(t) && lv(t.id) < 4).length;
+  const picked = [...S.pick].map(id => BYID[id]).filter(Boolean);
   return `
   ${statusNote()}
   ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때).</p>` : ""}
@@ -376,6 +390,11 @@ function renderHome(){
       <a class="row" href="#new" style="text-decoration:none"><div class="t"><b>새 개념 ${fresh}개</b><span>최근 2주 안에 위키에 새로 정리된 개념·새로 들어온 단어</span></div><span class="why">새 개념 →</span></a>
     </div>
   </section>
+  ${picked.length ? `<section class="card stack" id="picked">
+    <div class="meta"><h2 style="margin:0">시험하려고 모은 단어 <span class="mono">${picked.length}</span></h2><button class="btn ghost" data-pickclear="1" style="padding:6px 12px">모두 지우기</button></div>
+    <p class="small muted">단어를 누르면 바로 밑에 뜻과 맥락이 펼쳐져요. 체크를 풀면 목록에서 빠져요.</p>
+    <div class="list">${picked.map(pickRow).join("")}</div>
+  </section>` : ""}
   <section class="card">
     <h2>이해도 지도</h2>
     ${barHtml(all, TERMS.length)}
@@ -514,22 +533,26 @@ function renderList(){
   const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}</div>`;
   return `<input type="search" id="listQ" placeholder="단어나 뜻으로 찾기" value="${esc(S.listQ)}" aria-label="단어 찾기">
   ${chips}
-  <section class="card" id="listOut">${listRows()}</section>
-  ${S.detail ? detailHtml(BYID[S.detail]) : ""}`;
+  ${S.detail && BYID[S.detail] && !listItems().slice(0, 300).some(t => t.id === S.detail) ? detailHtml(BYID[S.detail], true) : ""}
+  <section class="card" id="listOut">${listRows()}</section>`;
+}
+function listItems(){
+  const q = S.listQ.trim().toLowerCase();
+  return TERMS.filter(t => (S.listCat === "all" || t.cat === S.listCat) && (!q || (t.term + " " + t.def).toLowerCase().includes(q)));
 }
 function listRows(){
-  const q = S.listQ.trim().toLowerCase();
-  const items = TERMS.filter(t => (S.listCat === "all" || t.cat === S.listCat) && (!q || (t.term + " " + t.def).toLowerCase().includes(q)));
+  const items = listItems();
   if (!items.length) return `<p class="empty">${TERMS.length ? "찾는 단어가 없어요." : esc(S.domain) + "에는 아직 단어가 없어요."}</p>`;
   return pickList(items, 300);
 }
-function detailHtml(t){
+function detailHtml(t, inline){
   const p = prog[t.id] || {};
-  return `<section class="card stack" id="detail">
-    <div class="meta"><span class="tc">${esc(t.cat)} · ${epOf(t)}</span>${pill(lv(t.id))}</div>
+  if (!ctxOk(t.id)) ensureCtx(t.id);   // 장면·쉽게가 아직 없으면 펼칠 때 저절로 만든다
+  return `<section class="card stack${inline ? " pdet" : ""}" id="detail">
+    <div class="meta"><span class="tc">${esc(t.cat)} · ${epOf(t)}</span><span class="btns" style="gap:6px;align-items:center">${pill(lv(t.id))}<button class="btn ghost" data-detail="${t.id}" style="padding:4px 10px" aria-label="${esc(t.term)} 접기">접기</button></span></div>
     <h3>${esc(t.term)}</h3>
     ${stageHtml(t)}
-    ${ctxOk(t.id) ? `<div class="scene"><span class="lbl">장면</span>${esc(CTX[t.id].scene)}</div>` : ""}
+    ${ctxOk(t.id) || genBusy.has(t.id) ? sceneHtml(t) : ""}
     ${ctxLayers(t)}
     ${!ctxOk(t.id) && sample ? `<button class="btn ghost" data-act="regen" data-id="${t.id}" ${genBusy.has(t.id)?"disabled":""}>${genBusy.has(t.id) ? "장면 만드는 중…" : "장면·맥락 만들기"}</button>` : ""}
     ${p.cmd?.text ? `<p class="small"><span class="muted">내가 쓴 명령</span><br>${esc(p.cmd.text)}</p>` : ""}
@@ -553,6 +576,7 @@ function render(){
   document.getElementById("dom").innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
   const pb = document.getElementById("pickbar"), pbh = pickBar(); if (pb) pb.remove(); if (pbh) document.body.insertAdjacentHTML("beforeend", pbh);
   document.getElementById("sub").textContent = `${S.domain} ${TERMS.length}개 · 목표 달성 ${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}`;
+  savePick();
 }
 
 /* ---------- Claude calls ---------- */
@@ -585,13 +609,34 @@ document.addEventListener("click", e => {
   if (d.act === "regen") { ensureCtx(d.id, true); render(); return; }
   if (d.act === "core") { const id = d.id; save(id, { core: !isCore(id) }, "체화/소통용 변경"); return; }
   if (d.listcat) { S.listCat = d.listcat; render(); return; }
-  if (d.detail) { S.detail = d.detail; if (view() !== "list") { location.hash = "list"; } else { render(); document.getElementById("detail")?.scrollIntoView({ block: "start", behavior: "smooth" }); } return; }
+  if (d.detail) {
+    // 목록 안의 단어(또는 펼친 카드의 「접기」)면 그 자리에서 펼치고 접는다. 강의 탭처럼 목록 밖이면 전체 탭 맨 위에 펼친다
+    if (el.closest(".pick,.pdet")) { S.detail = S.detail === d.detail ? null : d.detail; render(); if (S.detail) jumpTo("nearest"); }
+    else openTerm(d.detail);
+    return;
+  }
 });
+/* 단어 하나를 전체 탭에서 펼쳐 보기 — 다른 단어장의 단어면 그 단어장으로 바꾸고, 찾기·분야 거르기를 풀어 꼭 보이게 */
+function openTerm(id){
+  const t = BYID[id]; if (!t) return;
+  if (t.dom !== S.domain) setDomain(t.dom);
+  S.listCat = "all"; S.listQ = ""; S.detail = id; S.jump = "detail";
+  if (view() !== "list") location.hash = "list"; else { render(); jumpTo(); }
+}
+/* 화면을 다시 그린 뒤 펼친 단어(#detail)나 모은 단어(#picked)로 스크롤 */
+function jumpTo(block){
+  const id = S.jump || "detail"; S.jump = null;
+  requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: block || "start", behavior: "smooth" }));
+}
 document.addEventListener("input", e => {
   if (e.target.id === "listQ") { S.listQ = e.target.value; document.getElementById("listOut").innerHTML = listRows(); }
 });
 /* 입력 중 미뤄 둔 화면 갱신은 다음 버튼 동작 때 함께 반영한다 (focusout에서 다시 그리면 누르려던 버튼이 바뀌어 클릭이 사라짐) */
-window.addEventListener("hashchange", () => { if (view() !== "list") S.detail = S.detail; render(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => {
+  if (!S.jump) S.detail = null;   // 탭을 옮기면 펼친 단어는 접는다 (단어를 열러 온 길이면 그대로)
+  render(); window.scrollTo(0, 0);
+  if (S.jump) jumpTo();
+});
 
 /* ---------- start ---------- */
 async function init(){
@@ -785,7 +830,7 @@ function renderReview(){
     const top = `<div class="meta" style="margin:2px"><span class="tc">${title}</span><button class="btn ghost" data-rv="stageend" style="padding:6px 12px">그만</button></div>`;
     if (RV.i >= RV.queue.length) return `${top}<section class="card stack"><h3>시험 끝</h3>
       <p>${new Set(RV.queue).size}개 중 <b>${RV.up || 0}개</b>가 다음 단계로 올라갔어요.</p>
-      <div class="btns"><button class="btn primary" data-rv="stageend">단계별로 돌아가기</button></div></section>`;
+      <div class="btns"><button class="btn primary" data-rv="stageend">${({ home: "홈으로", new: "새 개념으로", field: "분야로", list: "전체로", lec: "강의로" })[RV.back] || "단계별로"} 돌아가기</button></div></section>`;
     return top + rvCard();
   }
   if (RV.i >= RV.queue.length) {
@@ -842,7 +887,7 @@ document.addEventListener("click", e => {
   const a = el.dataset.rv;
   const step3 = rvStep(RV.queue?.[RV.i]) >= 3;
   if (a === "flip") { if (!RV.flipped && !step3) { RV.flipped = true; render(); } return; }
-  if (a === "stageend") { RV.mode = null; RV.queue = null; RV.up = 0; location.hash = "stage"; return; }
+  if (a === "stageend") { RV.mode = null; RV.queue = null; RV.up = 0; location.hash = RV.back || "stage"; return; }
   if (a === "check") { rvCheck(); return; }
   if (a === "retry") { RV.flipped = false; RV.res = null; render(); return; }
   if (a === "more") { const extra = rvFresh().filter(t => !RV.queue.includes(t.id)).slice(0, RV_NEW).map(t => t.id); RV.queue = RV.queue.concat(extra); render(); return; }
@@ -864,14 +909,17 @@ const ro = w => { const c = (w || "").charCodeAt(w.length - 1) - 0xAC00, j = c >
 function stagePool(L){ return TERMS.filter(t => lv(t.id) === L).sort((a, b) => conceptFirst(a, b) || newerFirst(a, b) || String(prog[a.id]?.lastSeen || "").localeCompare(String(prog[b.id]?.lastSeen || ""))); }
 function stageStart(ids, from){
   if (!ids.length) return;
+  if (view() !== "review") RV.back = view();   // 시험이 끝나면 시작한 화면으로 돌아간다
   RV.mode = "stage"; RV.from = from; RV.up = 0; RV.queue = ids; RV.i = 0; RV.flipped = false; RV.res = null; RV.err = ""; RV.again = new Set();
   location.hash = "review";
 }
 /* 체크해서 고르기 (2026-11-13 동욱) — 단계별·새 개념·분야·전체 어디서든 보이는 단어를 골라 밑 바에서 바로 시험 */
 const PICK_MAX = 30;
+/* 단어를 누르면 다른 화면으로 가지 않고 그 자리 밑에 뜻·맥락을 펼친다 (다시 누르면 접힘, 2026-11-16 동욱) */
 function pickRow(t){
-  return `<div class="pick"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
-    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>`;
+  const open = S.detail === t.id;
+  return `<div class="pick${open ? " open" : ""}"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
+    <button class="t" data-detail="${t.id}" aria-expanded="${open}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${open ? detailHtml(t, true) : ""}`;
 }
 function pickList(list, max = 80){
   if (!list.length) return "";
@@ -881,7 +929,7 @@ function pickList(list, max = 80){
 function pickBar(){
   const ids = [...S.pick].filter(id => BYID[id]); if (!ids.length || view() === "review" || S.batch) return "";
   const n = [1, 2, 3, 4].map(L => ids.filter(id => lv(id) === L).length), all3 = n[2] === ids.length;
-  return `<div id="pickbar"><span><b class="mono">${ids.length}</b>개 고름 <span class="small muted">${[1, 2, 3, 4].filter(L => n[L - 1]).map(L => LV[L] + " " + n[L - 1]).join(" · ")}</span></span>
+  return `<div id="pickbar"><button type="button" class="pb-show" data-pickshow="1" title="모은 단어의 뜻·맥락 보기"><b class="mono">${ids.length}</b>개 고름 <span class="small" style="color:var(--accent);font-weight:600">보기</span> <span class="small muted">${[1, 2, 3, 4].filter(L => n[L - 1]).map(L => LV[L] + " " + n[L - 1]).join(" · ")}</span></button>
     <button class="btn ghost" data-pickclear="1" style="padding:8px 12px">✕</button><button class="btn" data-pickup="1" style="padding:8px 12px">▲ 바로 올리기</button><button class="btn primary" data-picktest="1" style="padding:8px 14px">▶ ${all3 ? "명령 시험" : "시험"}</button></div>`;
 }
 function pickTest(){
@@ -962,8 +1010,9 @@ async function batchCheck(){
   B.busy = false; render();
 }
 document.addEventListener("click", e => {
-  const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-pickup],[data-up],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;
+  const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-pickup],[data-up],[data-batchend],[data-batchcheck],[data-bself],[data-pickshow]"); if (!b) return;
   const d = b.dataset;
+  if (d.pickshow) { S.jump = "picked"; if (view() !== "home") location.hash = "home"; else { render(); jumpTo(); } return; }
   if (d.up) { const L = lv(d.up); if (L < 4) save(d.up, { level: L + 1, fuzzy: false }, "바로 올림 (시험 없이)"); return; }
   if (d.pickup) { const ids = [...S.pick].filter(id => BYID[id] && lv(id) < 4); S.pick = new Set(); ids.forEach(id => save(id, { level: lv(id) + 1, fuzzy: false }, "바로 올림 (시험 없이)")); render(); return; }
   if (d.stage) { S.stage = +d.stage; S.batch = null; render(); return; }
@@ -975,8 +1024,8 @@ document.addEventListener("click", e => {
   if (d.batchcheck) { batchCheck(); return; }
   if (d.bself) { const id = d.bself; if (d.ok === "1") { S.batch.res[id] = { pass: true, self: true }; batchPass(id, "직접 비교"); } else { S.batch.res[id] = { pass: false, self: true }; render(); } }
 });
-document.addEventListener("change", e => { const id = e.target?.dataset?.pickid; if (!id) return; if (e.target.checked && S.pick.size < PICK_MAX) S.pick.add(id); else S.pick.delete(id); e.target.checked = S.pick.has(id); paintPickBar(); });
-function paintPickBar(){ const old = document.getElementById("pickbar"); const h = pickBar(); if (old) old.outerHTML = h || ""; else if (h) document.body.insertAdjacentHTML("beforeend", h); }
+document.addEventListener("change", e => { const id = e.target?.dataset?.pickid; if (!id) return; if (e.target.checked && S.pick.size < PICK_MAX) S.pick.add(id); else S.pick.delete(id); e.target.checked = S.pick.has(id); if (view() === "home") render(); else paintPickBar(); });
+function paintPickBar(){ savePick(); const old = document.getElementById("pickbar"); const h = pickBar(); if (old) old.outerHTML = h || ""; else if (h) document.body.insertAdjacentHTML("beforeend", h); }
 document.addEventListener("input", e => { if (e.target.classList?.contains("bt-in") && S.batch) S.batch.drafts[e.target.dataset.bid] = e.target.value; });
 
 /* ── 강의 · 분야 — 강의(챕터)별 / 학습 분야별 용어, 거기서 바로 익히기, 용어를 누르면 맥락 (build.py 가 끼움) ──
@@ -1201,6 +1250,7 @@ init();
       ALL.filter(function (t) { return norm(t.term).indexOf(n) >= 0 || n.indexOf(norm(t.term)) >= 0; })[0] || null;
   }
   window.BRAINY_HOOK = {
+    side: true,   // 넓은 화면에선 단어장 옆에 붙는 창
     chips: ["오늘 복습할 단어 뭐야?", "헷갈리는 단어 3개 골라서 쉽게 설명해 줘", "이 앱에서 ○○ 고쳐 줘"],
     ctx: function () {
       var day = kday(), by = { 1: [], 2: [], 3: [], 4: [] }, due = [];
@@ -1224,7 +1274,7 @@ init();
         inputSchema: { type: "object", properties: { view: { type: "string" }, term: { type: "string" } } },
         execute: function (i) {
           var t = i.term ? findTerm(i.term) : null;
-          if (t) { S.detail = t.id; location.hash = "list"; render(); return t.term; }
+          if (t) { openTerm(t.id); return t.term; }
           var v = i.view === "learn" || i.view === "do" ? "stage" : (i.view || "home"); location.hash = v; return v;
         } }
     ]
@@ -1261,7 +1311,12 @@ init();
     "#bc .bc-chips{display:flex;flex-wrap:wrap;gap:6px}#bc .bc-hint{font-size:13px;color:var(--g-mut);margin:0}" +
     "#bc .bc-in{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--g-line);background:var(--g-card);align-items:end}" +
     "#bc textarea{font:inherit;font-size:16px;color:var(--g-fg);background:var(--g-bg);border:1px solid var(--g-line);border-radius:12px;padding:10px 12px;resize:none;height:46px;min-height:46px;max-height:140px;box-sizing:border-box}" +
-    "#bc .bc-send{height:46px;border:0;border-radius:12px;padding:0 16px;background:var(--g-acc);color:var(--g-acc-ink);font-weight:600}";
+    "#bc .bc-send{height:46px;border:0;border-radius:12px;padding:0 16px;background:var(--g-acc);color:var(--g-acc-ink);font-weight:600}" +
+    /* 넓은 화면 옆 창 (HOOK.side) — 앱 화면을 가리지 않고 오른쪽에 붙는다. 왼쪽 가장자리를 끌어 폭을 바꾼다 */
+    "#bc.bc-side{left:auto;width:var(--bc-w,400px);border-left:1px solid var(--g-line);box-shadow:-8px 0 24px rgba(0,0,0,.08)}" +
+    "#bc .bc-grip{display:none}#bc.bc-side .bc-grip{display:block;position:absolute;left:-4px;top:0;bottom:0;width:8px;cursor:col-resize;touch-action:none;z-index:1}" +
+    "#bc.bc-side .bc-grip:hover,#bc.bc-side .bc-grip.on{background:var(--g-acc);opacity:.35}" +
+    "#bc.bc-side .bc-bar{padding:10px 12px}#bc.bc-side .bc-msgs{padding:12px}#bc.bc-side .bc-b{max-width:96%}#bc.bc-side .bc-in{padding:10px 12px}";
   document.head.appendChild(css);
 
   var fab = document.createElement("button");
@@ -1269,13 +1324,37 @@ init();
   fab.setAttribute("aria-label", "Brainy에게 묻거나 이 앱 고쳐 달라기");
   var box = document.createElement("div");
   box.id = "bc"; box.hidden = true;
-  box.innerHTML = '<div class="bc-bar"><b>Brainy<small>' + esc(NAME) + ' — 묻기 · 이 앱 고쳐 달라기</small></b><button type="button" class="bc-q" data-bc="new">새 대화</button><button type="button" class="bc-q" data-bc="close">닫기</button></div>' +
+  box.innerHTML = '<div class="bc-grip" title="끌어서 폭 바꾸기 · 두 번 누르면 처음 폭" aria-hidden="true"></div><div class="bc-bar"><b>Brainy<small>' + esc(NAME) + ' — 묻기 · 이 앱 고쳐 달라기</small></b><button type="button" class="bc-q" data-bc="new">새 대화</button><button type="button" class="bc-q" data-bc="close">닫기</button></div>' +
     '<div class="bc-msgs" id="bc-msgs"></div>' +
     '<div class="bc-in"><textarea id="bc-text" rows="1" placeholder="예: 강의 탭 글씨를 더 크게 고쳐 줘"></textarea><button type="button" class="bc-send" id="bc-send">보내기</button></div>';
   document.body.appendChild(fab); document.body.appendChild(box);
   var msgs = box.querySelector("#bc-msgs"), text = box.querySelector("#bc-text"), send = box.querySelector("#bc-send");
 
-  var HOOK = window.BRAINY_HOOK || {};   // 앱마다: ctx() 지금 상태 · tools 앱 도구 · chips
+  var HOOK = window.BRAINY_HOOK || {};   // 앱마다: ctx() 지금 상태 · tools 앱 도구 · chips · side(넓은 화면에선 옆 창)
+  /* 옆 창: 넓은 화면(900px 이상)에서만. 앱은 --bc-side(열린 폭, 닫히면 0px)만큼 오른쪽을 비운다. 폰은 지금처럼 전체 화면 */
+  var WIDE = window.matchMedia("(min-width: 900px)"), WKEY = KEY + ".w", sideW = 400;
+  try { sideW = parseInt(localStorage.getItem(WKEY), 10) || 400; } catch (e) {}
+  function clampW(w) { return Math.round(Math.max(300, Math.min(w, Math.min(720, window.innerWidth * 0.6)))); }
+  function layout() {
+    var side = !!HOOK.side && WIDE.matches;
+    box.classList.toggle("bc-side", side);
+    box.querySelector('[data-bc="close"]').textContent = side ? "접기" : "닫기";
+    if (side) { sideW = clampW(sideW); box.style.setProperty("--bc-w", sideW + "px"); }
+    document.documentElement.style.setProperty("--bc-side", side && !box.hidden ? sideW + "px" : "0px");
+  }
+  function show(on) { box.hidden = !on; fab.hidden = on; layout(); }
+  if (HOOK.side) {
+    if (WIDE.addEventListener) WIDE.addEventListener("change", layout); else if (WIDE.addListener) WIDE.addListener(layout);
+    window.addEventListener("resize", function () { if (!box.hidden) layout(); });
+    var grip = box.querySelector(".bc-grip");
+    grip.addEventListener("pointerdown", function (e) {
+      e.preventDefault(); grip.classList.add("on"); try { grip.setPointerCapture(e.pointerId); } catch (x) {}
+      function mv(ev) { sideW = clampW(window.innerWidth - ev.clientX); layout(); }
+      function up() { grip.classList.remove("on"); grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); grip.removeEventListener("pointercancel", up); try { localStorage.setItem(WKEY, String(sideW)); } catch (x) {} }
+      grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up); grip.addEventListener("pointercancel", up);
+    });
+    grip.addEventListener("dblclick", function () { sideW = 400; layout(); try { localStorage.setItem(WKEY, "400"); } catch (x) {} });
+  }
   var CHIPS = (HOOK.chips || ["이 앱에서 ○○ 고쳐 줘"]).concat(["맡긴 앱 고치기 어떻게 됐어?"]);
   function render() {
     var h = "";
@@ -1319,11 +1398,11 @@ init();
       ai.content += (ai.content ? "\n\n" : "") + (e && e.code === "cancelled" ? "멈췄어요." : "⚠ " + ((e && e.message) || "답을 받지 못했어요"));
     }).then(function () { busy = false; ctl = null; keep(); render(); });
   }
-  fab.addEventListener("click", function () { box.hidden = false; fab.hidden = true; render(); setTimeout(function () { try { text.focus(); } catch (e) {} }, 50); });
+  fab.addEventListener("click", function () { show(true); render(); setTimeout(function () { try { text.focus(); } catch (e) {} }, 50); });
   box.addEventListener("click", function (e) {
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");
-    if (a === "close") { box.hidden = true; fab.hidden = false; return; }
+    if (a === "close") { show(false); return; }
     if (a === "new") { if (ctl) ctl.abort(); turns = []; keep(); render(); return; }
     if (a === "old") { openOld = !openOld; render(); return; }
     var c = b.getAttribute("data-bc-chip");
@@ -1332,7 +1411,7 @@ init();
   send.addEventListener("click", function () { if (busy) { if (ctl) ctl.abort(); } else go(text.value); });
   text.addEventListener("input", function () { text.style.height = "auto"; text.style.height = Math.min(text.scrollHeight, 140) + "px"; });
   text.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing && window.matchMedia("(pointer: fine)").matches) { e.preventDefault(); go(text.value); } });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) { box.hidden = true; fab.hidden = false; } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) show(false); });
   // 로그인돼 Brainy를 부를 수 있을 때만 버튼을 보인다
   if (window.claude && claude.use) claude.use("sample").then(function (s) { sample = s; fab.hidden = !s; }, function () {});
 })();

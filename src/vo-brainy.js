@@ -9,6 +9,7 @@
       ALL.filter(function (t) { return norm(t.term).indexOf(n) >= 0 || n.indexOf(norm(t.term)) >= 0; })[0] || null;
   }
   window.BRAINY_HOOK = {
+    side: true,   // 넓은 화면에선 단어장 옆에 붙는 창
     chips: ["오늘 복습할 단어 뭐야?", "헷갈리는 단어 3개 골라서 쉽게 설명해 줘", "이 앱에서 ○○ 고쳐 줘"],
     ctx: function () {
       var day = kday(), by = { 1: [], 2: [], 3: [], 4: [] }, due = [];
@@ -32,7 +33,7 @@
         inputSchema: { type: "object", properties: { view: { type: "string" }, term: { type: "string" } } },
         execute: function (i) {
           var t = i.term ? findTerm(i.term) : null;
-          if (t) { S.detail = t.id; location.hash = "list"; render(); return t.term; }
+          if (t) { openTerm(t.id); return t.term; }
           var v = i.view === "learn" || i.view === "do" ? "stage" : (i.view || "home"); location.hash = v; return v;
         } }
     ]

@@ -120,7 +120,8 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .pick{display:flex;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}.pick:first-child{border-top:0}
 .pick input{width:22px;height:22px;accent-color:var(--accent);flex:none;cursor:pointer}.pick .t{all:unset;flex:1;min-width:0;cursor:pointer}.pick .t b{display:block;font-weight:600}.pick .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom, 0px));z-index:7;width:min(620px, calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.15)}
-#pickbar>span:first-child{flex:1;min-width:0}
+#pickbar>:first-child{flex:1;min-width:0}
+#pickbar .pb-show{all:unset;cursor:pointer;flex:1;min-width:0}#pickbar .pb-show:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .upbtn{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--l4);font-size:13px;cursor:pointer}.upbtn:active{background:var(--l4);color:#fff}
 .fseg{display:flex;gap:6px;margin:0 0 10px}
 .stagegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -158,6 +159,14 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .lc-bar{height:4px;border-radius:2px;background:var(--line);margin:0 0 12px;overflow:hidden}.lc-bar i{display:block;height:100%;background:var(--accent)}
 .lc-flash{cursor:pointer;min-height:180px}.lc-gr{margin-top:12px}.lc-gr .btn{flex:1}
 .lt-mk{display:flex;gap:6px;align-items:flex-start}.lt-mk .mk{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:15px;cursor:pointer}
+/* 넓은 화면에서 Brainy 옆 창이 열리면(--bc-side) 그 폭만큼 오른쪽을 비워 단어장과 나란히 본다 */
+body{padding-right:calc(max(16px, env(safe-area-inset-right, 0px)) + var(--bc-side, 0px))}
+#tabbar{right:var(--bc-side, 0px)}
+#pickbar{left:calc((100% - var(--bc-side, 0px)) / 2);width:min(620px, calc(100% - var(--bc-side, 0px) - 24px))}
+/* 단어를 누르면 그 자리에서 펼쳐 보는 뜻·맥락 */
+.pdet{margin:2px 0 12px;border-color:var(--accent);padding:16px}
+#detail,#picked{scroll-margin-top:170px;scroll-margin-bottom:150px}
+.pick.open .t b{color:var(--accent)}
 .lt-mk .mk.ok[aria-pressed=true]{background:var(--l4);border-color:var(--l4);color:#fff}.lt-mk .mk.fav[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 </style>
 
@@ -202,7 +211,7 @@ function setDomain(d){
   S.domain = DOMAINS[d] ? d : "학습 단어장";
   TERMS = ALL.filter(t => t.dom === S.domain);
   CATS = DOMAINS[S.domain].filter(c => TERMS.some(t => t.cat === c));
-  S.listCat = "all"; S.detail = null; S.pick = new Set(); S.batch = null; S.fieldCat = ""; S.fieldMode = "";
+  S.listCat = "all"; S.detail = null; S.batch = null; S.fieldCat = ""; S.fieldMode = "";   // 시험하려고 모은 단어(S.pick)는 단어장을 바꿔도 남는다
   try { localStorage.setItem(DOMKEY, S.domain); } catch(e) {}
 }
 const epOf = t => t.ep ? "EP " + esc(t.ep) : "볼트 단어장";
@@ -268,7 +277,11 @@ let mode = "loading";   // loading | db | local
 let note = "";
 let db = null, sample = null, sampleChecked = false;
 let pendingRender = false;
-const S = { scen: 0, listCat: "all", listQ: "", detail: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null, fieldCat: "", fieldMode: "" };
+const S = { scen: 0, listCat: "all", listQ: "", detail: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null, fieldCat: "", fieldMode: "", jump: null };
+/* 시험하려고 모은 단어는 이 기기에 남겨 새로고침해도 홈에서 다시 본다 */
+const LSPICK = "chewha-vocab-pick-v1";
+try { S.pick = new Set(JSON.parse(localStorage.getItem(LSPICK) || "[]")); } catch(e) {}
+function savePick(){ try { localStorage.setItem(LSPICK, JSON.stringify([...S.pick])); } catch(e) {} }
 
 const lv = id => prog[id]?.level || 1;
 const isCore = id => (typeof prog[id]?.core === "boolean") ? prog[id].core : CORE.has(id);
@@ -311,6 +324,7 @@ function renderHome(){
   const all = counts(TERMS.map(t => t.id)), d = kday();
   const due = TERMS.filter(t => { const x = srsOf(t.id); return x && x.due <= d; }).length;
   const fresh = ALL.filter(t => isFresh(t) && lv(t.id) < 4).length;
+  const picked = [...S.pick].map(id => BYID[id]).filter(Boolean);
   return `
   ${statusNote()}
   ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때).</p>` : ""}
@@ -322,6 +336,11 @@ function renderHome(){
       <a class="row" href="#new" style="text-decoration:none"><div class="t"><b>새 개념 ${fresh}개</b><span>최근 2주 안에 위키에 새로 정리된 개념·새로 들어온 단어</span></div><span class="why">새 개념 →</span></a>
     </div>
   </section>
+  ${picked.length ? `<section class="card stack" id="picked">
+    <div class="meta"><h2 style="margin:0">시험하려고 모은 단어 <span class="mono">${picked.length}</span></h2><button class="btn ghost" data-pickclear="1" style="padding:6px 12px">모두 지우기</button></div>
+    <p class="small muted">단어를 누르면 바로 밑에 뜻과 맥락이 펼쳐져요. 체크를 풀면 목록에서 빠져요.</p>
+    <div class="list">${picked.map(pickRow).join("")}</div>
+  </section>` : ""}
   <section class="card">
     <h2>이해도 지도</h2>
     ${barHtml(all, TERMS.length)}
@@ -460,22 +479,26 @@ function renderList(){
   const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}</div>`;
   return `<input type="search" id="listQ" placeholder="단어나 뜻으로 찾기" value="${esc(S.listQ)}" aria-label="단어 찾기">
   ${chips}
-  <section class="card" id="listOut">${listRows()}</section>
-  ${S.detail ? detailHtml(BYID[S.detail]) : ""}`;
+  ${S.detail && BYID[S.detail] && !listItems().slice(0, 300).some(t => t.id === S.detail) ? detailHtml(BYID[S.detail], true) : ""}
+  <section class="card" id="listOut">${listRows()}</section>`;
+}
+function listItems(){
+  const q = S.listQ.trim().toLowerCase();
+  return TERMS.filter(t => (S.listCat === "all" || t.cat === S.listCat) && (!q || (t.term + " " + t.def).toLowerCase().includes(q)));
 }
 function listRows(){
-  const q = S.listQ.trim().toLowerCase();
-  const items = TERMS.filter(t => (S.listCat === "all" || t.cat === S.listCat) && (!q || (t.term + " " + t.def).toLowerCase().includes(q)));
+  const items = listItems();
   if (!items.length) return `<p class="empty">${TERMS.length ? "찾는 단어가 없어요." : esc(S.domain) + "에는 아직 단어가 없어요."}</p>`;
   return pickList(items, 300);
 }
-function detailHtml(t){
+function detailHtml(t, inline){
   const p = prog[t.id] || {};
-  return `<section class="card stack" id="detail">
-    <div class="meta"><span class="tc">${esc(t.cat)} · ${epOf(t)}</span>${pill(lv(t.id))}</div>
+  if (!ctxOk(t.id)) ensureCtx(t.id);   // 장면·쉽게가 아직 없으면 펼칠 때 저절로 만든다
+  return `<section class="card stack${inline ? " pdet" : ""}" id="detail">
+    <div class="meta"><span class="tc">${esc(t.cat)} · ${epOf(t)}</span><span class="btns" style="gap:6px;align-items:center">${pill(lv(t.id))}<button class="btn ghost" data-detail="${t.id}" style="padding:4px 10px" aria-label="${esc(t.term)} 접기">접기</button></span></div>
     <h3>${esc(t.term)}</h3>
     ${stageHtml(t)}
-    ${ctxOk(t.id) ? `<div class="scene"><span class="lbl">장면</span>${esc(CTX[t.id].scene)}</div>` : ""}
+    ${ctxOk(t.id) || genBusy.has(t.id) ? sceneHtml(t) : ""}
     ${ctxLayers(t)}
     ${!ctxOk(t.id) && sample ? `<button class="btn ghost" data-act="regen" data-id="${t.id}" ${genBusy.has(t.id)?"disabled":""}>${genBusy.has(t.id) ? "장면 만드는 중…" : "장면·맥락 만들기"}</button>` : ""}
     ${p.cmd?.text ? `<p class="small"><span class="muted">내가 쓴 명령</span><br>${esc(p.cmd.text)}</p>` : ""}
@@ -499,6 +522,7 @@ function render(){
   document.getElementById("dom").innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
   const pb = document.getElementById("pickbar"), pbh = pickBar(); if (pb) pb.remove(); if (pbh) document.body.insertAdjacentHTML("beforeend", pbh);
   document.getElementById("sub").textContent = `${S.domain} ${TERMS.length}개 · 목표 달성 ${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}`;
+  savePick();
 }
 
 /* ---------- Claude calls ---------- */
@@ -531,13 +555,34 @@ document.addEventListener("click", e => {
   if (d.act === "regen") { ensureCtx(d.id, true); render(); return; }
   if (d.act === "core") { const id = d.id; save(id, { core: !isCore(id) }, "체화/소통용 변경"); return; }
   if (d.listcat) { S.listCat = d.listcat; render(); return; }
-  if (d.detail) { S.detail = d.detail; if (view() !== "list") { location.hash = "list"; } else { render(); document.getElementById("detail")?.scrollIntoView({ block: "start", behavior: "smooth" }); } return; }
+  if (d.detail) {
+    // 목록 안의 단어(또는 펼친 카드의 「접기」)면 그 자리에서 펼치고 접는다. 강의 탭처럼 목록 밖이면 전체 탭 맨 위에 펼친다
+    if (el.closest(".pick,.pdet")) { S.detail = S.detail === d.detail ? null : d.detail; render(); if (S.detail) jumpTo("nearest"); }
+    else openTerm(d.detail);
+    return;
+  }
 });
+/* 단어 하나를 전체 탭에서 펼쳐 보기 — 다른 단어장의 단어면 그 단어장으로 바꾸고, 찾기·분야 거르기를 풀어 꼭 보이게 */
+function openTerm(id){
+  const t = BYID[id]; if (!t) return;
+  if (t.dom !== S.domain) setDomain(t.dom);
+  S.listCat = "all"; S.listQ = ""; S.detail = id; S.jump = "detail";
+  if (view() !== "list") location.hash = "list"; else { render(); jumpTo(); }
+}
+/* 화면을 다시 그린 뒤 펼친 단어(#detail)나 모은 단어(#picked)로 스크롤 */
+function jumpTo(block){
+  const id = S.jump || "detail"; S.jump = null;
+  requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: block || "start", behavior: "smooth" }));
+}
 document.addEventListener("input", e => {
   if (e.target.id === "listQ") { S.listQ = e.target.value; document.getElementById("listOut").innerHTML = listRows(); }
 });
 /* 입력 중 미뤄 둔 화면 갱신은 다음 버튼 동작 때 함께 반영한다 (focusout에서 다시 그리면 누르려던 버튼이 바뀌어 클릭이 사라짐) */
-window.addEventListener("hashchange", () => { if (view() !== "list") S.detail = S.detail; render(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => {
+  if (!S.jump) S.detail = null;   // 탭을 옮기면 펼친 단어는 접는다 (단어를 열러 온 길이면 그대로)
+  render(); window.scrollTo(0, 0);
+  if (S.jump) jumpTo();
+});
 
 /* ---------- start ---------- */
 async function init(){

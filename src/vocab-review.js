@@ -152,7 +152,7 @@ function renderReview(){
     const top = `<div class="meta" style="margin:2px"><span class="tc">${title}</span><button class="btn ghost" data-rv="stageend" style="padding:6px 12px">그만</button></div>`;
     if (RV.i >= RV.queue.length) return `${top}<section class="card stack"><h3>시험 끝</h3>
       <p>${new Set(RV.queue).size}개 중 <b>${RV.up || 0}개</b>가 다음 단계로 올라갔어요.</p>
-      <div class="btns"><button class="btn primary" data-rv="stageend">단계별로 돌아가기</button></div></section>`;
+      <div class="btns"><button class="btn primary" data-rv="stageend">${({ home: "홈으로", new: "새 개념으로", field: "분야로", list: "전체로", lec: "강의로" })[RV.back] || "단계별로"} 돌아가기</button></div></section>`;
     return top + rvCard();
   }
   if (RV.i >= RV.queue.length) {
@@ -209,7 +209,7 @@ document.addEventListener("click", e => {
   const a = el.dataset.rv;
   const step3 = rvStep(RV.queue?.[RV.i]) >= 3;
   if (a === "flip") { if (!RV.flipped && !step3) { RV.flipped = true; render(); } return; }
-  if (a === "stageend") { RV.mode = null; RV.queue = null; RV.up = 0; location.hash = "stage"; return; }
+  if (a === "stageend") { RV.mode = null; RV.queue = null; RV.up = 0; location.hash = RV.back || "stage"; return; }
   if (a === "check") { rvCheck(); return; }
   if (a === "retry") { RV.flipped = false; RV.res = null; render(); return; }
   if (a === "more") { const extra = rvFresh().filter(t => !RV.queue.includes(t.id)).slice(0, RV_NEW).map(t => t.id); RV.queue = RV.queue.concat(extra); render(); return; }
@@ -231,14 +231,17 @@ const ro = w => { const c = (w || "").charCodeAt(w.length - 1) - 0xAC00, j = c >
 function stagePool(L){ return TERMS.filter(t => lv(t.id) === L).sort((a, b) => conceptFirst(a, b) || newerFirst(a, b) || String(prog[a.id]?.lastSeen || "").localeCompare(String(prog[b.id]?.lastSeen || ""))); }
 function stageStart(ids, from){
   if (!ids.length) return;
+  if (view() !== "review") RV.back = view();   // 시험이 끝나면 시작한 화면으로 돌아간다
   RV.mode = "stage"; RV.from = from; RV.up = 0; RV.queue = ids; RV.i = 0; RV.flipped = false; RV.res = null; RV.err = ""; RV.again = new Set();
   location.hash = "review";
 }
 /* 체크해서 고르기 (2026-11-13 동욱) — 단계별·새 개념·분야·전체 어디서든 보이는 단어를 골라 밑 바에서 바로 시험 */
 const PICK_MAX = 30;
+/* 단어를 누르면 다른 화면으로 가지 않고 그 자리 밑에 뜻·맥락을 펼친다 (다시 누르면 접힘, 2026-11-16 동욱) */
 function pickRow(t){
-  return `<div class="pick"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
-    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>`;
+  const open = S.detail === t.id;
+  return `<div class="pick${open ? " open" : ""}"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
+    <button class="t" data-detail="${t.id}" aria-expanded="${open}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${open ? detailHtml(t, true) : ""}`;
 }
 function pickList(list, max = 80){
   if (!list.length) return "";
@@ -248,7 +251,7 @@ function pickList(list, max = 80){
 function pickBar(){
   const ids = [...S.pick].filter(id => BYID[id]); if (!ids.length || view() === "review" || S.batch) return "";
   const n = [1, 2, 3, 4].map(L => ids.filter(id => lv(id) === L).length), all3 = n[2] === ids.length;
-  return `<div id="pickbar"><span><b class="mono">${ids.length}</b>개 고름 <span class="small muted">${[1, 2, 3, 4].filter(L => n[L - 1]).map(L => LV[L] + " " + n[L - 1]).join(" · ")}</span></span>
+  return `<div id="pickbar"><button type="button" class="pb-show" data-pickshow="1" title="모은 단어의 뜻·맥락 보기"><b class="mono">${ids.length}</b>개 고름 <span class="small" style="color:var(--accent);font-weight:600">보기</span> <span class="small muted">${[1, 2, 3, 4].filter(L => n[L - 1]).map(L => LV[L] + " " + n[L - 1]).join(" · ")}</span></button>
     <button class="btn ghost" data-pickclear="1" style="padding:8px 12px">✕</button><button class="btn" data-pickup="1" style="padding:8px 12px">▲ 바로 올리기</button><button class="btn primary" data-picktest="1" style="padding:8px 14px">▶ ${all3 ? "명령 시험" : "시험"}</button></div>`;
 }
 function pickTest(){
@@ -329,8 +332,9 @@ async function batchCheck(){
   B.busy = false; render();
 }
 document.addEventListener("click", e => {
-  const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-pickup],[data-up],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;
+  const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-pickup],[data-up],[data-batchend],[data-batchcheck],[data-bself],[data-pickshow]"); if (!b) return;
   const d = b.dataset;
+  if (d.pickshow) { S.jump = "picked"; if (view() !== "home") location.hash = "home"; else { render(); jumpTo(); } return; }
   if (d.up) { const L = lv(d.up); if (L < 4) save(d.up, { level: L + 1, fuzzy: false }, "바로 올림 (시험 없이)"); return; }
   if (d.pickup) { const ids = [...S.pick].filter(id => BYID[id] && lv(id) < 4); S.pick = new Set(); ids.forEach(id => save(id, { level: lv(id) + 1, fuzzy: false }, "바로 올림 (시험 없이)")); render(); return; }
   if (d.stage) { S.stage = +d.stage; S.batch = null; render(); return; }
@@ -342,6 +346,6 @@ document.addEventListener("click", e => {
   if (d.batchcheck) { batchCheck(); return; }
   if (d.bself) { const id = d.bself; if (d.ok === "1") { S.batch.res[id] = { pass: true, self: true }; batchPass(id, "직접 비교"); } else { S.batch.res[id] = { pass: false, self: true }; render(); } }
 });
-document.addEventListener("change", e => { const id = e.target?.dataset?.pickid; if (!id) return; if (e.target.checked && S.pick.size < PICK_MAX) S.pick.add(id); else S.pick.delete(id); e.target.checked = S.pick.has(id); paintPickBar(); });
-function paintPickBar(){ const old = document.getElementById("pickbar"); const h = pickBar(); if (old) old.outerHTML = h || ""; else if (h) document.body.insertAdjacentHTML("beforeend", h); }
+document.addEventListener("change", e => { const id = e.target?.dataset?.pickid; if (!id) return; if (e.target.checked && S.pick.size < PICK_MAX) S.pick.add(id); else S.pick.delete(id); e.target.checked = S.pick.has(id); if (view() === "home") render(); else paintPickBar(); });
+function paintPickBar(){ savePick(); const old = document.getElementById("pickbar"); const h = pickBar(); if (old) old.outerHTML = h || ""; else if (h) document.body.insertAdjacentHTML("beforeend", h); }
 document.addEventListener("input", e => { if (e.target.classList?.contains("bt-in") && S.batch) S.batch.drafts[e.target.dataset.bid] = e.target.value; });
