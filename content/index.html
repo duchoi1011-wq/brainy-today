@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
+<meta name="application-name" content="콘텐츠 기획">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F7F6F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#F7F6F2" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="ct-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="ct-icon-192.png">
+<link rel="icon" type="image/png" sizes="64x64" href="ct-icon-64.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>콘텐츠 기획</title>
+<style>
+:root{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+/* 폰: 입력칸 글자가 16px보다 작으면 아이폰이 칸을 누를 때 화면을 확대해 버린다 → 왼쪽이 잘리고 아래 탭이 밀림 */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{max-width:100%;overflow-x:clip}
+@media (pointer:coarse){input,textarea,select{font-size:16px!important}}
+:root{--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--ok)}
+#gate{position:fixed;inset:0;z-index:50;background:var(--g-bg);color:var(--g-fg);display:grid;place-items:center;padding:24px;font-family:inherit}
+#gate .gbox{width:100%;max-width:340px;display:grid;gap:10px;justify-items:stretch}
+#gate img{border-radius:14px;justify-self:start}
+#gate h1{font-size:24px;margin:0}#gate .gsub{color:var(--g-mut);margin:0 0 8px}
+#gate label{font-size:13px;color:var(--g-mut);margin-top:4px}
+#gate input{font:inherit;font-size:16px;color:var(--g-fg);background:var(--g-card);border:1px solid var(--g-line);border-radius:10px;padding:11px 12px;width:100%}
+#gate button{font:inherit;font-weight:600;cursor:pointer;margin-top:8px;padding:11px 14px;border-radius:999px;border:1px solid var(--g-line);background:var(--g-card);color:var(--g-fg)}
+#gate button[type=submit]{background:var(--g-acc);border-color:var(--g-acc);color:var(--g-acc-ink)}
+#gate .gerr{color:var(--g-warn);font-size:13px;min-height:18px}
+/* 새로고침 버튼 (세 앱 공통, shim.js) — 오른쪽 위 작은 알약: 실시간 점 · ↻ · 마지막 동기화/반영 상태 */
+#bsync{position:fixed;z-index:11;top:calc(8px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));display:inline-flex;align-items:center;gap:6px;max-width:min(62vw,240px);height:30px;padding:0 11px 0 9px;border-radius:999px;border:1px solid var(--g-line);background:var(--g-card);color:var(--g-mut);font:inherit;font-size:12px;font-weight:600;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#bsync:hover{color:var(--g-fg)}#bsync:focus-visible{outline:2px solid var(--g-acc);outline-offset:2px}
+#bsync .bs-tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+#bsync .bs-ic{font-size:14px;color:var(--g-acc)}
+#bsync.busy{color:var(--g-fg);border-color:var(--g-acc)}#bsync.busy .bs-ic{animation:bsspin 1s linear infinite}
+#bsync.macoff{border-style:dashed}
+@keyframes bsspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#bsync.busy .bs-ic{animation:none}}
+#rtdot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--g-line)}
+#rtdot.on{background:var(--g-ok)}#rtdot.off{background:var(--g-warn)}
+#bsync-tip{position:fixed;z-index:11;top:calc(44px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));max-width:min(86vw,340px);padding:8px 12px;border-radius:12px;border:1px solid var(--g-line);background:var(--g-card);color:var(--g-fg);font-size:13px;line-height:1.45;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+header>.brand{padding-right:min(46vw,190px)}
+
+</style>
+</head>
+<body>
+<span id="rtdot" aria-hidden="true"></span>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>window.BRAINY_VERSION = "774ad1fffb"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=774ad1fffb"></script>
+<script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
+<meta name="application-name" content="콘텐츠 기획">
+<meta name="theme-color" content="#F7F6F2">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* 틀: 좁은 한 줄 기둥, 위에 탭, 아래 카드 (맥 단축키·체화 단어장과 같은 뼈대·같은 이름).
+   색은 밝은 한 벌만 쓴다 (2026-11-16 동욱: 편집 믹서가 어두우니 이 앱은 밝고 세련되게) — 종이색 바탕 · 흰 카드 · 코발트 강조,
+   상품 = 코랄(--prod) · 정체성 = 청록(--iden). 색·그림자·둥글기는 :root 값만 고친다.
+   이 앱은 조종판이다: 브랜드 → 비율 → 키워드 → 잘 되는 콘텐츠 → 추천 → 대본 초안. 데이터는 볼트 파일이 정본이고 여기서는 읽기만,
+   앱이 쓰는 것은 설정(ct.set)과 맥에 보내는 명령(cmd)뿐이다. */
+:root{
+  color-scheme:light;
+  --bg:#F7F6F2; --surface:#FFFFFF; --surface-2:#F4F2EC; --ink:#1B1D22; --muted:#6B6F78; --line:#E7E4DC;
+  --accent:#3B5BFF; --accent-ink:#FFFFFF; --accent-bg:#ECEFFF;
+  --prod:#E4572E; --prod-bg:#FDEEE8; --iden:#0E8F7E; --iden-bg:#E3F5F1;
+  --ok:#17915F; --no:#8A8E96; --blue:#3B5BFF;
+  --ok-bg:#E5F6EE; --warn-bg:#FFF4D9; --blue-bg:#ECEFFF;
+  --shadow:0 1px 2px rgba(27,29,34,.04),0 10px 28px rgba(27,29,34,.06);
+  --f-body:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 90px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--bg)}
+.wrap{max-width:720px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding-block:16px 10px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:4px 12px;flex-wrap:wrap}
+h1{font-size:22px;font-weight:800;margin:0;letter-spacing:-.03em;display:flex;align-items:center;gap:9px}
+h1::before{content:"";width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#8A6BFF 60%,var(--prod))}
+.brand small{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.brand .links{flex-basis:100%;font-family:var(--f-body);font-size:12px}
+.links a,.links button{font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
+nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto;scrollbar-width:none;background:var(--surface);border-radius:14px;padding:4px;box-shadow:var(--shadow)}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;color:var(--muted);background:none;border:0;font:inherit;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer}
+nav button.on{background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 12px rgba(59,91,255,.28)}
+nav button span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-right:4px}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{display:flex;flex-direction:column;gap:16px;padding-top:14px}
+.card{background:var(--surface);border-radius:20px;padding:20px 22px;box-shadow:var(--shadow)}
+.card-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.card-h h3{font-size:18px;font-weight:750;margin:0;line-height:1.35;letter-spacing:-.02em}
+.card-h .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+h4{font-size:14px;font-weight:700;margin:14px 0 4px}
+.lead{font-size:13px;color:var(--muted);margin:0 0 6px;line-height:1.55}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--muted);margin:0 2px 6px}
+p{margin:0}a{color:inherit}
+.muted{color:var(--muted)} .small{font-size:13px} .mono{font-family:var(--f-mono)}
+.empty{padding:22px 4px;text-align:center;color:var(--muted);font-size:14px}
+.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--warn-bg);line-height:1.55}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:5px 11px;border-radius:999px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-left:3px}
+.chip.dash{border-style:dashed;color:var(--accent)}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 17px;border-radius:12px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 6px 16px rgba(59,91,255,.25)}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+input[type=text],textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+textarea{min-height:150px;resize:vertical;line-height:1.5}
+/* 표시 딱지 — 종류(상품·정체성)·역할(풀링·신뢰·키)·판정 */
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;vertical-align:1px}
+.tag.p{color:var(--prod);background:var(--prod-bg);border-color:transparent}
+.tag.i{color:var(--iden);background:var(--iden-bg);border-color:transparent}
+.tag.ok{color:var(--ok);background:var(--ok-bg);border-color:transparent}
+.tag.fill{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* 한 줄 목록 */
+.list{display:flex;flex-direction:column}
+.it{display:flex;gap:10px;padding:11px 0;border-top:1px solid var(--line);align-items:flex-start}
+.it:first-child{border-top:0}
+.it-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.it-h b{font-weight:700;font-size:15px}
+.it-d{font-size:13px;color:var(--muted);line-height:1.5}
+.it.off .it-m{opacity:.5}
+.num{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mk{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:14px;cursor:pointer;padding:0;line-height:1;flex:none}
+.mk[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.mk.no[aria-pressed=true]{background:var(--no);border-color:var(--no);color:#fff}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.kv dt{color:var(--muted);font-size:13px;white-space:nowrap}.kv dd{margin:0;min-width:0}
+details>summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);list-style:none}details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:" ▾"}details[open]>summary::after{content:" ▴"}
+.pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.65}
+/* 비율 */
+.mix{display:flex;height:44px;border-radius:14px;overflow:hidden;font-size:14px;font-weight:700;gap:3px}
+.mix div{display:grid;place-items:center;min-width:0;overflow:hidden;white-space:nowrap;transition:flex-basis .15s}
+.mix div{border-radius:6px}.mix .p{background:var(--prod);color:#fff}.mix .i{background:var(--iden);color:#fff}
+input[type=range]{width:100%;accent-color:var(--ink);margin:14px 0 2px}
+.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.step{display:inline-flex;align-items:center;gap:6px}
+.step button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+.step b{min-width:26px;text-align:center;font-family:var(--f-mono)}
+.rows{display:grid;gap:8px;margin-top:6px}.rows>div{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+/* 맥에 보낸 명령 상태 */
+.run{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:12px 14px;border-radius:14px;background:var(--blue-bg);line-height:1.5}
+.run.done{background:var(--ok-bg)}.run.bad{background:var(--warn-bg)}
+.run b{white-space:nowrap}.run .x{margin-left:auto;background:none;border:0;color:var(--muted);cursor:pointer;font:inherit}
+/* 레퍼런스 카드 */
+.ref{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.ref:first-child{border-top:0}
+.ref img{width:128px;height:72px;object-fit:cover;border-radius:12px;flex:none;background:var(--surface-2)}
+.ref-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.ref-m a.t{font-weight:700;font-size:15px;line-height:1.4;text-decoration:none}.ref-m a.t:hover{text-decoration:underline}
+.apply{font-size:13.5px;line-height:1.55;padding:9px 12px;border-radius:12px;background:var(--surface-2)}
+.spark{vertical-align:-3px}
+.up{color:var(--ok);font-weight:700}.down{color:var(--no)}
+@media (max-width:480px){
+  .card{padding:16px 16px;border-radius:18px}
+  nav button{padding:8px 4px;font-size:13.5px;flex:1 1 0}nav button span{display:none}
+  .ref img{width:96px;height:54px}
+}
+@media (prefers-reduced-motion:no-preference){main>.card{animation:fade .18s ease-out}@keyframes fade{from{opacity:.5}to{opacity:1}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>콘텐츠 기획</h1><small id="sub"></small>
+      <small class="links muted"><a href="../home/">← Brainy 홈</a> · <button type="button" data-brainy="out">로그아웃</button></small>
+    </div>
+    <nav id="nav" role="tablist" aria-label="단계"></nav>
+  </header>
+  <main id="view"></main>
+</div>
+
+<script>
+"use strict";
+/* 내용은 볼트가 정본이다 — `4_Outputs/콘텐츠 기획 앱/<브랜드>/` 의 JSON 을 맥 동기화(content_app.py)가 Supabase `ct.data/<브랜드>[.부분]` 으로 올린다.
+   목록·문구를 바꾸려면 볼트 파일(또는 그 파일을 쓰는 세 스킬)을 고친다. 코드에 넣지 않는다.
+   앱이 쓰는 것: `ct.set/<브랜드>` (비율·고정·빼기·고른 추천) · `cmd/<id>` (맥의 Claude 에게 보내는 일, from: "content"). */
+var DB = null;
+var RAW = {};                       // ct.data 문서 id → data
+var SETS = {};                      // 브랜드 id → 설정
+var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부터)
+var cur = load("ct.brand", "");     // 지금 브랜드
+var tab = load("ct.tab", "brand");
+var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "ratio", refBuyer: true, refView: "videos", refMore: 20, newBrand: false, hide: load("ct.hide", {}) };
+var TABS = [["brand", "브랜드"], ["mix", "비율"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["script", "대본"]];
+var PARTS = { kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", script: ".script", log: ".log" };
+
+function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
+function md(s){ return esc(s).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, "$1") }
+function fmt(n){ return n == null ? "—" : Number(n).toLocaleString("ko-KR") }
+function ago(iso){ var m = Math.round((Date.now() - Date.parse(iso || 0)) / 60000); return isNaN(m) ? "" : m < 1 ? "방금" : m < 60 ? m + "분 전" : m < 1440 ? Math.round(m / 60) + "시간 전" : Math.round(m / 1440) + "일 전" }
+function day(iso){ return String(iso || "").slice(0, 10) }
+
+/* ── 데이터 꺼내기 ── */
+function brands(){ return Object.keys(RAW).filter(function(id){ return id.indexOf(".") < 0 }).map(function(id){ return RAW[id] }) }
+function B(){ return RAW[cur] || null }
+function part(name){ return RAW[cur + PARTS[name]] || null }
+function S(){
+  var b = B(), d = (b && b.defaults) || {}, s = SETS[cur] || {};
+  var share = {}; ((b && b.products) || []).forEach(function(p){ share[p.name] = (s.share && s.share[p.name] != null) ? s.share[p.name] : p.share });
+  return { ratio: s.ratio != null ? s.ratio : (d.ratio != null ? d.ratio : 70), count: s.count || d.count || 20, share: share,
+    mid: s.mid != null ? s.mid : (d.mid != null ? d.mid : 10), short: s.short != null ? s.short : (d.short != null ? d.short : 10),
+    roles: Object.assign({ "풀링": 3, "신뢰": 3, "키": 3 }, d.roles, s.roles), buyOnly: s.buyOnly !== false, fresh: s.fresh !== false,
+    pin: s.pin || {}, ex: s.ex || {}, pick: s.pick || {} };
+}
+function setS(patch){
+  var s = Object.assign({}, SETS[cur] || {}, patch, { updatedAt: new Date().toISOString() });
+  SETS[cur] = s;
+  s.cand = candidates(S()).map(function(k){ return { kw: k.kw, score: k.score } });   // 그때 조사 후보 — 맥이 설정.json 으로 받아 기록 PDF 에 쓴다
+  if(DB) DB.doc("ct.set/" + cur).set(s).catch(function(){});
+  render();
+}
+
+/* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", brief: "새 브랜드 프로필" };
+function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && /보내는 중|맥 대기|처리 중/.test(c.status || "") })[0] }
+function send(kind, text, params){
+  if(!DB || openCmd(kind)) return;
+  var id = "c" + Date.now().toString(36), at = new Date().toISOString(), b = B();
+  var data = { text: "🎬 콘텐츠 기획 — " + (b ? b.name : (params && params.name) || "") + " " + text, from: "content", app: "content", kind: kind,
+    brand: cur || "", params: params || {}, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
+  CMDS.unshift(Object.assign({ id: id }, data));
+  DB.doc("cmd/" + id).set(data).catch(function(){ CMDS[0].status = "못 보냄"; render() });
+  render();
+}
+function runHtml(kinds){
+  var out = "";
+  kinds.forEach(function(k){
+    var c = CMDS.filter(function(x){ return x.kind === k && (x.brand === cur || k === "brief") })[0];
+    if(!c || ui.hide[c.id]) return;
+    var open = /보내는 중|맥 대기|처리 중/.test(c.status || ""), bad = /멈춤|못 보냄/.test(c.status || "");
+    if(!open && Date.now() - Date.parse(c.doneAt || c.createdAt) > 3 * 86400000) return;
+    var step = c.steps ? " · " + c.steps.n + "/" + c.steps.total + " " + esc(c.steps.now || "") : "";
+    out += "<div class=\"run" + (open ? "" : bad ? " bad" : " done") + "\"><b>" + (open ? "⏳" : bad ? "⚠" : "✓") + " " + KIND[k] + "</b><span>" +
+      (open ? esc(c.status) + step + " · 보낸 지 " + ago(c.createdAt).replace(" 전", "") + " — 맥의 Claude가 하고 있어요. 몇 분에서 십몇 분 걸려요."
+            : esc(String(c.result || c.status || "").split("\n").slice(0, 4).join(" · ")) + " <span class=\"muted\">(" + ago(c.doneAt || c.createdAt) + ")</span>") +
+      "</span>" + (open ? "" : "<button class=\"x\" data-hide=\"" + c.id + "\" aria-label=\"닫기\">✕</button>") + "</div>";
+  });
+  return out;
+}
+
+/* ── ③ 키워드 — 점수 매기기 · 비율대로 후보 뽑기 · 화면 ──
+   점수(0~100)는 종류마다 다르게 본다 (화면 아래 「점수 계산」에 같은 설명):
+     상품    = 검색량 60% + 광고 클릭률 25% + 상승세 15%   (사려는 사람이 찾는 말인지가 중요)
+               클릭률은 월 검색 200 미만이면 그만큼 덜 믿는다 (검색 20에 클릭 4번이면 20%가 나오므로)
+     정체성  = 검색량 70% + 상승세 30%                    (채널 성격에 맞는 넓은 주제 — 클릭률은 안 본다)
+   검색량은 로그로 눌러 큰 키워드 하나가 다 가져가지 않게 한다. 상승세 = 구글 트렌드 최근 4주 ÷ 그 앞 8주. */
+function riseOf(kw){ var t = part("trend"); var x = t && t.items && t.items[kw]; return x ? x : null }
+function scored(){
+  var k = part("kw"); if(!k || !k.items) return [];
+  var max = { "상품": 0, "정체성": 0 };
+  k.items.forEach(function(x){ if(x.total > (max[x.kind] || 0)) max[x.kind] = x.total });
+  return k.items.map(function(x){
+    var tr = riseOf(x.kw), rise = tr ? tr.rise : null;
+    var vol = max[x.kind] ? Math.log10(x.total + 1) / Math.log10(max[x.kind] + 1) * 100 : 0;
+    var ctr = Math.min(x.ctr || 0, 10) * 10 * Math.min(1, x.total / 200);
+    var up = rise == null ? 50 : Math.max(0, Math.min(1, (rise - 0.5) / 1.5)) * 100;
+    var score = x.kind === "상품" ? vol * .60 + ctr * .25 + up * .15 : vol * .70 + up * .30;
+    return Object.assign({}, x, { rise: rise, w: tr ? tr.w : null, score: Math.round(score), buy: /^구매/.test(x.intent || "") && !/경쟁사 이름/.test(x.intent || "") });
+  }).sort(function(a, b){ return b.score - a.score || b.total - a.total });
+}
+/* 비율 → 몇 개씩: 상품 nP · 정체성 nI, 상품 안에서는 상품 비중대로 (나머지는 큰 쪽부터) */
+function split(s){
+  var nP = Math.round(s.count * s.ratio / 100), nI = s.count - nP, names = Object.keys(s.share);
+  var sum = names.reduce(function(a, n){ return a + s.share[n] }, 0), per = {}, used = 0;
+  var fr = names.map(function(n){ var raw = sum ? nP * s.share[n] / sum : 0; per[n] = Math.floor(raw); used += per[n]; return [n, raw - per[n]] })
+    .sort(function(a, b){ return b[1] - a[1] });
+  for(var i = 0; used < nP && fr.length; i = (i + 1) % fr.length){ per[fr[i][0]]++; used++ }
+  return { nP: nP, nI: nI, per: per };
+}
+/* 이번 조사 후보: 고정한 것 먼저, 그다음 점수순. 뺀 것·(켜 두면) 이미 조사한 것·구매 결 아닌 상품 키워드는 뺀다 */
+function candidates(s){
+  var all = scored(), sp = split(s), out = [];
+  function ok(x){ return !s.ex[x.kw] && (s.pin[x.kw] || ((!s.fresh || !x.surveyed) && (x.kind !== "상품" || !s.buyOnly || x.buy))) }
+  function take(pool, n){ pool.filter(function(x){ return s.pin[x.kw] }).concat(pool.filter(function(x){ return !s.pin[x.kw] })).slice(0, n).forEach(function(x){ out.push(x) }) }
+  Object.keys(sp.per).forEach(function(name){ take(all.filter(function(x){ return x.kind === "상품" && x.product === name && ok(x) }), sp.per[name]) });
+  var short = sp.nP - out.length;   // 어느 상품 후보가 모자라면 다른 상품 키워드로 채운다
+  if(short > 0) take(all.filter(function(x){ return x.kind === "상품" && ok(x) && out.indexOf(x) < 0 }), short);
+  take(all.filter(function(x){ return x.kind === "정체성" && ok(x) }), sp.nI);
+  return out;
+}
+function spark(w){
+  if(!w || w.length < 8) return "";
+  var v = w.slice(-26), mx = Math.max.apply(null, v) || 1, W = 64, H = 18;
+  var pts = v.map(function(y, i){ return (i / (v.length - 1) * W).toFixed(1) + "," + (H - 1 - y / mx * (H - 2)).toFixed(1) }).join(" ");
+  return "<svg class=\"spark\" width=\"" + W + "\" height=\"" + H + "\" viewBox=\"0 0 " + W + " " + H + "\" aria-hidden=\"true\"><polyline points=\"" + pts + "\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" stroke-linejoin=\"round\"/></svg>";
+}
+function riseHtml(x){
+  if(x.rise == null) return x.w ? "<span class=\"muted\">" + spark(x.w) + " 값 적음</span>" : "<span class=\"muted\">추세 없음</span>";
+  var cls = x.rise >= 1.15 ? "up" : x.rise <= 0.85 ? "down" : "muted";
+  return "<span class=\"" + cls + "\">" + spark(x.w) + " " + (x.rise >= 1.15 ? "▲" : x.rise <= 0.85 ? "▼" : "") + "×" + x.rise.toFixed(2) + "</span>";
+}
+function kwRow(x, s, mark){
+  return "<div class=\"it" + (s.ex[x.kw] ? " off" : "") + "\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b> <span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" +
+    esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + "</div>" +
+    "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · " + riseHtml(x) + " · <b class=\"num\">" + x.score + "점</b></div>" +
+    "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">구매</span> " : "") + esc(x.intent || "") + "</div></div>" +
+    (mark ? "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"후보에 고정\" aria-label=\"후보에 고정\">★</button>" +
+            "<button class=\"mk no\" data-ex=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.ex[x.kw] + "\" title=\"후보에서 빼기\" aria-label=\"후보에서 빼기\">✕</button>" : "") + "</div>";
+}
+function viewKw(){
+  var b = B(), k = part("kw"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
+  if(!k) return "<p class=\"empty\">아직 키워드 자료가 없어요. 조사를 한 번 돌리면 채워져요.</p>";
+  var s = S(), all = scored(), c = candidates(s), sp = split(s), t = part("trend");
+  var nP = c.filter(function(x){ return x.kind === "상품" }).length;
+  var h = runHtml(["discover", "trends"]);
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>이번 조사 후보</h3><span class=\"n\">상품 " + nP + " · 정체성 " + (c.length - nP) + "</span></div>" +
+    "<p class=\"lead\">② 비율(상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + ")대로 점수가 높은 키워드를 뽑았어요. ★은 고정, ✕는 빼기." +
+    (c.length < s.count ? " 조건에 맞는 키워드가 " + (s.count - c.length) + "개 모자라요 — 아래 조건을 풀거나 조사를 돌려 새 키워드를 받으세요." : "") + "</p>" +
+    "<div class=\"chips\" style=\"margin-bottom:6px\"><button class=\"chip" + (s.buyOnly ? " on" : "") + "\" data-set=\"buyOnly=" + !s.buyOnly + "\">상품은 구매 결만</button>" +
+    "<button class=\"chip" + (s.fresh ? " on" : "") + "\" data-set=\"fresh=" + !s.fresh + "\">이미 조사한 것 빼기</button></div>" +
+    "<div class=\"list\">" + (c.map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">후보가 없어요.</p>") + "</div>" +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"discover\"" + (openCmd("discover") || !c.length ? " disabled" : "") + ">이 구성으로 조사 돌리기</button>" +
+    "<button class=\"btn\" data-act=\"trends\"" + (openCmd("trends") ? " disabled" : "") + ">구글 트렌드 다시 받기</button></div>" +
+    "<p class=\"lead\" style=\"margin-top:10px\">조사는 맥의 Claude가 콘텐츠 발굴 스킬로 돌려요 (키워드 검색량 → 경쟁사 → 레퍼런스 20개 → 시트·카드 → 이 앱).</p></section>";
+  var list = all.filter(function(x){ return ui.kwKind === "all" || (ui.kwKind === "up" ? x.rise != null && x.rise >= 1.15 : x.kind === ui.kwKind) });
+  var nUp = all.filter(function(x){ return x.rise != null && x.rise >= 1.15 }).length;
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>전체 키워드</h3><span class=\"n\">" + list.length + "개</span></div><div class=\"chips\">" +
+    [["all", "전체", all.length], ["상품", "상품", all.filter(function(x){ return x.kind === "상품" }).length], ["정체성", "정체성", all.filter(function(x){ return x.kind === "정체성" }).length], ["up", "▲ 오르는 중", nUp]]
+      .map(function(f){ return "<button class=\"chip" + (ui.kwKind === f[0] ? " on" : "") + "\" data-ui=\"kwKind=" + f[0] + "\">" + f[1] + "<span>" + f[2] + "</span></button>" }).join("") + "</div>" +
+    "<div class=\"list\" style=\"margin-top:6px\">" + list.slice(0, ui.kwMore).map(function(x){ return kwRow(x, s, true) }).join("") + "</div>" +
+    (list.length > ui.kwMore ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"kwMore=" + (ui.kwMore + 100) + "\">더 보기 (" + (list.length - ui.kwMore) + "개 남음)</button></div>" : "") + "</section>";
+  h += "<section class=\"card\"><details><summary>점수 계산 · 자료 출처</summary><div class=\"small\" style=\"margin-top:8px;display:grid;gap:6px\">" +
+    "<p><span class=\"tag p\">상품</span> 검색량 60% + 광고 클릭률 25% + 상승세 15%. 클릭률이 높을수록 사려는 사람이 찾는 말이에요. 월 검색 200 미만이면 클릭률을 그만큼 덜 믿어요.</p>" +
+    "<p><span class=\"tag i\">정체성</span> 검색량 70% + 상승세 30%. 채널 성격에 맞는 넓은 주제라 클릭률은 안 봐요.</p>" +
+    "<p>검색량·클릭률: " + esc(k.source || "") + " · " + day(k.updatedAt) + "</p>" +
+    "<p>상승세(최근 4주 ÷ 그 앞 8주): " + (t ? esc(t.source || "") + " · " + day(t.updatedAt) + " · " + Object.keys(t.items || {}).length + "개 키워드" : "아직 받지 않음") + ". 검색이 적은 키워드는 구글이 값을 0으로 줘서 「값 적음」으로 두고 점수에서는 중간값으로 봐요.</p>" +
+    "<p>정체성 키워드의 구매 결은 아직 검증 전이에요 (조사를 돌리면 유튜브 상위 제목으로 확인).</p></div></details></section>";
+  return h;
+}
+
+/* ── ④ 잘 되는 콘텐츠 — 레퍼런스 영상 · 레퍼런스 채널 ──
+   성과는 조회수 그 자체로 보지 않는다 (content-recommend §1): 조회÷구독 100배↑ 퍼짐 · 10~100 잘 나감 · 1~10 채널 크기만큼 · 1 미만 약함.
+   1배 미만과 광고 집행 추정은 성과 근거로 쓰지 않는다 — 「성과 근거만」을 켜면 빠진다. */
+function band(r){ return r == null ? ["확인 못 함", ""] : r >= 100 ? ["퍼짐", "ok"] : r >= 10 ? ["잘 나감", "ok"] : r >= 1 ? ["채널 크기만큼", ""] : ["약함", ""] }
+function liveOf(x){ var l = part("live"); return l && l.items && x.vid ? l.items[x.vid] : null }
+function koNum(s){ var m = /([\d.,]+)\s*([천만억])?/.exec(String(s || "")); return m ? parseFloat(m[1].replace(/,/g, "")) * ({ "천": 1e3, "만": 1e4, "억": 1e8 }[m[2]] || 1) : null }
+function growth(x){   // 수집 때 조회수 → 지금 조회수 (늘어난 비율)
+  var l = liveOf(x), was = koNum(x.views);
+  return l && was ? { now: l.views, was: was, pct: Math.round((l.views - was) / was * 100) } : null;
+}
+function refCard(x){
+  var bd = band(x.ratio), g = growth(x), proof = x.ratio != null && x.ratio >= 1 && !x.ad;
+  return "<div class=\"ref\">" + (x.vid ? "<a href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(x.vid) + "/mqdefault.jpg\"></a>" : "") +
+    "<div class=\"ref-m\"><a class=\"t\" href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title) + "</a>" +
+    "<div class=\"it-d\">" + esc(x.channel) + " · 구독 " + esc(x.subs || "—") + " · 조회 " + (g ? fmt(g.now) + (g.pct > 0 ? " <span class=\"up\">(+" + g.pct + "%)</span>" : "") : esc(x.views || "—")) + " · " + esc(x.len) + " · " + esc(x.published) + "</div>" +
+    "<div><span class=\"tag fill\">" + esc(x.role) + "</span> <span class=\"tag p\">" + esc(x.product) + "</span> <span class=\"tag\">" + esc(x.form) + "</span> " +
+    "<span class=\"tag " + bd[1] + "\">" + (x.ratio != null ? "조회÷구독 " + x.ratio + "배 · " : "") + bd[0] + "</span> " +
+    (x.buyer ? "<span class=\"tag " + (x.buyer === "✓" ? "ok" : "") + "\">구매자 " + x.buyer + "</span> " : "") +
+    (/Great|Good/.test(x.vtPerf) ? "<span class=\"tag ok\">뷰트랩 " + esc(x.vtPerf) + "</span> " : "") +
+    (x.ad ? "<span class=\"tag\">광고 추정</span> " : "") + (proof ? "" : "<span class=\"tag\">성과 근거 ✕</span>") + "</div>" +
+    (x.apply ? "<div class=\"apply\"><b>적용</b> " + esc(x.apply) + "</div>" : "") +
+    "<details><summary>구성 · 다시 본 구간 · 댓글</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+    "<dt>레퍼런스</dt><dd>" + esc(x.refLine) + "</dd><dt>구성</dt><dd>" + esc(x.structure) + "</dd><dt>파동</dt><dd>" + esc(x.wave) + "</dd><dt>댓글</dt><dd>" + esc(x.comments) + "</dd>" +
+    "<dt>구매 결</dt><dd>" + esc(x.buyerNote) + "</dd><dt>검색어</dt><dd>" + esc(x.query) + " · " + x.round + "회차 " + esc(x.date) + " · 시트 " + x.row + "행</dd></dl></details></div></div>";
+}
+function viewRef(){
+  var b = B(), r = part("ref"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
+  var live = part("live"), chan = part("chan");
+  var h = runHtml(["refresh"]);
+  h += "<div class=\"chips\"><button class=\"chip" + (ui.refView === "videos" ? " on" : "") + "\" data-ui=\"refView=videos\">레퍼런스 영상<span>" + (r ? r.items.length : 0) + "</span></button>" +
+    "<button class=\"chip" + (ui.refView === "chans" ? " on" : "") + "\" data-ui=\"refView=chans\">레퍼런스 채널<span>" + ((b.channels || []).length) + "</span></button>" +
+    "<button class=\"chip dash\" data-act=\"refresh\"" + (openCmd("refresh") ? " disabled" : "") + ">↻ 지금 최신화</button></div>" +
+    "<p class=\"lead\">반응 최신화 " + (live ? day(live.updatedAt) : "아직 안 함") + " · 채널 새 영상 " + (chan ? day(chan.updatedAt) : "아직 안 함") + "</p>";
+  if(ui.refView === "chans") return h + chansHtml(b, chan);
+  if(!r) return h + "<p class=\"empty\">아직 레퍼런스가 없어요. ③ 키워드에서 조사를 돌리면 채워져요.</p>";
+  var list = r.items.filter(function(x){
+    return (ui.refRole === "all" || x.role === ui.refRole) && (ui.refForm === "all" || x.form === ui.refForm) &&
+      (!ui.refBuyer || (x.buyer === "✓" && x.ratio != null && x.ratio >= 1 && !x.ad));
+  });
+  var by = { ratio: function(a, c){ return (c.ratio || 0) - (a.ratio || 0) }, grow: function(a, c){ return ((growth(c) || {}).pct || 0) - ((growth(a) || {}).pct || 0) }, date: function(a, c){ return c.row - a.row } }[ui.refSort];
+  list.sort(by);
+  function chip(key, val, label){ return "<button class=\"chip" + (ui[key] === val ? " on" : "") + "\" data-ui=\"" + key + "=" + val + "\">" + label + "</button>" }
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>잘 되는 콘텐츠</h3><span class=\"n\">" + list.length + " / " + r.items.length + "</span></div>" +
+    "<div class=\"chips\">" + chip("refRole", "all", "역할 전체") + chip("refRole", "풀링", "풀링") + chip("refRole", "신뢰", "신뢰") + chip("refRole", "키", "키") + "</div>" +
+    "<div class=\"chips\" style=\"margin-top:6px\">" + chip("refForm", "all", "형식 전체") + chip("refForm", "숏폼", "숏폼") + chip("refForm", "미드폼", "미드폼") +
+    "<button class=\"chip" + (ui.refBuyer ? " on" : "") + "\" data-ui=\"refBuyer=" + !ui.refBuyer + "\">구매자 ✓ · 성과 근거만</button></div>" +
+    "<div class=\"chips\" style=\"margin-top:6px\">" + chip("refSort", "ratio", "조회÷구독순") + chip("refSort", "grow", "요즘 조회 늘어난 순") + chip("refSort", "date", "최근 조사순") + "</div>" +
+    "<div style=\"margin-top:6px\">" + (list.slice(0, ui.refMore).map(refCard).join("") || "<p class=\"empty\">조건에 맞는 레퍼런스가 없어요.</p>") + "</div>" +
+    (list.length > ui.refMore ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"refMore=" + (ui.refMore + 30) + "\">더 보기 (" + (list.length - ui.refMore) + "개 남음)</button></div>" : "") + "</section>";
+  return h;
+}
+function chansHtml(b, chan){
+  var groups = {}, order = [];
+  (b.channels || []).forEach(function(c){ if(!groups[c.group]){ groups[c.group] = []; order.push(c.group) } groups[c.group].push(c) });
+  return order.map(function(g){
+    return "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(g) + "</h3><span class=\"n\">" + groups[g].length + "곳</span></div><div class=\"list\">" +
+      groups[g].map(function(c){
+        var now = chan && chan.items && chan.items[c.name];
+        return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><a href=\"" + esc(c.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(c.name) + "</b></a>" +
+          (c.grade && c.grade !== "—" ? " <span class=\"tag\">" + esc(c.grade) + "</span>" : "") + (now && now.subs ? " <span class=\"num muted\">구독 " + fmt(now.subs) + "</span>" : "") + "</div>" +
+          "<div class=\"it-d\">" + esc(c.take) + "</div>" +
+          (now ? "<details><summary>새 영상 " + now.videos.length + "개 · " + esc(now.at) + "</summary><div class=\"list\">" + now.videos.map(function(v){
+              return "<div class=\"it\"><div class=\"it-m\"><a href=\"https://www.youtube.com/watch?v=" + esc(v.id) + "\" target=\"_blank\" rel=\"noopener\">" + esc(v.title) + "</a>" +
+                "<div class=\"it-d\">조회 " + fmt(v.views) + " · " + esc(v.when) + " · " + esc(v.len) + (v.ratio != null ? " · <span class=\"" + (v.ratio >= 1 ? "up" : "muted") + "\">조회÷구독 " + v.ratio + "배</span>" : "") + "</div></div></div>" }).join("") + "</div></details>"
+            : "<div class=\"it-d\">" + (/youtube\.com\/(@|channel\/)/.test(c.url) ? "아직 최신화 전" : "유튜브 채널이 아니라 자동으로 못 읽어요 — 링크로 직접 보기") + "</div>") +
+          "</div></div>";
+      }).join("") + "</div></section>";
+  }).join("") || "<p class=\"empty\">레퍼런스 채널이 없어요.</p>";
+}
+
+/* ── ⑤ 추천 (content-recommend 결과) · ⑥ 대본 초안 (content-production 결과) ── */
+function scriptOf(id){ var s = part("script"); return s && s.items ? s.items.filter(function(x){ return x.rec === id })[0] : null }
+function viewRec(){
+  var b = B(), r = part("rec"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
+  var s = S(), h = runHtml(["recommend", "script"]);
+  if(!r || !r.rounds || !r.rounds.length)
+    return h + "<section class=\"card\"><p class=\"empty\">아직 추천이 없어요.</p><div class=\"acts\"><button class=\"btn primary\" data-act=\"recommend\"" + (openCmd("recommend") ? " disabled" : "") + ">추천 받기</button></div></section>";
+  var rd = r.rounds[r.rounds.length - 1], picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
+    "<p>" + esc(rd.summary) + "</p>" + (rd.order ? "<p class=\"lead\" style=\"margin-top:8px\">바로 찍을 수 있는 순서 · " + esc(rd.order) + "</p>" : "") +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!picked.length || openCmd("script") ? " disabled" : "") + ">고른 " + picked.length + "개 대본 초안 만들기</button>" +
+    "<button class=\"btn\" data-act=\"recommend\"" + (openCmd("recommend") ? " disabled" : "") + ">추천 새로 받기</button></div>" +
+    "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋를 눌러 고르면 맥의 Claude가 제작 발굴 스킬로 대본 뼈대·촬영표를 만들어 ⑥ 대본에 올려요. 새 추천은 ② 비율의 역할 수(풀링 " + s.roles["풀링"] + " · 신뢰 " + s.roles["신뢰"] + " · 키 " + s.roles["키"] + ")대로 받아요.</p></section>";
+  ["풀링", "신뢰", "키"].forEach(function(role){
+    var items = rd.items.filter(function(x){ return x.role.indexOf(role) === 0 });
+    if(!items.length) return;
+    var what = ((b.roles || []).filter(function(x){ return x.name === role })[0] || {}).what || "";
+    h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag fill\">" + role + "</span> " + esc(what) + "</h3><span class=\"n\">" + items.length + "개</span></div><div class=\"list\">" +
+      items.map(function(x){
+        var sc = scriptOf(x.id);
+        return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"num muted\">" + esc(x.id) + "</span> <b>" + esc(x.title) + "</b></div>" +
+          "<div class=\"it-d\">" + [x.product, x.format, x.from === "카드" ? "모아 둔 카드에서" : ""].filter(Boolean).map(esc).join(" · ") + (sc ? " · <span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "") + "</div>" +
+          (x.structure ? "<div class=\"apply\">" + esc(x.structure) + "</div>" : "") +
+          "<details><summary>근거 · 다음 연결 · 이어 쓸 카드</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+          (x.scene ? "<dt>찍을 장면</dt><dd>" + esc(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + esc(x.basis) + "</dd>" +
+          (x.next ? "<dt>다음 연결</dt><dd>" + esc(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + esc(x.bank) + "</dd>" : "") + "</dl></details></div>" +
+          "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>";
+      }).join("") + "</div></section>";
+  });
+  return h;
+}
+function viewScript(){
+  var b = B(), sc = part("script"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
+  var h = runHtml(["script"]);
+  if(!sc || !sc.items || !sc.items.length) return h + "<p class=\"empty\">아직 대본 초안이 없어요. ⑤ 추천에서 고르고 「대본 초안 만들기」를 누르세요.</p>";
+  h += "<p class=\"lead\">여기까지가 편집 믹서 바로 앞 단계예요. 편집 믹서가 생기면 이 대본 자료(볼트 「콘텐츠 기획 앱/" + esc(b.id) + "/대본.json」)를 그대로 읽어 템플릿에 맞춰요. 본문 정본은 각 카드입니다.</p>";
+  sc.items.forEach(function(x, i){
+    h += "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(x.title) + "</h3><span class=\"n\">" + esc(x.rec || "") + " · " + esc(x.status || "") + "</span></div>" +
+      (x.meta ? "<p class=\"lead\">" + md(x.meta) + "</p>" : "") +
+      (x.summary ? "<h4>스크립트 요약</h4><div class=\"pre\">" + md(x.summary) + "</div>" : "") +
+      (x.shoot ? "<details><summary>촬영 요약</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.shoot) + "</div></details>" : "") +
+      (x.script ? "<details open><summary>대본 뼈대</summary><div class=\"pre\" id=\"sc-" + i + "\" style=\"margin-top:6px\">" + md(x.script) + "</div></details>" : "") +
+      (x.todo ? "<details><summary>아직 정해야 할 것</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.todo) + "</div></details>" : "") +
+      "<div class=\"acts\">" + (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
+  });
+  return h;
+}
+
+
+/* ── ① 브랜드 ── */
+function viewBrand(){
+  var b = B(), h = runHtml(["brief"]);
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>브랜드</h3><span class=\"n\">" + brands().length + "개</span></div>" +
+    "<div class=\"chips\">" + brands().map(function(x){ return "<button class=\"chip" + (x.id === cur ? " on" : "") + "\" data-brand=\"" + esc(x.id) + "\">" + esc(x.name) + "</button>" }).join("") +
+    "<button class=\"chip dash\" data-act=\"newbrand\">＋ 기획서로 새 브랜드</button></div>";
+  if(ui.newBrand){
+    h += "<h4>브랜드 기획서 올리기</h4><p class=\"lead\">기획서 글을 붙여 넣거나 파일(.md · .txt)을 고르면, 맥의 Claude가 판매 상품·타깃·채널 정체성·키워드 힌트를 뽑아 프로필 초안을 만들어요. 초안은 여기 브랜드 목록에 「확인 전」으로 뜹니다.</p>" +
+      "<input type=\"text\" id=\"nb-name\" placeholder=\"브랜드 이름 (예: 키우고 고르는 생활)\" style=\"margin-bottom:8px\">" +
+      "<textarea id=\"nb-doc\" placeholder=\"기획서 내용을 여기에 붙여 넣으세요\"></textarea>" +
+      "<div class=\"acts\"><input type=\"file\" id=\"nb-file\" accept=\".md,.txt,text/plain,text/markdown\" style=\"font-size:13px;max-width:60%\">" +
+      "<button class=\"btn primary\" data-act=\"sendbrief\"" + (openCmd("brief") ? " disabled" : "") + ">프로필 초안 만들기</button></div>";
+  }
+  h += "</section>";
+  if(!b) return h + "<p class=\"empty\">아직 브랜드 데이터가 없어요. 맥 동기화가 볼트의 「콘텐츠 기획 앱」 폴더를 올리면 여기에 떠요.</p>";
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + (b.draft ? " <span class=\"tag p\">확인 전</span>" : "") + "</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div>" +
+    "<p>" + esc(b.one) + "</p><dl class=\"kv\" style=\"margin-top:10px\"><dt>타깃</dt><dd>" + esc(b.target) + "</dd><dt>첫 질문</dt><dd>" + esc(b.firstQuestion) + "</dd></dl></section>";
+  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품</h3><span class=\"n\">" + (b.products || []).length + "개</span></div><div class=\"list\">" +
+    (b.products || []).map(function(p){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what) + "</div><div class=\"it-d\">키워드 힌트 · " + esc((p.hints || []).join(" · ")) + "</div></div></div>" }).join("") + "</div></section>";
+  var id = b.identity || {};
+  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div><dl class=\"kv\">" +
+    "<dt>콘텐츠 축</dt><dd>" + esc((id.axes || []).join(" · ")) + "</dd>" +
+    "<dt>필러</dt><dd>" + (id.pillars || []).map(function(p){ return "<b>" + esc(p.id) + "</b> " + esc(p.name) }).join(" · ") + "</dd>" +
+    "<dt>구매자 욕구</dt><dd>" + esc((id.needs || []).join(" · ")) + "</dd>" +
+    "<dt>키워드 힌트</dt><dd>" + esc((id.hints || []).join(" · ")) + "</dd>" +
+    "<dt>훅 규칙</dt><dd>" + esc(b.hook) + "</dd><dt>숏폼 공식</dt><dd>" + esc(b.shortform) + "</dd></dl>" +
+    ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
+      b.topicBank.map(function(t){ return "<div class=\"it\"><span class=\"num muted\">" + esc(t.n) + "</span><div class=\"it-m\"><div>" + esc(t.topic) + "</div><div class=\"it-d\">필러 " + esc(t.pillar) + " · " + esc(t.product) + "</div></div></div>" }).join("") + "</div></details>" : "") +
+    "</section>";
+  var lg = part("log");
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>기록 · 자동 백업</h3><span class=\"n\">" + (lg ? lg.items.length + "개" : "") + "</span></div>" +
+    "<p class=\"lead\">단계 자료가 바뀌면 1분 뒤 맥이 그 단계의 PDF와 그날 데이터 사본을 볼트에 남겨요 (같은 날 같은 단계는 최신으로 덮어씀). 볼트라서 구글 드라이브에도 사본이 생겨요. PDF는 맥·드라이브에서 열어요.</p>" +
+    (lg && lg.items.length ? "<p class=\"small mono\" style=\"margin-bottom:6px\">" + esc(lg.where) + "</p><div class=\"list\">" + lg.items.slice(0, 12).map(function(x){
+      return "<div class=\"it\"><span class=\"num muted\">" + esc(x.date) + "</span><div class=\"it-m\"><div>" + esc(String(x.file).replace(/^\S+ /, "").replace(/\.pdf$/, "")) + "</div></div><span class=\"num muted\">" + esc(String(x.at).slice(11, 16)) + "</span></div>" }).join("") + "</div>"
+      : "<p class=\"empty\">아직 기록이 없어요.</p>") + "</section>";
+  h += "<p class=\"lead\" style=\"text-align:center\">정본: 볼트 <span class=\"mono\">" + esc(b.profile || "") + "</span>" + (b.sheet ? " · <a href=\"" + esc(b.sheet) + "\" target=\"_blank\" rel=\"noopener\">조사 시트</a>" : "") + "</p>";
+  return h;
+}
+
+/* ── ② 비율 ── */
+function viewMix(){
+  var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
+  var s = S(), names = Object.keys(s.share);
+  var h = "<section class=\"card\"><div class=\"card-h\"><h3>판매 상품 ↔ 채널 정체성</h3><span class=\"n\" id=\"mix-n\"></span></div>" +
+    "<p class=\"lead\">조사할 주제어를 어느 쪽에서 더 뽑을지 정해요. 상품 쪽으로 밀면 사려는 사람이 찾는 말(키 콘텐츠 재료)이, 정체성 쪽으로 밀면 채널 성격에 맞는 넓은 주제(풀링·신뢰 콘텐츠 재료)가 늘어요.</p>" +
+    "<div class=\"mix\"><div class=\"p\" id=\"mix-p\"></div><div class=\"i\" id=\"mix-i\" style=\"flex:1\"></div></div>" +
+    "<input type=\"range\" id=\"ratio\" min=\"0\" max=\"100\" step=\"5\" value=\"" + s.ratio + "\" aria-label=\"판매 상품 비율\">" +
+    "<div class=\"ends\"><span>← 채널 정체성만</span><span>판매 상품만 →</span></div>" +
+    "<p class=\"small\" id=\"mix-sum\" style=\"margin-top:10px\"></p></section>";
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>세부 값</h3></div><div class=\"rows\">" +
+    stepRow("한 번에 조사할 키워드", "count", s.count, 5) +
+    names.map(function(n){ return stepRow("상품 비중 · " + esc(n), "share:" + esc(n), s.share[n], 1) }).join("") +
+    stepRow("레퍼런스 형식 · 미드폼", "mid", s.mid, 1) + stepRow("레퍼런스 형식 · 숏폼", "short", s.short, 1) +
+    ["풀링", "신뢰", "키"].map(function(r){ return stepRow("추천 수 · " + r, "role:" + r, s.roles[r], 1) }).join("") +
+    "</div><p class=\"lead\" style=\"margin-top:12px\">바꾸면 바로 저장돼요. 다음 조사·추천부터 이 값으로 돌아요 (월·수·금 자동 조사 포함).</p></section>";
+  return h;
+}
+/* 슬라이더를 끄는 동안에는 화면을 다시 그리지 않고 이 칸들만 바꾼다 (다시 그리면 손에서 슬라이더가 떨어진다) */
+function paintMix(){
+  var s = S(), sp = split(s), names = Object.keys(s.share), p = document.getElementById("mix-p");
+  if(!p) return;
+  p.style.flex = "0 0 " + s.ratio + "%"; p.textContent = s.ratio >= 15 ? "상품 " + sp.nP : "";
+  document.getElementById("mix-i").textContent = s.ratio <= 85 ? "정체성 " + sp.nI : "";
+  document.getElementById("mix-n").textContent = s.ratio + " : " + (100 - s.ratio);
+  document.getElementById("mix-sum").innerHTML = "이번 조사 <b>" + s.count + "개</b> = 상품 <b>" + sp.nP + "</b>" +
+    (sp.nP ? " (" + names.filter(function(n){ return sp.per[n] }).map(function(n){ return esc(n) + " " + sp.per[n] }).join(" · ") + ")" : "") + " + 정체성 <b>" + sp.nI + "</b>";
+}
+function stepRow(label, key, val, by){
+  return "<div><span>" + label + "</span><span class=\"step\"><button data-step=\"" + key + "\" data-by=\"-" + by + "\" aria-label=\"줄이기\">−</button><b>" + val + "</b><button data-step=\"" + key + "\" data-by=\"" + by + "\" aria-label=\"늘리기\">＋</button></span></div>";
+}
+
+/* ── 그리기 ── */
+function render(){
+  var b = B();
+  document.getElementById("sub").textContent = b ? b.name : "";
+  document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
+  var v = { brand: viewBrand, mix: viewMix, kw: viewKw, ref: viewRef, rec: viewRec, script: viewScript }[tab] || viewBrand;
+  document.getElementById("view").innerHTML = v();
+  if(tab === "mix") paintMix();
+}
+
+document.addEventListener("click", function(e){
+  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy]");
+  if(!t) return;
+  var d = t.dataset;
+  if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
+  if(d.brand){ cur = d.brand; save("ct.brand", cur); render(); return }
+  if(d.hide){ ui.hide[d.hide] = 1; save("ct.hide", ui.hide); render(); return }
+  if(d.ui){ var kv = d.ui.split("="); ui[kv[0]] = kv[1] === "true" ? true : kv[1] === "false" ? false : isNaN(+kv[1]) ? kv[1] : +kv[1]; render(); return }
+  if(d.set){ var p = {}, sv = d.set.split("="); p[sv[0]] = sv[1] === "true"; setS(p); return }
+  if(d.pin || d.ex){ var key = d.pin ? "pin" : "ex", s = S(), m = Object.assign({}, s[key]), k = d.pin || d.ex, o = {};
+    if(m[k]) delete m[k]; else m[k] = 1; o[key] = m;
+    if(m[k]){ var other = key === "pin" ? "ex" : "pin", om = Object.assign({}, s[other]); delete om[k]; o[other] = om }
+    setS(o); return }
+  if(d.pick){ var pk = Object.assign({}, S().pick); if(pk[d.pick]) delete pk[d.pick]; else pk[d.pick] = 1; setS({ pick: pk }); return }
+  if(d.copy){ var el = document.getElementById(d.copy); if(el && navigator.clipboard) navigator.clipboard.writeText(el.innerText).then(function(){ t.textContent = "복사했어요" }); return }
+  if(d.step){
+    var s2 = S(), by = +d.by, k2 = d.step;
+    if(k2 === "count") setS({ count: Math.max(5, Math.min(40, s2.count + by)) });
+    else if(k2 === "mid" || k2 === "short"){ var o2 = {}; o2[k2] = Math.max(0, Math.min(20, s2[k2] + by)); setS(o2) }
+    else if(k2.indexOf("share:") === 0){ var sh = Object.assign({}, s2.share); sh[k2.slice(6)] = Math.max(0, Math.min(20, sh[k2.slice(6)] + by)); setS({ share: sh }) }
+    else if(k2.indexOf("role:") === 0){ var ro = Object.assign({}, s2.roles); ro[k2.slice(5)] = Math.max(0, Math.min(6, ro[k2.slice(5)] + by)); setS({ roles: ro }) }
+    return;
+  }
+  if(d.act) act(d.act, t);
+});
+document.addEventListener("input", function(e){
+  if(e.target.id === "ratio"){ SETS[cur] = Object.assign({}, SETS[cur] || {}, { ratio: +e.target.value }); paintMix() }
+});
+document.addEventListener("change", function(e){
+  if(e.target.id === "ratio") setS({ ratio: +e.target.value });
+  if(e.target.id === "nb-file" && e.target.files[0]){
+    var f = e.target.files[0], rd = new FileReader();
+    rd.onload = function(){ var ta = document.getElementById("nb-doc"); if(ta) ta.value = String(rd.result).slice(0, 60000); var nm = document.getElementById("nb-name"); if(nm && !nm.value) nm.value = f.name.replace(/\.[^.]+$/, "") };
+    rd.readAsText(f);
+  }
+});
+function act(name, el){
+  var s = S();
+  if(name === "newbrand"){ ui.newBrand = !ui.newBrand; render(); return }
+  if(name === "sendbrief"){
+    var nm = (document.getElementById("nb-name").value || "").trim(), doc = (document.getElementById("nb-doc").value || "").trim();
+    if(!nm || doc.length < 50){ alert("브랜드 이름과 기획서 내용(50자 이상)을 넣어 주세요."); return }
+    send("brief", "새 브랜드 「" + nm + "」 기획서로 프로필 초안 만들기", { name: nm, doc: doc.slice(0, 60000) }); ui.newBrand = false; render(); return;
+  }
+  if(name === "discover"){ var c = candidates(s); send("discover", "키워드·레퍼런스 조사 (상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " · " + c.length + "개)",
+    { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, short: s.short, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
+  if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }
+  if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
+  if(name === "recommend"){ send("recommend", "콘텐츠 추천 (풀링 " + s.roles["풀링"] + " · 신뢰 " + s.roles["신뢰"] + " · 키 " + s.roles["키"] + ")", { roles: s.roles, ratio: s.ratio }); return }
+  if(name === "script"){ var ids = Object.keys(s.pick); if(!ids.length) return; send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); return }
+}
+
+/* ── 시작: 저장소 붙이기 ── */
+(function(){
+  if(!window.claude || typeof claude.use !== "function"){ render(); return }
+  claude.use("db").then(function(d){
+    if(!d){ render(); return }
+    DB = d;
+    DB.collection("ct.data").onSnapshot(function(q){
+      RAW = {}; q.docs.forEach(function(x){ RAW[x.id] = x.data() });
+      if(!RAW[cur]){ var first = brands()[0]; cur = first ? first.id : ""; }
+      render();
+    }, function(){});
+    DB.collection("ct.set").onSnapshot(function(q){ q.docs.forEach(function(x){ SETS[x.id] = x.data() }); render() }, function(){});
+    DB.collection("cmd").onSnapshot(function(q){
+      CMDS = q.docs.map(function(x){ return Object.assign({ id: x.id }, x.data()) }).filter(function(c){ return c.from === "content" })
+        .sort(function(a, b){ return String(b.createdAt).localeCompare(String(a.createdAt)) });
+      render();
+    }, function(){});
+  }, function(){ render() });
+})();
+render();
+</script>
+</body>
+</html>

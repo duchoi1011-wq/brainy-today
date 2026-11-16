@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""빌드된 세 앱(home·shortcuts·vocab)과 shim.js 의 자바스크립트 문법을 node --check 로 검사한다.
+"""빌드된 네 앱(home·shortcuts·vocab·content)과 shim.js 의 자바스크립트 문법을 node --check 로 검사한다.
 
   python3 .github/check_apps.py      # 문제 없으면 0, 있으면 1
 
@@ -27,7 +27,7 @@ def check(label, code):
 
 
 ok = check("shim.js", (root / "shim.js").read_text(encoding="utf-8"))
-for app in ("home", "shortcuts", "vocab"):
+for app in ("home", "shortcuts", "vocab", "content"):
     html = (root / app / "index.html").read_text(encoding="utf-8")
     blocks = SCRIPT.findall(html)
     if not blocks:
@@ -35,5 +35,5 @@ for app in ("home", "shortcuts", "vocab"):
         ok = False
     for i, code in enumerate(blocks, 1):
         ok = check(f"{app}/index.html 스크립트 {i}", code) and ok
-print("✓ 세 앱 문법 이상 없음" if ok else "문법 오류가 있어요")
+print("✓ 네 앱 문법 이상 없음" if ok else "문법 오류가 있어요")
 sys.exit(0 if ok else 1)
