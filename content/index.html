@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "738d724493"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=738d724493"></script>
+<script>window.BRAINY_VERSION = "4cf8c74c96"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=4cf8c74c96"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -264,7 +264,7 @@ var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");
 var tab = load("ct.tab", "sum");
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
 var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["build", "구축"], ["script", "대본"]];
-var PARTS = { mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", log: ".log" };
+var PARTS = { mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -320,7 +320,7 @@ function setS(patch){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", brief: "새 브랜드 프로필" };
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -786,6 +786,7 @@ function viewRec(){
   h += "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
     "<p>" + esc(rd.summary) + "</p>" + (rd.order ? "<p class=\"lead\" style=\"margin-top:8px\">바로 찍을 수 있는 순서 · " + esc(rd.order) + "</p>" : "") +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!need.length || openCmd("script") ? " disabled" : "") + ">고른 " + need.length + "개 대본 초안 만들기</button>" +
+    "<button class=\"btn\" data-act=\"source\"" + (!picked.length || openCmd("source") ? " disabled" : "") + ">고른 " + picked.length + "개 소재 찾기</button>" +
     "<button class=\"btn\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole ? " disabled" : "") + ">추천 새로 받기</button></div>" +
     "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋로 고른 뒤 「대본 초안 만들기」를 누르면, 맥의 Claude가 대본을 쓰면서 이 주제로 잘된 영상과 레퍼런스 채널에서 가져온 구성을 같이 붙여요. 새 추천은 비율 탭의 역할 수(" + roleNames().map(function(n){ return esc(n) + " " + s.roles[n] }).join(" · ") + ")대로 받아요.</p></section>";
   h += planHtml(rd, s);
@@ -801,6 +802,20 @@ function viewRec(){
   });
   return h;
 }
+/* 📚 소재와 출처 — content-source 가 기획 카드의 소재 채널(정체성 · 판매 상품)을 돌며 찾은 사실과 출처 (볼트 <브랜드>/소재.json → ct.data .source) */
+function sourceOf(id){ var p = part("source"); return p && p.items ? p.items.filter(function(x){ return x.rec === id })[0] : null }
+function sourceHtml(id){
+  var x = sourceOf(id), busy = openCmd("source");
+  var btn = "<button class=\"btn sm\" data-act=\"source\" data-id=\"" + esc(id || "") + "\"" + (busy || !id ? " disabled" : "") + ">" + (x ? "소재 다시 찾기" : "소재 찾기") + "</button>";
+  if(!x) return "<details><summary>📚 소재와 출처 <span class=\"num muted\">아직</span></summary><p class=\"lead\" style=\"margin-top:6px\">브랜드 탭 「브랜드 레퍼런스」의 소재 채널을 돌며 사례·숫자·연구·현장 목소리와 출처를 찾아요.</p><div class=\"acts\">" + btn + "</div></details>";
+  var ok = x.items.filter(function(i){ return i.check === "✅" }).length;
+  return "<details><summary>📚 소재와 출처 <span class=\"num muted\">" + x.items.length + "개 · ✅ " + ok + " · " + esc(x.date || "") + "</span></summary><div class=\"list\" style=\"margin-top:6px\">" +
+    x.items.map(function(i){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag " + (i.group === "판매 상품" ? "p" : "i") + "\">" + esc(i.kind || "") + "</span> " + esc(i.claim) + "</div>" +
+      "<div class=\"it-d\"><a href=\"" + esc(i.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(i.cite || i.channel) + "</a> · " + esc(i.useIn || "") + " · " + esc(i.check || "") + (i.outside ? " <span class=\"tag p\">카드 밖</span>" : "") + "</div></div></div>" }).join("") + "</div>" +
+    ((x.gaps || []).length ? "<p class=\"small\" style=\"margin-top:6px\"><b>못 찾은 것</b> " + x.gaps.map(esc).join(" / ") + "</p>" : "") +
+    ((x.suggest || []).length ? "<p class=\"small\"><b>카드 보강 후보</b> " + x.suggest.map(esc).join(" / ") + "</p>" : "") +
+    "<div class=\"acts\">" + btn + "</div></details>";
+}
 function viewScript(){
   var b = B(), sc = part("script"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var h = "";
@@ -812,6 +827,7 @@ function viewScript(){
       (x.summary ? "<h4>스크립트 요약</h4><div class=\"pre\">" + md(x.summary) + "</div>" : "") +
       (x.shoot ? "<details><summary>촬영 요약</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.shoot) + "</div></details>" : "") +
       (x.script ? "<details open><summary>대본 뼈대</summary><div class=\"pre\" id=\"sc-" + i + "\" style=\"margin-top:6px\">" + md(x.script) + "</div></details>" : "") +
+      sourceHtml(x.rec) +
       (x.todo ? "<details><summary>아직 정해야 할 것</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.todo) + "</div></details>" : "") +
       "<div class=\"acts\">" + (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
   });
@@ -1184,7 +1200,9 @@ function act(name, el){
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
   if(name === "recommend"){ send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + ")", { roles: s.roles, ratio: s.ratio }); return }
   if(name === "script"){ var ids = Object.keys(s.pick).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
-    send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }   // 고른 추천을 바로 대본으로 — 잘된 영상·레퍼런스 채널에서 가져온 구성이 대본에 같이 붙는다 (2026-11-16 참고 탭 없앰)
+    send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
+  if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : Object.keys(s.pick); if(!sids.length) return;
+    send("source", "소재 찾기 — " + sids.join(" · "), { ids: sids }); return }   // 소재 채널(정체성·판매 상품)을 돌며 대본 소재·출처를 찾는다 — content-source 스킬 (2026-11-17)   // 고른 추천을 바로 대본으로 — 잘된 영상·레퍼런스 채널에서 가져온 구성이 대본에 같이 붙는다 (2026-11-16 참고 탭 없앰)
 }
 
 /* ── 시작: 저장소 붙이기 ── */

@@ -210,7 +210,7 @@ var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");
 var tab = load("ct.tab", "sum");
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
 var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["build", "구축"], ["script", "대본"]];
-var PARTS = { mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", log: ".log" };
+var PARTS = { mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -266,7 +266,7 @@ function setS(patch){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", brief: "새 브랜드 프로필" };
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -481,7 +481,9 @@ function act(name, el){
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
   if(name === "recommend"){ send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + ")", { roles: s.roles, ratio: s.ratio }); return }
   if(name === "script"){ var ids = Object.keys(s.pick).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
-    send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }   // 고른 추천을 바로 대본으로 — 잘된 영상·레퍼런스 채널에서 가져온 구성이 대본에 같이 붙는다 (2026-11-16 참고 탭 없앰)
+    send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
+  if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : Object.keys(s.pick); if(!sids.length) return;
+    send("source", "소재 찾기 — " + sids.join(" · "), { ids: sids }); return }   // 소재 채널(정체성·판매 상품)을 돌며 대본 소재·출처를 찾는다 — content-source 스킬 (2026-11-17)   // 고른 추천을 바로 대본으로 — 잘된 영상·레퍼런스 채널에서 가져온 구성이 대본에 같이 붙는다 (2026-11-16 참고 탭 없앰)
 }
 
 /* ── 시작: 저장소 붙이기 ── */
