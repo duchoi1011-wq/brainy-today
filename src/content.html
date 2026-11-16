@@ -106,6 +106,12 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .step b{min-width:26px;text-align:center;font-family:var(--f-mono)}
 .knobs{display:grid;gap:16px}.knob-h{display:flex;justify-content:space-between;align-items:baseline}.knob input[type=range]{margin:2px 0 0;accent-color:var(--accent)}
 .row2{display:flex;gap:8px;align-items:center}.row2>input,.row2>select{flex:1;min-width:0}
+/* 한눈에 — 여섯 단계 상자 */
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stepbox{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:14px;padding:10px 12px;font:inherit;color:var(--ink);cursor:pointer;min-width:0}
+.stepbox b{font-size:13.5px}.stepbox .big{font-family:var(--f-mono);font-size:20px;font-weight:600;line-height:1.3}.stepbox .it-d{font-size:12px;overflow-wrap:anywhere}
+.stepbox:hover{border-color:var(--accent)}
+@media (min-width:640px){.flow{grid-template-columns:repeat(6,1fr)}}
 .rows{display:grid;gap:8px;margin-top:6px}.rows>div{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
 /* 맥에 보낸 명령 상태 */
 .run{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:12px 14px;border-radius:14px;background:var(--blue-bg);line-height:1.5}
@@ -123,7 +129,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 @media (pointer:coarse){.mk{width:44px;height:44px}.step button{width:42px;height:42px}.chip{padding:10px 14px}.btn.sm{padding:10px 14px}}
 @media (max-width:480px){
   .card{padding:16px 16px;border-radius:18px}
-  nav button{padding:8px 2px;font-size:13px;flex:1 1 0}nav button span{display:none}
+  nav button{padding:8px 10px;font-size:13px;flex:0 0 auto}nav button span{display:none}
   .ref img{width:96px;height:54px}
 }
 @media (prefers-reduced-motion:no-preference){main>.card{animation:fade .18s ease-out}@keyframes fade{from{opacity:.5}to{opacity:1}}}
@@ -151,9 +157,9 @@ var RAW = {};                       // ct.data 문서 id → data
 var SETS = {};                      // 브랜드 id → 설정
 var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부터)
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드 — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
-var tab = load("ct.tab", "brand");
+var tab = load("ct.tab", "sum");
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, newBrand: false, hide: load("ct.hide", {}) };
-var TABS = [["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["refpage", "참고"], ["script", "대본"]];
+var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["refpage", "참고"], ["script", "대본"]];
 var PARTS = { refpage: ".refpage", mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", script: ".script", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
@@ -231,6 +237,7 @@ function runHtml(kinds){
 /*@include content-ref.js*/
 /*@include content-plan.js*/
 /*@include content-refpage.js*/
+/*@include content-sum.js*/
 
 /* ── 브랜드 탭 ── */
 function viewBrand(){
@@ -311,7 +318,7 @@ function render(){
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
   document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
-  var v = { brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, refpage: viewRefpage, script: viewScript }[tab] || viewBrand;
+  var v = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, refpage: viewRefpage, script: viewScript }[tab] || viewBrand;
   var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.id ? "#" + act0.id : "");
   document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();   // 맥에 보낸 일의 상태는 어느 탭에서나 맨 위에
   if(tab === "mix") paintMix();
@@ -319,9 +326,10 @@ function render(){
 }
 
 document.addEventListener("click", function(e){
-  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel],[data-rpok],[data-rpmore],[data-rpsync]");
+  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel],[data-rpok],[data-rpmore],[data-rpsync],[data-go]");
   if(!t) return;
   var d = t.dataset;
+  if(d.go){ var gp = d.go.split("|"); if(gp[1]){ var gk = gp[1].split("="); ui[gk[0]] = gk[1] } tab = gp[0]; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }   // 한눈에 → 그 탭 (필요하면 그 탭의 보기도 맞춘다)
   if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
   if(d.brand){ pickBrand(d.brand); return }
   if(d.tpl){ if(d.tpl !== mixTpl().id && (!Object.keys((SETS[cur] || {}).mixer || {}).length || confirm("템플릿을 바꾸면 이 브랜드에서 바꾼 값이 템플릿 값으로 돌아가요. 바꿀까요?"))) setS({ template: d.tpl, mixer: {} }); return }
@@ -356,9 +364,15 @@ document.addEventListener("click", function(e){
 document.addEventListener("input", function(e){
   if(e.target.id === "ratio"){ SETS[cur] = Object.assign({}, SETS[cur] || {}, { ratio: +e.target.value }); paintMix() }
   if(e.target.id === "fb-text") ui.fbDraft = e.target.value;
+  if(e.target.id === "tpl-name") ui.tplName = e.target.value;
   if(e.target.dataset.knob){ var kb = mixDef().knobs.filter(function(k){ return k.id === e.target.dataset.knob })[0], lab = document.getElementById("kv-" + e.target.dataset.knob); if(kb && lab) lab.textContent = knobText(kb, +e.target.value) }
 });
-document.addEventListener("keydown", function(e){ if(e.key === "Enter" && e.target.id === "fb-text"){ e.preventDefault(); act("fbadd") } });
+document.addEventListener("keydown", function(e){
+  if(e.key !== "Enter" || e.isComposing) return;
+  if(e.target.id === "fb-text"){ e.preventDefault(); act("fbadd") }
+  if(e.target.id === "tpl-name"){ e.preventDefault(); act("tplnew") }
+  if(e.target.dataset.seed){ e.preventDefault(); act("seedsave") }
+});
 document.addEventListener("change", function(e){
   if(e.target.id === "ratio") setS({ ratio: +e.target.value });
   if(e.target.dataset.knob){ var mx = Object.assign({}, (SETS[cur] || {}).mixer || {}); mx[e.target.dataset.knob] = +e.target.value; var y = window.scrollY; setS({ mixer: mx }); window.scrollTo(0, y) }
@@ -381,6 +395,16 @@ function act(name, el){
     { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, short: s.short, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
   if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }
   if(name === "resetmixer"){ setS({ mixer: {} }); return }
+  if(name === "tplnew"){ saveTpl("new"); return }
+  if(name === "tplover"){ saveTpl("over"); return }
+  if(name === "toastx"){ ui.toast = ""; render(); return }
+  if(name === "seededit"){ ui.seedEdit = !ui.seedEdit; render(); return }
+  if(name === "seedsave"){
+    var sd = [].slice.call(document.querySelectorAll("[data-seed]")).map(function(el){ var kind = el.dataset.seed.split(":")[0], w = el.value.replace(/\s+/g, "").slice(0, 20);
+      return kind === "상품" ? { kind: kind, word: w, product: el.dataset.prod } : { kind: kind, word: w } }).filter(function(x){ return x.word });
+    if(!sd.length){ alert("씨앗 단어를 하나 이상 적어 주세요."); return }
+    ui.seedEdit = false; setS({ seeds: sd }); return;
+  }
   if(name === "fbadd"){ var tx = (document.getElementById("fb-text").value || "").trim(); if(!tx){ alert("피드백을 한 줄 적어 주세요."); return } ui.fbDraft = "";
     setS({ feedback: ((SETS[cur] || {}).feedback || []).concat([{ at: new Date().toISOString(), knob: document.getElementById("fb-knob").value, text: tx.slice(0, 400) }]) }); return }
   if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
