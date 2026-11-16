@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "4cf8c74c96"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=4cf8c74c96"></script>
+<script>window.BRAINY_VERSION = "b81c10e66c"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=b81c10e66c"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -262,7 +262,7 @@ var SETS = {};                      // 브랜드 id → 설정
 var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부터)
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드 — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "sum");
-var ui = { kwKind: "all", kwMore: 60, refRole: "all", refForm: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
+var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
 var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["build", "구축"], ["script", "대본"]];
 var PARTS = { mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
 
@@ -289,11 +289,17 @@ function applyKit(){
 }
 function B(){ return RAW[cur] || null }
 function part(name){ return RAW[cur + PARTS[name]] || null }
+/* 쇼츠는 안 한다 (2026-11-16 동욱 "쇼츠는 하지 말고 다 미드폼 롱폼 기준으로" · 11-17 "쇼츠 우선 제외") —
+   지난 회차의 숏폼 레퍼런스·추천은 시트·데이터 파일에 그대로 두고 앱에서만 뺀다 */
+function isLong(x){ return x.form !== "숏폼" }
+function isLongRec(x){ return !/^숏폼/.test(x.format || "") }
+function pickedIds(s){ var r = part("rec"), rd = r && r.rounds && r.rounds[r.rounds.length - 1];   // 최신 회차에서 고른 미드폼·롱폼 추천만
+  return rd ? rd.items.filter(function(x){ return isLongRec(x) && s.pick[x.id] }).map(function(x){ return x.id }) : [] }
 function S(){
   var b = B(), d = (b && b.defaults) || {}, s = SETS[cur] || {};
   var share = {}; ((b && b.products) || []).forEach(function(p){ share[p.name] = (s.share && s.share[p.name] != null) ? s.share[p.name] : p.share });
   return { ratio: s.ratio != null ? s.ratio : (d.ratio != null ? d.ratio : 70), count: s.count || d.count || 20, share: share,
-    mid: s.mid != null ? s.mid : (d.mid != null ? d.mid : 10), short: s.short != null ? s.short : (d.short != null ? d.short : 10),
+    mid: s.mid != null ? s.mid : (d.mid != null ? d.mid : 10),
     perWeek: s.perWeek || d.perWeek || 2, plan: s.plan || {},
     roles: roleNames().reduce(function(o, n){ o[n] = (s.roles && s.roles[n] != null) ? s.roles[n] : ((d.roles && d.roles[n] != null) ? d.roles[n] : 3); return o }, {}), buyOnly: s.buyOnly !== false, fresh: s.fresh !== false,
     pin: s.pin || {}, ex: s.ex || {}, pick: s.pick || {} };
@@ -654,31 +660,32 @@ function refCard(x){
 }
 function viewRef(){
   var b = B(), r = part("ref"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
+  var items = r ? r.items.filter(isLong) : [], nShort = r ? r.items.length - items.length : 0;
   var live = part("live"), chan = part("chan");
-  var h = "<div class=\"chips\"><button class=\"chip" + (ui.refView === "videos" ? " on" : "") + "\" data-ui=\"refView=videos\">레퍼런스 영상<span>" + (r ? r.items.length : 0) + "</span></button>" +
+  var h = "<div class=\"chips\"><button class=\"chip" + (ui.refView === "videos" ? " on" : "") + "\" data-ui=\"refView=videos\">레퍼런스 영상<span>" + items.length + "</span></button>" +
     "<button class=\"chip" + (ui.refView === "stages" ? " on" : "") + "\" data-ui=\"refView=stages\">단계 사다리</button>" +
     "<button class=\"chip" + (ui.refView === "chans" ? " on" : "") + "\" data-ui=\"refView=chans\">레퍼런스 채널<span>" + ((b.channels || []).length) + "</span></button>" +
     "<button class=\"chip dash\" data-act=\"refresh\"" + (openCmd("refresh") || !r || !r.items.length ? " disabled" : "") + ">↻ 지금 최신화</button></div>" +
     "<p class=\"lead\">반응 최신화 " + (live ? day(live.updatedAt) : "아직 안 함") + " · 채널 새 영상 " + (chan ? day(chan.updatedAt) : "아직 안 함") + "</p>";
   if(ui.refView === "chans") return h + chansHtml(b, chan);
   if(!r) return h + "<p class=\"empty\">아직 레퍼런스가 없어요. 키워드 탭에서 조사를 돌리면 채워져요.</p>";
-  if(ui.refView === "stages") return h + stagesHtml(r.items);
-  var list = r.items.filter(function(x){
-    return (ui.refRole === "all" || x.role === ui.refRole) && (ui.refForm === "all" || x.form === ui.refForm) &&
+  if(ui.refView === "stages") return h + stagesHtml(items);
+  var list = items.filter(function(x){
+    return (ui.refRole === "all" || x.role === ui.refRole) &&
       (!ui.refBuyer || (x.buyer === "✓" && isProof(x)));
   });
   var by = { mix: function(a, c){ return refScore(c) - refScore(a) }, ratio: function(a, c){ return (c.ratio || 0) - (a.ratio || 0) }, out: function(a, c){ return (outlier(c) || 0) - (outlier(a) || 0) }, grow: function(a, c){ return ((growth(c) || {}).pct || 0) - ((growth(a) || {}).pct || 0) }, date: function(a, c){ return c.row - a.row } }[ui.refSort];
   list.sort(by);
   function chip(key, val, label){ return "<button class=\"chip" + (ui[key] === val ? " on" : "") + "\" data-ui=\"" + key + "=" + val + "\">" + label + "</button>" }
-  h += "<section class=\"card\"><div class=\"card-h\"><h3>잘 되는 콘텐츠</h3><span class=\"n\">" + list.length + " / " + r.items.length + "</span></div>" +
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>잘 되는 콘텐츠</h3><span class=\"n\">" + list.length + " / " + items.length + "</span></div>" +
     "<div class=\"chips\">" + chip("refRole", "all", "역할 전체") + roleNames().map(function(n){ return chip("refRole", esc(n), esc(n)) }).join("") + "</div>" +
-    "<div class=\"chips\" style=\"margin-top:6px\">" + chip("refForm", "all", "형식 전체") + chip("refForm", "숏폼", "숏폼") + chip("refForm", "미드폼", "미드폼") +
-    "<button class=\"chip" + (ui.refBuyer ? " on" : "") + "\" data-ui=\"refBuyer=" + !ui.refBuyer + "\">구매자 ✓ · 성과 근거만</button></div>" +
+    (nShort ? "<p class=\"lead\">미드폼·롱폼만 보여요 — 지난 조사의 숏폼 " + nShort + "개는 뺐어요 (시트에는 남아 있어요).</p>" : "") +
+    "<div class=\"chips\" style=\"margin-top:6px\"><button class=\"chip" + (ui.refBuyer ? " on" : "") + "\" data-ui=\"refBuyer=" + !ui.refBuyer + "\">구매자 ✓ · 성과 근거만</button></div>" +
     "<div class=\"chips\" style=\"margin-top:6px\">" + chip("refSort", "mix", "믹서 점수순") + chip("refSort", "ratio", "조회÷구독순") + chip("refSort", "out", "채널 평소 대비순") + chip("refSort", "grow", "요즘 조회 늘어난 순") + chip("refSort", "date", "최근 조사순") + "</div>" +
-    (ui.refSort === "out" ? "<p class=\"lead\" style=\"margin-top:8px\">채널 평소 = 그 채널 일반 영상 최근 30개의 가운데 조회수예요. 쇼츠는 일반 영상과 견주게 돼 배수가 크게 나올 수 있어요.</p>" : "") +
+    (ui.refSort === "out" ? "<p class=\"lead\" style=\"margin-top:8px\">채널 평소 = 그 채널 일반 영상 최근 30개의 가운데 조회수예요.</p>" : "") +
     "<div style=\"margin-top:6px\">" + (list.slice(0, ui.refMore).map(refCard).join("") || "<p class=\"empty\">조건에 맞는 레퍼런스가 없어요.</p>") + "</div>" +
     (list.length > ui.refMore ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"refMore=" + (ui.refMore + 30) + "\">더 보기 (" + (list.length - ui.refMore) + "개 남음)</button></div>" : "") + "</section>";
-  return h + weekdayHtml(r.items);
+  return h + weekdayHtml(items);
 }
 /* 단계 사다리 보기 — 역할(풀링·키)마다 5단계 칸에 레퍼런스를 썸네일로 놓는다. 칸 안은 믹서 점수순, 「구매자 ✓ · 성과 근거만」을 켜면 그것만 */
 function stagesHtml(all){
@@ -781,10 +788,10 @@ function viewRec(){
   var s = S(), h = "", nRole = roleNames().reduce(function(t, n){ return t + (s.roles[n] || 0) }, 0);
   if(!r || !r.rounds || !r.rounds.length)
     return h + "<section class=\"card\"><p class=\"empty\">아직 추천이 없어요.</p><div class=\"acts\"><button class=\"btn primary\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole || !part("ref") ? " disabled" : "") + ">추천 받기</button></div><p class=\"lead\" style=\"margin-top:8px\">추천은 조사한 레퍼런스로 만들어요. 레퍼런스가 없으면 키워드 탭에서 조사부터 돌리세요.</p><div></div></section>";
-  var rd = r.rounds[r.rounds.length - 1], picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
+  var rd0 = r.rounds[r.rounds.length - 1], rd = Object.assign({}, rd0, { items: rd0.items.filter(isLongRec) }), nShort = rd0.items.length - rd.items.length, picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
   var need = picked.filter(function(id){ return !scriptOf(id) });
   h += "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
-    "<p>" + esc(rd.summary) + "</p>" + (rd.order ? "<p class=\"lead\" style=\"margin-top:8px\">바로 찍을 수 있는 순서 · " + esc(rd.order) + "</p>" : "") +
+    "<p>" + esc(rd.summary) + "</p>" + (nShort ? "<p class=\"lead\" style=\"margin-top:8px\">미드폼·롱폼만 보여요 — 이 회차의 숏폼 추천 " + nShort + "개는 뺐어요.</p>" : "") + (rd.order ? "<p class=\"lead\" style=\"margin-top:8px\">바로 찍을 수 있는 순서 · " + esc(rd.order) + "</p>" : "") +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!need.length || openCmd("script") ? " disabled" : "") + ">고른 " + need.length + "개 대본 초안 만들기</button>" +
     "<button class=\"btn\" data-act=\"source\"" + (!picked.length || openCmd("source") ? " disabled" : "") + ">고른 " + picked.length + "개 소재 찾기</button>" +
     "<button class=\"btn\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole ? " disabled" : "") + ">추천 새로 받기</button></div>" +
@@ -965,9 +972,9 @@ function viewSum(){
   var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var s = S(), sd = seedsOf(), all = scored(), pins = all.filter(function(x){ return s.pin[x.kw] });
   var seedKw = all.filter(function(x){ return (x.seed || []).length });
-  var rc = part("rec"), rd = rc && rc.rounds && rc.rounds[rc.rounds.length - 1], picks = rd ? rd.items.filter(function(x){ return s.pick[x.id] }) : [];
+  var rc = part("rec"), rd = rc && rc.rounds && rc.rounds[rc.rounds.length - 1], picks = rd ? rd.items.filter(function(x){ return isLongRec(x) && s.pick[x.id] }) : [];
   var sc = part("script"), scripts = (sc && sc.items) || [];
-  var ref = part("ref"), refs = (ref && ref.items) || [], chs = b.channels || [], chan = part("chan");
+  var ref = part("ref"), refs = ((ref && ref.items) || []).filter(isLong), chs = b.channels || [], chan = part("chan");
   var nNew = 0; chs.forEach(function(c){ var n = chan && chan.items && chan.items[c.name]; if(n) nNew += n.videos.filter(isNew).length });
   function box(n, label, big, sub, to){ return "<button class=\"stepbox\" data-go=\"" + to + "\"><span class=\"num muted\">" + n + "</span><b>" + label + "</b><span class=\"big\">" + big + "</span><span class=\"it-d\">" + sub + "</span></button>" }
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + " 한눈에</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div><p class=\"lead\">" + esc(b.one || "") + "</p>" +
@@ -1047,7 +1054,7 @@ function viewBrand(){
   var id = b.identity || {};
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div><dl class=\"kv\">" +
     [["콘텐츠 축", esc((id.axes || []).join(" · "))], ["필러", (id.pillars || []).map(function(p){ return "<b>" + esc(p.id) + "</b> " + esc(p.name) }).join(" · ")],
-     ["구매자 욕구", esc((id.needs || []).join(" · "))], ["키워드 힌트", esc((id.hints || []).join(" · "))], ["훅 규칙", esc(b.hook)], ["구성 공식", esc(b.shortform)]]
+     ["구매자 욕구", esc((id.needs || []).join(" · "))], ["키워드 힌트", esc((id.hints || []).join(" · "))], ["훅 규칙", esc(b.hook)]]
       .filter(function(r){ return r[1] }).map(function(r){ return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>" }).join("") + "</dl>" +
     ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
       b.topicBank.map(function(t){ return "<div class=\"it\"><span class=\"num muted\">" + esc(t.n) + "</span><div class=\"it-m\"><div>" + esc(t.topic) + "</div><div class=\"it-d\">필러 " + esc(t.pillar) + " · " + esc(t.product) + "</div></div></div>" }).join("") + "</div></details>" : "") +
@@ -1076,7 +1083,7 @@ function viewMix(){
   h += "<section class=\"card\"><div class=\"card-h\"><h3>세부 값</h3></div><div class=\"rows\">" +
     stepRow("한 번에 조사할 키워드", "count", s.count, 5) +
     names.map(function(n){ return stepRow("상품 비중 · " + esc(n), "share:" + esc(n), s.share[n], 1) }).join("") +
-    stepRow("레퍼런스 형식 · 미드폼", "mid", s.mid, 1) + stepRow("레퍼런스 형식 · 숏폼", "short", s.short, 1) + stepRow("한 주에 올릴 편 수 (발행 달력)", "perWeek", s.perWeek, 1) +
+    stepRow("레퍼런스 수 · 미드폼·롱폼 (쇼츠는 안 함)", "mid", s.mid, 1) + stepRow("한 주에 올릴 편 수 (발행 달력)", "perWeek", s.perWeek, 1) +
     roleNames().map(function(r){ return stepRow("추천 수 · " + esc(r), "role:" + esc(r), s.roles[r], 1) }).join("") +
     "</div><p class=\"lead\" style=\"margin-top:12px\">바꾸면 바로 저장돼요. 다음 조사·추천부터 이 값으로 돌아요 (월·수·금 자동 조사 포함).</p></section>";
   return h;
@@ -1135,7 +1142,7 @@ document.addEventListener("click", function(e){
     var s2 = S(), by = +d.by, k2 = d.step;
     function lim(v, lo, hi){ return Math.max(lo, Math.min(hi, v + by)) }   // 한계에 닿아 값이 그대로면 저장하지 않는다
     if(k2 === "count"){ if(lim(s2.count, 5, 40) !== s2.count) setS({ count: lim(s2.count, 5, 40) }) }
-    else if(k2 === "mid" || k2 === "short"){ if(lim(s2[k2], 0, 20) !== s2[k2]){ var o2 = {}; o2[k2] = lim(s2[k2], 0, 20); setS(o2) } }
+    else if(k2 === "mid"){ if(lim(s2.mid, 0, 20) !== s2.mid) setS({ mid: lim(s2.mid, 0, 20) }) }
     else if(k2 === "perWeek"){ if(lim(s2.perWeek, 1, 7) !== s2.perWeek) setS({ perWeek: lim(s2.perWeek, 1, 7) }) }
     else if(k2.indexOf("share:") === 0){ var sn = k2.slice(6); if(lim(s2.share[sn], 0, 20) !== s2.share[sn]){ var sh = Object.assign({}, s2.share); sh[sn] = lim(sh[sn], 0, 20); setS({ share: sh }) } }
     else if(k2.indexOf("role:") === 0){ var rn = k2.slice(5); if(lim(s2.roles[rn], 0, 10) !== s2.roles[rn]){ var ro = Object.assign({}, s2.roles); ro[rn] = lim(ro[rn], 0, 10); setS({ roles: ro }) } }
@@ -1176,7 +1183,7 @@ function act(name, el){
     send("brief", "새 브랜드 「" + nm + "」 기획서로 프로필 초안 만들기", { name: nm, doc: doc.slice(0, 60000) }); ui.newBrand = false; render(); return;
   }
   if(name === "discover"){ var c = candidates(s); send("discover", "키워드·레퍼런스 조사 (상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " · " + c.length + "개)",
-    { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, short: s.short, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
+    { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
   if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }
   if(name === "resetmixer"){ setS({ mixer: {} }); return }
   if(name === "tplnew"){ saveTpl("new"); return }
@@ -1199,9 +1206,9 @@ function act(name, el){
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
   if(name === "recommend"){ send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + ")", { roles: s.roles, ratio: s.ratio }); return }
-  if(name === "script"){ var ids = Object.keys(s.pick).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
+  if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
-  if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : Object.keys(s.pick); if(!sids.length) return;
+  if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : pickedIds(s); if(!sids.length) return;
     send("source", "소재 찾기 — " + sids.join(" · "), { ids: sids }); return }   // 소재 채널(정체성·판매 상품)을 돌며 대본 소재·출처를 찾는다 — content-source 스킬 (2026-11-17)   // 고른 추천을 바로 대본으로 — 잘된 영상·레퍼런스 채널에서 가져온 구성이 대본에 같이 붙는다 (2026-11-16 참고 탭 없앰)
 }
 
