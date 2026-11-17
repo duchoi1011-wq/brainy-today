@@ -15,7 +15,13 @@ var SEED_SRC = [["naver", "네이버 검색광고"], ["google", "구글 트렌�
 function seedsOf(){ return ((SETS[cur] || {}).seeds || (B() && B().seeds) || []).filter(function(x){ return x.word }) }
 function seedSrc(){ return (SETS[cur] || {}).seedSrc || (B() && B().seedSrc) || "naver" }
 function isFar(x, word){ return (x.far || []).indexOf(word) >= 0 }   // 씨앗이 안 든 말 — 구글 관련 검색어로만 들어온 것
-function seedItems(word, far){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 && (far == null || isFar(x, word) === far) }).sort(function(a, b){ return b.score - a.score || b.total - a.total }) }   // 순위 기준(kwCrit) 점수 순
+/* 씨앗 하나의 연관 검색어 — 「씨앗과 가까움」은 그 씨앗으로 다시 재서 점수를 매기고 점수 순 (순위 기준 kwCrit) */
+function seedItems(word, far){
+  var w = kwWeights();
+  return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 && (far == null || isFar(x, word) === far) }).map(function(x){
+    var rel = relTo(word, x.kw); return Object.assign({}, x, { rel: rel, score: Math.round(wsum([[w.rel, rel], [w.vol, x.sc.vol], [w.ctr, x.sc.ctr], [w.rise, x.sc.rise], [w.comp, x.sc.comp]])) });
+  }).sort(function(a, b){ return b.score - a.score || b.total - a.total });
+}
 function seedRun(word){ var k = part("kw"); return ((k && k.seeds) || []).filter(function(x){ return x.word === word })[0] || null }
 function seedsPending(){ var k = part("kw"), have = ((k && k.seeds) || []).map(function(x){ return x.word }).join("|") + "@" + ((k && k.seedSrc) || "naver"); return seedsOf().map(function(x){ return x.word }).join("|") + "@" + seedSrc() !== have }
 function seedRowHtml(x, s){
@@ -184,7 +190,7 @@ function scored(){
     var up = rise == null ? 50 : Math.max(0, Math.min(1, (rise - 0.5) / 1.5)) * 100;
     var rel = relOf(x), easy = x.comp === "낮음" ? 100 : x.comp === "중간" ? 60 : Math.max(0, 40 - (x.ads || 0) * 3);
     var score = wsum([[w.rel, rel], [w.vol, vol], [w.ctr, ctr], [w.rise, up], [w.comp, easy]]);
-    return Object.assign({}, x, { rel: rel, rise: rise, w: tr ? tr.w : null, score: Math.round(score), buy: /^구매/.test(x.intent || "") && !/경쟁사 이름/.test(x.intent || ""), diff: diffOf(x), cluster: clusterOf(x.kw) });
+    return Object.assign({}, x, { rel: rel, sc: { vol: vol, ctr: ctr, rise: up, comp: easy }, rise: rise, w: tr ? tr.w : null, score: Math.round(score), buy: /^구매/.test(x.intent || "") && !/경쟁사 이름/.test(x.intent || ""), diff: diffOf(x), cluster: clusterOf(x.kw) });
   }).map(function(x){ return Object.assign(x, { gap: x.kind === "상품" && x.buy && !x.surveyed && x.total >= 10 && cov.indexOf(x.kw) < 0 });
   }).sort(function(a, b){ return b.score - a.score || b.total - a.total });
 }
