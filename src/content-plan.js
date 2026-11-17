@@ -27,7 +27,34 @@ function planHtml(rd, s){
 /* 원문 칸 (2026-11-16 동욱 "추천 컨텐츠는 내 원문이 기준") — 조사 시트 [조사] 콘텐츠 E~N열과 같은 순서.
    주제 칸만 우리 추천이고, 썸네일부터 댓글까지는 그 추천의 근거 레퍼런스(refs = [조사] 행 번호) 칸을 그대로 보여 준다.
    뷰트랩 기여도·성과도는 등급을 읽은 레퍼런스에만 채널 칸 끝에 붙는다 (연결됐을 때만) */
-var ORIG_COLS = ["주제 (우리 적용)", "썸네일", "문구 / 배경", "제목", "채널", "대본", "파동", "댓글"];
+var ORIG_COLS = ["주제 (우리 적용)", "기준 레퍼런스 → 내 주제", "썸네일", "문구 / 배경", "제목", "채널", "대본", "파동", "댓글 (좋아요 순 5개)"];
+/* 이 레퍼런스의 주제와, 거기서 무엇을 가져와 내 주제를 만들었나 (2026-11-17 동욱 "어떤 레퍼런스를 기준으로 저런 콘텐츠를 만들었는지, 내 주제와 레퍼런스 주제를 같이")
+   맥이 추천할 때 x.refNotes{<refs 값>: {topic, took}} 를 쓴다. 없으면 조사 시트의 refLine(레퍼런스 한 줄) · apply(우리 적용) · 영상 분석 주제 · 제목 순으로 */
+function refBasisCell(x, r, key){
+  var n = ((x.refNotes || {})[String(key)]) || {}, an = r.vid ? anaOf(r.vid) : null;
+  var topic = n.topic || r.refLine || (an && an.topic) || r.title || "", took = n.took || r.apply || "";
+  return "<td class=\"o-basis\"><div class=\"small muted\">레퍼런스 주제</div><div>" + esc(topic) + "</div>" +
+    "<div class=\"small muted\" style=\"margin-top:6px\">→ 내 주제</div><div><b>" + esc(x.title) + "</b></div>" +
+    (took ? "<div class=\"small muted\" style=\"margin-top:6px\">가져온 것</div><div class=\"small\">" + esc(took) + "</div>" : "") + "</td>";
+}
+/* 댓글 — 좋아요 많은 순 5개 (2026-11-17 동욱 "댓글을 자세히 읽게 하는 칸 · 가져오는 모든 댓글은 좋아요 순 5개").
+   볼트 <브랜드>/댓글.json(ct.data .cmts, content_app.py cmts — 공식 API 100개 중 좋아요 순) > 영상 분석 댓글 > 조사 시트 요약 글 */
+var CMT_TOP = 5;
+function cmtsOf(vid){
+  var c = vid && (((part("cmts") || {}).items) || {})[vid];
+  if(c && (c.comments || []).length) return { list: c.comments.slice(0, CMT_TOP), at: c.at };
+  var an = vid ? anaOf(vid) : null;
+  if(an && (an.comments || []).length) return { list: an.comments.slice().sort(function(a, b){ return (b.likes || 0) - (a.likes || 0) }).slice(0, CMT_TOP), at: an.at };
+  return c && c.error ? { list: [], error: c.error } : null;
+}
+function cmtCell(r){
+  var c = cmtsOf(r.vid);
+  if(!c || !c.list.length) return "<td>" + esc(c && c.error ? c.error : (r.comments || "아직 안 받음")) + "</td>";
+  var top = c.list[0];
+  return "<td class=\"o-cmt\"><div><span class=\"num\">👍 " + fmt(top.likes || 0) + "</span> " + esc(String(top.text || "").slice(0, 70)) + (String(top.text || "").length > 70 ? "…" : "") + "</div>" +
+    "<details style=\"margin-top:4px\"><summary>댓글 " + c.list.length + "개 자세히</summary><ol class=\"cmts\">" +
+    c.list.map(function(m){ return "<li><div>" + esc(m.text || "") + "</div><div class=\"it-d\">👍 " + fmt(m.likes || 0) + (m.replies ? " · 답글 " + m.replies : "") + (m.at ? " · " + esc(m.at) : "") + "</div></li>" }).join("") + "</ol></details></td>";
+}
 var VT_GRADE = /^(Great|Good|Normal|Bad|Worst)$/;
 /* 근거 레퍼런스 — 숫자면 [조사] 시트 행, 글이면 영상 id (조사 없이 ☆ 즐겨찾기·키워드로 찾은 콘텐츠로 추천받았을 때) */
 function refByRow(n){
@@ -63,19 +90,19 @@ function topicCell(x, s){
     (x.scene ? "<dt>찍을 장면</dt><dd>" + esc(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + esc(x.basis) + "</dd>" +
     (x.next ? "<dt>다음 연결</dt><dd>" + esc(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + esc(x.bank) + "</dd>" : "") + "</dl></details>";
 }
-function refCells(r){
+function refCells(r, x, key){
   var vt = [VT_GRADE.test(r.vtContrib || "") ? "기여도 " + r.vtContrib : "", VT_GRADE.test(r.vtPerf || "") ? "성과도 " + r.vtPerf : ""].filter(Boolean);
   var ch = [r.channel, "구독 " + (r.subs || "—"), "조회 " + (r.views || "—"), r.ratio != null ? "조회÷구독 " + r.ratio + "배" + (r.ad ? "(광고 집행 추정)" : "") : "", r.published, r.len].concat(vt).filter(Boolean);
-  return "<td>" + (r.vid ? "<a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(r.vid) + "/mqdefault.jpg\"></a>" : "") + "</td>" +
+  return refBasisCell(x, r, key) + "<td>" + (r.vid ? "<a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(r.vid) + "/mqdefault.jpg\"></a>" : "") + "</td>" +
     "<td>" + esc(r.thumbText || "확인 못 함") + "</td>" +
     "<td><a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(r.title) + "</a></td>" +
-    "<td>" + esc(ch.join(" · ")) + "</td><td>" + esc(r.structure || "") + "</td><td>" + esc(r.wave || "") + "</td><td>" + esc(r.comments || "") + "</td>";
+    "<td>" + esc(ch.join(" · ")) + "</td><td>" + esc(r.structure || "") + "</td><td>" + esc(r.wave || "") + "</td>" + cmtCell(r);
 }
 function origRows(x, s){
-  var refs = (x.refs || []).map(refByRow).filter(Boolean), n = Math.max(1, refs.length);
+  var keys = (x.refs || []).filter(function(k){ return refByRow(k) }), refs = keys.map(refByRow), n = Math.max(1, refs.length);
   var first = "<tr><td rowspan=\"" + n + "\" class=\"o-topic\">" + topicCell(x, s) + "</td>" +
-    (refs.length ? refCells(refs[0]) : "<td colspan=\"7\" class=\"muted\">근거 레퍼런스 없음 — " + esc(x.cards ? String(x.cards).replace(/\[\[|\]\]/g, "").slice(0, 80) : "모아 둔 카드에서") + "</td>") + "</tr>";
-  return first + refs.slice(1).map(function(r){ return "<tr>" + refCells(r) + "</tr>" }).join("");
+    (refs.length ? refCells(refs[0], x, keys[0]) : "<td colspan=\"8\" class=\"muted\">근거 레퍼런스 없음 — " + esc(x.cards ? String(x.cards).replace(/\[\[|\]\]/g, "").slice(0, 80) : "모아 둔 카드에서") + "</td>") + "</tr>";
+  return first + refs.slice(1).map(function(r, i){ return "<tr>" + refCells(r, x, keys[i + 1]) + "</tr>" }).join("");
 }
 function viewRec(){
   var b = B(), r = part("rec"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
@@ -87,6 +114,7 @@ function viewRec(){
     "<p>" + esc(rd.summary) + "</p>" + (nShort ? "<p class=\"lead\" style=\"margin-top:8px\">미드폼·롱폼만 보여요 — 이 회차의 숏폼 추천 " + nShort + "개는 뺐어요.</p>" : "") + (rd.order ? "<details style=\"margin-top:8px\"><summary>찍는 순서 (" + rd.items.length + "편)</summary><p class=\"lead\" style=\"margin-top:6px\">" + orderText(rd) + "</p></details>" : "") +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!need.length || openCmd("script") ? " disabled" : "") + ">고른 " + need.length + "개 대본 초안 만들기</button>" +
     "<button class=\"btn\" data-act=\"source\"" + (!picked.length || openCmd("source") ? " disabled" : "") + ">고른 " + picked.length + "개 소재 찾기</button>" +
+    cmtBtnHtml() +
 "</div>" +
     "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋로 고른 뒤 「대본 초안 만들기」를 누르면, 맥의 Claude가 대본을 쓰면서 이 주제로 잘된 영상과 레퍼런스 채널에서 가져온 구성을 같이 붙여요.</p></section>";
   h += planHtml(rd, s);
@@ -132,4 +160,9 @@ function viewScript(){
       "<div class=\"acts\">" + (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
   });
   return h;
+}
+/* 추천 근거 영상 댓글 다시 받기 — ct.set cmtReq {at} → 맥 동기화가 content_app.py cmts (Claude 없이, 1분 안팎). 추천을 새로 받으면 맥이 알아서 받는다 */
+function cmtBtnHtml(){
+  var r = (SETS[cur] || {}).cmtReq, d = part("cmts"), busy = !!(r && (!d || Date.parse(d.updatedAt) < Date.parse(r.at) - 5000));
+  return "<button class=\"btn\" data-act=\"cmtreq\"" + (busy ? " disabled" : "") + ">" + (busy ? "맥이 댓글 받는 중…" : "레퍼런스 댓글 다시 받기 (좋아요 순 5개)") + "</button>";
 }

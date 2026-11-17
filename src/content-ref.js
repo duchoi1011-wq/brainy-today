@@ -164,7 +164,7 @@ function srScore(x, words){
    맥의 Claude가 ego lite 로 영상을 열어 읽는다 (cmd kind "analyze" → 볼트 <브랜드>/분석.json → ct.data .analysis, 영상 id 별).
    구매 욕구 검증 행은 구축 틀.json 의 「욕구 결 검증」과 같다(viewer · buyer · verdict · basis · fix). 무엇을 읽고 보여 줄지는 ct.set anaOpt */
 var ANA_PARTS = [["topic", "영상 주제"], ["wave", "파동 대사"], ["comments", "좋아요 많은 댓글"], ["fit", "구매 욕구 검증"]];
-function anaOpt(){ var o = (SETS[cur] || {}).anaOpt || {}; return { topic: o.topic !== false, wave: o.wave !== false, comments: o.comments !== false, fit: o.fit !== false, nCmt: o.nCmt || 10, target: o.target || "top", topN: o.topN || 3 } }
+function anaOpt(){ var o = (SETS[cur] || {}).anaOpt || {}; return { topic: o.topic !== false, wave: o.wave !== false, comments: o.comments !== false, fit: o.fit !== false, nCmt: CMT_TOP, target: o.target || "top", topN: o.topN || 3 } }
 function anaOf(vid){ var a = part("analysis"); return a && a.items ? a.items[vid] : null }
 function fitV(x){ var a = anaOf(x.vid), v = a && a.fit && String(a.fit.verdict || "").split(" ")[0]; return { "같음": 100, "비슷": 60, "다름": 0 }[v] }
 function fitTag(x){ var a = anaOf(x.vid), v = a && a.fit && String(a.fit.verdict || "").split(" ")[0]; if(!v) return "";
@@ -182,7 +182,6 @@ function anaBarHtml(words){
   return "<details style=\"margin-top:8px\"><summary>🔍 영상 분석 조절 · 분석한 영상 " + nDone + "개</summary>" +
     "<p class=\"lead\" style=\"margin-top:6px\">맥의 Claude가 영상을 열어 읽어요. 켠 것만 읽고, 카드 「자세히」에도 켠 것만 보여요.</p>" +
     "<div class=\"chips\">" + ANA_PARTS.map(function(p){ return tg(p[0], p[1]) }).join("") + "</div>" +
-    "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">댓글</span>" + [5, 10, 20].map(function(n){ return "<button class=\"chip" + (o.nCmt === n ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"nCmt\" data-v=\"" + n + "\">" + n + "개</button>" }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">분석할 영상</span>" + [1, 3, 5].map(function(n){ return "<button class=\"chip" + (o.target === "top" && o.topN === n ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"topN\" data-v=\"" + n + "\">키워드마다 점수 상위 " + n + "개</button>" }).join("") +
       "<button class=\"chip" + (o.target === "picked" ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"target\" data-v=\"picked\">💡 담은 영상</button></div>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"analyze\"" + (busy || !todo.length || !ANA_PARTS.some(function(p){ return o[p[0]] }) ? " disabled" : "") + ">" + (busy ? "맥이 영상 읽는 중…" : todo.length ? "새 영상 " + todo.length + "개 분석하기" : "고른 영상은 다 분석했어요") + "</button>" +
@@ -195,7 +194,7 @@ function anaHtml(x){
   var h = "";
   if(o.topic && a.topic) h += "<dt>영상 주제</dt><dd>" + esc(a.topic) + "</dd>";
   if(o.wave) h += "<dt>파동 대사</dt><dd>" + ((a.wave || []).length ? a.wave.map(function(w){ return "<div><a href=\"" + url + "&t=" + secs(w.at) + "\" target=\"_blank\" rel=\"noopener\">" + esc(w.at) + "</a> “" + esc(w.line || "못 읽음") + "”" + (w.note ? " <span class=\"muted\">— " + esc(w.note) + "</span>" : "") + "</div>" }).join("") : "<span class=\"muted\">" + esc(a.waveNote || "다시 본 구간 없음") + "</span>") + "</dd>";
-  if(o.comments) h += "<dt>좋아요 많은 댓글</dt><dd>" + ((a.comments || []).length ? a.comments.slice(0, o.nCmt).map(function(c){ return "<div>“" + esc(c.text) + "” <span class=\"muted\">· 좋아요 " + esc(c.likes != null ? fmt(c.likes) : "?") + "</span></div>" }).join("") : "<span class=\"muted\">" + esc(a.commentNote || "못 읽음") + "</span>") + "</dd>";
+  if(o.comments) h += "<dt>좋아요 많은 댓글</dt><dd>" + ((a.comments || []).length ? a.comments.slice().sort(function(p, q){ return (q.likes || 0) - (p.likes || 0) }).slice(0, o.nCmt).map(function(c){ return "<div>“" + esc(c.text) + "” <span class=\"muted\">· 좋아요 " + esc(c.likes != null ? fmt(c.likes) : "?") + "</span></div>" }).join("") : "<span class=\"muted\">" + esc(a.commentNote || "못 읽음") + "</span>") + "</dd>";
   if(o.fit && a.fit) h += "<dt>구매 욕구 검증</dt><dd>" + buildFit((buildDef().sections.reduce(function(r, sc){ return r.concat(sc.fields) }, []).filter(function(f){ return f.type === "fit" })[0]) || { rows: [{ id: "viewer", label: "시청자 욕구" }, { id: "buyer", label: "구매 욕구" }, { id: "verdict", label: "같은가" }, { id: "basis", label: "근거" }, { id: "fix", label: "다르면" }] }, a.fit) + "</dd>";
   return h + "<dt>분석한 때</dt><dd class=\"muted\">" + esc(day(a.at)) + "</dd>";
 }
