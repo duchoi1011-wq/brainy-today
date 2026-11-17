@@ -2,6 +2,27 @@
    (2026-11-16 동욱: "참고 페이지와 뽑아낸 검색어와 정리된 시트 등을 한 번에 쉽게 파악할 수 있게")
    새 자료를 만들지 않는다 — 다른 탭이 쓰는 자료(키워드·설정·브랜드 레퍼런스·레퍼런스·추천·대본·기록)를 같은 함수로 읽어 줄여 보여 주고, 누르면 그 탭으로 간다. */
 function goBtn(label, to){ return "<button class=\"chip\" data-go=\"" + esc(to) + "\">" + label + " →</button>" }
+/* 다음 할 일 — 동욱이 고른 것(씨앗 단어 → ★ 검증 키워드 → ＋ 고른 추천)을 따라 지금 한 걸음만 보여 준다. 한눈에 맨 위와 브랜드·키워드·추천 탭 맨 아래에 같은 것을 쓴다 */
+function nextStep(){
+  var b = B(); if(!b) return null;
+  var s = S(), sd = seedsOf(), all = scored(), pins = all.filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] });
+  var rc = part("rec"), rd = rc && rc.rounds && rc.rounds[rc.rounds.length - 1], picks = pickedIds(s), noScript = picks.filter(function(id){ return !scriptOf(id) });
+  var fresh = pins.filter(function(x){ return !x.surveyed });
+  if(!sd.length) return { n: 1, t: "검색어를 뽑을 단어 넣기", d: "브랜드 탭에서 브랜드 정체성 단어와 상품 판매 단어를 넣으세요.", go: "brand" };
+  if(seedsPending()) return { n: 2, t: "연관 검색어 받는 중", d: "맥이 단어마다 연관 검색어를 받고 있어요 (1분 안팎). 다 받으면 키워드 탭에서 ★로 고르세요.", go: "kw" };
+  if(!pins.length) return { n: 3, t: "쓸 검색어 ★로 고르기", d: "키워드 탭에서 씨앗 단어별 연관 검색어를 보고 쓸 것에 ★을 누르세요. 다음 단계는 ★한 것 위주로 가요.", go: "kw" };
+  if(fresh.length) return { n: 4, t: "★한 검색어로 조사 돌리기", d: "★한 " + pins.length + "개 중 " + fresh.length + "개가 아직 조사 전이에요 (" + fresh.slice(0, 4).map(function(x){ return x.kw }).join(" · ") + (fresh.length > 4 ? " …" : "") + "). 조사하면 이 검색어로 잘 된 영상·경쟁사를 찾아 와요.", act: "discover", btn: "★ 검색어로 조사 돌리기", busy: openCmd("discover") };
+  if(!rd || (rc.updatedAt && part("ref") && Date.parse(part("ref").updatedAt) > Date.parse(rc.updatedAt))) return { n: 5, t: "★ 검색어 위주로 추천 받기", d: "조사가 끝났어요. ★한 " + pins.length + "개 검색어 위주로 찍을 주제를 추천받으세요.", act: "recommend", btn: "★ 위주로 추천 받기", busy: openCmd("recommend") };
+  if(!picks.length) return { n: 6, t: "찍을 주제 ＋로 고르기", d: "추천 탭에서 찍을 주제에 ＋를 누르세요. 고른 것만 대본으로 넘어가요.", go: "rec" };
+  if(noScript.length) return { n: 7, t: "고른 주제로 대본 초안", d: "고른 " + picks.length + "개 중 " + noScript.length + "개가 대본 전이에요. 레퍼런스 채널의 말하는 방식·구성에 맞춰 대본 초안을 써요.", act: "script", btn: "고른 " + noScript.length + "개 대본 초안 만들기", busy: openCmd("script") };
+  return { n: 8, t: "대본 검토", d: "고른 주제의 대본이 다 나왔어요. 대본 탭에서 읽고 고칠 점을 남기세요.", go: "script" };
+}
+function nextHtml(){
+  var x = nextStep(); if(!x) return "";
+  return "<section class=\"card next\"><div class=\"card-h\"><h3>다음 할 일 · " + esc(x.t) + "</h3><span class=\"n\">" + x.n + " / 8</span></div><p class=\"lead\">" + esc(x.d) + "</p><div class=\"acts\">" +
+    (x.act ? "<button class=\"btn primary\" data-act=\"" + x.act + "\"" + (x.busy ? " disabled" : "") + ">" + esc(x.busy ? "맥이 하는 중…" : x.btn) + "</button>" : "") +
+    (x.go ? "<button class=\"btn primary\" data-go=\"" + x.go + "\">" + esc({ brand: "브랜드 탭", kw: "키워드 탭", rec: "추천 탭", script: "대본 탭" }[x.go] || x.go) + "으로 →</button>" : "") + "</div></section>";
+}
 function viewSum(){
   var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var s = S(), sd = seedsOf(), all = scored(), pins = all.filter(function(x){ return s.pin[x.kw] });
@@ -11,7 +32,7 @@ function viewSum(){
   var ref = part("ref"), refs = ((ref && ref.items) || []).filter(isLong), chs = b.channels || [], chan = part("chan");
   var nNew = 0; chs.forEach(function(c){ var n = chan && chan.items && chan.items[c.name]; if(n) nNew += n.videos.filter(isNew).length });
   function box(n, label, big, sub, to){ return "<button class=\"stepbox\" data-go=\"" + to + "\"><span class=\"num muted\">" + n + "</span><b>" + label + "</b><span class=\"big\">" + big + "</span><span class=\"it-d\">" + sub + "</span></button>" }
-  var h = "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + " 한눈에</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div><p class=\"lead\">" + esc(b.one || "") + "</p>" +
+  var h = nextHtml() + "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + " 한눈에</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div><p class=\"lead\">" + esc(b.one || "") + "</p>" +
     "<div class=\"flow\">" +
     box(1, "씨앗 단어", sd.length, "정체성 " + sd.filter(function(x){ return x.kind === "정체성" }).length + " · 상품 " + sd.filter(function(x){ return x.kind === "상품" }).length, "kw") +
     box(2, "뽑은 검색어", seedKw.length, "씨앗이 든 연관 검색어", "kw") +
@@ -26,7 +47,7 @@ function viewSum(){
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" + esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span> <b>" + esc(x.word) + "</b> <span class=\"num muted\">" + it.length + "개</span></div>" +
         "<div class=\"it-d\">" + (it.slice(0, 4).map(function(y){ return (s.pin[y.kw] ? "★" : "") + esc(y.kw) + " <span class=\"num\">" + fmt(y.total) + "</span>" }).join(" · ") || "아직 안 받음") + "</div></div>" +
         "<button class=\"btn sm\" data-go=\"kw|seed=" + esc(x.word) + "\">보기</button></div>" }).join("") + "</div>"
-      : "<p class=\"lead\">씨앗 단어가 아직 없어요. 키워드 탭에서 정체성 3 · 상품 3개를 정하세요.</p>") + "</section>";
+      : "<p class=\"lead\">씨앗 단어가 아직 없어요. 브랜드 탭에서 정체성 단어와 상품 판매 단어를 넣으세요.</p>") + "</section>";
   /* ② 검증한 키워드 · 주제 → 대본 */
   h += "<section class=\"card\"><div class=\"card-h\"><h3>② 검증한 키워드와 주제</h3>" + goBtn("추천 탭", "rec") + "</div>" +
     "<h4>★ 검증한 키워드 <span class=\"num muted\">" + pins.length + "</span></h4>" +

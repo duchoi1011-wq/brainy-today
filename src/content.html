@@ -56,6 +56,7 @@ p{margin:0}a{color:inherit}
 .chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:7px 12px;border-radius:999px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .chip span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-left:3px}
+.chip i.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}.chip i.dot.p{background:var(--prod)}.chip i.dot.i{background:var(--iden)}
 .chip.dash{border-style:dashed;color:var(--accent)}
 /* 브랜드 고르기 — 편집 믹서의 채널 탭처럼 맨 위에서 고르면 그 브랜드 화면·색으로 열린다 */
 #brands{display:flex;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none}#brands::-webkit-scrollbar{display:none}
@@ -107,6 +108,9 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .knobs{display:grid;gap:16px}.knob-h{display:flex;justify-content:space-between;align-items:baseline}.knob input[type=range]{margin:2px 0 0;accent-color:var(--accent)}
 .row2{display:flex;gap:8px;align-items:center}.row2>input,.row2>select{flex:1;min-width:0}
 /* 한눈에 — 여섯 단계 상자 */
+.fld{display:block;margin-top:10px}.fld span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px}.fld textarea{min-height:0}
+.prow{display:flex;gap:6px;align-items:center;margin-top:6px}.prow input{min-width:0}.prow input[data-pf=name]{flex:0 0 32%}.prow input[data-pf=what]{flex:1}
+.card.next{border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
 .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .stepbox{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:14px;padding:10px 12px;font:inherit;color:var(--ink);cursor:pointer;min-width:0}
 .stepbox b{font-size:13.5px}.stepbox .big{font-family:var(--f-mono);font-size:20px;font-weight:600;line-height:1.3}.stepbox .it-d{font-size:12px;overflow-wrap:anywhere}
@@ -233,7 +237,10 @@ function applyKit(){
   if(k.accent){ st.setProperty("--accent", k.accent); st.setProperty("--accent2", k.accent2 || k.accent) }
   else { st.removeProperty("--accent"); st.removeProperty("--accent2") }   // 키트가 없으면 :root 의 기본색
 }
-function B(){ return RAW[cur] || null }
+function B(){   // 브랜드 정본(ct.data) + 앱에서 고친 브랜드 정보(ct.set profile — 맥이 정본에 적기 전까지 겹쳐 본다)
+  var r = RAW[cur] || null, pf = (SETS[cur] || {}).profile;
+  return r && pf ? Object.assign({}, r, pf, { identity: Object.assign({}, r.identity || {}, pf.identity || {}) }) : r;
+}
 function part(name){ return RAW[cur + PARTS[name]] || null }
 /* 쇼츠는 안 한다 (2026-11-16 동욱 "쇼츠는 하지 말고 다 미드폼 롱폼 기준으로" · 11-17 "쇼츠 우선 제외") —
    지난 회차의 숏폼 레퍼런스·추천은 시트·데이터 파일에 그대로 두고 앱에서만 뺀다 */
@@ -247,7 +254,7 @@ function S(){
   return { ratio: s.ratio != null ? s.ratio : (d.ratio != null ? d.ratio : 70), count: s.count || d.count || 20, share: share,
     mid: s.mid != null ? s.mid : (d.mid != null ? d.mid : 10),
     perWeek: s.perWeek || d.perWeek || 2, plan: s.plan || {},
-    roles: roleNames().reduce(function(o, n){ o[n] = (s.roles && s.roles[n] != null) ? s.roles[n] : ((d.roles && d.roles[n] != null) ? d.roles[n] : 3); return o }, {}), buyOnly: s.buyOnly !== false, fresh: s.fresh !== false,
+    roles: roleNames().reduce(function(o, n){ o[n] = (s.roles && s.roles[n] != null) ? s.roles[n] : ((d.roles && d.roles[n] != null) ? d.roles[n] : 3); return o }, {}), buyOnly: s.buyOnly !== false, fresh: s.fresh !== false, pinOnly: !!s.pinOnly,
     pin: s.pin || {}, ex: s.ex || {}, pick: s.pick || {} };
 }
 /* 역할(풀링·키)과 단계(5개)는 브랜드.json 이 정본 — roles · stages 를 읽는다 (2026-11-16 동욱: 신뢰 역할 없앰) */
@@ -308,6 +315,7 @@ function runHtml(kinds){
 /*@include content-build.js*/
 /*@include content-brandrefs.js*/
 /*@include content-sum.js*/
+/*@include content-profile.js*/
 
 /* ── 브랜드 탭 ── */
 function viewBrand(){
@@ -328,13 +336,17 @@ function viewBrand(){
     "<p>" + esc(b.one) + "</p><dl class=\"kv\" style=\"margin-top:10px\"><dt>타깃</dt><dd>" + esc(b.target) + "</dd><dt>첫 질문</dt><dd>" + esc(b.firstQuestion) + "</dd>" +
     (b.kit ? "<dt>브랜드 색</dt><dd><span class=\"sw\" style=\"background:" + esc(b.kit.accent) + "\"></span><span class=\"sw\" style=\"background:" + esc(b.kit.accent2 || b.kit.accent) + "\"></span>" + esc(b.kit.note || "") + "</dd>" : "") +
     (b.cadence ? "<dt>발행</dt><dd>" + esc(b.cadence.note || "") + "</dd>" : "") + "</dl>" +
-    (b.todo ? "<p class=\"note\" style=\"margin-top:12px\">" + esc(b.todo) + "</p>" : "") + "</section>";
-  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품</h3><span class=\"n\">" + (b.products || []).length + "개</span></div><div class=\"list\">" +
-    (b.products || []).map(function(p){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what) + "</div>" + ((p.hints || []).length ? "<div class=\"it-d\">키워드 힌트 · " + esc(p.hints.join(" · ")) + "</div>" : "") + "</div></div>" }).join("") + "</div></section>";
+    (b.todo ? "<p class=\"note\" style=\"margin-top:12px\">" + esc(b.todo) + "</p>" : "") +
+    "<div class=\"acts\"><button class=\"btn sm" + (ui.profEdit ? "" : " primary") + "\" data-act=\"profedit\">" + (ui.profEdit ? "고치기 닫기" : "브랜드 정보 고치기 · 더하기") + "</button>" + (b.profileNote ? "<span class=\"lead\" style=\"margin:0\">" + esc(b.profileNote) + "</span>" : "") + "</div></section>" +
+    (ui.profEdit ? profileFormHtml() : "");
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>연관 검색어 받는 곳</h3><span class=\"n\">단어 " + seedsOf().length + "개</span></div>" + seedSrcHtml() + seedPendingHtml() + "</section>";
+  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품과 판매 단어</h3><span class=\"n\">" + (b.products || []).length + "개</span></div>" +
+    "<p class=\"lead\">상품마다 사려는 사람이 찾을 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지). 이 단어가 들어간 연관 검색어가 키 콘텐츠(상품 판매) 재료가 돼요.</p><div class=\"list\">" +
+    (b.products || []).map(function(p){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what) + "</div>" + productWordsHtml(p.name) + "</div></div>" }).join("") + "</div></section>";
   var id = b.identity || {};
-  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div><dl class=\"kv\">" +
+  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityWordsHtml() + "<h4>정체성 정본</h4><dl class=\"kv\">" +
     [["콘텐츠 축", esc((id.axes || []).join(" · "))], ["필러", (id.pillars || []).map(function(p){ return "<b>" + esc(p.id) + "</b> " + esc(p.name) }).join(" · ")],
-     ["구매자 욕구", esc((id.needs || []).join(" · "))], ["키워드 힌트", esc((id.hints || []).join(" · "))], ["훅 규칙", esc(b.hook)]]
+     ["구매자 욕구", esc((id.needs || []).join(" · "))], ["훅 규칙", esc(b.hook)]]
       .filter(function(r){ return r[1] }).map(function(r){ return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>" }).join("") + "</dl>" +
     ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
       b.topicBank.map(function(t){ return "<div class=\"it\"><span class=\"num muted\">" + esc(t.n) + "</span><div class=\"it-m\"><div>" + esc(t.topic) + "</div><div class=\"it-d\">필러 " + esc(t.pillar) + " · " + esc(t.product) + "</div></div></div>" }).join("") + "</div></details>" : "") +
@@ -390,9 +402,12 @@ function render(){
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
   document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
-  var v = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, script: viewScript }[tab] || viewBrand;
+  var v0 = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, script: viewScript }[tab] || viewBrand;
   var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.id ? "#" + act0.id : "");
-  document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();   // 맥에 보낸 일의 상태는 어느 탭에서나 맨 위에
+  var v = function(){ return v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") };   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
+  var keepForm = document.getElementById("prof-form") && ui.profEdit ? document.getElementById("prof-form") : null;   // 고치는 중인 브랜드 정보 칸은 다시 그려도 그대로 둔다 (맥 상태가 바뀌어 화면이 다시 그려질 때)
+  document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();
+  if(keepForm){ var nf = document.getElementById("prof-form"); if(nf) nf.replaceWith(keepForm) }   // 맥에 보낸 일의 상태는 어느 탭에서나 맨 위에
   if(tab === "mix") paintMix();
   if(key){ var back = document.querySelector(key); if(back) back.focus({ preventScroll: true }) }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
 }
@@ -434,14 +449,14 @@ document.addEventListener("input", function(e){
   if(e.target.id === "ratio"){ SETS[cur] = Object.assign({}, SETS[cur] || {}, { ratio: +e.target.value }); paintMix() }
   if(e.target.id === "fb-text") ui.fbDraft = e.target.value;
   if(e.target.id === "tpl-name") ui.tplName = e.target.value;
-  if(e.target.dataset.addseed){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
+  if(e.target.dataset.addseed != null){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
   if(e.target.dataset.knob){ var kb = mixDef().knobs.filter(function(k){ return k.id === e.target.dataset.knob })[0], lab = document.getElementById("kv-" + e.target.dataset.knob); if(kb && lab) lab.textContent = knobText(kb, +e.target.value) }
 });
 document.addEventListener("keydown", function(e){
   if(e.key !== "Enter" || e.isComposing) return;
   if(e.target.id === "fb-text"){ e.preventDefault(); act("fbadd") }
   if(e.target.id === "tpl-name"){ e.preventDefault(); act("tplnew") }
-  if(e.target.dataset.addseed){ e.preventDefault(); act("seedadd", e.target) }
+  if(e.target.dataset.addseed != null){ e.preventDefault(); act("seedadd", e.target) }
 });
 document.addEventListener("change", function(e){
   if(e.target.id === "ratio") setS({ ratio: +e.target.value });
@@ -469,15 +484,20 @@ function act(name, el){
   if(name === "tplnew"){ saveTpl("new"); return }
   if(name === "tplover"){ saveTpl("over"); return }
   if(name === "toastx"){ ui.toast = ""; render(); return }
-  if(name === "seedadd"){   // 씨앗 단어 넣기 — 띄어쓰기는 빼고(네이버가 붙여 쓴 말로 받는다), 같은 단어는 한 번만
-    var kind = el.dataset.kind || el.dataset.addseed, inp = document.querySelector("[data-addseed=\"" + kind + "\"]"), w = ((inp && inp.value) || "").replace(/\s+/g, "").slice(0, 20), cur3 = seedsOf();
+  if(name === "seedadd"){   // 씨앗 단어 넣기 — key 「정체성」 또는 「상품:<상품>」. 띄어쓰기는 빼고(네이버가 붙여 쓴 말로 받는다), 같은 단어는 한 번만
+    var key = el.dataset.key || el.dataset.addseed, inp = [].filter.call(document.querySelectorAll("[data-addseed]"), function(x){ return x.dataset.addseed === key })[0];
+    var w = ((inp && inp.value) || "").replace(/\s+/g, "").slice(0, 20), cur3 = seedsOf();
     if(!w){ alert("넣을 단어를 적어 주세요."); if(inp) inp.focus(); return }
     if(cur3.some(function(x){ return x.word === w })){ alert("「" + w + "」은 이미 씨앗 단어예요."); return }
-    var ps = document.getElementById("seed-prod"), nx = kind === "상품" ? { kind: kind, word: w, product: ps ? ps.value : "" } : { kind: kind, word: w };
-    if(ps) ui.seedProd = ps.value;
-    ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[kind] = ""; ui.seed = w;
+    var nx = key.indexOf("상품:") === 0 ? { kind: "상품", word: w, product: key.slice(3) } : { kind: "정체성", word: w };
+    ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[key] = ""; ui.seed = w;
     setS({ seeds: cur3.concat([nx]) }); return;
   }
+  if(name === "profedit"){ ui.profEdit = !ui.profEdit; render(); if(ui.profEdit){ var pfm = document.getElementById("prof-form"); if(pfm) window.scrollTo(0, pfm.getBoundingClientRect().top + window.scrollY - 140) } return }
+  if(name === "profsave"){ profileSave(); return }
+  if(name === "profprod"){ var box = document.getElementById("prof-prods"); if(box){ box.insertAdjacentHTML("beforeend", prodRowHtml({}, box.children.length)); box.lastChild.querySelector("input").focus() } return }
+  if(name === "profprodx"){ var row = el.closest(".prow"); if(row && (!row.dataset.old || confirm("「" + row.dataset.old + "」 상품을 뺄까요? 이 상품의 판매 단어도 같이 빠져요 (저장해야 반영돼요)."))) row.remove(); return }
+  if(name === "seedsrc"){ if(el.dataset.v !== seedSrc()) setS({ seedSrc: el.dataset.v }); return }
   if(name === "seeddel"){ var wd = el.dataset.word; if(!confirm("씨앗 단어 「" + wd + "」을 뺄까요? 이 단어에서만 나온 검색어는 다음에 받을 때 목록에서 빠져요 (★한 것은 남아요).")) return;
     setS({ seeds: seedsOf().filter(function(x){ return x.word !== wd }) }); return }
   if(name === "fbadd"){ var tx = (document.getElementById("fb-text").value || "").trim(); if(!tx){ alert("피드백을 한 줄 적어 주세요."); return } ui.fbDraft = "";
@@ -485,7 +505,9 @@ function act(name, el){
   if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
-  if(name === "recommend"){ send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + ")", { roles: s.roles, ratio: s.ratio }); return }
+  if(name === "recommend"){ var pk = scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] });   // ★한 검증 키워드 위주로 추천받는다
+    send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + (pk.length ? " · ★ 검증 키워드 " + pk.length + "개 위주" : "") + ")",
+      { roles: s.roles, ratio: s.ratio, keywords: pk.map(function(x){ return { kw: x.kw, kind: x.kind, product: x.product, total: x.total } }), seeds: seedsOf() }); return }
   if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
   if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : pickedIds(s); if(!sids.length) return;

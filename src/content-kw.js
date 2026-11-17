@@ -8,36 +8,58 @@
      난이도 (Ahrefs 키워드 난이도) = 광고 경쟁: 경쟁정도 높음 + 노출 광고 9개 이상 → 어려움 · 노출 광고 5개 이하나 경쟁정도 낮음 → 쉬움 · 그 사이 보통
      주제 묶음 (Ahrefs 상위 주제) = 브랜드.json clusters 의 말이 든 키워드끼리 묶어 검색량을 더한다 — 키워드 하나가 아니라 주제의 크기를 본다
      빈 곳 (Ahrefs 콘텐츠 갭) = 구매 결인 상품 키워드인데 아직 조사하지 않았고, 레퍼런스 검색어·추천 제목 어디에도 안 나온 것 */
-/* 씨앗 단어 — 정체성 · 상품 단어 (처음엔 3개씩, 동욱이 넣고 빼서 한 쪽에 SEED_MAX 개까지). 맥이 씨앗마다 네이버 연관 검색어 중 씨앗이 들어간 것을 검색량 순으로 받아
-   키워드.json 에 seed 를 달아 둔다 (content_app.py seeds). 기본은 브랜드.json seeds, 여기서 넣고 빼면 ct.set seeds 가 앞서고 맥이 1분 안에 새로 받는다. */
+/* 씨앗 단어 — 브랜드마다 「브랜드 정체성 단어」와 「상품별 판매 단어」를 동욱이 넣고 뺀다 (브랜드 탭 · 한 쪽에 SEED_MAX 개까지).
+   맥이 씨앗마다 연관 검색어를 받아 키워드.json 에 seed 를 달아 둔다 (content_app.py seeds). 받는 곳(seedSrc) = 네이버 검색광고 · 구글 트렌드 · 둘 다.
+   고친 것은 ct.set(Supabase)에 바로 쓰이고, 맥 동기화가 설정.json 과 브랜드.json 정본에도 적는다 → ct.data/<브랜드> 도 따라 바뀐다. */
 var SEED_MAX = 10;
+var SEED_SRC = [["naver", "네이버 검색광고"], ["google", "구글 트렌드"], ["both", "둘 다"]];
 function seedsOf(){ return ((SETS[cur] || {}).seeds || (B() && B().seeds) || []).filter(function(x){ return x.word }) }
-function seedItems(word){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 }).sort(function(a, b){ return b.total - a.total }) }
+function seedSrc(){ return (SETS[cur] || {}).seedSrc || (B() && B().seedSrc) || "naver" }
+function seedItems(word){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 }).sort(function(a, b){ return b.total - a.total || (b.gTop || 0) - (a.gTop || 0) }) }
 function seedRun(word){ var k = part("kw"); return ((k && k.seeds) || []).filter(function(x){ return x.word === word })[0] || null }
-function seedsPending(){ var k = part("kw"), have = ((k && k.seeds) || []).map(function(x){ return x.word }).join("|"); return seedsOf().map(function(x){ return x.word }).join("|") !== have }
+function seedsPending(){ var k = part("kw"), have = ((k && k.seeds) || []).map(function(x){ return x.word }).join("|") + "@" + ((k && k.seedSrc) || "naver"); return seedsOf().map(function(x){ return x.word }).join("|") + "@" + seedSrc() !== have }
+function seedRowHtml(x, s){
+  var r = seedRun(x.word), n = seedItems(x.word);
+  return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b></div>" +
+    "<div class=\"it-d\">" + (r ? "연관 검색어 " + n.length + "개" + (r.google != null ? " (네이버 " + (r.naver || 0) + " · 구글 " + r.google + ")" : "") + " · 검색량 합 월 " + fmt(n.reduce(function(a, y){ return a + y.total }, 0)) + " · ★ " + n.filter(function(y){ return s.pin[y.kw] }).length +
+      (r.error ? " · <span class=\"down\">" + esc(r.error) + "</span>" : "") : (seedsPending() ? "맥이 받는 중" : "아직 안 받음")) + "</div></div>" +
+    "<button class=\"btn sm\" data-go=\"kw|seed=" + esc(x.word) + "\">검색어</button><button class=\"mk no\" data-act=\"seeddel\" data-word=\"" + esc(x.word) + "\" aria-label=\"" + esc(x.word) + " 빼기\" title=\"빼기\">✕</button></div>";
+}
+function seedAddHtml(key, n, hint){   // key = "정체성" 또는 "상품:<상품 이름>"
+  if(n >= SEED_MAX) return "";
+  return "<div class=\"row2\" style=\"margin-top:6px\"><input type=\"text\" data-addseed=\"" + esc(key) + "\" maxlength=\"20\" placeholder=\"" + esc(hint) + "\" value=\"" + esc((ui.seedDraft || {})[key] || "") + "\">" +
+    "<button class=\"btn sm primary\" data-act=\"seedadd\" data-key=\"" + esc(key) + "\">넣기</button></div>";
+}
+function seedSrcHtml(){
+  var v = seedSrc();
+  return "<div class=\"chips\">" + SEED_SRC.map(function(o){ return "<button class=\"chip" + (v === o[0] ? " on" : "") + "\" data-act=\"seedsrc\" data-v=\"" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div>" +
+    "<p class=\"lead\" style=\"margin-top:6px\">네이버 = 한국 검색량·광고 클릭률(살 사람이 찾는 말) · 구글 트렌드 = 관련 검색어의 인기와 상승세(요즘 뜨는 말) · 둘 다 = 구글에서 나온 말에도 네이버 검색량을 붙여요. 바꾸면 맥이 다시 받아요.</p>";
+}
+function seedPendingHtml(){ return seedsPending() ? "<p class=\"note\" style=\"margin-top:10px\">씨앗 단어나 받는 곳이 바뀌었어요 — 맥이 연관 검색어를 받는 중이에요 (1분 안팎, 맥이 켜져 있어야 해요).</p>" : "" }
+/* 브랜드 탭 — 정체성 카드 안 「브랜드 정체성 단어」 */
+function identityWordsHtml(){
+  var s = S(), list = seedsOf().filter(function(x){ return x.kind === "정체성" });
+  return "<h4><span class=\"tag i\">정체성</span> 브랜드 정체성 단어 <span class=\"num muted\">" + list.length + "</span></h4>" +
+    "<p class=\"lead\">채널 성격을 말하는 단어예요. 이 단어가 들어간 연관 검색어가 풀링(처음 보는 사람 끌어오기) 재료가 돼요.</p>" +
+    "<div class=\"list\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("정체성", list.length, "정체성 단어 넣기 (예: 사내행사)");
+}
+/* 브랜드 탭 — 판매 상품 카드 안, 상품마다 「판매 단어」 */
+function productWordsHtml(name){
+  var s = S(), list = seedsOf().filter(function(x){ return x.kind === "상품" && x.product === name });
+  return "<div class=\"list\" style=\"margin-top:4px\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("상품:" + name, list.length, "「" + name + "」 판매 단어 넣기");
+}
+/* 키워드 탭 맨 위 — 씨앗을 고르면 그 씨앗의 연관 검색어. 단어 고치기는 브랜드 탭 한 곳에서 */
 function seedsHtml(){
-  var sd = seedsOf(), b = B(), s = S(), prods = (b.products || []).map(function(p){ return p.name });
-  var h = "<section class=\"card\"><div class=\"card-h\"><h3>씨앗 단어</h3><span class=\"n\">정체성 " + sd.filter(function(x){ return x.kind === "정체성" }).length + " · 상품 " + sd.filter(function(x){ return x.kind === "상품" }).length + "</span></div>" +
-    "<p class=\"lead\">검색어를 뽑을 출발 단어예요. 원하는 단어를 직접 넣고 빼세요 (한 쪽에 " + SEED_MAX + "개까지). 단어마다 네이버 연관 검색어 중 그 단어가 들어간 것을 검색량 순으로 받고, 쓸 검색어에 ★을 누르면 「검증한 키워드」가 돼요.</p>";
-  ["정체성", "상품"].forEach(function(kind){
-    var list = sd.filter(function(x){ return x.kind === kind }), c = kind === "상품" ? "p" : "i";
-    h += "<h4><span class=\"tag " + c + "\">" + kind + "</span> " + (kind === "상품" ? "판매 상품 단어" : "브랜드 정체성 단어") + " <span class=\"num muted\">" + list.length + "</span></h4><div class=\"list\">" + list.map(function(x){
-      var r = seedRun(x.word), n = seedItems(x.word);
-      return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b>" + (kind === "상품" && x.product ? " <span class=\"tag p\">" + esc(x.product) + "</span>" : "") + "</div>" +
-        "<div class=\"it-d\">" + (r ? "연관 검색어 " + n.length + "개 · 검색량 합 월 " + fmt(n.reduce(function(a, y){ return a + y.total }, 0)) + " · ★ " + n.filter(function(y){ return s.pin[y.kw] }).length + (r.error ? " · <span class=\"down\">" + esc(r.error) + "</span>" : "") : (seedsPending() ? "맥이 받는 중" : "아직 안 받음")) + "</div></div>" +
-        "<button class=\"btn sm\" data-ui=\"seed=" + esc(x.word) + "\">보기</button><button class=\"mk no\" data-act=\"seeddel\" data-word=\"" + esc(x.word) + "\" aria-label=\"" + esc(x.word) + " 빼기\" title=\"빼기\">✕</button></div>" }).join("") + "</div>" +
-      (list.length < SEED_MAX ? "<div class=\"row2\" style=\"margin-top:6px\"><input type=\"text\" id=\"seed-" + c + "\" data-addseed=\"" + kind + "\" maxlength=\"20\" placeholder=\"" + (kind === "상품" ? "상품 단어 넣기 (예: 포토키오스크)" : "정체성 단어 넣기 (예: 사내행사)") + "\" value=\"" + esc((ui.seedDraft || {})[kind] || "") + "\">" +
-        (kind === "상품" && prods.length ? "<select id=\"seed-prod\" style=\"flex:0 0 32%\">" + prods.map(function(n){ return "<option" + (ui.seedProd === n ? " selected" : "") + ">" + esc(n) + "</option>" }).join("") + "</select>" : "") +
-        "<button class=\"btn sm primary\" data-act=\"seedadd\" data-kind=\"" + kind + "\">넣기</button></div>" : "");
-  });
-  h += (b.seedsNote && !(SETS[cur] || {}).seeds ? "<p class=\"lead\" style=\"margin-top:10px\">" + esc(b.seedsNote) + "</p>" : "") +
-    (seedsPending() ? "<p class=\"note\" style=\"margin-top:10px\">씨앗 단어가 바뀌었어요 — 맥이 네이버에서 연관 검색어를 받는 중이에요 (1분 안팎, 맥이 켜져 있어야 해요).</p>" : "") + "</section>";
+  var sd = seedsOf(), s = S(), src = SEED_SRC.filter(function(o){ return o[0] === seedSrc() })[0];
+  var h = "<section class=\"card\"><div class=\"card-h\"><h3>씨앗 단어</h3><button class=\"chip\" data-go=\"brand\">단어 고치기 →</button></div>" +
+    "<p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 " + esc(src ? src[1] : "") + (seedSrc() === "both" ? "(네이버 + 구글)" : "") + "에서 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요.</p>" +
+    (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + "</section>";
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
   if(pickW){
     var list = seedItems(pickW), more = ui.seedMore || 15;
     h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">검색량 순 · " + list.length + "개</span></div><div class=\"chips\">" +
-      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\">" + esc(x.word) + "<span>" + seedItems(x.word).length + "</span></button>" }).join("") + "</div>" +
-      "<div class=\"list\" style=\"margin-top:6px\">" + (list.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">이 씨앗이 들어간 연관 검색어가 없어요. 더 넓은 단어로 바꿔 보세요.</p>") + "</div>" +
+      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word).length + "</span></button>" }).join("") + "</div>" +
+      "<div class=\"list\" style=\"margin-top:6px\">" + (list.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">이 씨앗이 들어간 연관 검색어가 없어요. 브랜드 탭에서 더 넓은 단어로 바꿔 보세요.</p>") + "</div>" +
       (list.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"seedMore=" + (more + 25) + "\">더 보기 (" + (list.length - more) + "개 남음)</button></div>" : "") + "</section>";
   }
   return h;
@@ -81,12 +103,14 @@ function split(s){
   return { nP: nP, nI: nI, per: per };
 }
 /* 이번 조사 후보: 고정한 것 먼저, 그다음 점수순. 뺀 것·(켜 두면) 이미 조사한 것·구매 결 아닌 상품 키워드는 뺀다 */
-function candidates(s){
-  var all = scored(), sp = split(s), out = [];
+function candidates(s){   // ★(검증한 키워드)은 비율·조건과 상관없이 먼저 다 넣고, 「★만 조사」가 아니면 남은 자리를 비율대로 점수순으로 채운다
+  var all = scored(), out = all.filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] });
+  if(s.pinOnly && out.length) return out;
+  var sp = split(Object.assign({}, s, { count: Math.max(0, s.count - out.length) }));
   function ok(x){ return !s.ex[x.kw] && (s.pin[x.kw] || ((!s.fresh || !x.surveyed) && (x.kind !== "상품" || !s.buyOnly || x.buy))) }
-  function take(pool, n){ pool.filter(function(x){ return s.pin[x.kw] }).concat(pool.filter(function(x){ return !s.pin[x.kw] })).slice(0, n).forEach(function(x){ out.push(x) }) }
+  function take(pool, n){ pool.filter(function(x){ return out.indexOf(x) < 0 }).slice(0, n).forEach(function(x){ out.push(x) }) }
   Object.keys(sp.per).forEach(function(name){ take(all.filter(function(x){ return x.kind === "상품" && x.product === name && ok(x) }), sp.per[name]) });
-  var short = sp.nP - out.length;   // 어느 상품 후보가 모자라면 다른 상품 키워드로 채운다
+  var short = sp.nP - out.filter(function(x){ return x.kind === "상품" && !s.pin[x.kw] }).length;   // 어느 상품 후보가 모자라면 다른 상품 키워드로 채운다
   if(short > 0) take(all.filter(function(x){ return x.kind === "상품" && ok(x) && out.indexOf(x) < 0 }), short);
   take(all.filter(function(x){ return x.kind === "정체성" && ok(x) }), sp.nI);
   return out;
@@ -107,7 +131,7 @@ function riseHtml(x){
 function kwRow(x, s, mark){
   return "<div class=\"it" + (s.ex[x.kw] ? " off" : "") + "\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b> <span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" +
     esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + (x.gap ? " <span class=\"tag ok\">빈 곳</span>" : "") + "</div>" +
-    "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · 경쟁 " + x.diff + " · " + riseHtml(x) + " · <b class=\"num\">" + x.score + "점</b></div>" +
+    "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · 경쟁 " + x.diff + " · " + riseHtml(x) + (x.gRise ? " · <span class=\"up\">구글 ▲" + esc(x.gRise) + "</span>" : x.gTop != null ? " · 구글 인기 " + x.gTop : "") + " · <b class=\"num\">" + x.score + "점</b></div>" +
     "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">" + esc(x.intent) + "</span>" : esc(x.intent || "")) + "</div></div>" +
     (mark ? "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"검증한 키워드로 고정\" aria-label=\"검증한 키워드로 고정\">★</button>" +
             "<button class=\"mk no\" data-ex=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.ex[x.kw] + "\" title=\"후보에서 빼기\" aria-label=\"후보에서 빼기\">✕</button>" : "") + "</div>";
@@ -120,9 +144,9 @@ function viewKw(){
   var h0 = seedsHtml();
   var nP = c.filter(function(x){ return x.kind === "상품" }).length;
   var h = h0 + "<section class=\"card\"><div class=\"card-h\"><h3>이번 조사 후보</h3><span class=\"n\">상품 " + nP + " · 정체성 " + (c.length - nP) + "</span></div>" +
-    "<p class=\"lead\">비율 탭 값(상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + ")대로 점수가 높은 키워드를 뽑았어요. ★은 고정, ✕는 빼기 — 뺀 것은 아래 「뺀 것」 칩에서 되살려요." +
+    "<p class=\"lead\">비율 탭 값(상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + ")대로 뽑되, ★한 검증 키워드를 먼저 다 넣고 남은 자리만 점수순으로 채워요. 「★만 조사」를 켜면 ★한 것만 조사해요. ✕는 빼기 — 뺀 것은 아래 「뺀 것」 칩에서 되살려요." +
     (c.length < s.count ? " 조건에 맞는 키워드가 " + (s.count - c.length) + "개 모자라요 — 아래 조건을 풀거나 조사를 돌려 새 키워드를 받으세요." : "") + "</p>" +
-    "<div class=\"chips\" style=\"margin-bottom:6px\"><button class=\"chip" + (s.buyOnly ? " on" : "") + "\" data-set=\"buyOnly=" + !s.buyOnly + "\">상품은 구매 결만</button>" +
+    "<div class=\"chips\" style=\"margin-bottom:6px\"><button class=\"chip" + (s.pinOnly ? " on" : "") + "\" data-set=\"pinOnly=" + !s.pinOnly + "\">★만 조사</button><button class=\"chip" + (s.buyOnly ? " on" : "") + "\" data-set=\"buyOnly=" + !s.buyOnly + "\">상품은 구매 결만</button>" +
     "<button class=\"chip" + (s.fresh ? " on" : "") + "\" data-set=\"fresh=" + !s.fresh + "\">이미 조사한 것 빼기</button></div>" +
     "<div class=\"list\">" + (c.map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">후보가 없어요.</p>") + "</div>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"discover\"" + (openCmd("discover") || !c.length ? " disabled" : "") + ">이 구성으로 조사 돌리기</button>" +

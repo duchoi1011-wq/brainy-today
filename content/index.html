@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "b81c10e66c"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=b81c10e66c"></script>
+<script>window.BRAINY_VERSION = "61da24d9b0"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=61da24d9b0"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -110,6 +110,7 @@ p{margin:0}a{color:inherit}
 .chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:7px 12px;border-radius:999px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .chip span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-left:3px}
+.chip i.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}.chip i.dot.p{background:var(--prod)}.chip i.dot.i{background:var(--iden)}
 .chip.dash{border-style:dashed;color:var(--accent)}
 /* 브랜드 고르기 — 편집 믹서의 채널 탭처럼 맨 위에서 고르면 그 브랜드 화면·색으로 열린다 */
 #brands{display:flex;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none}#brands::-webkit-scrollbar{display:none}
@@ -161,6 +162,9 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .knobs{display:grid;gap:16px}.knob-h{display:flex;justify-content:space-between;align-items:baseline}.knob input[type=range]{margin:2px 0 0;accent-color:var(--accent)}
 .row2{display:flex;gap:8px;align-items:center}.row2>input,.row2>select{flex:1;min-width:0}
 /* 한눈에 — 여섯 단계 상자 */
+.fld{display:block;margin-top:10px}.fld span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px}.fld textarea{min-height:0}
+.prow{display:flex;gap:6px;align-items:center;margin-top:6px}.prow input{min-width:0}.prow input[data-pf=name]{flex:0 0 32%}.prow input[data-pf=what]{flex:1}
+.card.next{border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
 .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .stepbox{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:14px;padding:10px 12px;font:inherit;color:var(--ink);cursor:pointer;min-width:0}
 .stepbox b{font-size:13.5px}.stepbox .big{font-family:var(--f-mono);font-size:20px;font-weight:600;line-height:1.3}.stepbox .it-d{font-size:12px;overflow-wrap:anywhere}
@@ -287,7 +291,10 @@ function applyKit(){
   if(k.accent){ st.setProperty("--accent", k.accent); st.setProperty("--accent2", k.accent2 || k.accent) }
   else { st.removeProperty("--accent"); st.removeProperty("--accent2") }   // 키트가 없으면 :root 의 기본색
 }
-function B(){ return RAW[cur] || null }
+function B(){   // 브랜드 정본(ct.data) + 앱에서 고친 브랜드 정보(ct.set profile — 맥이 정본에 적기 전까지 겹쳐 본다)
+  var r = RAW[cur] || null, pf = (SETS[cur] || {}).profile;
+  return r && pf ? Object.assign({}, r, pf, { identity: Object.assign({}, r.identity || {}, pf.identity || {}) }) : r;
+}
 function part(name){ return RAW[cur + PARTS[name]] || null }
 /* 쇼츠는 안 한다 (2026-11-16 동욱 "쇼츠는 하지 말고 다 미드폼 롱폼 기준으로" · 11-17 "쇼츠 우선 제외") —
    지난 회차의 숏폼 레퍼런스·추천은 시트·데이터 파일에 그대로 두고 앱에서만 뺀다 */
@@ -301,7 +308,7 @@ function S(){
   return { ratio: s.ratio != null ? s.ratio : (d.ratio != null ? d.ratio : 70), count: s.count || d.count || 20, share: share,
     mid: s.mid != null ? s.mid : (d.mid != null ? d.mid : 10),
     perWeek: s.perWeek || d.perWeek || 2, plan: s.plan || {},
-    roles: roleNames().reduce(function(o, n){ o[n] = (s.roles && s.roles[n] != null) ? s.roles[n] : ((d.roles && d.roles[n] != null) ? d.roles[n] : 3); return o }, {}), buyOnly: s.buyOnly !== false, fresh: s.fresh !== false,
+    roles: roleNames().reduce(function(o, n){ o[n] = (s.roles && s.roles[n] != null) ? s.roles[n] : ((d.roles && d.roles[n] != null) ? d.roles[n] : 3); return o }, {}), buyOnly: s.buyOnly !== false, fresh: s.fresh !== false, pinOnly: !!s.pinOnly,
     pin: s.pin || {}, ex: s.ex || {}, pick: s.pick || {} };
 }
 /* 역할(풀링·키)과 단계(5개)는 브랜드.json 이 정본 — roles · stages 를 읽는다 (2026-11-16 동욱: 신뢰 역할 없앰) */
@@ -449,36 +456,58 @@ function viewMixer(){
      난이도 (Ahrefs 키워드 난이도) = 광고 경쟁: 경쟁정도 높음 + 노출 광고 9개 이상 → 어려움 · 노출 광고 5개 이하나 경쟁정도 낮음 → 쉬움 · 그 사이 보통
      주제 묶음 (Ahrefs 상위 주제) = 브랜드.json clusters 의 말이 든 키워드끼리 묶어 검색량을 더한다 — 키워드 하나가 아니라 주제의 크기를 본다
      빈 곳 (Ahrefs 콘텐츠 갭) = 구매 결인 상품 키워드인데 아직 조사하지 않았고, 레퍼런스 검색어·추천 제목 어디에도 안 나온 것 */
-/* 씨앗 단어 — 정체성 · 상품 단어 (처음엔 3개씩, 동욱이 넣고 빼서 한 쪽에 SEED_MAX 개까지). 맥이 씨앗마다 네이버 연관 검색어 중 씨앗이 들어간 것을 검색량 순으로 받아
-   키워드.json 에 seed 를 달아 둔다 (content_app.py seeds). 기본은 브랜드.json seeds, 여기서 넣고 빼면 ct.set seeds 가 앞서고 맥이 1분 안에 새로 받는다. */
+/* 씨앗 단어 — 브랜드마다 「브랜드 정체성 단어」와 「상품별 판매 단어」를 동욱이 넣고 뺀다 (브랜드 탭 · 한 쪽에 SEED_MAX 개까지).
+   맥이 씨앗마다 연관 검색어를 받아 키워드.json 에 seed 를 달아 둔다 (content_app.py seeds). 받는 곳(seedSrc) = 네이버 검색광고 · 구글 트렌드 · 둘 다.
+   고친 것은 ct.set(Supabase)에 바로 쓰이고, 맥 동기화가 설정.json 과 브랜드.json 정본에도 적는다 → ct.data/<브랜드> 도 따라 바뀐다. */
 var SEED_MAX = 10;
+var SEED_SRC = [["naver", "네이버 검색광고"], ["google", "구글 트렌드"], ["both", "둘 다"]];
 function seedsOf(){ return ((SETS[cur] || {}).seeds || (B() && B().seeds) || []).filter(function(x){ return x.word }) }
-function seedItems(word){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 }).sort(function(a, b){ return b.total - a.total }) }
+function seedSrc(){ return (SETS[cur] || {}).seedSrc || (B() && B().seedSrc) || "naver" }
+function seedItems(word){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 }).sort(function(a, b){ return b.total - a.total || (b.gTop || 0) - (a.gTop || 0) }) }
 function seedRun(word){ var k = part("kw"); return ((k && k.seeds) || []).filter(function(x){ return x.word === word })[0] || null }
-function seedsPending(){ var k = part("kw"), have = ((k && k.seeds) || []).map(function(x){ return x.word }).join("|"); return seedsOf().map(function(x){ return x.word }).join("|") !== have }
+function seedsPending(){ var k = part("kw"), have = ((k && k.seeds) || []).map(function(x){ return x.word }).join("|") + "@" + ((k && k.seedSrc) || "naver"); return seedsOf().map(function(x){ return x.word }).join("|") + "@" + seedSrc() !== have }
+function seedRowHtml(x, s){
+  var r = seedRun(x.word), n = seedItems(x.word);
+  return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b></div>" +
+    "<div class=\"it-d\">" + (r ? "연관 검색어 " + n.length + "개" + (r.google != null ? " (네이버 " + (r.naver || 0) + " · 구글 " + r.google + ")" : "") + " · 검색량 합 월 " + fmt(n.reduce(function(a, y){ return a + y.total }, 0)) + " · ★ " + n.filter(function(y){ return s.pin[y.kw] }).length +
+      (r.error ? " · <span class=\"down\">" + esc(r.error) + "</span>" : "") : (seedsPending() ? "맥이 받는 중" : "아직 안 받음")) + "</div></div>" +
+    "<button class=\"btn sm\" data-go=\"kw|seed=" + esc(x.word) + "\">검색어</button><button class=\"mk no\" data-act=\"seeddel\" data-word=\"" + esc(x.word) + "\" aria-label=\"" + esc(x.word) + " 빼기\" title=\"빼기\">✕</button></div>";
+}
+function seedAddHtml(key, n, hint){   // key = "정체성" 또는 "상품:<상품 이름>"
+  if(n >= SEED_MAX) return "";
+  return "<div class=\"row2\" style=\"margin-top:6px\"><input type=\"text\" data-addseed=\"" + esc(key) + "\" maxlength=\"20\" placeholder=\"" + esc(hint) + "\" value=\"" + esc((ui.seedDraft || {})[key] || "") + "\">" +
+    "<button class=\"btn sm primary\" data-act=\"seedadd\" data-key=\"" + esc(key) + "\">넣기</button></div>";
+}
+function seedSrcHtml(){
+  var v = seedSrc();
+  return "<div class=\"chips\">" + SEED_SRC.map(function(o){ return "<button class=\"chip" + (v === o[0] ? " on" : "") + "\" data-act=\"seedsrc\" data-v=\"" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div>" +
+    "<p class=\"lead\" style=\"margin-top:6px\">네이버 = 한국 검색량·광고 클릭률(살 사람이 찾는 말) · 구글 트렌드 = 관련 검색어의 인기와 상승세(요즘 뜨는 말) · 둘 다 = 구글에서 나온 말에도 네이버 검색량을 붙여요. 바꾸면 맥이 다시 받아요.</p>";
+}
+function seedPendingHtml(){ return seedsPending() ? "<p class=\"note\" style=\"margin-top:10px\">씨앗 단어나 받는 곳이 바뀌었어요 — 맥이 연관 검색어를 받는 중이에요 (1분 안팎, 맥이 켜져 있어야 해요).</p>" : "" }
+/* 브랜드 탭 — 정체성 카드 안 「브랜드 정체성 단어」 */
+function identityWordsHtml(){
+  var s = S(), list = seedsOf().filter(function(x){ return x.kind === "정체성" });
+  return "<h4><span class=\"tag i\">정체성</span> 브랜드 정체성 단어 <span class=\"num muted\">" + list.length + "</span></h4>" +
+    "<p class=\"lead\">채널 성격을 말하는 단어예요. 이 단어가 들어간 연관 검색어가 풀링(처음 보는 사람 끌어오기) 재료가 돼요.</p>" +
+    "<div class=\"list\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("정체성", list.length, "정체성 단어 넣기 (예: 사내행사)");
+}
+/* 브랜드 탭 — 판매 상품 카드 안, 상품마다 「판매 단어」 */
+function productWordsHtml(name){
+  var s = S(), list = seedsOf().filter(function(x){ return x.kind === "상품" && x.product === name });
+  return "<div class=\"list\" style=\"margin-top:4px\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("상품:" + name, list.length, "「" + name + "」 판매 단어 넣기");
+}
+/* 키워드 탭 맨 위 — 씨앗을 고르면 그 씨앗의 연관 검색어. 단어 고치기는 브랜드 탭 한 곳에서 */
 function seedsHtml(){
-  var sd = seedsOf(), b = B(), s = S(), prods = (b.products || []).map(function(p){ return p.name });
-  var h = "<section class=\"card\"><div class=\"card-h\"><h3>씨앗 단어</h3><span class=\"n\">정체성 " + sd.filter(function(x){ return x.kind === "정체성" }).length + " · 상품 " + sd.filter(function(x){ return x.kind === "상품" }).length + "</span></div>" +
-    "<p class=\"lead\">검색어를 뽑을 출발 단어예요. 원하는 단어를 직접 넣고 빼세요 (한 쪽에 " + SEED_MAX + "개까지). 단어마다 네이버 연관 검색어 중 그 단어가 들어간 것을 검색량 순으로 받고, 쓸 검색어에 ★을 누르면 「검증한 키워드」가 돼요.</p>";
-  ["정체성", "상품"].forEach(function(kind){
-    var list = sd.filter(function(x){ return x.kind === kind }), c = kind === "상품" ? "p" : "i";
-    h += "<h4><span class=\"tag " + c + "\">" + kind + "</span> " + (kind === "상품" ? "판매 상품 단어" : "브랜드 정체성 단어") + " <span class=\"num muted\">" + list.length + "</span></h4><div class=\"list\">" + list.map(function(x){
-      var r = seedRun(x.word), n = seedItems(x.word);
-      return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b>" + (kind === "상품" && x.product ? " <span class=\"tag p\">" + esc(x.product) + "</span>" : "") + "</div>" +
-        "<div class=\"it-d\">" + (r ? "연관 검색어 " + n.length + "개 · 검색량 합 월 " + fmt(n.reduce(function(a, y){ return a + y.total }, 0)) + " · ★ " + n.filter(function(y){ return s.pin[y.kw] }).length + (r.error ? " · <span class=\"down\">" + esc(r.error) + "</span>" : "") : (seedsPending() ? "맥이 받는 중" : "아직 안 받음")) + "</div></div>" +
-        "<button class=\"btn sm\" data-ui=\"seed=" + esc(x.word) + "\">보기</button><button class=\"mk no\" data-act=\"seeddel\" data-word=\"" + esc(x.word) + "\" aria-label=\"" + esc(x.word) + " 빼기\" title=\"빼기\">✕</button></div>" }).join("") + "</div>" +
-      (list.length < SEED_MAX ? "<div class=\"row2\" style=\"margin-top:6px\"><input type=\"text\" id=\"seed-" + c + "\" data-addseed=\"" + kind + "\" maxlength=\"20\" placeholder=\"" + (kind === "상품" ? "상품 단어 넣기 (예: 포토키오스크)" : "정체성 단어 넣기 (예: 사내행사)") + "\" value=\"" + esc((ui.seedDraft || {})[kind] || "") + "\">" +
-        (kind === "상품" && prods.length ? "<select id=\"seed-prod\" style=\"flex:0 0 32%\">" + prods.map(function(n){ return "<option" + (ui.seedProd === n ? " selected" : "") + ">" + esc(n) + "</option>" }).join("") + "</select>" : "") +
-        "<button class=\"btn sm primary\" data-act=\"seedadd\" data-kind=\"" + kind + "\">넣기</button></div>" : "");
-  });
-  h += (b.seedsNote && !(SETS[cur] || {}).seeds ? "<p class=\"lead\" style=\"margin-top:10px\">" + esc(b.seedsNote) + "</p>" : "") +
-    (seedsPending() ? "<p class=\"note\" style=\"margin-top:10px\">씨앗 단어가 바뀌었어요 — 맥이 네이버에서 연관 검색어를 받는 중이에요 (1분 안팎, 맥이 켜져 있어야 해요).</p>" : "") + "</section>";
+  var sd = seedsOf(), s = S(), src = SEED_SRC.filter(function(o){ return o[0] === seedSrc() })[0];
+  var h = "<section class=\"card\"><div class=\"card-h\"><h3>씨앗 단어</h3><button class=\"chip\" data-go=\"brand\">단어 고치기 →</button></div>" +
+    "<p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 " + esc(src ? src[1] : "") + (seedSrc() === "both" ? "(네이버 + 구글)" : "") + "에서 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요.</p>" +
+    (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + "</section>";
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
   if(pickW){
     var list = seedItems(pickW), more = ui.seedMore || 15;
     h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">검색량 순 · " + list.length + "개</span></div><div class=\"chips\">" +
-      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\">" + esc(x.word) + "<span>" + seedItems(x.word).length + "</span></button>" }).join("") + "</div>" +
-      "<div class=\"list\" style=\"margin-top:6px\">" + (list.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">이 씨앗이 들어간 연관 검색어가 없어요. 더 넓은 단어로 바꿔 보세요.</p>") + "</div>" +
+      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word).length + "</span></button>" }).join("") + "</div>" +
+      "<div class=\"list\" style=\"margin-top:6px\">" + (list.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">이 씨앗이 들어간 연관 검색어가 없어요. 브랜드 탭에서 더 넓은 단어로 바꿔 보세요.</p>") + "</div>" +
       (list.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"seedMore=" + (more + 25) + "\">더 보기 (" + (list.length - more) + "개 남음)</button></div>" : "") + "</section>";
   }
   return h;
@@ -522,12 +551,14 @@ function split(s){
   return { nP: nP, nI: nI, per: per };
 }
 /* 이번 조사 후보: 고정한 것 먼저, 그다음 점수순. 뺀 것·(켜 두면) 이미 조사한 것·구매 결 아닌 상품 키워드는 뺀다 */
-function candidates(s){
-  var all = scored(), sp = split(s), out = [];
+function candidates(s){   // ★(검증한 키워드)은 비율·조건과 상관없이 먼저 다 넣고, 「★만 조사」가 아니면 남은 자리를 비율대로 점수순으로 채운다
+  var all = scored(), out = all.filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] });
+  if(s.pinOnly && out.length) return out;
+  var sp = split(Object.assign({}, s, { count: Math.max(0, s.count - out.length) }));
   function ok(x){ return !s.ex[x.kw] && (s.pin[x.kw] || ((!s.fresh || !x.surveyed) && (x.kind !== "상품" || !s.buyOnly || x.buy))) }
-  function take(pool, n){ pool.filter(function(x){ return s.pin[x.kw] }).concat(pool.filter(function(x){ return !s.pin[x.kw] })).slice(0, n).forEach(function(x){ out.push(x) }) }
+  function take(pool, n){ pool.filter(function(x){ return out.indexOf(x) < 0 }).slice(0, n).forEach(function(x){ out.push(x) }) }
   Object.keys(sp.per).forEach(function(name){ take(all.filter(function(x){ return x.kind === "상품" && x.product === name && ok(x) }), sp.per[name]) });
-  var short = sp.nP - out.length;   // 어느 상품 후보가 모자라면 다른 상품 키워드로 채운다
+  var short = sp.nP - out.filter(function(x){ return x.kind === "상품" && !s.pin[x.kw] }).length;   // 어느 상품 후보가 모자라면 다른 상품 키워드로 채운다
   if(short > 0) take(all.filter(function(x){ return x.kind === "상품" && ok(x) && out.indexOf(x) < 0 }), short);
   take(all.filter(function(x){ return x.kind === "정체성" && ok(x) }), sp.nI);
   return out;
@@ -548,7 +579,7 @@ function riseHtml(x){
 function kwRow(x, s, mark){
   return "<div class=\"it" + (s.ex[x.kw] ? " off" : "") + "\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b> <span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" +
     esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + (x.gap ? " <span class=\"tag ok\">빈 곳</span>" : "") + "</div>" +
-    "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · 경쟁 " + x.diff + " · " + riseHtml(x) + " · <b class=\"num\">" + x.score + "점</b></div>" +
+    "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · 경쟁 " + x.diff + " · " + riseHtml(x) + (x.gRise ? " · <span class=\"up\">구글 ▲" + esc(x.gRise) + "</span>" : x.gTop != null ? " · 구글 인기 " + x.gTop : "") + " · <b class=\"num\">" + x.score + "점</b></div>" +
     "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">" + esc(x.intent) + "</span>" : esc(x.intent || "")) + "</div></div>" +
     (mark ? "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"검증한 키워드로 고정\" aria-label=\"검증한 키워드로 고정\">★</button>" +
             "<button class=\"mk no\" data-ex=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.ex[x.kw] + "\" title=\"후보에서 빼기\" aria-label=\"후보에서 빼기\">✕</button>" : "") + "</div>";
@@ -561,9 +592,9 @@ function viewKw(){
   var h0 = seedsHtml();
   var nP = c.filter(function(x){ return x.kind === "상품" }).length;
   var h = h0 + "<section class=\"card\"><div class=\"card-h\"><h3>이번 조사 후보</h3><span class=\"n\">상품 " + nP + " · 정체성 " + (c.length - nP) + "</span></div>" +
-    "<p class=\"lead\">비율 탭 값(상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + ")대로 점수가 높은 키워드를 뽑았어요. ★은 고정, ✕는 빼기 — 뺀 것은 아래 「뺀 것」 칩에서 되살려요." +
+    "<p class=\"lead\">비율 탭 값(상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + ")대로 뽑되, ★한 검증 키워드를 먼저 다 넣고 남은 자리만 점수순으로 채워요. 「★만 조사」를 켜면 ★한 것만 조사해요. ✕는 빼기 — 뺀 것은 아래 「뺀 것」 칩에서 되살려요." +
     (c.length < s.count ? " 조건에 맞는 키워드가 " + (s.count - c.length) + "개 모자라요 — 아래 조건을 풀거나 조사를 돌려 새 키워드를 받으세요." : "") + "</p>" +
-    "<div class=\"chips\" style=\"margin-bottom:6px\"><button class=\"chip" + (s.buyOnly ? " on" : "") + "\" data-set=\"buyOnly=" + !s.buyOnly + "\">상품은 구매 결만</button>" +
+    "<div class=\"chips\" style=\"margin-bottom:6px\"><button class=\"chip" + (s.pinOnly ? " on" : "") + "\" data-set=\"pinOnly=" + !s.pinOnly + "\">★만 조사</button><button class=\"chip" + (s.buyOnly ? " on" : "") + "\" data-set=\"buyOnly=" + !s.buyOnly + "\">상품은 구매 결만</button>" +
     "<button class=\"chip" + (s.fresh ? " on" : "") + "\" data-set=\"fresh=" + !s.fresh + "\">이미 조사한 것 빼기</button></div>" +
     "<div class=\"list\">" + (c.map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">후보가 없어요.</p>") + "</div>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"discover\"" + (openCmd("discover") || !c.length ? " disabled" : "") + ">이 구성으로 조사 돌리기</button>" +
@@ -968,6 +999,27 @@ function brandRefsHtml(b){
    (2026-11-16 동욱: "참고 페이지와 뽑아낸 검색어와 정리된 시트 등을 한 번에 쉽게 파악할 수 있게")
    새 자료를 만들지 않는다 — 다른 탭이 쓰는 자료(키워드·설정·브랜드 레퍼런스·레퍼런스·추천·대본·기록)를 같은 함수로 읽어 줄여 보여 주고, 누르면 그 탭으로 간다. */
 function goBtn(label, to){ return "<button class=\"chip\" data-go=\"" + esc(to) + "\">" + label + " →</button>" }
+/* 다음 할 일 — 동욱이 고른 것(씨앗 단어 → ★ 검증 키워드 → ＋ 고른 추천)을 따라 지금 한 걸음만 보여 준다. 한눈에 맨 위와 브랜드·키워드·추천 탭 맨 아래에 같은 것을 쓴다 */
+function nextStep(){
+  var b = B(); if(!b) return null;
+  var s = S(), sd = seedsOf(), all = scored(), pins = all.filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] });
+  var rc = part("rec"), rd = rc && rc.rounds && rc.rounds[rc.rounds.length - 1], picks = pickedIds(s), noScript = picks.filter(function(id){ return !scriptOf(id) });
+  var fresh = pins.filter(function(x){ return !x.surveyed });
+  if(!sd.length) return { n: 1, t: "검색어를 뽑을 단어 넣기", d: "브랜드 탭에서 브랜드 정체성 단어와 상품 판매 단어를 넣으세요.", go: "brand" };
+  if(seedsPending()) return { n: 2, t: "연관 검색어 받는 중", d: "맥이 단어마다 연관 검색어를 받고 있어요 (1분 안팎). 다 받으면 키워드 탭에서 ★로 고르세요.", go: "kw" };
+  if(!pins.length) return { n: 3, t: "쓸 검색어 ★로 고르기", d: "키워드 탭에서 씨앗 단어별 연관 검색어를 보고 쓸 것에 ★을 누르세요. 다음 단계는 ★한 것 위주로 가요.", go: "kw" };
+  if(fresh.length) return { n: 4, t: "★한 검색어로 조사 돌리기", d: "★한 " + pins.length + "개 중 " + fresh.length + "개가 아직 조사 전이에요 (" + fresh.slice(0, 4).map(function(x){ return x.kw }).join(" · ") + (fresh.length > 4 ? " …" : "") + "). 조사하면 이 검색어로 잘 된 영상·경쟁사를 찾아 와요.", act: "discover", btn: "★ 검색어로 조사 돌리기", busy: openCmd("discover") };
+  if(!rd || (rc.updatedAt && part("ref") && Date.parse(part("ref").updatedAt) > Date.parse(rc.updatedAt))) return { n: 5, t: "★ 검색어 위주로 추천 받기", d: "조사가 끝났어요. ★한 " + pins.length + "개 검색어 위주로 찍을 주제를 추천받으세요.", act: "recommend", btn: "★ 위주로 추천 받기", busy: openCmd("recommend") };
+  if(!picks.length) return { n: 6, t: "찍을 주제 ＋로 고르기", d: "추천 탭에서 찍을 주제에 ＋를 누르세요. 고른 것만 대본으로 넘어가요.", go: "rec" };
+  if(noScript.length) return { n: 7, t: "고른 주제로 대본 초안", d: "고른 " + picks.length + "개 중 " + noScript.length + "개가 대본 전이에요. 레퍼런스 채널의 말하는 방식·구성에 맞춰 대본 초안을 써요.", act: "script", btn: "고른 " + noScript.length + "개 대본 초안 만들기", busy: openCmd("script") };
+  return { n: 8, t: "대본 검토", d: "고른 주제의 대본이 다 나왔어요. 대본 탭에서 읽고 고칠 점을 남기세요.", go: "script" };
+}
+function nextHtml(){
+  var x = nextStep(); if(!x) return "";
+  return "<section class=\"card next\"><div class=\"card-h\"><h3>다음 할 일 · " + esc(x.t) + "</h3><span class=\"n\">" + x.n + " / 8</span></div><p class=\"lead\">" + esc(x.d) + "</p><div class=\"acts\">" +
+    (x.act ? "<button class=\"btn primary\" data-act=\"" + x.act + "\"" + (x.busy ? " disabled" : "") + ">" + esc(x.busy ? "맥이 하는 중…" : x.btn) + "</button>" : "") +
+    (x.go ? "<button class=\"btn primary\" data-go=\"" + x.go + "\">" + esc({ brand: "브랜드 탭", kw: "키워드 탭", rec: "추천 탭", script: "대본 탭" }[x.go] || x.go) + "으로 →</button>" : "") + "</div></section>";
+}
 function viewSum(){
   var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var s = S(), sd = seedsOf(), all = scored(), pins = all.filter(function(x){ return s.pin[x.kw] });
@@ -977,7 +1029,7 @@ function viewSum(){
   var ref = part("ref"), refs = ((ref && ref.items) || []).filter(isLong), chs = b.channels || [], chan = part("chan");
   var nNew = 0; chs.forEach(function(c){ var n = chan && chan.items && chan.items[c.name]; if(n) nNew += n.videos.filter(isNew).length });
   function box(n, label, big, sub, to){ return "<button class=\"stepbox\" data-go=\"" + to + "\"><span class=\"num muted\">" + n + "</span><b>" + label + "</b><span class=\"big\">" + big + "</span><span class=\"it-d\">" + sub + "</span></button>" }
-  var h = "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + " 한눈에</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div><p class=\"lead\">" + esc(b.one || "") + "</p>" +
+  var h = nextHtml() + "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + " 한눈에</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div><p class=\"lead\">" + esc(b.one || "") + "</p>" +
     "<div class=\"flow\">" +
     box(1, "씨앗 단어", sd.length, "정체성 " + sd.filter(function(x){ return x.kind === "정체성" }).length + " · 상품 " + sd.filter(function(x){ return x.kind === "상품" }).length, "kw") +
     box(2, "뽑은 검색어", seedKw.length, "씨앗이 든 연관 검색어", "kw") +
@@ -992,7 +1044,7 @@ function viewSum(){
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" + esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span> <b>" + esc(x.word) + "</b> <span class=\"num muted\">" + it.length + "개</span></div>" +
         "<div class=\"it-d\">" + (it.slice(0, 4).map(function(y){ return (s.pin[y.kw] ? "★" : "") + esc(y.kw) + " <span class=\"num\">" + fmt(y.total) + "</span>" }).join(" · ") || "아직 안 받음") + "</div></div>" +
         "<button class=\"btn sm\" data-go=\"kw|seed=" + esc(x.word) + "\">보기</button></div>" }).join("") + "</div>"
-      : "<p class=\"lead\">씨앗 단어가 아직 없어요. 키워드 탭에서 정체성 3 · 상품 3개를 정하세요.</p>") + "</section>";
+      : "<p class=\"lead\">씨앗 단어가 아직 없어요. 브랜드 탭에서 정체성 단어와 상품 판매 단어를 넣으세요.</p>") + "</section>";
   /* ② 검증한 키워드 · 주제 → 대본 */
   h += "<section class=\"card\"><div class=\"card-h\"><h3>② 검증한 키워드와 주제</h3>" + goBtn("추천 탭", "rec") + "</div>" +
     "<h4>★ 검증한 키워드 <span class=\"num muted\">" + pins.length + "</span></h4>" +
@@ -1028,6 +1080,57 @@ function viewSum(){
   return h;
 }
 
+/* ── 브랜드 정보 고치기 — 브랜드 탭의 모든 칸(소개·타깃·첫 질문·훅 규칙·판매 상품·콘텐츠 축·필러·구매자 욕구·역할·단계)을 고치고 더한다 ──
+   (2026-11-17 동욱: "모든 부분은 다 수정하거나 추가 지정할 수 있게")
+   고친 것은 ct.set/<브랜드> profile 에 바로 쓰이고(Supabase), 맥 동기화가 볼트 브랜드.json 정본에 적는다 → ct.data/<브랜드> 도 따라 바뀐다.
+   맥이 받기 전에도 화면이 고친 값으로 보이게 B() 가 profile 을 겹쳐 본다. 레퍼런스 채널·포맷은 볼트 레퍼런스 카드가 정본이라 여기서 고치지 않는다. */
+var PROF_TEXT = [["one", "한 줄 소개"], ["target", "타깃"], ["firstQuestion", "첫 질문"], ["hook", "훅 규칙"]];
+function lines(v){ return String(v || "").split("\n").map(function(x){ return x.trim() }).filter(Boolean) }
+function pairLines(list, a, b){ return (list || []).map(function(x){ return x[a] + (x[b] ? " — " + x[b] : "") }).join("\n") }
+function parsePairs(v, a, b){ return lines(v).map(function(x){ var i = x.indexOf("—"); var o = {}; o[a] = (i < 0 ? x : x.slice(0, i)).trim(); o[b] = i < 0 ? "" : x.slice(i + 1).trim(); return o }) }
+function profileFormHtml(){
+  var b = B(), id = b.identity || {};
+  function ta(k, label, val, rows, hint){ return "<label class=\"fld\"><span>" + label + "</span><textarea data-prof=\"" + k + "\" rows=\"" + (rows || 2) + "\" placeholder=\"" + esc(hint || "") + "\">" + esc(val || "") + "</textarea></label>" }
+  var h = "<section class=\"card\" id=\"prof-form\"><div class=\"card-h\"><h3>브랜드 정보 고치기</h3><span class=\"n\">" + esc(b.name) + "</span></div>" +
+    "<p class=\"lead\">칸을 고치거나 줄을 더해 「저장」을 누르세요. 목록 칸은 한 줄에 하나씩 적어요. 저장하면 바로 앱에 쓰이고, 맥이 볼트 정본(브랜드.json)에도 적어요.</p>";
+  PROF_TEXT.forEach(function(f){ h += ta(f[0], f[1], b[f[0]], f[0] === "one" ? 3 : 2) });
+  h += "<h4>판매 상품</h4><div id=\"prof-prods\">" + (b.products || []).map(function(p, i){ return prodRowHtml(p, i) }).join("") + "</div>" +
+    "<div class=\"acts\"><button class=\"btn sm\" data-act=\"profprod\">＋ 상품 더하기</button></div>";
+  h += ta("axes", "콘텐츠 축 (한 줄에 하나)", (id.axes || []).join("\n"), 4) +
+    ta("pillars", "필러 (한 줄에 「A — 이름」)", pairLines(id.pillars, "id", "name"), 5, "A — 사람이 안 오는 이유") +
+    ta("needs", "구매자 욕구 (한 줄에 하나)", (id.needs || []).join("\n"), 4) +
+    ta("roles", "역할 (한 줄에 「이름 — 하는 일」)", pairLines(b.roles, "name", "what"), 3, "풀링 — 사람을 모으기") +
+    ta("stages", "단계 (한 줄에 「이름 — 시청자 마음」)", pairLines(b.stages, "name", "what"), 5, "궁금 의문 — 저건 왜 저래?");
+  return h + "<div class=\"acts\"><button class=\"btn primary\" data-act=\"profsave\">저장</button><button class=\"btn\" data-act=\"profedit\">그만두기</button></div></section>";
+}
+function prodRowHtml(p, i){
+  return "<div class=\"prow\" data-old=\"" + esc(p.name || "") + "\"><input type=\"text\" data-pf=\"name\" maxlength=\"30\" placeholder=\"상품 이름\" value=\"" + esc(p.name || "") + "\">" +
+    "<input type=\"text\" data-pf=\"what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(p.what || "") + "\">" +
+    "<button class=\"mk no\" data-act=\"profprodx\" aria-label=\"이 상품 빼기\" title=\"빼기\">✕</button></div>";
+}
+/* 폼 → profile. 상품 이름을 바꾸면 그 상품의 판매 단어(seeds)·비중(share)도 새 이름으로 옮긴다 */
+function profileSave(){
+  var b = B(), f = document.getElementById("prof-form"); if(!f) return;
+  function v(k){ var el = f.querySelector("[data-prof=\"" + k + "\"]"); return el ? el.value : "" }
+  var ren = {}, old = {}; (b.products || []).forEach(function(p){ old[p.name] = p });
+  var prods = [].map.call(f.querySelectorAll(".prow"), function(r){
+    var nm = r.querySelector("[data-pf=name]").value.trim(), was = r.dataset.old, o = old[was] || {};
+    if(was && nm && was !== nm) ren[was] = nm;
+    return nm ? Object.assign({}, o, { name: nm, what: r.querySelector("[data-pf=what]").value.trim(), share: o.share != null ? o.share : 5 }) : null;
+  }).filter(Boolean);
+  var names = prods.map(function(p){ return p.name });
+  if(names.length !== new Set(names).size){ alert("같은 이름의 상품이 둘 있어요. 이름을 다르게 적어 주세요."); return }
+  var pf = { products: prods, identity: Object.assign({}, b.identity || {}, { axes: lines(v("axes")), pillars: parsePairs(v("pillars"), "id", "name"), needs: lines(v("needs")) }),
+    roles: parsePairs(v("roles"), "name", "what"), stages: parsePairs(v("stages"), "name", "what") };
+  PROF_TEXT.forEach(function(x){ pf[x[0]] = v(x[0]).trim() });
+  var patch = { profile: pf };
+  var sd = seedsOf().map(function(x){ return x.kind === "상품" && ren[x.product] ? Object.assign({}, x, { product: ren[x.product] }) : x })
+    .filter(function(x){ return x.kind !== "상품" || names.indexOf(x.product) >= 0 });   // 뺀 상품의 판매 단어는 같이 뺀다
+  if(JSON.stringify(sd) !== JSON.stringify(seedsOf())) patch.seeds = sd;
+  var sh = (SETS[cur] || {}).share; if(sh){ var ns = {}; Object.keys(sh).forEach(function(k){ var nk = ren[k] || k; if(names.indexOf(nk) >= 0) ns[nk] = sh[k] }); patch.share = ns }
+  ui.profEdit = false; setS(patch);
+}
+
 
 /* ── 브랜드 탭 ── */
 function viewBrand(){
@@ -1048,13 +1151,17 @@ function viewBrand(){
     "<p>" + esc(b.one) + "</p><dl class=\"kv\" style=\"margin-top:10px\"><dt>타깃</dt><dd>" + esc(b.target) + "</dd><dt>첫 질문</dt><dd>" + esc(b.firstQuestion) + "</dd>" +
     (b.kit ? "<dt>브랜드 색</dt><dd><span class=\"sw\" style=\"background:" + esc(b.kit.accent) + "\"></span><span class=\"sw\" style=\"background:" + esc(b.kit.accent2 || b.kit.accent) + "\"></span>" + esc(b.kit.note || "") + "</dd>" : "") +
     (b.cadence ? "<dt>발행</dt><dd>" + esc(b.cadence.note || "") + "</dd>" : "") + "</dl>" +
-    (b.todo ? "<p class=\"note\" style=\"margin-top:12px\">" + esc(b.todo) + "</p>" : "") + "</section>";
-  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품</h3><span class=\"n\">" + (b.products || []).length + "개</span></div><div class=\"list\">" +
-    (b.products || []).map(function(p){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what) + "</div>" + ((p.hints || []).length ? "<div class=\"it-d\">키워드 힌트 · " + esc(p.hints.join(" · ")) + "</div>" : "") + "</div></div>" }).join("") + "</div></section>";
+    (b.todo ? "<p class=\"note\" style=\"margin-top:12px\">" + esc(b.todo) + "</p>" : "") +
+    "<div class=\"acts\"><button class=\"btn sm" + (ui.profEdit ? "" : " primary") + "\" data-act=\"profedit\">" + (ui.profEdit ? "고치기 닫기" : "브랜드 정보 고치기 · 더하기") + "</button>" + (b.profileNote ? "<span class=\"lead\" style=\"margin:0\">" + esc(b.profileNote) + "</span>" : "") + "</div></section>" +
+    (ui.profEdit ? profileFormHtml() : "");
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>연관 검색어 받는 곳</h3><span class=\"n\">단어 " + seedsOf().length + "개</span></div>" + seedSrcHtml() + seedPendingHtml() + "</section>";
+  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품과 판매 단어</h3><span class=\"n\">" + (b.products || []).length + "개</span></div>" +
+    "<p class=\"lead\">상품마다 사려는 사람이 찾을 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지). 이 단어가 들어간 연관 검색어가 키 콘텐츠(상품 판매) 재료가 돼요.</p><div class=\"list\">" +
+    (b.products || []).map(function(p){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what) + "</div>" + productWordsHtml(p.name) + "</div></div>" }).join("") + "</div></section>";
   var id = b.identity || {};
-  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div><dl class=\"kv\">" +
+  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityWordsHtml() + "<h4>정체성 정본</h4><dl class=\"kv\">" +
     [["콘텐츠 축", esc((id.axes || []).join(" · "))], ["필러", (id.pillars || []).map(function(p){ return "<b>" + esc(p.id) + "</b> " + esc(p.name) }).join(" · ")],
-     ["구매자 욕구", esc((id.needs || []).join(" · "))], ["키워드 힌트", esc((id.hints || []).join(" · "))], ["훅 규칙", esc(b.hook)]]
+     ["구매자 욕구", esc((id.needs || []).join(" · "))], ["훅 규칙", esc(b.hook)]]
       .filter(function(r){ return r[1] }).map(function(r){ return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>" }).join("") + "</dl>" +
     ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
       b.topicBank.map(function(t){ return "<div class=\"it\"><span class=\"num muted\">" + esc(t.n) + "</span><div class=\"it-m\"><div>" + esc(t.topic) + "</div><div class=\"it-d\">필러 " + esc(t.pillar) + " · " + esc(t.product) + "</div></div></div>" }).join("") + "</div></details>" : "") +
@@ -1110,9 +1217,12 @@ function render(){
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
   document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
-  var v = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, script: viewScript }[tab] || viewBrand;
+  var v0 = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, script: viewScript }[tab] || viewBrand;
   var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.id ? "#" + act0.id : "");
-  document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();   // 맥에 보낸 일의 상태는 어느 탭에서나 맨 위에
+  var v = function(){ return v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") };   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
+  var keepForm = document.getElementById("prof-form") && ui.profEdit ? document.getElementById("prof-form") : null;   // 고치는 중인 브랜드 정보 칸은 다시 그려도 그대로 둔다 (맥 상태가 바뀌어 화면이 다시 그려질 때)
+  document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();
+  if(keepForm){ var nf = document.getElementById("prof-form"); if(nf) nf.replaceWith(keepForm) }   // 맥에 보낸 일의 상태는 어느 탭에서나 맨 위에
   if(tab === "mix") paintMix();
   if(key){ var back = document.querySelector(key); if(back) back.focus({ preventScroll: true }) }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
 }
@@ -1154,14 +1264,14 @@ document.addEventListener("input", function(e){
   if(e.target.id === "ratio"){ SETS[cur] = Object.assign({}, SETS[cur] || {}, { ratio: +e.target.value }); paintMix() }
   if(e.target.id === "fb-text") ui.fbDraft = e.target.value;
   if(e.target.id === "tpl-name") ui.tplName = e.target.value;
-  if(e.target.dataset.addseed){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
+  if(e.target.dataset.addseed != null){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
   if(e.target.dataset.knob){ var kb = mixDef().knobs.filter(function(k){ return k.id === e.target.dataset.knob })[0], lab = document.getElementById("kv-" + e.target.dataset.knob); if(kb && lab) lab.textContent = knobText(kb, +e.target.value) }
 });
 document.addEventListener("keydown", function(e){
   if(e.key !== "Enter" || e.isComposing) return;
   if(e.target.id === "fb-text"){ e.preventDefault(); act("fbadd") }
   if(e.target.id === "tpl-name"){ e.preventDefault(); act("tplnew") }
-  if(e.target.dataset.addseed){ e.preventDefault(); act("seedadd", e.target) }
+  if(e.target.dataset.addseed != null){ e.preventDefault(); act("seedadd", e.target) }
 });
 document.addEventListener("change", function(e){
   if(e.target.id === "ratio") setS({ ratio: +e.target.value });
@@ -1189,15 +1299,20 @@ function act(name, el){
   if(name === "tplnew"){ saveTpl("new"); return }
   if(name === "tplover"){ saveTpl("over"); return }
   if(name === "toastx"){ ui.toast = ""; render(); return }
-  if(name === "seedadd"){   // 씨앗 단어 넣기 — 띄어쓰기는 빼고(네이버가 붙여 쓴 말로 받는다), 같은 단어는 한 번만
-    var kind = el.dataset.kind || el.dataset.addseed, inp = document.querySelector("[data-addseed=\"" + kind + "\"]"), w = ((inp && inp.value) || "").replace(/\s+/g, "").slice(0, 20), cur3 = seedsOf();
+  if(name === "seedadd"){   // 씨앗 단어 넣기 — key 「정체성」 또는 「상품:<상품>」. 띄어쓰기는 빼고(네이버가 붙여 쓴 말로 받는다), 같은 단어는 한 번만
+    var key = el.dataset.key || el.dataset.addseed, inp = [].filter.call(document.querySelectorAll("[data-addseed]"), function(x){ return x.dataset.addseed === key })[0];
+    var w = ((inp && inp.value) || "").replace(/\s+/g, "").slice(0, 20), cur3 = seedsOf();
     if(!w){ alert("넣을 단어를 적어 주세요."); if(inp) inp.focus(); return }
     if(cur3.some(function(x){ return x.word === w })){ alert("「" + w + "」은 이미 씨앗 단어예요."); return }
-    var ps = document.getElementById("seed-prod"), nx = kind === "상품" ? { kind: kind, word: w, product: ps ? ps.value : "" } : { kind: kind, word: w };
-    if(ps) ui.seedProd = ps.value;
-    ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[kind] = ""; ui.seed = w;
+    var nx = key.indexOf("상품:") === 0 ? { kind: "상품", word: w, product: key.slice(3) } : { kind: "정체성", word: w };
+    ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[key] = ""; ui.seed = w;
     setS({ seeds: cur3.concat([nx]) }); return;
   }
+  if(name === "profedit"){ ui.profEdit = !ui.profEdit; render(); if(ui.profEdit){ var pfm = document.getElementById("prof-form"); if(pfm) window.scrollTo(0, pfm.getBoundingClientRect().top + window.scrollY - 140) } return }
+  if(name === "profsave"){ profileSave(); return }
+  if(name === "profprod"){ var box = document.getElementById("prof-prods"); if(box){ box.insertAdjacentHTML("beforeend", prodRowHtml({}, box.children.length)); box.lastChild.querySelector("input").focus() } return }
+  if(name === "profprodx"){ var row = el.closest(".prow"); if(row && (!row.dataset.old || confirm("「" + row.dataset.old + "」 상품을 뺄까요? 이 상품의 판매 단어도 같이 빠져요 (저장해야 반영돼요)."))) row.remove(); return }
+  if(name === "seedsrc"){ if(el.dataset.v !== seedSrc()) setS({ seedSrc: el.dataset.v }); return }
   if(name === "seeddel"){ var wd = el.dataset.word; if(!confirm("씨앗 단어 「" + wd + "」을 뺄까요? 이 단어에서만 나온 검색어는 다음에 받을 때 목록에서 빠져요 (★한 것은 남아요).")) return;
     setS({ seeds: seedsOf().filter(function(x){ return x.word !== wd }) }); return }
   if(name === "fbadd"){ var tx = (document.getElementById("fb-text").value || "").trim(); if(!tx){ alert("피드백을 한 줄 적어 주세요."); return } ui.fbDraft = "";
@@ -1205,7 +1320,9 @@ function act(name, el){
   if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
-  if(name === "recommend"){ send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + ")", { roles: s.roles, ratio: s.ratio }); return }
+  if(name === "recommend"){ var pk = scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] });   // ★한 검증 키워드 위주로 추천받는다
+    send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + (pk.length ? " · ★ 검증 키워드 " + pk.length + "개 위주" : "") + ")",
+      { roles: s.roles, ratio: s.ratio, keywords: pk.map(function(x){ return { kw: x.kw, kind: x.kind, product: x.product, total: x.total } }), seeds: seedsOf() }); return }
   if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
   if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : pickedIds(s); if(!sids.length) return;
