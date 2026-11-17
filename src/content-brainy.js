@@ -4,7 +4,7 @@
 (function () {
   function subName(id) { var n = id; TABS.forEach(function (g) { g.subs.forEach(function (x) { if (x[0] === id) n = g.name + " › " + x[1]; }); }); return n; }
   window.BRAINY_HOOK = {
-    editNote: "고친 판은 5~15분 뒤 준비되고, 「적용해 줘」 하면 원본에 들어가요. 이 주소에 올리는 건 맥에서 한 번 더 해요.",
+    editNote: "고친 판은 5~15분 뒤 준비되고, 「적용해 줘」 하면 원본에 들어가요. 이 주소에 실제로 바뀌어 보이려면 맥의 Claude에게 「콘텐츠 기획 올려 줘」라고 한 번 더 말해 주세요.",
     chips: ["지금 이 브랜드에서 다음에 뭘 하면 돼?", "이 탭 설명을 더 쉽게 바꿔 줘", "이 앱에서 ○○ 고쳐 줘"],
     ctx: function () {
       var b = (typeof B === "function" && B()) || {};
