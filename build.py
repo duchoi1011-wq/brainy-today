@@ -110,13 +110,12 @@ header>.brand{{padding-right:min(46vw,190px)}}
 '''
 
 
-def emit(out_dir, title, short, theme, gate_vars, icons, app, manifest, css="", tail=""):
+def emit(out_dir, title, short, theme, gate_vars, icons, app, manifest, css="", tail="", up="../"):
     """head 를 붙여 out_dir/index.html 을 쓴다. 판 번호(version.txt)는 화면·받침 코드가 바뀌면 달라진다 —
-    앱은 볼 때마다 version.txt 와 견주어 새 판이면 스스로 새로 고친다."""
+    앱은 볼 때마다 version.txt 와 견주어 새 판이면 스스로 새로 고친다. out_dir 은 저장소 안 폴더 이름이나 다른 저장소의 Path."""
     global body
-    d = root / out_dir
+    d = out_dir if isinstance(out_dir, pathlib.Path) else root / out_dir
     d.mkdir(exist_ok=True)
-    up = "../"
     page = HEAD.format(title=title, short=short, theme_light=theme[0], theme_dark=theme[1], icons=icons,
                        gate_vars=gate_vars, css=css, app=app, up=up)
     b = body  # 공개 저장소에 올라가는 코드 — 실명은 원본에도 넣지 않는다
@@ -172,14 +171,34 @@ emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
      '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vo-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vo-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', "", VO_BRAINY + BRAINY_CHAT)
 
 # ═════════════════════════ 콘텐츠 기획 ═════════════════════════
-# 브랜드 → 비율 → 키워드 → 잘 되는 콘텐츠 → 추천 → 대본 초안 (편집 믹서 바로 앞 단계). 조종판 — 실행은 맥의 Claude(콘텐츠 스킬 셋).
-load("content.html")
-include()
-emit("content", "콘텐츠 기획", "콘텐츠 기획", ("#F7F6F2", "#F7F6F2"),
-     "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--ok)",
-     '<link rel="apple-touch-icon" href="ct-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="ct-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="ct-icon-64.png">',
-     '{key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]}',
-     '{"id":"/brainy-today/content/","name":"콘텐츠 기획","short_name":"콘텐츠 기획","start_url":"./","scope":"./","display":"standalone","background_color":"#F7F6F2","theme_color":"#F7F6F2","icons":[{"src":"ct-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ct-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}')
+# 브랜드 → 키워드 → 콘텐츠 → 대본 (편집 믹서 바로 앞 단계). 조종판 — 실행은 맥의 Claude(콘텐츠 스킬 셋).
+# 2026-11-17 동욱: 맥에 앱으로 설치한 Brainy 홈(옛 범위 /brainy-today/)에 섞여 열려서 따로 웹앱으로 — 주소는 /content-plan/ (저장소 duchoi1011-wq/content-plan).
+# 원본은 여기 src/ 그대로이고, 조립한 결과만 옆 저장소 ../content-plan 에 쓴다 (받침 shim.js · 아이콘도 같이 복사). 그 저장소가 없으면(GitHub Actions 등) 콘텐츠 기획은 건너뛴다.
+# 옛 주소 /brainy-today/content/ 는 새 주소로 넘기기만 한다.
+CP = root.parent / "content-plan"
+if (CP / ".git").exists():
+    load("content.html")
+    include()
+    emit(CP, "콘텐츠 기획", "콘텐츠 기획", ("#F7F6F2", "#F7F6F2"),
+         "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--ok)",
+         '<link rel="apple-touch-icon" href="ct-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="ct-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="ct-icon-64.png">',
+         '{key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]}',
+         '{"id":"/content-plan/","name":"콘텐츠 기획","short_name":"콘텐츠 기획","start_url":"./","scope":"./","display":"standalone","background_color":"#F7F6F2","theme_color":"#F7F6F2","icons":[{"src":"ct-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ct-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
+         up="")
+    import shutil
+    shutil.copyfile(root / "shim.js", CP / "shim.js")
+    for f in ("ct-icon-180.png", "ct-icon-192.png", "ct-icon-512.png", "ct-icon-64.png", "ct-icon.svg"):
+        shutil.copyfile(root / "src" / f, CP / f)
+else:
+    print("콘텐츠 기획 건너뜀 — 옆에 content-plan 저장소가 없음")
+(root / "content").mkdir(exist_ok=True)
+(root / "content" / "index.html").write_text('''<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>콘텐츠 기획 — 주소가 바뀌었어요</title>
+<script>location.replace("/content-plan/" + location.search + location.hash)</script>
+<meta http-equiv="refresh" content="0; url=/content-plan/"></head>
+<body><p>콘텐츠 기획은 새 주소로 옮겼어요 → <a href="/content-plan/">/content-plan/</a></p></body></html>
+''', encoding="utf-8")
 
 # ═════════════════════════ 옛 주소 /brainy-today/ → home/ ═════════════════════════
 # 예전엔 Brainy 홈이 맨 위 주소에 있어서 그 앱 범위가 단축키·단어장까지 덮었다 (같은 앱 창으로 열림).
@@ -189,7 +208,7 @@ redirect = """<!doctype html>
 <title>Brainy 홈</title><meta http-equiv="refresh" content="0; url=home/">
 <script>location.replace("home/" + location.search + location.hash);</script></head>
 <body style="font-family:-apple-system,sans-serif;padding:24px">
-<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="content/">콘텐츠 기획</a></p></body></html>
+<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
 """
 (root / "index.html").write_text(redirect, encoding="utf-8")
 # 열려 있던 옛 화면이 version.txt 를 보고 스스로 새로 고치면 → 이 넘김 페이지 → home/

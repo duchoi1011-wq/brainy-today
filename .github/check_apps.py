@@ -27,7 +27,10 @@ def check(label, code):
 
 
 ok = check("shim.js", (root / "shim.js").read_text(encoding="utf-8"))
-for app in ("home", "shortcuts", "vocab", "content"):
+for app in ("home", "shortcuts", "vocab", "../content-plan"):   # 콘텐츠 기획은 옆 저장소 content-plan 에 조립된다 (없으면 건너뜀)
+    if not (root / app / "index.html").exists():
+        print(f"- {app} 없음 — 건너뜀")
+        continue
     html = (root / app / "index.html").read_text(encoding="utf-8")
     blocks = SCRIPT.findall(html)
     if not blocks:
