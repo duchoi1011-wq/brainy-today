@@ -222,7 +222,7 @@ var TABS = [
   { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] }
 ];
 function tabGroup(id){ return TABS.filter(function(g){ return g.subs.some(function(x){ return x[0] === id }) })[0] || TABS[0] }
-var PARTS = { wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
+var PARTS = { wordrec: ".wordrec", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -300,7 +300,7 @@ function saveSet(id){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", wordrec: "판매 단어 추천", brief: "새 브랜드 프로필" };
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -364,7 +364,7 @@ function viewBrand(){
   h += "<section class=\"card\"><div class=\"card-h\"><h3>연관 검색어 받는 곳</h3><span class=\"n\">단어 " + seedsOf().length + "개</span></div>" + seedSrcHtml() + seedPendingHtml() + "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품과 판매 단어</h3><span class=\"n\">" + (b.products || []).length + "개</span></div>" +
     "<p class=\"lead\">상품 자체도 ✎로 고치고 ✕로 빼고 아래에서 더해요. 상품마다 사려는 사람이 찾을 판매 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지) — 이 단어가 들어간 연관 검색어가 키 콘텐츠(상품 판매) 재료가 돼요.</p>" +
-    productsHtml() + "</section>";
+    wordRecBarHtml() + productsHtml() + "</section>";
   var id = b.identity || {};
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityWordsHtml() + plistHtml("identity.axes") + plistHtml("identity.pillars") + plistHtml("identity.needs") + ptextHtml("hook", "훅 규칙", true) +
     ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
@@ -510,6 +510,16 @@ function act(name, el){
     var pk2 = (SETS[cur] || {}).chanpick || {}, skip = (((part("chancand") || {}).items) || []).filter(function(x){ return pk2[x.id] === "skip" }).map(function(x){ return x.name });
     var sides = RP_SIDES.filter(function(x){ return ro2.sides[x.id] }).map(function(x){ return x.id }), rg = RP_REGION.filter(function(r){ return r[0] === ro2.region })[0][1];
     send("chanfind", "참고 페이지 채우기 — " + sides.join(" · ") + " · " + rg + " · " + sd2.map(function(x){ return x.word }).join(" · "), { seeds: sd2, sides: sides, region: rg, have: (B().channels || []).map(function(c){ return c.name }), skip: skip }); return }
+  if(name === "wordrec"){ var ps2 = profNow().products, sd3 = seedsOf(); if(!ps2.length) return;   // 판매 단어 Claude 추천 — 상품마다 지금 단어를 넘겨 겹치지 않게
+    send("wordrec", "판매 단어 추천 — " + ps2.map(function(p){ return p.name }).join(" · "), { products: ps2.map(function(p){ return { name: p.name, what: p.what || "", words: sd3.filter(function(x){ return x.kind === "상품" && x.product === p.name }).map(function(x){ return x.word }) } }),
+      identity: sd3.filter(function(x){ return x.kind === "정체성" }).map(function(x){ return x.word }), max: SEED_MAX }); return }
+  if(name === "wordrecall"){ var rk = el.dataset.key, rws = el.dataset.ws.split(","), cur5 = seedsOf(), has5 = {};   // 판매 단어 — 추천 전부 넣기 (상품마다 SEED_MAX 까지)
+    cur5.forEach(function(x){ has5[x.word] = 1 });
+    var room5 = SEED_MAX - cur5.filter(function(x){ return x.kind === "상품" && x.product === rk.slice(3) }).length;
+    var nw = rws.filter(function(w){ return w && !has5[w] }).slice(0, Math.max(0, room5));
+    if(!nw.length) return;
+    if(!confirm("「" + rk.slice(3) + "」 판매 단어로 " + nw.join(" · ") + " — " + nw.length + "개를 넣을까요? (✕로 다시 뺄 수 있어요)")) return;
+    setS({ seeds: cur5.concat(nw.map(function(w){ return { kind: "상품", word: w, product: rk.slice(3) } })) }); return }
   if(name === "chanrec"){ var rids = el.dataset.ids.split(","); if(!confirm("Claude 추천 " + rids.length + "곳을 기획 레퍼런스 카드에 넣을까요? (카드에서 다시 뺄 수 있어요)")) return;   // 참고 페이지 — 추천대로 한 번에 넣기
     var rc = Object.assign({}, (SETS[cur] || {}).chanpick || {}); rids.forEach(function(id){ rc[id] = "add" }); setS({ chanpick: rc }); return }
   if(name === "chanpick"){ var cp = Object.assign({}, (SETS[cur] || {}).chanpick || {}); if(el.dataset.v) cp[el.dataset.id] = el.dataset.v; else delete cp[el.dataset.id]; setS({ chanpick: cp }); return }

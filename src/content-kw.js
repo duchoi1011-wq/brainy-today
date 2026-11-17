@@ -48,7 +48,38 @@ function identityWordsHtml(){
 /* 브랜드 탭 — 판매 상품 카드 안, 상품마다 「판매 단어」 */
 function productWordsHtml(name){
   var s = S(), list = seedsOf().filter(function(x){ return x.kind === "상품" && x.product === name });
-  return "<div class=\"list\" style=\"margin-top:4px\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("상품:" + name, list.length, "「" + name + "」 판매 단어 넣기");
+  return "<div class=\"list\" style=\"margin-top:4px\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + wordRecHtml(name, list.length) + seedAddHtml("상품:" + name, list.length, "「" + name + "」 판매 단어 넣기");
+}
+/* 판매 단어 Claude 추천 (2026-11-17 동욱 "판매 단어도 너가 추천해 주고 넣을 수 있게 — 검색어 기반도 좋고")
+   「판매 단어 추천받기」 → cmd wordrec → 맥 Claude 가 상품마다 네이버 검색량·연관 검색어를 보고 고른 단어를
+   단어 추천.json(ct.data .wordrec) {updatedAt, items:[{product, word, volume, comp, via, why, recommend}]} 에 쓴다.
+   앱은 상품 칸 안에 추천을 보여 주고 ＋(하나) · 「추천 전부 넣기」로 씨앗 단어에 넣는다 — 넣은 단어는 추천에서 빠진다 */
+function wordRecs(name){
+  var d = part("wordrec"), have = {};
+  seedsOf().forEach(function(x){ have[x.word] = 1 });
+  return (((d || {}).items) || []).filter(function(x){ return x.product === name && x.word && !have[String(x.word).replace(/\s+/g, "")] })
+    .sort(function(a, b){ return (b.recommend ? 1 : 0) - (a.recommend ? 1 : 0) || (b.volume || 0) - (a.volume || 0) });
+}
+function wordRecBarHtml(){
+  var d = part("wordrec"), busy = openCmd("wordrec"), n = ((d || {}).items || []).length;
+  return "<div class=\"acts\" style=\"margin:4px 0 8px\"><button class=\"btn sm primary\" data-act=\"wordrec\"" + (busy || !profNow().products.length ? " disabled" : "") + ">" +
+    (busy ? "맥이 판매 단어 고르는 중…" : "🤖 판매 단어 추천받기") + "</button>" +
+    "<span class=\"muted\" style=\"font-size:13px\">" + (d && d.updatedAt ? "지난 추천 " + esc(String(d.updatedAt).slice(5, 16).replace("T", " ")) + " · " + n + "개" : "Claude 가 상품마다 네이버 검색량과 연관 검색어를 보고 사려는 사람이 찾는 말을 골라요") + "</span></div>";
+}
+function wordRecHtml(name, n){
+  var rs = wordRecs(name);
+  if(!rs.length) return "";
+  var room = Math.max(0, SEED_MAX - n), rec = rs.filter(function(x){ return x.recommend }).slice(0, room);
+  return "<div class=\"wrec\" style=\"margin-top:8px\"><div class=\"it-d\"><span class=\"tag p\">Claude 추천</span> ＋를 누르면 판매 단어로 들어가요" + (room ? "" : " · 이 상품은 " + SEED_MAX + "개가 다 찼어요 — 하나 빼고 넣으세요") + "</div><div class=\"chips\" style=\"margin-top:4px\">" +
+    rs.map(function(x){
+      var w = String(x.word).replace(/\s+/g, "");
+      return "<button class=\"chip" + (x.recommend ? " on" : "") + "\" data-act=\"wordadd\" data-key=\"상품:" + esc(name) + "\" data-w=\"" + esc(w) + "\" title=\"" + esc(x.why || "") + "\"" + (room ? "" : " disabled") + ">＋ " + esc(w) +
+        (x.volume ? " <span class=\"num muted\">월 " + fmt(x.volume) + "</span>" : "") + "</button>";
+    }).join("") + "</div>" +
+    (rec.length ? "<div class=\"acts\" style=\"margin-top:6px\"><button class=\"btn sm\" data-act=\"wordrecall\" data-key=\"상품:" + esc(name) + "\" data-ws=\"" + esc(rec.map(function(x){ return String(x.word).replace(/\s+/g, "") }).join(",")) + "\">추천 " + rec.length + "개 전부 넣기</button></div>" : "") +
+    "<details style=\"margin-top:6px\"><summary>추천 이유</summary><div class=\"list\">" + rs.map(function(x){
+      return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b>" + (x.recommend ? " <span class=\"tag p\">추천</span>" : "") + "</div><div class=\"it-d\">" +
+        [x.volume ? "월 " + fmt(x.volume) : "", x.comp ? "경쟁 " + esc(x.comp) : "", x.via ? esc(x.via) : "", esc(x.why || "")].filter(Boolean).join(" · ") + "</div></div></div>" }).join("") + "</div></details></div>";
 }
 /* 키워드 탭 맨 위 — 씨앗을 고르면 그 씨앗의 연관 검색어. 단어 고치기는 브랜드 탭 한 곳에서 */
 function seedsHtml(){

@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "71debedb4a"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=71debedb4a"></script>
+<script>window.BRAINY_VERSION = "dc639a6dc3"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=dc639a6dc3"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -276,7 +276,7 @@ var TABS = [
   { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] }
 ];
 function tabGroup(id){ return TABS.filter(function(g){ return g.subs.some(function(x){ return x[0] === id }) })[0] || TABS[0] }
-var PARTS = { wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
+var PARTS = { wordrec: ".wordrec", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -354,7 +354,7 @@ function saveSet(id){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", wordrec: "판매 단어 추천", brief: "새 브랜드 프로필" };
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -445,7 +445,38 @@ function identityWordsHtml(){
 /* 브랜드 탭 — 판매 상품 카드 안, 상품마다 「판매 단어」 */
 function productWordsHtml(name){
   var s = S(), list = seedsOf().filter(function(x){ return x.kind === "상품" && x.product === name });
-  return "<div class=\"list\" style=\"margin-top:4px\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("상품:" + name, list.length, "「" + name + "」 판매 단어 넣기");
+  return "<div class=\"list\" style=\"margin-top:4px\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + wordRecHtml(name, list.length) + seedAddHtml("상품:" + name, list.length, "「" + name + "」 판매 단어 넣기");
+}
+/* 판매 단어 Claude 추천 (2026-11-17 동욱 "판매 단어도 너가 추천해 주고 넣을 수 있게 — 검색어 기반도 좋고")
+   「판매 단어 추천받기」 → cmd wordrec → 맥 Claude 가 상품마다 네이버 검색량·연관 검색어를 보고 고른 단어를
+   단어 추천.json(ct.data .wordrec) {updatedAt, items:[{product, word, volume, comp, via, why, recommend}]} 에 쓴다.
+   앱은 상품 칸 안에 추천을 보여 주고 ＋(하나) · 「추천 전부 넣기」로 씨앗 단어에 넣는다 — 넣은 단어는 추천에서 빠진다 */
+function wordRecs(name){
+  var d = part("wordrec"), have = {};
+  seedsOf().forEach(function(x){ have[x.word] = 1 });
+  return (((d || {}).items) || []).filter(function(x){ return x.product === name && x.word && !have[String(x.word).replace(/\s+/g, "")] })
+    .sort(function(a, b){ return (b.recommend ? 1 : 0) - (a.recommend ? 1 : 0) || (b.volume || 0) - (a.volume || 0) });
+}
+function wordRecBarHtml(){
+  var d = part("wordrec"), busy = openCmd("wordrec"), n = ((d || {}).items || []).length;
+  return "<div class=\"acts\" style=\"margin:4px 0 8px\"><button class=\"btn sm primary\" data-act=\"wordrec\"" + (busy || !profNow().products.length ? " disabled" : "") + ">" +
+    (busy ? "맥이 판매 단어 고르는 중…" : "🤖 판매 단어 추천받기") + "</button>" +
+    "<span class=\"muted\" style=\"font-size:13px\">" + (d && d.updatedAt ? "지난 추천 " + esc(String(d.updatedAt).slice(5, 16).replace("T", " ")) + " · " + n + "개" : "Claude 가 상품마다 네이버 검색량과 연관 검색어를 보고 사려는 사람이 찾는 말을 골라요") + "</span></div>";
+}
+function wordRecHtml(name, n){
+  var rs = wordRecs(name);
+  if(!rs.length) return "";
+  var room = Math.max(0, SEED_MAX - n), rec = rs.filter(function(x){ return x.recommend }).slice(0, room);
+  return "<div class=\"wrec\" style=\"margin-top:8px\"><div class=\"it-d\"><span class=\"tag p\">Claude 추천</span> ＋를 누르면 판매 단어로 들어가요" + (room ? "" : " · 이 상품은 " + SEED_MAX + "개가 다 찼어요 — 하나 빼고 넣으세요") + "</div><div class=\"chips\" style=\"margin-top:4px\">" +
+    rs.map(function(x){
+      var w = String(x.word).replace(/\s+/g, "");
+      return "<button class=\"chip" + (x.recommend ? " on" : "") + "\" data-act=\"wordadd\" data-key=\"상품:" + esc(name) + "\" data-w=\"" + esc(w) + "\" title=\"" + esc(x.why || "") + "\"" + (room ? "" : " disabled") + ">＋ " + esc(w) +
+        (x.volume ? " <span class=\"num muted\">월 " + fmt(x.volume) + "</span>" : "") + "</button>";
+    }).join("") + "</div>" +
+    (rec.length ? "<div class=\"acts\" style=\"margin-top:6px\"><button class=\"btn sm\" data-act=\"wordrecall\" data-key=\"상품:" + esc(name) + "\" data-ws=\"" + esc(rec.map(function(x){ return String(x.word).replace(/\s+/g, "") }).join(",")) + "\">추천 " + rec.length + "개 전부 넣기</button></div>" : "") +
+    "<details style=\"margin-top:6px\"><summary>추천 이유</summary><div class=\"list\">" + rs.map(function(x){
+      return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b>" + (x.recommend ? " <span class=\"tag p\">추천</span>" : "") + "</div><div class=\"it-d\">" +
+        [x.volume ? "월 " + fmt(x.volume) : "", x.comp ? "경쟁 " + esc(x.comp) : "", x.via ? esc(x.via) : "", esc(x.why || "")].filter(Boolean).join(" · ") + "</div></div></div>" }).join("") + "</div></details></div>";
 }
 /* 키워드 탭 맨 위 — 씨앗을 고르면 그 씨앗의 연관 검색어. 단어 고치기는 브랜드 탭 한 곳에서 */
 function seedsHtml(){
@@ -1567,7 +1598,7 @@ function viewBrand(){
   h += "<section class=\"card\"><div class=\"card-h\"><h3>연관 검색어 받는 곳</h3><span class=\"n\">단어 " + seedsOf().length + "개</span></div>" + seedSrcHtml() + seedPendingHtml() + "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품과 판매 단어</h3><span class=\"n\">" + (b.products || []).length + "개</span></div>" +
     "<p class=\"lead\">상품 자체도 ✎로 고치고 ✕로 빼고 아래에서 더해요. 상품마다 사려는 사람이 찾을 판매 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지) — 이 단어가 들어간 연관 검색어가 키 콘텐츠(상품 판매) 재료가 돼요.</p>" +
-    productsHtml() + "</section>";
+    wordRecBarHtml() + productsHtml() + "</section>";
   var id = b.identity || {};
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityWordsHtml() + plistHtml("identity.axes") + plistHtml("identity.pillars") + plistHtml("identity.needs") + ptextHtml("hook", "훅 규칙", true) +
     ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
@@ -1713,6 +1744,16 @@ function act(name, el){
     var pk2 = (SETS[cur] || {}).chanpick || {}, skip = (((part("chancand") || {}).items) || []).filter(function(x){ return pk2[x.id] === "skip" }).map(function(x){ return x.name });
     var sides = RP_SIDES.filter(function(x){ return ro2.sides[x.id] }).map(function(x){ return x.id }), rg = RP_REGION.filter(function(r){ return r[0] === ro2.region })[0][1];
     send("chanfind", "참고 페이지 채우기 — " + sides.join(" · ") + " · " + rg + " · " + sd2.map(function(x){ return x.word }).join(" · "), { seeds: sd2, sides: sides, region: rg, have: (B().channels || []).map(function(c){ return c.name }), skip: skip }); return }
+  if(name === "wordrec"){ var ps2 = profNow().products, sd3 = seedsOf(); if(!ps2.length) return;   // 판매 단어 Claude 추천 — 상품마다 지금 단어를 넘겨 겹치지 않게
+    send("wordrec", "판매 단어 추천 — " + ps2.map(function(p){ return p.name }).join(" · "), { products: ps2.map(function(p){ return { name: p.name, what: p.what || "", words: sd3.filter(function(x){ return x.kind === "상품" && x.product === p.name }).map(function(x){ return x.word }) } }),
+      identity: sd3.filter(function(x){ return x.kind === "정체성" }).map(function(x){ return x.word }), max: SEED_MAX }); return }
+  if(name === "wordrecall"){ var rk = el.dataset.key, rws = el.dataset.ws.split(","), cur5 = seedsOf(), has5 = {};   // 판매 단어 — 추천 전부 넣기 (상품마다 SEED_MAX 까지)
+    cur5.forEach(function(x){ has5[x.word] = 1 });
+    var room5 = SEED_MAX - cur5.filter(function(x){ return x.kind === "상품" && x.product === rk.slice(3) }).length;
+    var nw = rws.filter(function(w){ return w && !has5[w] }).slice(0, Math.max(0, room5));
+    if(!nw.length) return;
+    if(!confirm("「" + rk.slice(3) + "」 판매 단어로 " + nw.join(" · ") + " — " + nw.length + "개를 넣을까요? (✕로 다시 뺄 수 있어요)")) return;
+    setS({ seeds: cur5.concat(nw.map(function(w){ return { kind: "상품", word: w, product: rk.slice(3) } })) }); return }
   if(name === "chanrec"){ var rids = el.dataset.ids.split(","); if(!confirm("Claude 추천 " + rids.length + "곳을 기획 레퍼런스 카드에 넣을까요? (카드에서 다시 뺄 수 있어요)")) return;   // 참고 페이지 — 추천대로 한 번에 넣기
     var rc = Object.assign({}, (SETS[cur] || {}).chanpick || {}); rids.forEach(function(id){ rc[id] = "add" }); setS({ chanpick: rc }); return }
   if(name === "chanpick"){ var cp = Object.assign({}, (SETS[cur] || {}).chanpick || {}); if(el.dataset.v) cp[el.dataset.id] = el.dataset.v; else delete cp[el.dataset.id]; setS({ chanpick: cp }); return }
