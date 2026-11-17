@@ -148,7 +148,7 @@
   /* 아래 막대(탭 막대 등)를 가리지 않게 단추·창을 그만큼 올린다 · 폰 키보드가 올라오면 창을 키보드 위로 */
   function lift() {
     var bar = HOOK.avoid !== false && document.querySelector(HOOK.avoid || "#tabbar"), h = 0;
-    if (bar && bar.offsetParent !== null) { var r = bar.getBoundingClientRect(); if (r.bottom >= window.innerHeight - 2) h = Math.round(r.height); }
+    if (bar) { var r = bar.getBoundingClientRect(); if (r.height > 0 && getComputedStyle(bar).display !== "none" && r.bottom >= window.innerHeight - 2) h = Math.round(r.height); }   // 고정 막대는 offsetParent 가 비어 있어 크기로 본다
     document.documentElement.style.setProperty("--bc-lift", h + "px");
     var vv = window.visualViewport, kb = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
     box.style.setProperty("--bc-kb", (kb > 80 ? kb : 0) + "px"); box.classList.toggle("kb", kb > 80);

@@ -282,13 +282,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .fab { position: fixed; z-index: 6; right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 13px 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
 .fab svg { width: 18px; height: 18px; }
 /* 대화창 = 서비스형 채팅 (2026-11-18 동욱 "모든 칸을 다 덮지 않고 플랫폼 서비스의 채팅 칸처럼") — 컴퓨터는 오른쪽 아래에 붙는 창, 폰은 아래에서 올라오는 창. 다른 앱의 대화창(brainy-chat.js)과 같은 모양 */
-.sheet { position: fixed; z-index: 20; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: 420px; height: min(680px, calc(100vh - 100px)); height: min(680px, calc(100dvh - 100px)); background: var(--bg); display: grid; grid-template-rows: auto 1fr auto; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 18px 50px rgba(0,0,0,.28); overflow: hidden; overscroll-behavior: contain; transform-origin: bottom right; animation: sheet-in .18s ease-out; }
-@keyframes sheet-in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+.sheet { position: fixed; z-index: 20; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: 420px; height: min(680px, calc(100vh - 100px)); height: min(680px, calc(100dvh - 100px)); background: var(--bg); display: grid; grid-template-rows: auto 1fr auto; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 18px 50px rgba(0,0,0,.28); overflow: hidden; overscroll-behavior: contain; }
 .sheet[hidden] { display: none !important; }
 .sheet .msgs { min-height: 0; overscroll-behavior: contain; }
 .sheet.kb .composer2 { padding-bottom: 10px; }
 @media (max-width: 640px) {
-  .sheet { left: 8px; right: 8px; width: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); height: min(72vh, calc(100vh - 80px)); height: min(72dvh, calc(100dvh - 80px)); transform-origin: bottom center; }
+  .sheet { left: 8px; right: 8px; width: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); height: min(72vh, calc(100vh - 80px)); height: min(72dvh, calc(100dvh - 80px)); }
   .sheet.kb { bottom: var(--kb, 8px); }
 }
 .sheet .bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 10px 10px 14px; background: var(--accent); color: var(--accent-ink); }
