@@ -1,8 +1,7 @@
 /* ── 키워드 탭 — 점수 매기기 · 비율대로 후보 뽑기 · 화면 ──
-   점수(0~100)는 종류마다 다르게 본다. 무엇을 얼마나 볼지는 판정 믹서 값이다 (content-mixer.js · 볼트 믹서.json) — 여기에 비중을 적지 않는다:
-     상품    = 검색량(kw_vol) · 광고 클릭률(kw_ctr) · 상승세(kw_rise) 의 가중 평균   (사려는 사람이 찾는 말인지가 중요)
-               클릭률은 월 검색 200 미만이면 그만큼 덜 믿는다 (검색 20에 클릭 4번이면 20%가 나오므로)
-     정체성  = 검색량(id_vol) · 상승세(id_rise) 의 가중 평균   (채널 성격에 맞는 넓은 주제 — 클릭률은 안 본다)
+   점수(0~100) = 씨앗과 가까움 · 검색량 · 광고 클릭률 · 상승세 · 경쟁 적음의 가중 평균. 비중은 동욱이 키워드 탭 「순위 기준」에서 정한 순서다
+   (content-kwcrit.js · ct.set kwCrit — 여기에 비중을 적지 않는다, 2026-11-17 믹서 kw_*·id_* 대신).
+   클릭률은 월 검색 200 미만이면 그만큼 덜 믿는다 (검색 20에 클릭 4번이면 20%가 나오므로).
    검색량은 로그로 눌러 큰 키워드 하나가 다 가져가지 않게 한다. 상승세 = 구글 트렌드 최근 4주 ÷ 그 앞 8주. */
 /* 다른 도구에서 가져온 보는 법 (자료는 네이버 검색광고 값 그대로 — 새로 추정하지 않는다)
      난이도 (Ahrefs 키워드 난이도) = 광고 경쟁: 경쟁정도 높음 + 노출 광고 9개 이상 → 어려움 · 노출 광고 5개 이하나 경쟁정도 낮음 → 쉬움 · 그 사이 보통
@@ -16,7 +15,7 @@ var SEED_SRC = [["naver", "네이버 검색광고"], ["google", "구글 트렌�
 function seedsOf(){ return ((SETS[cur] || {}).seeds || (B() && B().seeds) || []).filter(function(x){ return x.word }) }
 function seedSrc(){ return (SETS[cur] || {}).seedSrc || (B() && B().seedSrc) || "naver" }
 function isFar(x, word){ return (x.far || []).indexOf(word) >= 0 }   // 씨앗이 안 든 말 — 구글 관련 검색어로만 들어온 것
-function seedItems(word, far){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 && (far == null || isFar(x, word) === far) }).sort(function(a, b){ return b.total - a.total || (b.gTop || 0) - (a.gTop || 0) }) }
+function seedItems(word, far){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 && (far == null || isFar(x, word) === far) }).sort(function(a, b){ return b.score - a.score || b.total - a.total }) }   // 순위 기준(kwCrit) 점수 순
 function seedRun(word){ var k = part("kw"); return ((k && k.seeds) || []).filter(function(x){ return x.word === word })[0] || null }
 function seedsPending(){ var k = part("kw"), have = ((k && k.seeds) || []).map(function(x){ return x.word }).join("|") + "@" + ((k && k.seedSrc) || "naver"); return seedsOf().map(function(x){ return x.word }).join("|") + "@" + seedSrc() !== have }
 function seedRowHtml(x, s){
@@ -87,18 +86,20 @@ function seedsHtml(){
   var sd = seedsOf(), s = S(), src = SEED_SRC.filter(function(o){ return o[0] === seedSrc() })[0];
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>씨앗 단어</h3><button class=\"chip\" data-go=\"brand\">단어 고치기 →</button></div>" +
     "<p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 " + esc(src ? src[1] : "") + (seedSrc() === "both" ? "(네이버 + 구글)" : "") + "에서 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요.</p>" +
-    (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + "</section>";
+    (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + "</section>" + kwRecBarHtml();
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
   if(pickW){
     var all0 = seedItems(pickW), tab0 = ui.sTab || "naver", more = ui.seedMore || 15;
-    var inT = all0.filter(function(x){ return inTab(viaOf(x, pickW), tab0) }), near = inT.filter(function(x){ return !isFar(x, pickW) }), far = inT.filter(function(x){ return isFar(x, pickW) });
+    var kc = kwCrit(), inT = all0.filter(function(x){ return inTab(viaOf(x, pickW), tab0) && kwShown(x, pickW) });   // 순위 기준(kwCrit) — 최소 검색량·가까움·씨앗 글자가 안 든 말 보기
+    var near = inT.filter(function(x){ return kc.far === "mix" || !isFar(x, pickW) }), far = kc.far === "fold" ? inT.filter(function(x){ return isFar(x, pickW) }) : [];
     h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">" + all0.length + "개</span></div><div class=\"chips\">" +
-      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word).length + "</span></button>" }).join("") + "</div>" +
-      srcTabsHtml("sTab", all0, pickW) +
+      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word).filter(function(y){ return kwShown(y, x.word) }).length + "</span></button>" }).join("") + "</div>" +
+      srcTabsHtml("sTab", all0.filter(function(y){ return kwShown(y, pickW) }), pickW) +
+      "<p class=\"it-d\" style=\"margin-top:4px\">점수 높은 순 · <button class=\"chip\" data-go=\"kwset\">순위 기준 바꾸기 →</button></p>" + kwRecSeedHtml(pickW) +
       (tab0 !== "naver" && seedSrc() === "naver" ? "<p class=\"note\" style=\"margin-top:8px\">지금은 네이버에서만 받아요. 구글 트렌드도 보려면 브랜드 탭 「연관 검색어 받는 곳」을 「둘 다」로 바꾸세요.</p>" : "") +
       "<div class=\"list\" style=\"margin-top:6px\">" + (near.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">" + (tab0 === "both" ? "네이버와 구글 둘 다에서 나온 말이 아직 없어요." : "이 칸에 나온 연관 검색어가 없어요.") + "</p>") + "</div>" +
       (near.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"seedMore=" + (more + 25) + "\">더 보기 (" + (near.length - more) + "개 남음)</button></div>" : "") +
-      (far.length ? "<details style=\"margin-top:12px\"><summary>「" + esc(pickW) + "」이 안 든 말 " + far.length + "개 — 구글이 같이 찾은 관련 검색어</summary><div class=\"list\" style=\"margin-top:6px\">" +
+      (far.length ? "<details style=\"margin-top:12px\"><summary>「" + esc(pickW) + "」 글자가 안 든 말 " + far.length + "개 — 네이버·구글이 같이 찾은 관련 검색어</summary><div class=\"list\" style=\"margin-top:6px\">" +
         far.map(function(x){ return kwRow(x, s, true) }).join("") + "</div></details>" : "") + "</section>";
   }
   return h;
@@ -175,15 +176,15 @@ function scored(){
   var k = part("kw"); if(!k || !k.items) return [];
   var max = { "상품": 0, "정체성": 0 };
   k.items.forEach(function(x){ if(x.total > (max[x.kind] || 0)) max[x.kind] = x.total });
-  var cov = coveredText(), m = M();
-  function w(id){ return m[id] != null ? m[id] : 1 }   // 믹서 정의가 아직 안 왔으면 고르게
+  var cov = coveredText(), w = kwWeights();
   return k.items.map(function(x){
     var tr = riseOf(x.kw), rise = tr ? tr.rise : null;
     var vol = max[x.kind] ? Math.log10(x.total + 1) / Math.log10(max[x.kind] + 1) * 100 : 0;
     var ctr = Math.min(x.ctr || 0, 10) * 10 * Math.min(1, x.total / 200);
     var up = rise == null ? 50 : Math.max(0, Math.min(1, (rise - 0.5) / 1.5)) * 100;
-    var score = x.kind === "상품" ? wsum([[w("kw_vol"), vol], [w("kw_ctr"), ctr], [w("kw_rise"), up]]) : wsum([[w("id_vol"), vol], [w("id_rise"), up]]);
-    return Object.assign({}, x, { rise: rise, w: tr ? tr.w : null, score: Math.round(score), buy: /^구매/.test(x.intent || "") && !/경쟁사 이름/.test(x.intent || ""), diff: diffOf(x), cluster: clusterOf(x.kw) });
+    var rel = relOf(x), easy = x.comp === "낮음" ? 100 : x.comp === "중간" ? 60 : Math.max(0, 40 - (x.ads || 0) * 3);
+    var score = wsum([[w.rel, rel], [w.vol, vol], [w.ctr, ctr], [w.rise, up], [w.comp, easy]]);
+    return Object.assign({}, x, { rel: rel, rise: rise, w: tr ? tr.w : null, score: Math.round(score), buy: /^구매/.test(x.intent || "") && !/경쟁사 이름/.test(x.intent || ""), diff: diffOf(x), cluster: clusterOf(x.kw) });
   }).map(function(x){ return Object.assign(x, { gap: x.kind === "상품" && x.buy && !x.surveyed && x.total >= 10 && cov.indexOf(x.kw) < 0 });
   }).sort(function(a, b){ return b.score - a.score || b.total - a.total });
 }
@@ -224,7 +225,7 @@ function riseHtml(x){
 }
 function kwRow(x, s, mark){
   return "<div class=\"it" + (s.ex[x.kw] ? " off" : "") + "\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b> <span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" +
-    esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + (x.gap ? " <span class=\"tag ok\">빈 곳</span>" : "") + "</div>" +
+    esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + (x.gap ? " <span class=\"tag ok\">빈 곳</span>" : "") + (kwRecOf(x.kw) ? " <span class=\"tag p\">Claude 추천</span>" : "") + "</div>" +
     "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · 경쟁 " + x.diff + " · " + riseHtml(x) + (x.gRise ? " · <span class=\"up\">구글 ▲" + esc(x.gRise) + "</span>" : x.gTop != null ? " · 구글 인기 " + x.gTop : "") + " · <b class=\"num\">" + x.score + "점</b></div>" +
     "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">" + esc(x.intent) + "</span>" : esc(x.intent || "")) + "</div></div>" +
     (mark ? "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"즐겨찾기 — 브랜드가 기억하고 콘텐츠 검색에 씀\" aria-label=\"즐겨찾기\">★</button>" +
@@ -247,7 +248,7 @@ function viewKw(){
     "<button class=\"btn\" data-act=\"trends\"" + (openCmd("trends") ? " disabled" : "") + ">구글 트렌드 다시 받기</button></div>" +
     "<p class=\"lead\" style=\"margin-top:10px\">조사는 맥의 Claude가 콘텐츠 발굴 스킬로 돌려요 (키워드 검색량 → 경쟁사 → 레퍼런스 20개 → 시트·카드 → 이 앱). 누르면 진행 상태가 화면 맨 위에 떠요.</p></details></section>";
   h += clustersHtml(all);
-  var pool = all.filter(function(x){ return !ui.kwCluster || x.cluster === ui.kwCluster });   // 묶음을 골랐으면 칩 숫자도 그 묶음 안에서 센다
+  var pool = all.filter(function(x){ return (!ui.kwCluster || x.cluster === ui.kwCluster) && kwShown(x) });   // 순위 기준의 최소 검색량·가까움   // 묶음을 골랐으면 칩 숫자도 그 묶음 안에서 센다
   var KF = { all: function(){ return true }, "상품": function(x){ return x.kind === "상품" }, "정체성": function(x){ return x.kind === "정체성" }, up: isUp, gap: function(x){ return x.gap },
              pin: function(x){ return s.pin[x.kw] }, ex: function(x){ return s.ex[x.kw] } };
   var list = pool.filter(KF[ui.kwKind] || KF.all);
@@ -258,9 +259,7 @@ function viewKw(){
     "<div class=\"list\" style=\"margin-top:6px\">" + list.slice(0, ui.kwMore).map(function(x){ return kwRow(x, s, true) }).join("") + "</div>" +
     (list.length > ui.kwMore ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"kwMore=" + (ui.kwMore + 100) + "\">더 보기 (" + (list.length - ui.kwMore) + "개 남음)</button></div>" : "") + "</section>";
   h += "<section class=\"card\"><details><summary>점수 계산 · 자료 출처</summary><div class=\"small\" style=\"margin-top:8px;display:grid;gap:6px\">" +
-    "<p><span class=\"tag p\">상품</span> 검색량 " + M().kw_vol + " : 광고 클릭률 " + M().kw_ctr + " : 상승세 " + M().kw_rise + " 비중. 클릭률이 높을수록 사려는 사람이 찾는 말이에요. 월 검색 200 미만이면 클릭률을 그만큼 덜 믿어요.</p>" +
-    "<p><span class=\"tag i\">정체성</span> 검색량 " + M().id_vol + " : 상승세 " + M().id_rise + " 비중. 채널 성격에 맞는 넓은 주제라 클릭률은 안 봐요.</p>" +
-    "<p>비중은 참고용 점수 기준이에요 (볼트 믹서.json 「" + esc(mixTpl().name) + "」). 바꿔야 하면 Claude에게 말해 주세요.</p>" +
+    "<p>점수 = " + kwCrit().order.filter(function(id){ return kwWeights()[id] }).map(function(id){ return KWCRIT.filter(function(q){ return q.id === id })[0].name + " " + kwWeights()[id] }).join(" : ") + " 비중. 클릭률은 월 검색 200 미만이면 그만큼 덜 믿어요. <button class=\"chip\" data-go=\"kwset\">순위 기준 바꾸기 →</button></p>" +
     "<p>검색량·클릭률: " + esc(k.source || "") + " · " + day(k.updatedAt) + "</p>" +
     "<p>상승세(최근 4주 ÷ 그 앞 8주): " + (t ? esc(t.source || "") + " · " + day(t.updatedAt) + " · " + Object.keys(t.items || {}).length + "개 키워드" : "아직 받지 않음") + ". 검색이 적은 키워드는 구글이 값을 0으로 줘서 「값 적음」으로 두고 점수에서는 중간값으로 봐요.</p>" +
     "<p>경쟁(난이도): 네이버 경쟁정도와 월평균 노출 광고 수로 봐요 — 높음 + 광고 9개 이상이면 어려움, 광고 5개 이하면 쉬움. 주제 묶음: 같은 주제 말이 든 키워드의 검색량을 더한 값. 빈 곳: 구매 결인데 아직 조사·추천에 안 나온 키워드.</p>" +

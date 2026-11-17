@@ -223,12 +223,12 @@ var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: 
    tab 변수는 칸 id(sum·brand·kw·ref·rec·build·refpage·script) 그대로 — 위 탭을 누르면 그 탭에서 마지막으로 본 칸이 열린다 */
 var TABS = [
   { name: "브랜드", subs: [["sum", "한눈에"], ["brand", "브랜드"]] },
-  { name: "키워드", subs: [["kw", "키워드"]] },
+  { name: "키워드", subs: [["kw", "키워드"], ["kwset", "순위 기준"]] },
   { name: "콘텐츠", subs: [["ref", "콘텐츠"], ["rec", "추천"]] },
   { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] }
 ];
 function tabGroup(id){ return TABS.filter(function(g){ return g.subs.some(function(x){ return x[0] === id }) })[0] || TABS[0] }
-var PARTS = { wordrec: ".wordrec", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
+var PARTS = { kwrec: ".kwrec", wordrec: ".wordrec", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -306,7 +306,7 @@ function saveSet(id){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", wordrec: "판매 단어 추천", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", wordrec: "판매 단어 추천", kwrec: "씨앗마다 키워드 추천", brief: "새 브랜드 프로필" };
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -340,6 +340,8 @@ function runHtml(kinds){
 /*@include content-ref.js*/
 /*@include content-plan.js*/
 /*@include content-criteria.js*/
+/*@include content-kwcrit.js*/
+/*@include content-kwrec.js*/
 /*@include content-build.js*/
 /*@include content-brandrefs.js*/
 /*@include content-sum.js*/
@@ -406,7 +408,7 @@ function render(){
   document.getElementById("nav").innerHTML = TABS.map(function(g, i){ var to = last[g.name] && g.subs.some(function(x){ return x[0] === last[g.name] }) ? last[g.name] : g.subs[0][0];
     return "<button role=\"tab\" class=\"" + (g === grp ? "on" : "") + "\" data-tab=\"" + to + "\"><span>" + (i + 1) + "</span>" + g.name + "</button>" }).join("");
   var sub = grp.subs.length > 1 ? "<div class=\"subnav\" role=\"tablist\">" + grp.subs.map(function(x){ return "<button role=\"tab\" class=\"" + (tab === x[0] ? "on" : "") + "\" data-tab=\"" + x[0] + "\">" + x[1] + "</button>" }).join("") + "</div>" : "";
-  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, script: viewScript }[tab] || viewSum;
+  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, script: viewScript, kwset: kwCritHtml }[tab] || viewSum;
   ui.later = false;
   var act0 = document.activeElement, key = act0 && (act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
   var v = function(){ return v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") };   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
@@ -500,6 +502,9 @@ function act(name, el){
     setS({ seeds: cur3.concat([nx]) }); return;
   }
   if(name === "rc"){ recCritAct(el.dataset.k); return }   // 추천 기준 — 조절 · 우선
+  if(name === "kc"){ kwCritAct(el.dataset.k); return }
+  if(name === "kwrec"){ kwRecSend(); return }   // 씨앗마다 Claude 키워드 추천
+  if(name === "kwrecgo"){ kwRecGo(); return }   // 추천 키워드 ★ → 콘텐츠 검색   // 키워드 순위 기준 — 조절 · 우선
   if(name === "anaopt"){ var ao = anaOpt(), k3 = el.dataset.k, v3 = el.dataset.v;   // 영상 분석 조절
     if(k3 === "nCmt") ao.nCmt = +v3; else if(k3 === "topN"){ ao.topN = +v3; ao.target = "top" } else if(k3 === "target") ao.target = v3; else ao[k3] = !ao[k3];
     setS({ anaOpt: ao }); return }
