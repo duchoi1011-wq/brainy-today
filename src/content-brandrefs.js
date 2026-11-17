@@ -1,4 +1,4 @@
-/* ── 브랜드 레퍼런스 — 브랜드 탭 아래. 대본(content-production)이 「레퍼런스 채널에서 가져온 구성」을 찾는 곳 ──
+/* ── 그 밖의 레퍼런스 — 대본 탭 「참고 페이지」 맨 아래 (위 세 칸에 안 드는 판매 묶음 · 이 채널의 결 · 포맷). 대본(content-production)이 「레퍼런스 채널에서 가져온 구성」을 찾는 곳 ──
    (2026-11-16 참고 탭을 없애며 그 탭 아래에 있던 이 목록을 브랜드 탭으로 옮겼다) */
 /* 브랜드 레퍼런스 — 브랜드의 레퍼런스 카드(기획·판매)를 맥 동기화가 읽어 브랜드.json 에 맞춰 둔 것을 카드와 같은 순서로 보여 준다:
    쓰는 순서 → 묶음별 채널(등급·가져올 것·대본 적용 예 + 그 채널의 새 영상) → 포맷 → 분석 칸. 카드를 고치면 몇 초 안에 여기가 바뀐다 (코드에 목록을 두지 않는다). */
@@ -19,9 +19,9 @@ function refGroupHtml(g, list, chan){
 }
 function brandRefsHtml(b){
   var chan = part("chan"), t = b.tone, groups = {}, order = [];
-  (b.channels || []).forEach(function(c){ if(!groups[c.group]){ groups[c.group] = []; order.push(c.group) } groups[c.group].push(c) });
+  (b.channels || []).filter(function(c){ return !RP_SIDES.some(function(x){ return x.group.test(c.group) }) }).forEach(function(c){ if(!groups[c.group]){ groups[c.group] = []; order.push(c.group) } groups[c.group].push(c) });
   if(!order.length && !t) return "<section class=\"card\"><div class=\"card-h\"><h3>브랜드 레퍼런스</h3></div><p class=\"lead\">이 브랜드는 아직 레퍼런스 채널 카드가 없어요. 볼트에 레퍼런스 카드(소재 · 말하는 방식 · 화면 묶음 표)를 만들고 브랜드 파일의 refCards 에 적으면 여기에 떠요.</p></section>";
-  var h = "<section class=\"card\"><div class=\"card-h\"><h3>브랜드 레퍼런스</h3><span class=\"n\">" + (b.channels || []).length + "곳</span></div>" +
+  var h = "<section class=\"card\"><div class=\"card-h\"><h3>그 밖의 레퍼런스 — 판매 · 말투 · 포맷</h3><span class=\"n\">" + order.length + "묶음</span></div>" +
     "<p class=\"lead\">대본을 쓸 때 이 채널들에서 같은 주제 영상을 찾아 구성을 가져와요. 볼트의 레퍼런스 카드를 고치면 몇 초 안에 여기가 바뀌고, 채널 새 영상은 하루 한 번 저절로 최신화돼요. 카드 맞춘 때 " +
     (b.refsAt ? esc(day(b.refsAt)) + " " + esc(String(b.refsAt).slice(11, 16)) : "—") + " · 새 영상 읽은 때 " + (chan ? esc(day(chan.updatedAt)) : "아직") + "</p>";
   if((b.refOrder || []).length) h += "<h4>쓰는 순서</h4><div class=\"list\">" + b.refOrder.map(function(r, i){ return "<div class=\"it\"><span class=\"num muted\">" + (i + 1) + "</span><div class=\"it-m\">" + esc(r) + "</div></div>" }).join("") + "</div>";
@@ -36,25 +36,57 @@ function brandRefsHtml(b){
   var src = b.refCards ? Object.keys(b.refCards).map(function(k){ return String(b.refCards[k]).split("/").pop().replace(/\.md$/, "") }).join(" · ") : "";
   return h + (src ? "<p class=\"lead\" style=\"margin-top:10px\">정본 카드 · " + esc(src) + "</p>" : "") + "</section>";
 }
-/* 소재 채널 찾기 — 동욱이 정한 정체성 단어·상품 판매 단어마다, 소재(사례·숫자·연구·현장 목소리)를 꾸준히 주는 전 세계 채널을 맥의 Claude가 찾는다 (cmd kind "chanfind").
-   후보는 볼트 <브랜드>/채널 후보.json (ct.data .chancand). 「넣기」(ct.set chanpick = add)한 것만 맥 동기화가 기획 레퍼런스 카드 1-1·1-2 표에 한 줄씩 넣고,
-   카드가 바뀌면 위 「브랜드 레퍼런스」가 저절로 바뀐다. 「빼기」(skip)는 다음 후보에서도 다시 권하지 않는다. */
-function chanFindHtml(b){
-  var sd = seedsOf(), cd = part("chancand"), pick = (SETS[cur] || {}).chanpick || {}, busy = openCmd("chanfind");
-  var items = ((cd && cd.items) || []).filter(function(x){ return !x.added && pick[x.id] !== "skip" });
-  var h = "<section class=\"card\"><div class=\"card-h\"><h3>소재 채널 찾기</h3><span class=\"n\">단어 " + sd.length + "개</span></div>" +
-    "<p class=\"lead\">정체성 단어와 상품 판매 단어마다 소재를 꾸준히 주는 채널을 전 세계에서 찾아요 — 유튜브 · 업계 매체 · 뉴스레터 · 팟캐스트 · 리서치 · 커뮤니티, 언어 무관. 맥의 Claude가 채널을 열어 최근에도 올리는지 확인하고, 「넣기」 한 것만 브랜드 레퍼런스 카드에 들어가요.</p>" +
-    "<div class=\"chips\">" + sd.map(function(x){ return "<span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" + esc(x.word) + "</span>" }).join("") + "</div>" +
-    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"chanfind\"" + (busy || !sd.length ? " disabled" : "") + ">" + (busy ? "맥이 찾는 중…" : "이 단어로 소재 채널 찾기") + "</button>" +
-    (cd && cd.updatedAt ? "<span class=\"lead\" style=\"margin:0\">마지막 " + esc(day(cd.updatedAt)) + "</span>" : "") + "</div>";
-  if(items.length) h += "<h4>찾은 후보 <span class=\"num muted\">" + items.length + "</span></h4><div class=\"list\">" + items.map(function(x){
-    var on = pick[x.id] === "add";
-    return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\">" + (x.url ? "<a href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(x.name) + "</b></a>" : "<b>" + esc(x.name) + "</b>") +
-      " <span class=\"tag " + (x.side === "상품" ? "p" : "i") + "\">" + esc(x.seed || x.side || "") + "</span> <span class=\"tag\">" + esc(x.kind || "") + "</span> <span class=\"tag\">" + esc(x.lang || "") + "</span>" + (x.grade ? " <span class=\"tag\">" + esc(x.grade) + "</span>" : "") + "</div>" +
-      "<div class=\"it-d\">" + esc(x.take || "") + "</div>" + (x.example ? "<div class=\"apply\"><b>대본 적용 예</b> " + esc(x.example) + "</div>" : "") +
-      "<div class=\"it-d\">" + esc(x.proof || x.why || "") + "</div>" +
-      "<div class=\"acts\"><button class=\"btn sm" + (on ? "" : " primary") + "\" data-act=\"chanpick\" data-id=\"" + esc(x.id) + "\" data-v=\"" + (on ? "" : "add") + "\">" + (on ? "넣는 중 — 취소" : "레퍼런스에 넣기") + "</button>" +
-      "<button class=\"btn sm\" data-act=\"chanpick\" data-id=\"" + esc(x.id) + "\" data-v=\"skip\">빼기</button></div></div></div>" }).join("") + "</div>";
-  else if(cd && cd.items && cd.items.length) h += "<p class=\"lead\" style=\"margin-top:8px\">찾은 후보를 모두 넣거나 뺐어요. 단어를 바꾸고 다시 찾을 수 있어요.</p>";
-  return h + "</section>";
+/* ── 대본 탭 「참고 페이지」 — 대본을 쓰기 전에 보는 곳 (2026-11-17 동욱: "구축과 대본 사이에 내 채널 소재를 찾을 수 있는 레퍼런스 채널 만드는 칸. 한국뿐 아니라 전 세계 페이지와 자료를 모으고,
+   정체성 키워드·판매 상품 키워드에 맞는 소재 정보가 많은지, 내 채널 연출에 참고될 자료인지 보는 참고 페이지. 이걸 기반으로 대본을 쓴다").
+   세 칸: 정체성 소재(기획 카드 1-1) · 상품 소재(1-2) · 연출 참고(2 말하는 방식 · 3 화면). 넣은 곳은 기획 레퍼런스 카드가 정본(브랜드.json channels 로 읽힘),
+   후보는 맥의 Claude가 찾은 볼트 <브랜드>/채널 후보.json (cmd kind "chanfind"). 「넣기」(ct.set chanpick = add)한 것만 맥 동기화가 카드 표에 한 줄씩 넣는다 — 카드가 없으면 새로 만든다.
+   찾는 범위는 ct.set rpOpt {sides, region} */
+var RP_SIDES = [
+  { id: "정체성", name: "정체성 소재", what: "정체성 단어에 맞는 사례·숫자·연구·현장 목소리를 꾸준히 주는 곳", card: "1-1", group: /^소재 발굴 · 정체성/ },
+  { id: "상품", name: "상품 소재", what: "판매 상품 단어에 맞는 소재 — 시장·고객·가격·후기·업계 조사", card: "1-2", group: /^소재 발굴 · 판매/ },
+  { id: "연출", name: "연출 참고", what: "내 채널 연출(말하는 방식·구성·화면·편집)에 참고할 채널 — 소재가 아니라 「어떻게 보여 주나」", card: "2 · 3", group: /^(말하는 방식|화면)/ }
+];
+var RP_REGION = [["world", "전 세계"], ["ko", "한국"], ["en", "영어권"], ["ja", "일본"], ["zh", "중국어권"], ["eu", "유럽"]];
+function rpOpt(){ var o = (SETS[cur] || {}).rpOpt || {}; return { sides: o.sides || { "정체성": true, "상품": true, "연출": true }, region: o.region || "world", words: o.words || null } }
+function rpWords(){ var o = rpOpt(); return seedsOf().filter(function(x){ return !o.words || o.words[x.word] !== false }) }
+function amountTag(a){ return a ? "<span class=\"tag" + (/많음/.test(a) ? " ok" : "") + "\">소재 " + esc(a) + "</span>" : "" }
+function rpRow(c, cand){
+  var on = cand && ((SETS[cur] || {}).chanpick || {})[c.id] === "add";
+  return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\">" + (c.url ? "<a href=\"" + esc(c.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(c.name) + "</b></a>" : "<b>" + esc(c.name) + "</b>") +
+      (c.seed ? " <span class=\"tag " + (c.side === "상품" ? "p" : "i") + "\">" + esc(c.seed) + "</span>" : "") + (c.kind ? " <span class=\"tag\">" + esc(c.kind) + "</span>" : "") + (c.lang ? " <span class=\"tag\">" + esc(c.lang) + "</span>" : "") +
+      (c.grade && c.grade !== "—" ? " <span class=\"tag\">" + esc(c.grade) + "</span>" : "") + " " + amountTag(c.amount) + "</div>" +
+    "<div class=\"it-d\">" + esc(c.take || "") + "</div>" +
+    "<details><summary>자세히</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+      (c.amountProof ? "<dt>소재가 많나</dt><dd>" + esc(c.amountProof) + "</dd>" : "") + (c.direction ? "<dt>연출 참고</dt><dd>" + esc(c.direction) + "</dd>" : "") +
+      (c.example ? "<dt>대본 적용 예</dt><dd>" + esc(c.example) + "</dd>" : "") + ((c.proof || c.why) ? "<dt>확인한 것</dt><dd>" + esc([c.proof, c.why].filter(Boolean).join(" · ")) + "</dd>" : "") +
+      (c.pillar && c.pillar !== "—" ? "<dt>필러</dt><dd>" + esc(c.pillar) + "</dd>" : "") + "</dl></details>" +
+    (cand ? "<div class=\"acts\"><button class=\"btn sm" + (on ? "" : " primary") + "\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"" + (on ? "" : "add") + "\">" + (on ? "넣는 중 — 취소" : "참고 페이지에 넣기") + "</button>" +
+      "<button class=\"btn sm\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"skip\">빼기</button></div>" : "") + "</div></div>";
+}
+function viewRefPage(){
+  var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
+  var o = rpOpt(), sd = seedsOf(), cd = part("chancand"), pick = (SETS[cur] || {}).chanpick || {}, busy = openCmd("chanfind");
+  var cands = ((cd && cd.items) || []).filter(function(x){ return !x.added && pick[x.id] !== "skip" });
+  var h = "<section class=\"card\"><div class=\"card-h\"><h3>참고 페이지</h3><span class=\"n\">넣은 곳 " + (b.channels || []).filter(function(c){ return RP_SIDES.some(function(sd0){ return sd0.group.test(c.group) }) }).length + " · 후보 " + cands.length + "</span></div>" +
+    "<p class=\"lead\">대본은 이 페이지를 기반으로 써요. 정체성 단어·상품 단어에 맞는 <b>소재가 많은 곳</b>과 내 채널 <b>연출에 참고할 곳</b>을 한국만이 아니라 전 세계에서 모아요 — 유튜브 · 매체 · 리서치 · 뉴스레터 · 팟캐스트 · 커뮤니티. 「대본 초안」과 「소재 찾기」는 여기 넣은 곳을 돌아요.</p>" +
+    "<h4>어떤 단어로 찾을까</h4><div class=\"chips\">" + (sd.map(function(x){ var off = o.words && o.words[x.word] === false;
+      return "<button class=\"chip" + (off ? "" : " on") + "\" data-act=\"rpword\" data-word=\"" + esc(x.word) + "\">" + (x.kind === "상품" ? "🛒 " : "") + esc(x.word) + "</button>" }).join("") || "<span class=\"lead\">브랜드 탭에서 정체성 단어·상품 판매 단어를 먼저 넣으세요.</span>") + "</div>" +
+    "<h4>무엇을 찾을까</h4><div class=\"chips\">" + RP_SIDES.map(function(x){ return "<button class=\"chip" + (o.sides[x.id] ? " on" : "") + "\" data-act=\"rpside\" data-side=\"" + x.id + "\">" + x.name + "</button>" }).join("") + "</div>" +
+    "<h4>어디서</h4><div class=\"chips\">" + RP_REGION.map(function(r){ return "<button class=\"chip" + (o.region === r[0] ? " on" : "") + "\" data-act=\"rpregion\" data-v=\"" + r[0] + "\">" + r[1] + "</button>" }).join("") + "</div>" +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"chanfind\"" + (busy || !rpWords().length || !RP_SIDES.some(function(x){ return o.sides[x.id] }) ? " disabled" : "") + ">" + (busy ? "맥이 찾는 중…" : "고른 단어로 참고 페이지 채우기") + "</button>" +
+    (cd && cd.updatedAt ? "<span class=\"lead\" style=\"margin:0\">마지막 " + esc(day(cd.updatedAt)) + "</span>" : "") + "</div></section>";
+  /* 단어마다 소재가 충분한가 — 후보·넣은 곳을 단어별로 센다 */
+  var all = (cd && cd.items) || [];
+  if(all.length) h += "<section class=\"card\"><div class=\"card-h\"><h3>단어마다 소재가 충분한가</h3></div><div class=\"list\">" + sd.map(function(x){
+      var l = all.filter(function(c){ return c.seed === x.word }), got = l.filter(function(c){ return c.added || pick[c.id] === "add" }), many = l.filter(function(c){ return /많음/.test(c.amount || "") });
+      return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b> <span class=\"num muted\">" + (x.kind === "상품" ? "상품" : "정체성") + "</span></div><div class=\"it-d\">찾은 곳 " + l.length + " · 넣은 곳 " + got.length + " · 소재 많은 곳 " + many.length +
+        (!l.length ? " — <b>아직 못 찾음</b>" : !many.length ? " — 소재가 넉넉한 곳이 없어요" : "") + "</div></div></div>" }).join("") + "</div></section>";
+  RP_SIDES.forEach(function(sd0){
+    var have = (b.channels || []).filter(function(c){ return sd0.group.test(c.group) }), cl = cands.filter(function(c){ return (c.side || "정체성") === sd0.id });
+    h += "<section class=\"card\"><div class=\"card-h\"><h3>" + sd0.name + "</h3><span class=\"n\">넣은 곳 " + have.length + " · 후보 " + cl.length + "</span></div><p class=\"lead\">" + sd0.what + " · 기획 레퍼런스 카드 " + sd0.card + "</p>" +
+      (cl.length ? "<h4>찾은 후보</h4><div class=\"list\">" + cl.map(function(c){ return rpRow(c, true) }).join("") + "</div>" : "") +
+      (have.length ? "<details" + (cl.length ? "" : " open") + " style=\"margin-top:10px\"><summary>넣은 곳 " + have.length + "</summary><div class=\"list\" style=\"margin-top:4px\">" + have.map(function(c){ return rpRow(c, false) }).join("") + "</div></details>"
+        : (cl.length ? "" : "<p class=\"lead\">아직 없어요. 위에서 「참고 페이지 채우기」를 누르세요.</p>")) + "</section>";
+  });
+  return h + brandRefsHtml(b);
 }

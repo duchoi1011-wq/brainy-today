@@ -106,7 +106,7 @@ function sourceOf(id){ var p = part("source"); return p && p.items ? p.items.fil
 function sourceHtml(id){
   var x = sourceOf(id), busy = openCmd("source");
   var btn = "<button class=\"btn sm\" data-act=\"source\" data-id=\"" + esc(id || "") + "\"" + (busy || !id ? " disabled" : "") + ">" + (x ? "소재 다시 찾기" : "소재 찾기") + "</button>";
-  if(!x) return "<details><summary>📚 소재와 출처 <span class=\"num muted\">아직</span></summary><p class=\"lead\" style=\"margin-top:6px\">브랜드 탭 「브랜드 레퍼런스」의 소재 채널을 돌며 사례·숫자·연구·현장 목소리와 출처를 찾아요.</p><div class=\"acts\">" + btn + "</div></details>";
+  if(!x) return "<details><summary>📚 소재와 출처 <span class=\"num muted\">아직</span></summary><p class=\"lead\" style=\"margin-top:6px\">대본 탭 「참고 페이지」의 소재 채널을 돌며 사례·숫자·연구·현장 목소리와 출처를 찾아요.</p><div class=\"acts\">" + btn + "</div></details>";
   var ok = x.items.filter(function(i){ return i.check === "✅" }).length;
   return "<details><summary>📚 소재와 출처 <span class=\"num muted\">" + x.items.length + "개 · ✅ " + ok + " · " + esc(x.date || "") + "</span></summary><div class=\"list\" style=\"margin-top:6px\">" +
     x.items.map(function(i){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag " + (i.group === "판매 상품" ? "p" : "i") + "\">" + esc(i.kind || "") + "</span> " + esc(i.claim) + "</div>" +

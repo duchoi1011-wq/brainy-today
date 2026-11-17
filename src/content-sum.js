@@ -67,7 +67,7 @@ function viewSum(){
   var groups = {}, order = [];
   chs.forEach(function(c){ if(!groups[c.group]){ groups[c.group] = []; order.push(c.group) } groups[c.group].push(c) });
   var proof = refs.filter(function(x){ return x.buyer === "✓" && isProof(x) }).length, rounds = (ref && ref.rounds) || [];
-  h += "<section class=\"card\"><div class=\"card-h\"><h3>③ 레퍼런스 채널과 조사 시트</h3>" + goBtn("브랜드 레퍼런스", "brand") + "</div>" +
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>③ 레퍼런스 채널과 조사 시트</h3>" + goBtn("참고 페이지", "refpage") + "</div>" +
     "<p class=\"lead\">상품·정체성과 닿은 채널이에요. 대본은 검증한 키워드·주제를 이 채널들의 말하는 방식·구성에 맞춰 써요.</p>" +
     (order.length ? "<div class=\"list\">" + order.map(function(g){
       var l = groups[g], nw = 0; l.forEach(function(c){ var n = chan && chan.items && chan.items[c.name]; if(n) nw += n.videos.filter(isNew).length });
