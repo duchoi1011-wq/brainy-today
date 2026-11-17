@@ -19,15 +19,15 @@ function autoStart(){
 function autoStepsHtml(st){
   var ic = { "끝": "✓", "하는 중": "⏳", "실패": "⚠", "대기": "·" };
   return "<ol class=\"auto-steps\">" + (st.stages || []).map(function(x){
-    return "<li class=\"s-" + esc(x.status) + "\"><b>" + (ic[x.status] || "·") + " " + esc(x.name) + "</b>" + (x.note ? " <span class=\"it-d\">" + esc(x.note) + "</span>" : "") + "</li>" }).join("") + "</ol>";
+    return "<li class=\"s-" + txt(x.status) + "\"><b>" + (ic[x.status] || "·") + " " + esc(x.name) + "</b>" + (x.note ? " <span class=\"it-d\">" + txt(x.note) + "</span>" : "") + "</li>" }).join("") + "</ol>";
 }
 function autoPilotHtml(where){
   if(!B() || !seedsOf().length) return "";
   var a = autoState(), o = autoOpt(), st = a.st;
   var h = "<div class=\"auto-card\"><div class=\"card-h\"><h3>🚀 자동으로 — " + esc(AUTO_UPTO.filter(function(x){ return x[0] === o.upto })[0][1]) + "</h3>" + (st && st.startedAt ? "<span class=\"n\">" + esc(String(st.startedAt).slice(5, 16).replace("T", " ")) + " " + esc(st.status || "") + "</span>" : "") + "</div>" +
-    "<p class=\"lead\">한 번 누르면 맥의 Claude가 이어서 해요: 씨앗마다 <b>최고 키워드 ★</b> → <b>콘텐츠 추천</b> → 키·풀링 골라 <b>구축 문서</b> → <b>대본</b> → <b>보고</b>. 맥이 켜져 있어야 해요.</p>" +
+    "<p class=\"lead\">한 번 누르면 맥의 Claude가 이어서 해요: 씨앗마다 <b>최고 키워드 ★</b> → <b>콘텐츠 추천</b> → 상품 파는 영상·사람 모으는 영상을 골라 <b>구축 문서</b> → <b>대본</b> → <b>보고</b>. 맥이 켜져 있어야 해요.</p>" +
     "<div class=\"chips\">" + AUTO_UPTO.map(function(x){ return "<button class=\"chip" + (o.upto === x[0] ? " on" : "") + "\" data-act=\"autoopt\" data-k=\"upto\" data-v=\"" + x[0] + "\"" + (a.running ? " disabled" : "") + ">" + x[1] + "</button>" }).join("") +
-    (o.upto !== "rec" ? "<span class=\"lead\" style=\"margin:0 4px 0 10px\">편 수</span>" + [1, 2, 3].map(function(n){ return "<button class=\"chip" + (o.n === n ? " on" : "") + "\" data-act=\"autoopt\" data-k=\"n\" data-v=\"" + n + "\"" + (a.running ? " disabled" : "") + ">" + n + (n === 2 ? " (키 1 · 풀링 1)" : "") + "</button>" }).join("") : "") + "</div>" +
+    (o.upto !== "rec" ? "<span class=\"lead\" style=\"margin:0 4px 0 10px\">편 수</span>" + [1, 2, 3].map(function(n){ return "<button class=\"chip" + (o.n === n ? " on" : "") + "\" data-act=\"autoopt\" data-k=\"n\" data-v=\"" + n + "\"" + (a.running ? " disabled" : "") + ">" + n + (n === 2 ? " (상품 파는 영상 1 · 사람 모으는 영상 1)" : "") + "</button>" }).join("") : "") + "</div>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"autostart\"" + (a.running ? " disabled" : "") + ">" + (a.waiting ? "맥이 시작하는 중…" : a.running ? "맥이 진행하는 중…" : "🚀 시작") + "</button></div>";
   if(st && (st.stages || []).length && (a.running || Date.now() - Date.parse(st.doneAt || st.startedAt) < 3 * 86400000)){
     h += autoStepsHtml(st);

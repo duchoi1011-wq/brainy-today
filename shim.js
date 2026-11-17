@@ -443,7 +443,8 @@
         var tried = ""; try { tried = sessionStorage.getItem("brainy-ver") || ""; } catch (e) {}
         if (tried === v) return;                                  // 한 번만 (캐시 때문에 같은 판이 오면 되풀이하지 않는다)
         try { sessionStorage.setItem("brainy-ver", v); } catch (e) {}
-        location.replace(location.pathname + "?v=" + encodeURIComponent(v) + location.hash);
+        var q = new URLSearchParams(location.search); q.set("v", v);   // 주소의 다른 값(?b= 브랜드 등)은 지킨다 (2026-11-18 검증: 새 판으로 다시 열 때 ?b= 가 사라져 다른 브랜드가 열림)
+        location.replace(location.pathname + "?" + q.toString() + location.hash);
       }).catch(function () {});
     }
     document.addEventListener("visibilitychange", fresh);

@@ -41,6 +41,7 @@ nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;c
 html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 폭이 15px 바뀌던 것 */
 details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:600}
 .runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
+details>summary{text-align:left;overflow-wrap:anywhere;word-break:keep-all}
 @media (max-width:560px){input,textarea,select{font-size:16px!important}}   /* 아이폰에서 누르면 화면이 확대되던 것 (16px 미만) */
 .subnav{display:flex;gap:6px;margin:0 0 14px;overflow-x:auto}.subnav button{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}.subnav button.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
 nav button.on{background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 30%,transparent)}
@@ -222,7 +223,8 @@ var DB = null;
 var RAW = {};                       // ct.data 문서 id → data
 var SETS = {};                      // 브랜드 id → 설정
 var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부터)
-var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드 — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
+var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드
+var WANT = cur; if(new URLSearchParams(location.search).get("b")) save("ct.brand", cur);   // 열려고 한 브랜드 — 자료가 덜 들어온 순간 다른 브랜드로 바뀌어도, 들어오면 되돌린다 (2026-11-18 검증) — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "sum");
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
 /* 탭은 넷 — 한 탭 안을 칸(subs)으로 나눈다 (2026-11-17 동욱: "한눈에·브랜드는 한 탭 안에 나누고, 키워드는 따로, 콘텐츠·추천 한 탭, 구축·대본 한 탭").
@@ -247,7 +249,7 @@ function day(iso){ return String(iso || "").slice(0, 10) }
 /* ── 데이터 꺼내기 ── */
 function brands(){ return Object.keys(RAW).filter(function(id){ return id.indexOf(".") < 0 && RAW[id].name }).map(function(id){ return RAW[id] }).sort(function(a, b){ return (a.order || 9) - (b.order || 9) }) }
 function pickBrand(id){
-  cur = id; save("ct.brand", cur);
+  cur = id; WANT = id; save("ct.brand", cur);
   try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){}
   render();
 }
@@ -282,7 +284,12 @@ function roleNames(){ var b = B(); return ((b && b.roles) || []).map(function(x)
 function stageList(){ var b = B(); return (b && b.stages) || [] }
 /* 추천 번호 쉬운 말 — P1 → 모으기 1 (사람 모으는 영상), K3 → 팔기 3 (상품 파는 영상). 2026-11-17 검증: P1·K1 약어 */
 /* 맥이 쓴 글(대본·구축·결과)에 남은 번호·줄임말·파일 이름을 화면에서 쉬운 말로 (정본 글은 그대로) */
-function plainWords(t){ return String(t).replace(/\b([PK]\d{1,2})\b/g, function(m){ return recNo(m) }).replace(/키콘/g, "상품 파는 영상").replace(/(→\s*)?[^\s·()「」]+\.(json|md)\b/g, "") }
+/* 맥이 쓴 글(추천·구축·대본·분석·참고 채널·맥 결과)은 화면에 그릴 때 늘 txt() 를 거친다 — 번호·줄임말·파일 이름·영어 등급을 쉬운 말로 (정본 글은 그대로).
+   규칙: 맥이 쓴 글 칸은 esc() 가 아니라 txt(). id·주소·속성 값은 esc() (2026-11-18 검증: 일부 출력에만 씌운 덧대기였던 것) */
+function plainWords(t){ return String(t).replace(/\b([PK]\d{1,2})\b/g, function(m){ return recNo(m) }).replace(/키콘/g, "상품 파는 영상")
+  .replace(/\[조사\]\s*(\d+)\s*행/g, "조사 시트 $1번째 줄").replace(/(기여도|성과도|뷰트랩)([^가-힣]{0,6})\b(Great|Good|Normal|Bad|Worst)\b/g, function(m, a, b, g){ return a + b + VT_KO[g] })
+  .replace(/(→\s*)?[^\s·()「」]+\.(json|md)\b/g, "").replace(/(\s*·\s*){2,}/g, " · ") }
+function txt(s){ return plainWords(esc(s)) }
 function roleKo(n){ return { "풀링": "사람 모으는 영상", "키": "상품 파는 영상" }[n] || n }
 function recNo(id){ var m = /^([PK])(\d+)$/.exec(String(id || "")); return m ? (m[1] === "P" ? "모으기 " : "팔기 ") + m[2] : String(id || "") }
 var VT_KO = { Great: "아주 좋음", Good: "좋음", Normal: "보통", Bad: "나쁨", Worst: "아주 나쁨" };
@@ -394,7 +401,7 @@ function viewBrand(){
   h += wordFindHtml();   // 단어 후보 찾기 — 정체성·판매 단어를 고르는 곳이라 브랜드 탭에 (2026-11-17 동욱 "이건 브랜드에 넣어서 진행해야지")
   h += "<section class=\"card\"><div class=\"card-h\"><h3>연관 검색어 받는 곳</h3><span class=\"n\">단어 " + seedsOf().length + "개</span></div>" + seedSrcHtml() + seedPendingHtml() + "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품과 판매 단어</h3><span class=\"n\">" + (b.products || []).length + "개</span></div>" +
-    "<p class=\"lead\">상품 자체도 ✎로 고치고 ✕로 빼고 아래에서 더해요. 상품마다 사려는 사람이 찾을 판매 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지) — 이 단어가 들어간 연관 검색어가 키 콘텐츠(상품 판매) 재료가 돼요.</p>" +
+    "<p class=\"lead\">상품 자체도 ✎로 고치고 ✕로 빼고 아래에서 더해요. 상품마다 사려는 사람이 찾을 판매 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지) — 이 단어가 들어간 연관 검색어가 상품 파는 영상의 재료가 돼요.</p>" +
     wordRecBarHtml() + productsHtml() + "</section>";
   var id = b.identity || {};
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityWordsHtml() + plistHtml("identity.axes") + plistHtml("identity.pillars") + plistHtml("identity.needs") + ptextHtml("hook", "훅 규칙", true) +
@@ -612,8 +619,9 @@ function act(name, el){
     DB = d;
     DB.collection("ct.data").onSnapshot(function(q){
       RAW = {}; q.docs.forEach(function(x){ RAW[x.id] = x.data() });
-      if(!RAW[cur] || !RAW[cur].name){ var first = brands().filter(function(x){ return RAW[x.id + ".kw"] })[0] || brands()[0]; cur = first ? first.id : ""; }
-      if(cur && new URLSearchParams(location.search).get("b") !== cur){ try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){} }   // 주소가 늘 지금 브랜드를 가리키게 (없는 브랜드로 열었을 때도)
+      if(WANT && RAW[WANT] && RAW[WANT].name) cur = WANT;
+      else if(!RAW[cur] || !RAW[cur].name){ var first = brands().filter(function(x){ return RAW[x.id + ".kw"] })[0] || brands()[0]; cur = first ? first.id : ""; }
+      if(cur && cur === WANT && new URLSearchParams(location.search).get("b") !== cur){ try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){} }   // 주소가 늘 지금 브랜드를 가리키게 (없는 브랜드로 열었을 때도)
       renderSoft();
     }, function(){});
     DB.collection("ct.set").onSnapshot(function(q){

@@ -31,7 +31,7 @@ function promptWhereHtml(key){
 }
 function promptBarHtml(){
   var t = PROMPT_TABS[tab]; if(!t || !B()) return "";
-  return "<details class=\"prbar\"" + (prDraft("tab:" + tab) ? " open" : "") + "><summary>✍️ 내 말로 끼어들기 <span class=\"muted\">— 이 탭(" + esc(t[0]) + ") 자료로 바로 시키기</span></summary>" + promptBoxHtml("tab:" + tab, "무엇을 할까요?", t[3]) + "</details>";
+  return "<details class=\"prbar\"" + (prDraft("tab:" + tab) ? " open" : "") + "><summary>✍️ 내 말로 끼어들기</summary>" + promptBoxHtml("tab:" + tab, "무엇을 할까요?", t[3]) + "</details>";
 }
 /* 지금 이 자리의 맥락 — 맥이 무엇을 기준으로 할지 알게 넘긴다 */
 function promptContext(key){

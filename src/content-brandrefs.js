@@ -11,7 +11,7 @@ function refGroupHtml(g, list, chan){
     return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\">" + (c.url ? "<a href=\"" + esc(c.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(c.name) + "</b></a>" : "<b>" + esc(c.name) + "</b>") +
       (c.grade && c.grade !== "—" ? " <span class=\"tag\" title=\"이 브랜드에 얼마나 맞나 — A+ 매번 볼 곳 · A 자주 · A-·B+ 가끔 · B 참고\">맞음 " + esc(c.grade) + "</span>" : "") + (c.pillar && c.pillar !== "—" ? " <span class=\"tag\">필러 " + esc(c.pillar) + "</span>" : "") +
       (fresh.length ? " <span class=\"tag ok\">새 영상 " + fresh.length + "</span>" : "") + "</div>" +
-      "<div class=\"it-d\">" + esc(c.take) + "</div>" + (c.example ? "<div class=\"apply\"><b>대본 적용 예</b> " + esc(c.example) + "</div>" : "") +
+      "<div class=\"it-d\">" + txt(c.take) + "</div>" + (c.example ? "<div class=\"apply\"><b>대본 적용 예</b> " + txt(c.example) + "</div>" : "") +
       (top ? "<div class=\"it-d\">" + (isNew(top) ? "새 영상" : "최근 영상") + " · <a href=\"https://www.youtube.com/watch?v=" + esc(top.id) + "\" target=\"_blank\" rel=\"noopener\">" + esc(top.title) + "</a> · " + esc(top.when) +
         (top.views != null ? " · 조회 " + fmt(top.views) : "") + (top.ratio != null ? " · 조회÷구독 " + top.ratio + "배" : "") + "</div>" : "") + "</div></div>";
   }).join("");
@@ -30,7 +30,7 @@ function brandRefsHtml(b){
     (t.todo ? "<p class=\"note\" style=\"margin-top:8px\">" + esc(t.todo) + "</p>" : "") + "</details>";
   order.forEach(function(g){ h += refGroupHtml(g, groups[g], chan) });
   if((b.formats || []).length) h += "<details style=\"margin-top:10px\"><summary>콘텐츠 포맷 " + b.formats.length + "종</summary><div class=\"list\" style=\"margin-top:4px\">" + b.formats.map(function(f){
-    return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(f.name) + "</b> <span class=\"num muted\">" + esc(f.len) + "</span> <span class=\"tag\">" + esc(f.goal) + "</span></div><div class=\"it-d\">" + esc(f.structure) + "</div></div></div>" }).join("") + "</div></details>";
+    return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(f.name) + "</b> <span class=\"num muted\">" + esc(f.len) + "</span> <span class=\"tag\">" + esc(f.goal) + "</span></div><div class=\"it-d\">" + txt(f.structure) + "</div></div></div>" }).join("") + "</div></details>";
   if(b.refFields || (b.refNotes || []).length) h += "<details style=\"margin-top:10px\"><summary>영상 분석 칸 · 주의</summary><p class=\"small\" style=\"margin-top:6px\">" + esc(b.refFields || "") + "</p>" +
     (b.refNotes || []).map(function(n){ return "<p class=\"small muted\" style=\"margin-top:4px\">· " + esc(n) + "</p>" }).join("") + "</details>";
   var src = b.refCards ? Object.keys(b.refCards).map(function(k){ return String(b.refCards[k]).split("/").pop().replace(/\.md$/, "") }).join(" · ") : "";
@@ -69,8 +69,8 @@ function rpRow(c, cand){
       (c.grade && c.grade !== "—" ? " <span class=\"tag\" title=\"이 브랜드에 얼마나 맞나 — A+ 매번 볼 곳 · A 자주 · A-·B+ 가끔 · B 참고\">맞음 " + esc(c.grade) + "</span>" : "") + " " + amountTag(c.amount) + (cand && rpRec(c) ? " <span class=\"tag fill\" title=\"" + esc(rpRecWhy(c)) + "\">Claude 추천</span>" : "") + "</div>" +
     "<div class=\"it-d\">" + esc(c.take || "") + "</div>" +
     "<details><summary>자세히</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
-      (cand && rpRec(c) ? "<dt>추천 이유</dt><dd>" + esc(rpRecWhy(c)) + "</dd>" : "") + (c.amountProof ? "<dt>소재가 많나</dt><dd>" + esc(c.amountProof) + "</dd>" : "") + (c.direction ? "<dt>연출 참고</dt><dd>" + esc(c.direction) + "</dd>" : "") +
-      (c.example ? "<dt>대본 적용 예</dt><dd>" + esc(c.example) + "</dd>" : "") + ((c.proof || c.why) ? "<dt>확인한 것</dt><dd>" + esc([c.proof, c.why].filter(Boolean).join(" · ")) + "</dd>" : "") +
+      (cand && rpRec(c) ? "<dt>추천 이유</dt><dd>" + esc(rpRecWhy(c)) + "</dd>" : "") + (c.amountProof ? "<dt>소재가 많나</dt><dd>" + txt(c.amountProof) + "</dd>" : "") + (c.direction ? "<dt>연출 참고</dt><dd>" + txt(c.direction) + "</dd>" : "") +
+      (c.example ? "<dt>대본 적용 예</dt><dd>" + txt(c.example) + "</dd>" : "") + ((c.proof || c.why) ? "<dt>확인한 것</dt><dd>" + esc([c.proof, c.why].filter(Boolean).join(" · ")) + "</dd>" : "") +
       (c.pillar && c.pillar !== "—" ? "<dt>필러</dt><dd>" + esc(c.pillar) + "</dd>" : "") + "</dl></details>" +
     (cand ? "<div class=\"acts\"><button class=\"btn sm" + (on ? "" : " primary") + "\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"" + (on ? "" : "add") + "\">" + (on ? "넣는 중 — 취소" : "참고 페이지에 넣기") + "</button>" +
       "<button class=\"btn sm\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"skip\">빼기</button></div>" : "") + "</div></div>";

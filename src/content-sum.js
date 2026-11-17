@@ -59,7 +59,7 @@ function viewSum(){
     "<h4>고른 주제 → 대본 <span class=\"num muted\">" + picks.length + "</span></h4>" +
     (picks.length ? "<div class=\"list\">" + picks.map(function(x){
       var t = scriptOf(x.id);
-      return "<div class=\"it\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.title) + "</b></div>" +
+      return "<div class=\"it\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span><div class=\"it-m\"><div class=\"it-h\"><b>" + txt(x.title) + "</b></div>" +
         "<div class=\"it-d\"><span class=\"tag fill\">" + esc(x.role || "") + "</span> " + esc(x.product || "") +
         " · 대본 " + (t ? "<span class=\"tag ok\">" + esc(t.status || "있음") + "</span>" : "<span class=\"tag\">아직</span>") + "</div></div>" +
         "<button class=\"btn sm\" data-go=\"" + (t ? "script" : "rec") + "\">" + (t ? "대본" : "추천") + "</button></div>" }).join("") + "</div>"
@@ -82,7 +82,7 @@ function viewSum(){
   var lg = part("log");
   if(lg && lg.items.length) h += "<section class=\"card\"><div class=\"card-h\"><h3>단계 기록 PDF</h3>" + goBtn("전체", "brand") + "</div><div class=\"list\">" + lg.items.slice(0, 4).map(function(x){
     return "<div class=\"it\"><span class=\"num muted\">" + esc(x.date.slice(5)) + "</span><div class=\"it-m\">" + esc(String(x.file).replace(/^\S+ /, "").replace(/\.pdf$/, "")) + "</div></div>" }).join("") + "</div>" +
-    "<p class=\"lead\" style=\"margin-top:6px\">볼트 · 드라이브에 저장돼요 — " + esc(lg.where || "") + "</p></section>";
+    "<p class=\"lead\" style=\"margin-top:6px\">볼트와 구글 드라이브에 저장돼요.</p></section>";
   return h;
 }
 

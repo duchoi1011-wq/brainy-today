@@ -12,14 +12,15 @@ function kwRecPicks(){ var s = S(), seen = {}; return kwRecs().filter(function(x
 function kwRecBarHtml(){
   var d = part("kwrec"), busy = openCmd("kwrec"), sd = seedsOf(), picks = kwRecPicks(), st = searchState();
   if(!sd.length) return "";
-  return "<section class=\"card\" id=\"kwrec\"><div class=\"card-h\"><h3>🤖 Claude 키워드 추천</h3><span class=\"n\">" + (d && d.updatedAt ? esc(String(d.updatedAt).slice(5, 16).replace("T", " ")) : "아직 안 받음") + "</span></div>" +
+  /* 평소엔 접어 두고 한 줄만 — 폰에서 씨앗 연관 검색어 목록이 첫 화면에 오게 (2026-11-18 검증 F14). 맥이 고르는 중이거나 추천이 막 왔으면 펼친다 */
+  return "<section class=\"card\" id=\"kwrec\"><details" + (busy ? " open" : "") + "><summary>🤖 Claude 키워드 추천 · 🚀 자동 진행 <span class=\"num muted\">" + (busy ? "맥이 고르는 중" : picks.length ? "추천 " + picks.length + "개" : d ? "지난 추천 있음" : "아직 안 받음") + " — 펴서 쓰기</span></summary>" +
     "<details class=\"help\"><summary>이 추천은 어떻게 고르나요?</summary><p class=\"lead\">맥의 Claude가 브랜드 정보(타깃 · 구매자 욕구 · 상품 · 콘텐츠 축 · 필러), ★ 키워드, ☆ 영상, 영상 분석과 아이디어를 다 읽고 씨앗 단어마다 콘텐츠로 찍을 만한 키워드를 골라요. 고른 키워드로 바로 콘텐츠 검색까지 이어져요.</p></details>" +
     "<div class=\"acts\"><button class=\"btn" + (picks.length ? "" : " primary") + "\" data-act=\"kwrec\"" + (busy ? " disabled" : "") + ">" + (busy ? "맥이 키워드 고르는 중…" : d ? "씨앗마다 다시 추천받기" : "씨앗마다 키워드 추천받기") + "</button>" +
     (picks.length ? "<button class=\"btn primary\" data-act=\"kwrecgo\"" + (st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 검색하는 중…" : "추천 " + Math.min(picks.length, 10) + "개 ★하고 콘텐츠 검색 →") + "</button>" : "") + "</div>" +
     autoPilotHtml("kw") +
     (busy ? "<p class=\"lead\" style=\"margin-top:8px\">씨앗 " + sd.length + "개 — 몇 분 걸려요. 맥이 켜져 있어야 해요.</p>" : "") +
     (picks.length ? "<div class=\"chips\" style=\"margin-top:8px\">" + picks.map(function(x){ return "<button class=\"chip" + (S().pin[x.kw] ? " on" : "") + "\" data-pin=\"" + esc(x.kw) + "\" title=\"" + esc(x.why || "") + "\">" + (S().pin[x.kw] ? "★ " : "☆ ") + esc(x.kw) + "<span>" + esc(x.seed) + "</span></button>" }).join("") + "</div>" +
-      "<p class=\"it-d\" style=\"margin-top:4px\">눌러서 ★ 켜고 끄기 · 콘텐츠 검색은 한 번에 10개까지예요.</p>" : "") + "</section>";
+      "<p class=\"it-d\" style=\"margin-top:4px\">눌러서 ★ 켜고 끄기 · 콘텐츠 검색은 한 번에 10개까지예요.</p>" : "") + "</details></section>";
 }
 /* 씨앗 연관 검색어 카드 안 — 그 씨앗의 추천과 이유 */
 function kwRecSeedHtml(word){
