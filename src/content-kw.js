@@ -42,7 +42,8 @@ function identityWordsHtml(){
   var s = S(), list = seedsOf().filter(function(x){ return x.kind === "정체성" });
   return "<h4><span class=\"tag i\">정체성</span> 브랜드 정체성 단어 <span class=\"num muted\">" + list.length + "</span></h4>" +
     "<p class=\"lead\">채널 성격을 말하는 단어예요. 이 단어가 들어간 연관 검색어가 풀링(처음 보는 사람 끌어오기) 재료가 돼요.</p>" +
-    "<div class=\"list\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("정체성", list.length, "정체성 단어 넣기 (예: 사내행사)");
+    "<div class=\"list\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("정체성", list.length, "정체성 단어 넣기 (예: 사내행사)") +
+    "<div class=\"acts\" style=\"margin-top:6px\"><button class=\"btn sm\" data-go=\"kw\">어떤 단어가 좋을지 모르겠으면 — 키워드 탭 「단어 후보 찾기」 →</button></div>";
 }
 /* 브랜드 탭 — 판매 상품 카드 안, 상품마다 「판매 단어」 */
 function productWordsHtml(name){
@@ -57,15 +58,59 @@ function seedsHtml(){
     (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + "</section>";
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
   if(pickW){
-    var list = seedItems(pickW, false), far = seedItems(pickW, true), more = ui.seedMore || 15;
-    h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">검색량 순 · " + list.length + "개</span></div><div class=\"chips\">" +
-      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word, false).length + "</span></button>" }).join("") + "</div>" +
-      "<div class=\"list\" style=\"margin-top:6px\">" + (list.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">이 씨앗이 들어간 연관 검색어가 없어요. 브랜드 탭에서 더 넓은 단어로 바꿔 보세요.</p>") + "</div>" +
-      (list.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"seedMore=" + (more + 25) + "\">더 보기 (" + (list.length - more) + "개 남음)</button></div>" : "") +
-      (far.length ? "<details style=\"margin-top:12px\"><summary>구글이 같이 찾은 말 " + far.length + "개 — 「" + esc(pickW) + "」이 안 든 관련 검색어</summary><p class=\"lead\" style=\"margin-top:6px\">구글 트렌드에서 이 단어와 함께 검색된 말이에요. 쓸 만한 것만 ★하세요.</p><div class=\"list\">" +
+    var all0 = seedItems(pickW), tab0 = ui.sTab || "naver", more = ui.seedMore || 15;
+    var inT = all0.filter(function(x){ return inTab(viaOf(x, pickW), tab0) }), near = inT.filter(function(x){ return !isFar(x, pickW) }), far = inT.filter(function(x){ return isFar(x, pickW) });
+    h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">" + all0.length + "개</span></div><div class=\"chips\">" +
+      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word).length + "</span></button>" }).join("") + "</div>" +
+      srcTabsHtml("sTab", all0, pickW) +
+      (tab0 !== "naver" && seedSrc() === "naver" ? "<p class=\"note\" style=\"margin-top:8px\">지금은 네이버에서만 받아요. 구글 트렌드도 보려면 브랜드 탭 「연관 검색어 받는 곳」을 「둘 다」로 바꾸세요.</p>" : "") +
+      "<div class=\"list\" style=\"margin-top:6px\">" + (near.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">" + (tab0 === "both" ? "네이버와 구글 둘 다에서 나온 말이 아직 없어요." : "이 칸에 나온 연관 검색어가 없어요.") + "</p>") + "</div>" +
+      (near.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"seedMore=" + (more + 25) + "\">더 보기 (" + (near.length - more) + "개 남음)</button></div>" : "") +
+      (far.length ? "<details style=\"margin-top:12px\"><summary>「" + esc(pickW) + "」이 안 든 말 " + far.length + "개 — 구글이 같이 찾은 관련 검색어</summary><div class=\"list\" style=\"margin-top:6px\">" +
         far.map(function(x){ return kwRow(x, s, true) }).join("") + "</div></details>" : "") + "</section>";
   }
   return h;
+}
+/* 네이버 · 구글 트렌드 · 둘 다(겹침) 칸 (2026-11-17 동욱: "구글 트렌드와 네이버 둘 다 검색하는 게 따로 보이고, 중복해서 트렌드인 걸 3탭으로").
+   via = 그 말을 낸 곳 — 맥이 씨앗마다(키워드.json via{씨앗: [...]}) · 단어 후보마다(단어 후보.json via [...]) 적는다. 예전 자료는 src · gTop 으로 짐작한다 */
+var SRC_TABS = [["naver", "네이버"], ["google", "구글 트렌드"], ["both", "둘 다 — 겹치는 말"]];
+function viaOf(x, word){
+  var v = Array.isArray(x.via) ? x.via : (x.via || {})[word]; if(v) return v;
+  var o = []; if((x.src || ["naver"]).indexOf("naver") >= 0 && !isFar(x, word)) o.push("naver"); if(x.gTop != null || x.gRise) o.push("google"); return o;
+}
+function inTab(v, t){ return t === "both" ? v.length === 2 : v.indexOf(t) >= 0 }
+function srcTabsHtml(key, items, word){
+  var t = ui[key] || "naver";
+  return "<div class=\"subnav\" style=\"margin:10px 0 0\">" + SRC_TABS.map(function(o){ return "<button class=\"" + (t === o[0] ? "on" : "") + "\" data-ui=\"" + key + "=" + o[0] + "\">" + o[1] + " <span class=\"num\">" + items.filter(function(x){ return inTab(viaOf(x, word), o[0]) }).length + "</span></button>" }).join("") + "</div>" +
+    "<p class=\"lead\" style=\"margin-top:6px\">" + { naver: "네이버 = 한국에서 한 달에 몇 번 검색되나(살 사람이 찾는 말인지는 클릭률로)", google: "구글 트렌드 = 이 단어와 같이 검색되는 말의 인기(0~100)와 요즘 오르는 정도(▲)", both: "둘 다 = 네이버에도 구글 트렌드에도 나온 말 — 검색도 많고 요즘도 찾는, 가장 믿을 만한 말" }[t] + "</p>";
+}
+/* 단어 후보 찾기 — 넓은 단어 하나로 네이버 · 구글 연관 검색어를 받아, 정체성 단어나 상품 판매 단어로 넣을 후보를 고른다 (2026-11-17 동욱: "키워드 검색으로 정체성과 상품 단어 등의 후보군을 올리는 칸").
+   요청은 ct.set wordReq {at, word, src} — 맥 동기화가 content_app.py words 로 받아 단어 후보.json(ct.data .wordcand)에 쓴다 (Claude 없이, 1분 안팎) */
+function wordState(){ var r = (SETS[cur] || {}).wordReq, d = part("wordcand"); return { req: r, data: d, busy: !!(r && (!d || d.reqAt !== r.at || d.busy)) } }
+function wordFindHtml(){
+  var st = wordState(), d = st.data, runs = (d && d.runs) || [], src = ui.wSrc || "both", sd = seedsOf(), prods = ((B() || {}).products || []).map(function(p){ return p.name });
+  var run = runs.filter(function(r){ return r.word === ui.wRun })[0] || runs[0];
+  var h = "<section class=\"card\" id=\"word-find\"><div class=\"card-h\"><h3>단어 후보 찾기</h3><span class=\"n\">정체성 · 상품 단어 고르기</span></div>" +
+    "<p class=\"lead\">넓은 단어(예: 연애, 자기관리, 행사)를 넣으면 맥이 네이버와 구글 트렌드에서 연관 검색어를 받아 와요. 마음에 드는 말을 <b>정체성 단어</b>나 <b>상품 판매 단어</b>로 넣으면, 그 단어로 다시 연관 검색어를 받아 아래 「씨앗 단어」에 쌓여요.</p>" +
+    "<div class=\"row2\"><input type=\"text\" id=\"word-in\" data-wordin=\"1\" maxlength=\"20\" placeholder=\"찾을 단어 (예: 연애)\" value=\"" + esc(ui.wDraft || "") + "\"><button class=\"btn primary\" data-act=\"wordfind\"" + (st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 받는 중…" : "후보 찾기") + "</button></div>" +
+    "<div class=\"chips\" style=\"margin-top:6px\">" + SEED_SRC.map(function(o){ return "<button class=\"chip" + (src === o[0] ? " on" : "") + "\" data-ui=\"wSrc=" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div>";
+  if(!run) return h + (st.busy ? "<p class=\"note\" style=\"margin-top:10px\">맥이 받는 중이에요 (1분 안팎, 맥이 켜져 있어야 해요).</p>" : "") + "</section>";
+  var t = ui.wTab || "naver", hitOnly = ui.wHit !== false, items = run.items.filter(function(x){ return !hitOnly || x.hit !== false });
+  var list = items.filter(function(x){ return inTab(x.via || [], t) }), more = ui.wMore || 20;
+  h += (runs.length > 1 ? "<div class=\"chips\" style=\"margin-top:10px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">찾은 단어</span>" + runs.map(function(r){ return "<button class=\"chip" + (r === run ? " on" : "") + "\" data-ui=\"wRun=" + esc(r.word) + "\">" + esc(r.word) + "</button>" }).join("") + "</div>" : "") +
+    "<h4>「" + esc(run.word) + "」 후보 <span class=\"num muted\">" + esc(day(run.at)) + (run.error ? " · " + esc(run.error) : "") + "</span></h4>" +
+    "<div class=\"chips\"><button class=\"chip" + (hitOnly ? " on" : "") + "\" data-ui=\"wHit=" + !hitOnly + "\">「" + esc(run.word) + "」가 든 말만</button></div>" +
+    srcTabsHtml("wTab", items) +
+    "<div class=\"list\" style=\"margin-top:6px\">" + (list.slice(0, more).map(function(x){
+      var have = sd.filter(function(y){ return y.word === x.kw.replace(/\s+/g, "") })[0];
+      return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b>" + (have ? " <span class=\"tag ok\">" + (have.kind === "상품" ? "🛒 " + esc(have.product) : "정체성") + " 단어</span>" : "") + "</div>" +
+        "<div class=\"it-d\">" + (x.total != null ? "<span class=\"num\">월 " + fmt(x.total) + "</span>" : "검색량 모름") + (x.ctr ? " · 클릭률 " + x.ctr + "%" : "") +
+          (x.gRise ? " · <span class=\"up\">구글 ▲" + esc(x.gRise) + "</span>" : x.gTop != null ? " · 구글 인기 " + x.gTop : "") + "</div>" +
+        (have ? "" : "<div class=\"acts\" style=\"margin-top:4px\"><button class=\"btn sm\" data-act=\"wordadd\" data-w=\"" + esc(x.kw) + "\" data-key=\"정체성\">＋ 정체성 단어</button>" +
+          prods.map(function(p){ return "<button class=\"btn sm\" data-act=\"wordadd\" data-w=\"" + esc(x.kw) + "\" data-key=\"상품:" + esc(p) + "\">＋ 🛒 " + esc(p) + " 판매 단어</button>" }).join("") + "</div>") + "</div></div>";
+    }).join("") || "<p class=\"empty\">" + (t === "both" ? "네이버와 구글 둘 다에서 나온 말이 없어요." : "이 칸에 나온 말이 없어요.") + (hitOnly ? " 「가 든 말만」을 끄면 더 보여요." : "") + "</p>") + "</div>" +
+    (list.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"wMore=" + (more + 30) + "\">더 보기 (" + (list.length - more) + "개 남음)</button></div>" : "");
+  return h + "</section>";
 }
 /* 선별한 키워드로 콘텐츠 검색 — ★(즐겨찾기)한 키워드 중 고른 것으로 맥이 유튜브를 검색해 미드폼·롱폼 영상을 읽어 온다 (Claude 없이, content_app.py search).
    요청은 ct.set searchReq {at, kws} 하나 — 맥 동기화가 보고 검색해 검색.json(ct.data .search)에 쓴다. 결과는 콘텐츠 탭 「키워드로 찾은 콘텐츠」. */
@@ -155,10 +200,10 @@ function kwRow(x, s, mark){
 }
 function viewKw(){
   var b = B(), k = part("kw"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
-  if(!k) return seedsHtml() + "<section class=\"card\"><div class=\"card-h\"><h3>첫 조사</h3></div><p class=\"lead\">이 브랜드는 아직 키워드 자료가 없어요. 첫 조사를 누르면 맥의 Claude가 채널 기획안으로 조사 프로필 초안부터 만들고, 기획안에 없는 칸(키워드 힌트 등)은 지어내지 않고 되물어요. 답한 뒤 다시 누르면 조사가 돌아요.</p>" +
+  if(!k) return wordFindHtml() + seedsHtml() + "<section class=\"card\"><div class=\"card-h\"><h3>첫 조사</h3></div><p class=\"lead\">이 브랜드는 아직 키워드 자료가 없어요. 첫 조사를 누르면 맥의 Claude가 채널 기획안으로 조사 프로필 초안부터 만들고, 기획안에 없는 칸(키워드 힌트 등)은 지어내지 않고 되물어요. 답한 뒤 다시 누르면 조사가 돌아요.</p>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"discover\"" + (openCmd("discover") ? " disabled" : "") + ">첫 조사 시작하기</button></div></section>";
   var s = S(), all = scored(), c = candidates(s), sp = split(s), t = part("trend");
-  var h0 = seedsHtml();
+  var h0 = wordFindHtml() + seedsHtml();
   var nP = c.filter(function(x){ return x.kind === "상품" }).length;
   var h = h0 + searchBoxHtml() + "<section class=\"card\"><details><summary>깊게 조사 — 경쟁사·레퍼런스 20개·시트·카드까지 (맥의 Claude) · 후보 " + c.length + "개</summary>" +
     "<p class=\"lead\" style=\"margin-top:8px\">상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " 비율로 뽑되, ★한 검증 키워드를 먼저 다 넣고 남은 자리만 점수순으로 채워요. 「★만 조사」를 켜면 ★한 것만 조사해요. ✕는 빼기 — 뺀 것은 아래 「뺀 것」 칩에서 되살려요." +

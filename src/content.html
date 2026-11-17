@@ -432,9 +432,11 @@ document.addEventListener("click", function(e){
 document.addEventListener("input", function(e){
   if(e.target.dataset.pfin != null){ ui.pdraft = Object.assign({}, ui.pdraft); ui.pdraft[e.target.dataset.pfin] = e.target.value }
   if(e.target.dataset.addseed != null){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
+  if(e.target.dataset.wordin != null) ui.wDraft = e.target.value;   // 단어 후보 찾기 칸 — 다시 그려도 쓰던 글을 지킨다
 });
 function enterAct(t){   // Enter 로 넣기·저장 — 칸마다 할 일
   if(t.dataset.addseed != null){ act("seedadd", t); return true }
+  if(t.dataset.wordin != null){ ui.wDraft = t.value; act("wordfind", t); return true }
   if(t.dataset.pfin != null && t.tagName === "INPUT"){ var pk = t.dataset.pfin;
     if(/^prod:new/.test(pk)) act("paddprod", t);
     else if(/:new$/.test(pk)) act("padd", { dataset: { k: pk.replace(/:new$/, "") } });
@@ -475,6 +477,13 @@ function act(name, el){
   if(name === "discover"){ var c = candidates(s); send("discover", "키워드·레퍼런스 조사 (상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " · " + c.length + "개)",
     { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
   if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }
+  if(name === "wordfind"){ var wi = document.getElementById("word-in"), ww = ((wi && wi.value) || "").trim().slice(0, 20); if(!ww){ alert("찾을 단어를 적어 주세요."); if(wi) wi.focus(); return }
+    ui.wDraft = ww; ui.wRun = ww; ui.wMore = 20; setS({ wordReq: { at: new Date().toISOString(), word: ww, src: ui.wSrc || "both" } }); return }   // 단어 후보 찾기 — 맥이 네이버·구글 연관 검색어를 받는다
+  if(name === "wordadd"){ var wk = el.dataset.key, wv = el.dataset.w.replace(/\s+/g, "").slice(0, 20), cur4 = seedsOf();   // 단어 후보를 씨앗 단어로
+    if(cur4.some(function(x){ return x.word === wv })) return;
+    var same = cur4.filter(function(x){ return wk === "정체성" ? x.kind === "정체성" : x.kind === "상품" && x.product === wk.slice(3) }).length;
+    if(same >= SEED_MAX){ alert("한 쪽에 " + SEED_MAX + "개까지예요. 브랜드 탭에서 하나 빼고 넣으세요."); return }
+    setS({ seeds: cur4.concat([wk.indexOf("상품:") === 0 ? { kind: "상품", word: wv, product: wk.slice(3) } : { kind: "정체성", word: wv }]) }); return }
   if(name === "seedadd"){   // 씨앗 단어 넣기 — key 「정체성」 또는 「상품:<상품>」. 띄어쓰기는 빼고(네이버가 붙여 쓴 말로 받는다), 같은 단어는 한 번만
     var key = el.dataset.key || el.dataset.addseed, inp = [].filter.call(document.querySelectorAll("[data-addseed]"), function(x){ return x.dataset.addseed === key })[0];
     var w = ((inp && inp.value) || "").replace(/\s+/g, "").slice(0, 20), cur3 = seedsOf();
