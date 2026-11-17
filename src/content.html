@@ -182,6 +182,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .orig table{border-collapse:collapse;min-width:1100px;font-size:13px;line-height:1.5}
 .orig th{position:sticky;top:0;background:var(--ink);color:#fff;font-weight:600;padding:8px 10px;text-align:left;white-space:nowrap}
 .orig td{border-top:1px solid var(--line);padding:10px;vertical-align:top;max-width:220px}
+.auto-card .card-h h3{font-size:18px}#kwrec .auto-card{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.auto-steps{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-wrap:wrap;gap:6px 14px}.auto-steps li{font-size:14px}.auto-steps .s-대기{opacity:.5}.auto-steps .s-실패 b{color:var(--warn,#c0392b)}
 .prbar{margin:0 0 14px;background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:10px 14px}.prbar>summary{cursor:pointer;font-weight:600}.prbox{margin-top:8px}.prbox-h{font-weight:600;margin-bottom:6px}.prbox textarea{width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);resize:vertical}.bd-idea .acts{margin-top:6px}
 .orig td.o-cmt{max-width:320px;min-width:240px}.orig td.o-basis{min-width:200px}.orig ol.cmts{margin:6px 0 0;padding-left:18px}.orig ol.cmts li{margin-bottom:8px;white-space:pre-wrap}
 .orig td img{width:150px;height:84px;object-fit:cover;border-radius:8px;display:block}
@@ -233,7 +234,7 @@ var TABS = [
   { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] }
 ];
 function tabGroup(id){ return TABS.filter(function(g){ return g.subs.some(function(x){ return x[0] === id }) })[0] || TABS[0] }
-var PARTS = { cmts: ".cmts", kwrec: ".kwrec", wordrec: ".wordrec", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
+var PARTS = { cmts: ".cmts", kwrec: ".kwrec", wordrec: ".wordrec", auto: ".auto", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -317,7 +318,7 @@ function saveSet(id){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", wordrec: "판매 단어 추천", prompt: "✍️ 내 지시", scriptedit: "대본 고치기", build: "구축 문서 만들기", autorec: "키워드 고르고 콘텐츠 추천", kwrec: "씨앗마다 키워드 추천", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", wordrec: "판매 단어 추천", prompt: "✍️ 내 지시", scriptedit: "대본 고치기", build: "구축 문서 만들기", auto: "🚀 자동 진행", kwrec: "씨앗마다 키워드 추천", brief: "새 브랜드 프로필" };
 function recParams(){   // 콘텐츠 추천 cmd 파라미터 — 추천 버튼과 ⚡ 한 번에 가 같이 쓴다
   var s = S(), rc = recCritParams(), pk = rc.use.pin ? scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] }) : [];
   return { roles: s.roles, ratio: s.ratio, criteria: rc, keywords: pk.map(function(x){ return { kw: x.kw, kind: x.kind, product: x.product, total: x.total } }), seeds: rc.use.seed ? seedsOf() : [],
@@ -365,6 +366,7 @@ function runHtml(kinds){
 /*@include content-brandrefs.js*/
 /*@include content-sum.js*/
 /*@include content-prompt.js*/
+/*@include content-auto.js*/
 /*@include content-profile.js*/
 
 /* ── 브랜드 탭 ── */
@@ -593,7 +595,8 @@ function act(name, el){
   if(name === "buildscript"){ var bd = buildDocs().filter(function(x){ return x.id === el.dataset.id })[0]; if(!bd) return;   // 구축 문서 → 대본 (최종)
     send("script", "대본 초안 — 구축 문서 " + bd.id + " " + bd.title, { ids: [bd.id], build: bd.id }); return }
   if(name === "cmtreq"){ setS({ cmtReq: { at: new Date().toISOString() } }); return }   // 추천 근거 영상 댓글 — 좋아요 순 5개
-  if(name === "autorec"){ autoRecSend(); return }   // ⚡ 씨앗마다 최고 키워드 ★ → 콘텐츠 추천
+  if(name === "autostart"){ autoStart(); return }   // 🚀 자동 진행 — 키워드 → 추천 → 구축 → 대본 → 보고
+  if(name === "autoopt"){ var ao5 = autoOpt(); ao5[el.dataset.k] = el.dataset.k === "n" ? +el.dataset.v : el.dataset.v; setS({ autoOpt: ao5 }); return }
   if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
   if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : pickedIds(s); if(!sids.length) return;

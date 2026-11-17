@@ -34,7 +34,8 @@ function viewSum(){
   var ref = part("ref"), refs = ((ref && ref.items) || []).filter(isLong), chs = b.channels || [], chan = part("chan");
   var nNew = 0; chs.forEach(function(c){ var n = chan && chan.items && chan.items[c.name]; if(n) nNew += n.videos.filter(isNew).length });
   function box(n, label, big, sub, to){ return "<button class=\"stepbox\" data-go=\"" + to + "\"><span class=\"num muted\">" + n + "</span><b>" + label + "</b><span class=\"big\">" + big + "</span><span class=\"it-d\">" + sub + "</span></button>" }
-  var h = nextHtml() + "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + " 한눈에</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div><p class=\"lead\">" + esc(b.one || "") + "</p>" +
+  var ap = autoPilotHtml("sum");   // 🚀 자동 진행 — 누르기만 하면 대본·보고까지
+  var h = (ap ? "<section class=\"card\">" + ap + "</section>" : "") + nextHtml() + "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + " 한눈에</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div><p class=\"lead\">" + esc(b.one || "") + "</p>" +
     "<div class=\"flow\">" +
     box(1, "씨앗 단어", sd.length, "정체성 " + sd.filter(function(x){ return x.kind === "정체성" }).length + " · 상품 " + sd.filter(function(x){ return x.kind === "상품" }).length, "kw") +
     box(2, "뽑은 검색어", seedKw.length, "씨앗이 든 연관 검색어", "kw") +

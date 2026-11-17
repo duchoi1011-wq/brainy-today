@@ -16,7 +16,7 @@ function kwRecBarHtml(){
     "<details class=\"help\"><summary>이 추천은 어떻게 고르나요?</summary><p class=\"lead\">맥의 Claude가 브랜드 정보(타깃 · 구매자 욕구 · 상품 · 콘텐츠 축 · 필러), ★ 키워드, ☆ 영상, 영상 분석과 아이디어를 다 읽고 씨앗 단어마다 콘텐츠로 찍을 만한 키워드를 골라요. 고른 키워드로 바로 콘텐츠 검색까지 이어져요.</p></details>" +
     "<div class=\"acts\"><button class=\"btn" + (picks.length ? "" : " primary") + "\" data-act=\"kwrec\"" + (busy ? " disabled" : "") + ">" + (busy ? "맥이 키워드 고르는 중…" : d ? "씨앗마다 다시 추천받기" : "씨앗마다 키워드 추천받기") + "</button>" +
     (picks.length ? "<button class=\"btn primary\" data-act=\"kwrecgo\"" + (st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 검색하는 중…" : "추천 " + Math.min(picks.length, 10) + "개 ★하고 콘텐츠 검색 →") + "</button>" : "") + "</div>" +
-    autoRecHtml(d) +
+    autoPilotHtml("kw") +
     (busy ? "<p class=\"lead\" style=\"margin-top:8px\">씨앗 " + sd.length + "개 — 몇 분 걸려요. 맥이 켜져 있어야 해요.</p>" : "") +
     (picks.length ? "<div class=\"chips\" style=\"margin-top:8px\">" + picks.map(function(x){ return "<button class=\"chip" + (S().pin[x.kw] ? " on" : "") + "\" data-pin=\"" + esc(x.kw) + "\" title=\"" + esc(x.why || "") + "\">" + (S().pin[x.kw] ? "★ " : "☆ ") + esc(x.kw) + "<span>" + esc(x.seed) + "</span></button>" }).join("") + "</div>" +
       "<p class=\"it-d\" style=\"margin-top:4px\">눌러서 ★ 켜고 끄기 · 콘텐츠 검색은 한 번에 10개까지예요.</p>" : "") + "</section>";
@@ -39,15 +39,8 @@ function kwRecParams(){
     pins: Object.keys(s.pin).filter(function(k){ return s.pin[k] && !s.ex[k] }), perSeed: 5 };
 }
 function kwRecSend(){ var p = kwRecParams(); send("kwrec", "씨앗마다 키워드 추천 — " + p.seeds.map(function(x){ return x.word }).join(" · "), p) }
-/* ⚡ 한 번에 — 씨앗마다 최고 키워드 하나를 맥 Claude 가 골라 ★ 하고, 이어서 그 키워드로 콘텐츠 추천까지 (2026-11-17 동욱
-   "너가 뽑는 순위에 따라 내 키워드별로 최고의 추천 키워드를 알아서 지정해 주고 바로 콘텐츠 추천을 받게 자동화 버튼").
-   cmd autorec {kw: kwrec 파라미터, rec: 추천 파라미터} → 맥이 키워드 추천.json(auto {at, best:[...]}) 과 추천.json 을 쓴다.
-   ★ 는 앱이 auto.at 을 처음 볼 때 한 번 켠다(autoPinAt) — 동욱이 나중에 끈 ★ 를 다시 켜지 않는다 */
-function autoRecSend(){
-  if(!seedsOf().length || openCmd("autorec")) return;
-  var kp = kwRecParams();
-  send("autorec", "한 번에 — 씨앗 " + kp.seeds.length + "개마다 최고 키워드 ★ → 콘텐츠 추천", { kw: kp, rec: recParams() });
-}
+/* 🚀 자동 진행(content-auto.js)의 ① 키워드 단계가 키워드 추천.json 에 auto {at, best:[...]} 를 쓰면,
+   앱이 처음 볼 때 한 번 ★ 를 켠다(autoPinAt) — 동욱이 나중에 끈 ★ 를 다시 켜지 않는다 */
 function autoPinApply(){
   var a = ((part("kwrec") || {}).auto) || null;
   if(!a || !a.at || !SETS_LIVE || (SETS[cur] || {}).autoPinAt === a.at) return;
@@ -63,10 +56,4 @@ function kwRecGo(){
   kws.forEach(function(k){ pin[k] = 1; delete ex[k] });
   ui.refView = "search"; tab = "ref"; save("ct.tab", tab); window.scrollTo(0, 0);
   setS({ pin: pin, ex: ex, searchReq: { at: new Date().toISOString(), kws: kws } });
-}
-function autoRecHtml(d){
-  var busy = openCmd("autorec"), a = (d || {}).auto, rb = openCmd("recommend");
-  return "<div class=\"note\" style=\"margin-top:10px\"><b>⚡ 한 번에</b> — 씨앗마다 Claude가 순위 기준대로 <b>최고 키워드 1개</b>를 골라 ★ 하고, 그 키워드로 <b>콘텐츠 추천</b>까지 받아요. 다 되면 콘텐츠 탭 「추천」에 떠요." +
-    "<div class=\"acts\" style=\"margin-top:8px\"><button class=\"btn primary\" data-act=\"autorec\"" + (busy || rb ? " disabled" : "") + ">" + (busy ? "맥이 고르고 추천 받는 중… (10~20분)" : "⚡ 키워드 고르고 콘텐츠 추천까지") + "</button>" +
-    (a && a.best && a.best.length ? "<span class=\"it-d\">지난번 " + esc(String(a.at).slice(5, 16).replace("T", " ")) + " · " + a.best.map(esc).join(" · ") + "</span>" : "") + "</div></div>";
 }
