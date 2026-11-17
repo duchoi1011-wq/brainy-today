@@ -38,7 +38,7 @@ function penBtn(key, label){ return "<button class=\"mk\" data-act=\"pedit\" dat
 function ptextHtml(key, label, multi){
   var v = profNow()[key] || "";
   if(ui.pedit === key) return "<div class=\"pfield\"><span class=\"pl\">" + esc(label) + "</span>" +
-    (multi ? "<textarea data-pin=\"" + key + "\" rows=\"3\">" + esc(draft(key, v)) + "</textarea>" : "<input type=\"text\" data-pin=\"" + key + "\" value=\"" + esc(draft(key, v)) + "\">") +
+    (multi ? "<textarea data-pfin=\"" + key + "\" rows=\"3\">" + esc(draft(key, v)) + "</textarea>" : "<input type=\"text\" data-pfin=\"" + key + "\" value=\"" + esc(draft(key, v)) + "\">") +
     "<div class=\"acts\">" + editBtns(key) + "</div></div>";
   return "<div class=\"pfield\"><span class=\"pl\">" + esc(label) + "</span><div class=\"pv\"><span>" + (v ? esc(v) : "<span class=\"muted\">비어 있음</span>") + "</span>" + penBtn(key, label) + "</div></div>";
 }
@@ -47,11 +47,11 @@ function plistHtml(path){
   var def = PLIST[path], list = pget(profNow(), path) || [];
   return "<div class=\"pfield\"><span class=\"pl\">" + esc(def.label) + " <span class=\"num muted\">" + list.length + "</span></span><div class=\"list\">" + list.map(function(x, i){
     var key = path + ":" + i;
-    if(ui.pedit === key) return "<div class=\"it\"><div class=\"it-m\"><input type=\"text\" data-pin=\"" + esc(key) + "\" value=\"" + esc(draft(key, itemText(def, x))) + "\"><div class=\"acts\">" + editBtns(key) + "</div></div></div>";
+    if(ui.pedit === key) return "<div class=\"it\"><div class=\"it-m\"><input type=\"text\" data-pfin=\"" + esc(key) + "\" value=\"" + esc(draft(key, itemText(def, x))) + "\"><div class=\"acts\">" + editBtns(key) + "</div></div></div>";
     return "<div class=\"it\"><div class=\"it-m\">" + (def.pair ? "<div><b>" + esc(x[def.pair[0]]) + "</b>" + (x[def.pair[1]] ? " " + esc(x[def.pair[1]]) : "") + "</div>" : "<div>" + esc(x) + "</div>") + "</div>" +
       penBtn(key, def.label) + "<button class=\"mk no\" data-act=\"pdel\" data-k=\"" + esc(key) + "\" aria-label=\"빼기\" title=\"빼기\">✕</button></div>";
   }).join("") + "</div>" +
-    "<div class=\"row2\" style=\"margin-top:6px\"><input type=\"text\" data-pin=\"" + esc(path + ":new") + "\" placeholder=\"" + esc(def.hint) + "\" value=\"" + esc(draft(path + ":new", "")) + "\"><button class=\"btn sm\" data-act=\"padd\" data-k=\"" + esc(path) + "\">넣기</button></div></div>";
+    "<div class=\"row2\" style=\"margin-top:6px\"><input type=\"text\" data-pfin=\"" + esc(path + ":new") + "\" placeholder=\"" + esc(def.hint) + "\" value=\"" + esc(draft(path + ":new", "")) + "\"><button class=\"btn sm\" data-act=\"padd\" data-k=\"" + esc(path) + "\">넣기</button></div></div>";
 }
 /* 판매 상품 — 이름·설명 ✎, 상품 ✕, 맨 아래 ＋ 상품 더하기. 상품마다 판매 단어(씨앗)가 붙는다 */
 function productsHtml(){
@@ -59,19 +59,19 @@ function productsHtml(){
   return "<div class=\"list\">" + ps.map(function(p, i){
     var key = "prod:" + i;
     var head = ui.pedit === key ?
-      "<div class=\"prow\"><input type=\"text\" data-pin=\"" + key + ":name\" maxlength=\"30\" placeholder=\"상품 이름\" value=\"" + esc(draft(key + ":name", p.name)) + "\">" +
-        "<input type=\"text\" data-pin=\"" + key + ":what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(draft(key + ":what", p.what)) + "\"></div><div class=\"acts\">" + editBtns(key) + "</div>"
+      "<div class=\"prow\"><input type=\"text\" data-pfin=\"" + key + ":name\" maxlength=\"30\" placeholder=\"상품 이름\" value=\"" + esc(draft(key + ":name", p.name)) + "\">" +
+        "<input type=\"text\" data-pfin=\"" + key + ":what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(draft(key + ":what", p.what)) + "\"></div><div class=\"acts\">" + editBtns(key) + "</div>"
       : "<div class=\"pv\"><div><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what || "") + "</div></div><span style=\"display:flex;gap:2px\">" + penBtn(key, p.name) +
         "<button class=\"mk no\" data-act=\"pdelprod\" data-i=\"" + i + "\" aria-label=\"" + esc(p.name) + " 빼기\" title=\"상품 빼기\">✕</button></span></div>";
     return "<div class=\"it\"><div class=\"it-m\">" + head + productWordsHtml(p.name) + "</div></div>";
   }).join("") + "</div>" +
-    "<h4>＋ 상품 더하기</h4><div class=\"prow\"><input type=\"text\" data-pin=\"prod:new:name\" maxlength=\"30\" placeholder=\"새 상품 이름\" value=\"" + esc(draft("prod:new:name", "")) + "\">" +
-    "<input type=\"text\" data-pin=\"prod:new:what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(draft("prod:new:what", "")) + "\"><button class=\"btn sm primary\" data-act=\"paddprod\">더하기</button></div>";
+    "<h4>＋ 상품 더하기</h4><div class=\"prow\"><input type=\"text\" data-pfin=\"prod:new:name\" maxlength=\"30\" placeholder=\"새 상품 이름\" value=\"" + esc(draft("prod:new:name", "")) + "\">" +
+    "<input type=\"text\" data-pfin=\"prod:new:what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(draft("prod:new:what", "")) + "\"><button class=\"btn sm primary\" data-act=\"paddprod\">더하기</button></div>";
 }
-function pval(key){ var el = [].filter.call(document.querySelectorAll("[data-pin]"), function(x){ return x.dataset.pin === key })[0]; return el ? el.value.trim() : "" }
+function pval(key){ var el = [].filter.call(document.querySelectorAll("[data-pfin]"), function(x){ return x.dataset.pfin === key })[0]; return el ? el.value.trim() : "" }
 function profAct(name, el){
   var k = el && el.dataset.k, p = profNow();
-  if(name === "pedit"){ ui.pedit = k; ui.pdraft = {}; render(); var f = [].filter.call(document.querySelectorAll("[data-pin]"), function(x){ return x.dataset.pin.indexOf(k) === 0 })[0]; if(f) f.focus(); return true }
+  if(name === "pedit"){ ui.pedit = k; ui.pdraft = {}; render(); var f = [].filter.call(document.querySelectorAll("[data-pfin]"), function(x){ return x.dataset.pfin.indexOf(k) === 0 })[0]; if(f) f.focus(); return true }
   if(name === "pcancel"){ ui.pedit = ""; ui.pdraft = {}; render(); return true }
   if(name === "psave"){
     if(k.indexOf("prod:") === 0){

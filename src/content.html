@@ -11,7 +11,7 @@
 /* 틀: 좁은 한 줄 기둥, 위에 탭, 아래 카드 (맥 단축키·체화 단어장과 같은 뼈대·같은 이름).
    색은 밝은 한 벌만 쓴다 (2026-11-16 동욱: 편집 믹서가 어두우니 이 앱은 밝고 세련되게) — 종이색 바탕 · 흰 카드 · 코발트 강조,
    상품 = 코랄(--prod) · 정체성 = 청록(--iden). 색·그림자·둥글기는 :root 값만 고친다.
-   이 앱은 조종판이다: 브랜드 → 비율 → 믹서 → 키워드 → 잘 되는 콘텐츠 → 추천 → 대본 초안 (탭 순서는 TABS). 데이터는 볼트 파일이 정본이고 여기서는 읽기만,
+   이 앱은 조종판이다: 브랜드(단어·즐겨찾기·레퍼런스 채널) → 키워드(씨앗 → ★ 선별 → 콘텐츠 검색) → 콘텐츠(☆) → 추천 → 대본 초안 (탭 순서는 TABS). 데이터는 볼트 파일이 정본이고 여기서는 읽기만,
    앱이 쓰는 것은 설정(ct.set)과 맥에 보내는 명령(cmd)뿐이다. */
 :root{
   color-scheme:light;
@@ -97,20 +97,18 @@ details>summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--muted)
 details>summary::after{content:" ▾"}details[open]>summary::after{content:" ▴"}
 .pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.65}
 /* 비율 */
-.mix{display:flex;height:44px;border-radius:14px;overflow:hidden;font-size:14px;font-weight:700;gap:3px}
-.mix div{display:grid;place-items:center;min-width:0;overflow:hidden;white-space:nowrap;transition:flex-basis .15s}
-.mix div{border-radius:6px}.mix .p{background:var(--prod);color:#fff}.mix .i{background:var(--iden);color:#fff}
 input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
 .step{display:inline-flex;align-items:center;gap:6px}
 .step button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
 .step b{min-width:26px;text-align:center;font-family:var(--f-mono)}
-.knobs{display:grid;gap:16px}.knob-h{display:flex;justify-content:space-between;align-items:baseline}.knob input[type=range]{margin:2px 0 0;accent-color:var(--accent)}
 .row2{display:flex;gap:8px;align-items:center}.row2>input,.row2>select{flex:1;min-width:0}
 /* 한눈에 — 여섯 단계 상자 */
 .pfield{margin-top:12px}.pfield .pl{display:block;font-size:13px;font-weight:650;color:var(--muted);margin-bottom:3px}.pfield textarea{min-height:0}
 .pv{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.pv>span:first-child,.pv>div:first-child{flex:1;min-width:0}
 .prow{display:flex;gap:6px;align-items:center;margin-top:6px}.prow input{min-width:0}.prow input[data-pf=name]{flex:0 0 32%}.prow input[data-pf=what]{flex:1}
+.ref-t{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}.ref-t .mk{width:34px;height:34px;flex:none}.mk.fav[aria-pressed=true]{background:#F5B700;border-color:#F5B700;color:#fff}
+.x0{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0 0 0 4px}
 .card.next{border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
 .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .stepbox{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:14px;padding:10px 12px;font:inherit;color:var(--ink);cursor:pointer;min-width:0}
@@ -214,8 +212,8 @@ var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부�
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드 — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "sum");
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
-var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["mix", "비율"], ["mixer", "믹서"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["build", "구축"], ["script", "대본"]];
-var PARTS = { mixlog: ".mixlog", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
+var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["build", "구축"], ["script", "대본"]];
+var PARTS = { search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -280,7 +278,7 @@ function setS(patch){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "소재 채널 찾기", brief: "새 브랜드 프로필" };
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -322,7 +320,7 @@ function runHtml(kinds){
 function viewBrand(){
   var b = B(), h = "";
   h += "<section class=\"card\"><div class=\"card-h\"><h3>브랜드</h3><span class=\"n\">" + brands().length + "개</span></div>" +
-    "<p class=\"lead\">맨 위에서 브랜드를 고르면 그 브랜드의 자료·비율·색으로 열려요. 주소 끝에 <span class=\"mono\">?b=" + esc(cur) + "</span> 가 붙어 있어서, 이 주소를 즐겨찾기나 바로가기로 두면 이 브랜드로 바로 열려요.</p>" +
+    "<p class=\"lead\">맨 위에서 브랜드를 고르면 그 브랜드의 자료·색으로 열려요. 주소 끝에 <span class=\"mono\">?b=" + esc(cur) + "</span> 가 붙어 있어서, 이 주소를 즐겨찾기나 바로가기로 두면 이 브랜드로 바로 열려요.</p>" +
     "<div class=\"chips\"><button class=\"chip dash\" data-act=\"newbrand\">＋ 기획서로 새 브랜드</button></div>";
   if(ui.newBrand){
     h += "<h4>브랜드 기획서 올리기</h4><p class=\"lead\">기획서 글을 붙여 넣거나 파일(.md · .txt)을 고르면, 맥의 Claude가 판매 상품·타깃·채널 정체성·키워드 힌트를 뽑아 프로필 초안을 만들어요. 초안은 여기 브랜드 목록에 「확인 전」으로 뜹니다.</p>" +
@@ -350,7 +348,7 @@ function viewBrand(){
       b.topicBank.map(function(t){ return "<div class=\"it\"><span class=\"num muted\">" + esc(t.n) + "</span><div class=\"it-m\"><div>" + esc(t.topic) + "</div><div class=\"it-d\">필러 " + esc(t.pillar) + " · " + esc(t.product) + "</div></div></div>" }).join("") + "</div></details>" : "") +
     "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3>역할 · 단계</h3></div><p class=\"lead\">추천이 콘텐츠를 나누는 기준이에요. 역할(풀링·키 …)과 시청자 단계를 고치고 더하세요.</p>" + plistHtml("roles") + plistHtml("stages") + "</section>";
-  h += brandRefsHtml(b);
+  h += favHtml() + chanFindHtml(b) + brandRefsHtml(b);
   var lg = part("log");
   h += "<section class=\"card\"><div class=\"card-h\"><h3>기록 · 자동 백업</h3><span class=\"n\">" + (lg ? lg.items.length + "개" : "") + "</span></div>" +
     "<p class=\"lead\">단계 자료가 바뀌면 1분 뒤 맥이 그 단계의 PDF와 그날 데이터 사본을 볼트에 남겨요 (같은 날 같은 단계는 최신으로 덮어씀). 볼트라서 구글 드라이브에도 사본이 생겨요. PDF는 맥·드라이브에서 열어요.</p>" +
@@ -361,37 +359,7 @@ function viewBrand(){
   return h;
 }
 
-/* ── 비율 탭 ── */
-function viewMix(){
-  var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
-  var s = S(), names = Object.keys(s.share);
-  var h = "<section class=\"card\"><div class=\"card-h\"><h3>판매 상품 ↔ 채널 정체성</h3><span class=\"n\" id=\"mix-n\"></span></div>" +
-    "<p class=\"lead\">조사할 주제어를 어느 쪽에서 더 뽑을지 정해요. 상품 쪽으로 밀면 사려는 사람이 찾는 말(키 콘텐츠 재료)이, 정체성 쪽으로 밀면 채널 성격에 맞는 넓은 주제(풀링 콘텐츠 재료)가 늘어요.</p>" +
-    "<div class=\"mix\"><div class=\"p\" id=\"mix-p\"></div><div class=\"i\" id=\"mix-i\" style=\"flex:1\"></div></div>" +
-    "<input type=\"range\" id=\"ratio\" min=\"0\" max=\"100\" step=\"5\" value=\"" + s.ratio + "\" aria-label=\"판매 상품 비율\">" +
-    "<div class=\"ends\"><span>← 채널 정체성만</span><span>판매 상품만 →</span></div>" +
-    "<p class=\"small\" id=\"mix-sum\" style=\"margin-top:10px\"></p></section>";
-  h += "<section class=\"card\"><div class=\"card-h\"><h3>세부 값</h3></div><div class=\"rows\">" +
-    stepRow("한 번에 조사할 키워드", "count", s.count, 5) +
-    names.map(function(n){ return stepRow("상품 비중 · " + esc(n), "share:" + esc(n), s.share[n], 1) }).join("") +
-    stepRow("레퍼런스 수 · 미드폼·롱폼 (쇼츠는 안 함)", "mid", s.mid, 1) + stepRow("한 주에 올릴 편 수 (발행 달력)", "perWeek", s.perWeek, 1) +
-    roleNames().map(function(r){ return stepRow("추천 수 · " + esc(r), "role:" + esc(r), s.roles[r], 1) }).join("") +
-    "</div><p class=\"lead\" style=\"margin-top:12px\">바꾸면 바로 저장돼요. 다음 조사·추천부터 이 값으로 돌아요 (월·수·금 자동 조사 포함).</p></section>";
-  return h;
-}
-/* 슬라이더를 끄는 동안에는 화면을 다시 그리지 않고 이 칸들만 바꾼다 (다시 그리면 손에서 슬라이더가 떨어진다) */
-function paintMix(){
-  var s = S(), sp = split(s), names = Object.keys(s.share), p = document.getElementById("mix-p");
-  if(!p) return;
-  p.style.flex = "0 0 " + s.ratio + "%"; p.textContent = s.ratio >= 15 ? "상품 " + sp.nP : "";
-  document.getElementById("mix-i").textContent = s.ratio <= 85 ? "정체성 " + sp.nI : "";
-  document.getElementById("mix-n").textContent = s.ratio + " : " + (100 - s.ratio);
-  document.getElementById("mix-sum").innerHTML = "이번 조사 <b>" + s.count + "개</b> = 상품 <b>" + sp.nP + "</b>" +
-    (sp.nP ? " (" + names.filter(function(n){ return sp.per[n] }).map(function(n){ return esc(n) + " " + sp.per[n] }).join(" · ") + ")" : "") + " + 정체성 <b>" + sp.nI + "</b>";
-}
-function stepRow(label, key, val, by){
-  return "<div><span>" + label + "</span><span class=\"step\"><button data-step=\"" + key + "\" data-by=\"-" + by + "\" aria-label=\"줄이기\">−</button><b>" + val + "</b><button data-step=\"" + key + "\" data-by=\"" + by + "\" aria-label=\"늘리기\">＋</button></span></div>";
-}
+
 
 /* ── 그리기 ──
    맥·저장소에서 온 변화(renderSoft)는 동욱이 칸에 글을 쓰는 중이면 그리지 않고 미뤘다가, 칸에서 나가면 그린다
@@ -406,24 +374,21 @@ function render(){
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
   document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
-  var v0 = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, script: viewScript }[tab] || viewBrand;
+  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, script: viewScript }[tab] || viewBrand;
   ui.later = false;
-  var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pin != null ? "[data-pin=\"" + CSS.escape(act0.dataset.pin) + "\"]" : act0.id ? "#" + act0.id : "");
+  var act0 = document.activeElement, key = act0 && (act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
   var v = function(){ return v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") };   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
   document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();
-  if(tab === "mix") paintMix();
   if(key){ var back = document.querySelector(key); if(back) back.focus({ preventScroll: true }) }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
 }
 
 document.addEventListener("click", function(e){
-  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-step],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-tpl],[data-fbdel],[data-go]");
+  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-go]");
   if(!t) return;
   var d = t.dataset;
   if(d.go){ var gp = d.go.split("|"); if(gp[1]){ var gk = gp[1].split("="); ui[gk[0]] = gk[1] } tab = gp[0]; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }   // 한눈에 → 그 탭 (필요하면 그 탭의 보기도 맞춘다)
   if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
   if(d.brand){ pickBrand(d.brand); return }
-  if(d.tpl){ if(d.tpl !== mixTpl().id && (!Object.keys((SETS[cur] || {}).mixer || {}).length || confirm("템플릿을 바꾸면 이 브랜드에서 바꾼 값이 템플릿 값으로 돌아가요. 바꿀까요?"))) setS({ template: d.tpl, mixer: {} }); return }
-  if(d.fbdel){ setS({ feedback: ((SETS[cur] || {}).feedback || []).filter(function(f){ return f.at !== d.fbdel }) }); return }
   if(d.hide){ ui.hide[d.hide] = 1; save("ct.hide", ui.hide); render(); return }
   if(d.ui){ var kv = d.ui.split("="); ui[kv[0]] = kv[1] === "true" ? true : kv[1] === "false" ? false : (kv[1] === "" || isNaN(+kv[1])) ? kv[1] : +kv[1]; render();
     if(kv[0] === "bdView") save("ct.bdView", kv[1]);   // 구축 보드 세로/시트는 기기마다 기억
@@ -436,31 +401,15 @@ document.addEventListener("click", function(e){
     setS(o); return }
   if(d.pick){ var pk = Object.assign({}, S().pick); if(pk[d.pick]) delete pk[d.pick]; else pk[d.pick] = 1; setS({ pick: pk }); return }
   if(d.copy){ var el = document.getElementById(d.copy); if(el && navigator.clipboard) navigator.clipboard.writeText(el.innerText).then(function(){ t.textContent = "복사했어요" }); return }
-  if(d.step){
-    var s2 = S(), by = +d.by, k2 = d.step;
-    function lim(v, lo, hi){ return Math.max(lo, Math.min(hi, v + by)) }   // 한계에 닿아 값이 그대로면 저장하지 않는다
-    if(k2 === "count"){ if(lim(s2.count, 5, 40) !== s2.count) setS({ count: lim(s2.count, 5, 40) }) }
-    else if(k2 === "mid"){ if(lim(s2.mid, 0, 20) !== s2.mid) setS({ mid: lim(s2.mid, 0, 20) }) }
-    else if(k2 === "perWeek"){ if(lim(s2.perWeek, 1, 7) !== s2.perWeek) setS({ perWeek: lim(s2.perWeek, 1, 7) }) }
-    else if(k2.indexOf("share:") === 0){ var sn = k2.slice(6); if(lim(s2.share[sn], 0, 20) !== s2.share[sn]){ var sh = Object.assign({}, s2.share); sh[sn] = lim(sh[sn], 0, 20); setS({ share: sh }) } }
-    else if(k2.indexOf("role:") === 0){ var rn = k2.slice(5); if(lim(s2.roles[rn], 0, 10) !== s2.roles[rn]){ var ro = Object.assign({}, s2.roles); ro[rn] = lim(ro[rn], 0, 10); setS({ roles: ro }) } }
-    return;
-  }
   if(d.act) act(d.act, t);
 });
 document.addEventListener("input", function(e){
-  if(e.target.id === "ratio"){ SETS[cur] = Object.assign({}, SETS[cur] || {}, { ratio: +e.target.value }); paintMix() }
-  if(e.target.id === "fb-text") ui.fbDraft = e.target.value;
-  if(e.target.id === "tpl-name") ui.tplName = e.target.value;
-  if(e.target.dataset.pin != null){ ui.pdraft = Object.assign({}, ui.pdraft); ui.pdraft[e.target.dataset.pin] = e.target.value }
+  if(e.target.dataset.pfin != null){ ui.pdraft = Object.assign({}, ui.pdraft); ui.pdraft[e.target.dataset.pfin] = e.target.value }
   if(e.target.dataset.addseed != null){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
-  if(e.target.dataset.knob){ var kb = mixDef().knobs.filter(function(k){ return k.id === e.target.dataset.knob })[0], lab = document.getElementById("kv-" + e.target.dataset.knob); if(kb && lab) lab.textContent = knobText(kb, +e.target.value) }
 });
 function enterAct(t){   // Enter 로 넣기·저장 — 칸마다 할 일
-  if(t.id === "fb-text"){ act("fbadd"); return true }
-  if(t.id === "tpl-name"){ act("tplnew"); return true }
   if(t.dataset.addseed != null){ act("seedadd", t); return true }
-  if(t.dataset.pin != null && t.tagName === "INPUT"){ var pk = t.dataset.pin;
+  if(t.dataset.pfin != null && t.tagName === "INPUT"){ var pk = t.dataset.pfin;
     if(/^prod:new/.test(pk)) act("paddprod", t);
     else if(/:new$/.test(pk)) act("padd", { dataset: { k: pk.replace(/:new$/, "") } });
     else act("psave", { dataset: { k: ui.pedit } });
@@ -480,8 +429,6 @@ document.addEventListener("keyup", function(e){
   var t = enterWait; enterWait = null; enterAct(t);
 });
 document.addEventListener("change", function(e){
-  if(e.target.id === "ratio") setS({ ratio: +e.target.value });
-  if(e.target.dataset.knob){ var mx = Object.assign({}, (SETS[cur] || {}).mixer || {}); mx[e.target.dataset.knob] = +e.target.value; var y = window.scrollY; setS({ mixer: mx }); window.scrollTo(0, y) }
   if(e.target.dataset.plan){ var pl = Object.assign({}, S().plan); if(e.target.value) pl[e.target.dataset.plan] = e.target.value; else delete pl[e.target.dataset.plan]; setS({ plan: pl }) }
   if(e.target.id === "nb-file" && e.target.files[0]){
     var f = e.target.files[0], rd = new FileReader();
@@ -502,10 +449,6 @@ function act(name, el){
   if(name === "discover"){ var c = candidates(s); send("discover", "키워드·레퍼런스 조사 (상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " · " + c.length + "개)",
     { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
   if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }
-  if(name === "resetmixer"){ setS({ mixer: {} }); return }
-  if(name === "tplnew"){ saveTpl("new"); return }
-  if(name === "tplover"){ saveTpl("over"); return }
-  if(name === "toastx"){ ui.toast = ""; render(); return }
   if(name === "seedadd"){   // 씨앗 단어 넣기 — key 「정체성」 또는 「상품:<상품>」. 띄어쓰기는 빼고(네이버가 붙여 쓴 말로 받는다), 같은 단어는 한 번만
     var key = el.dataset.key || el.dataset.addseed, inp = [].filter.call(document.querySelectorAll("[data-addseed]"), function(x){ return x.dataset.addseed === key })[0];
     var w = ((inp && inp.value) || "").replace(/\s+/g, "").slice(0, 20), cur3 = seedsOf();
@@ -515,17 +458,26 @@ function act(name, el){
     ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[key] = ""; ui.seed = w;
     setS({ seeds: cur3.concat([nx]) }); return;
   }
+  if(name === "chanfind"){ var sd2 = seedsOf(); if(!sd2.length) return;
+    var pk2 = (SETS[cur] || {}).chanpick || {}, skip = (((part("chancand") || {}).items) || []).filter(function(x){ return pk2[x.id] === "skip" }).map(function(x){ return x.name });
+    send("chanfind", "소재 채널 찾기 — " + sd2.map(function(x){ return x.word }).join(" · "), { seeds: sd2, have: (B().channels || []).map(function(c){ return c.name }), skip: skip }); return }
+  if(name === "chanpick"){ var cp = Object.assign({}, (SETS[cur] || {}).chanpick || {}); if(el.dataset.v) cp[el.dataset.id] = el.dataset.v; else delete cp[el.dataset.id]; setS({ chanpick: cp }); return }
+  if(name === "stoggle"){ ui.sOff = Object.assign({}, ui.sOff); if(ui.sOff[el.dataset.kw]) delete ui.sOff[el.dataset.kw]; else ui.sOff[el.dataset.kw] = 1; render(); return }
+  if(name === "search"){ var off = ui.sOff || {}, kws = scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] && !off[x.kw] }).map(function(x){ return x.kw }).slice(0, 10);
+    if(!kws.length || searchState().busy) return; setS({ searchReq: { at: new Date().toISOString(), kws: kws } }); return }
+  if(name === "favc"){ var fv = Object.assign({}, (SETS[cur] || {}).favc || {}), vid = el.dataset.vid;
+    if(fv[vid]) delete fv[vid]; else fv[vid] = Object.assign(videoOf(vid), { at: new Date().toISOString() });
+    setS({ favc: fv }); return }
   if(name === "seedsrc"){ if(el.dataset.v !== seedSrc()) setS({ seedSrc: el.dataset.v }); return }
   if(name === "seeddel"){ var wd = el.dataset.word; if(!confirm("씨앗 단어 「" + wd + "」을 뺄까요? 이 단어에서만 나온 검색어는 다음에 받을 때 목록에서 빠져요 (★한 것은 남아요).")) return;
     setS({ seeds: seedsOf().filter(function(x){ return x.word !== wd }) }); return }
-  if(name === "fbadd"){ var tx = (document.getElementById("fb-text").value || "").trim(); if(!tx){ alert("피드백을 한 줄 적어 주세요."); return } ui.fbDraft = "";
-    setS({ feedback: ((SETS[cur] || {}).feedback || []).concat([{ at: new Date().toISOString(), knob: document.getElementById("fb-knob").value, text: tx.slice(0, 400) }]) }); return }
   if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
   if(name === "recommend"){ var pk = scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] });   // ★한 검증 키워드 위주로 추천받는다
     send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + (pk.length ? " · ★ 검증 키워드 " + pk.length + "개 위주" : "") + ")",
-      { roles: s.roles, ratio: s.ratio, keywords: pk.map(function(x){ return { kw: x.kw, kind: x.kind, product: x.product, total: x.total } }), seeds: seedsOf() }); return }
+      { roles: s.roles, ratio: s.ratio, keywords: pk.map(function(x){ return { kw: x.kw, kind: x.kind, product: x.product, total: x.total } }), seeds: seedsOf(),
+        favContents: Object.keys((SETS[cur] || {}).favc || {}).map(function(v){ return Object.assign({ vid: v }, SETS[cur].favc[v]) }) }); return }
   if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
   if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : pickedIds(s); if(!sids.length) return;

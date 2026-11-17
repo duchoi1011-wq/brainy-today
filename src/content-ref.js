@@ -38,9 +38,9 @@ function refScore(x){
 function refCard(x){
   var bd = band(x.ratio), g = growth(x), proof = isProof(x), o = outlier(x), dv = daily(x);
   return "<div class=\"ref\">" + (x.vid ? "<a href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(x.vid) + "/mqdefault.jpg\"></a>" : "") +
-    "<div class=\"ref-m\"><a class=\"t\" href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title) + "</a>" +
+    "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title) + "</a>" + (x.vid ? favBtn(x.vid) : "") + "</div>" +
     "<div class=\"it-d\">" + esc(x.channel) + " · 구독 " + esc(x.subs || "—") + " · 조회 " + (g ? fmt(g.now) + (g.pct > 0 ? " <span class=\"up\">(+" + g.pct + "%)</span>" : "") : esc(x.views || "—")) + " · " + esc(x.len) + " · " + esc(x.published) + "</div>" +
-    "<div><span class=\"tag fill\">" + esc(x.role) + "</span> " + stageTag(x) + " <span class=\"tag\" style=\"border-color:var(--accent);color:var(--accent)\">믹서 " + refScore(x) + "점</span> <span class=\"tag p\">" + esc(x.product) + "</span> <span class=\"tag\">" + esc(x.form) + "</span> " +
+    "<div><span class=\"tag fill\">" + esc(x.role) + "</span> " + stageTag(x) + " <span class=\"tag\" style=\"border-color:var(--accent);color:var(--accent)\">점수 " + refScore(x) + "</span> <span class=\"tag p\">" + esc(x.product) + "</span> <span class=\"tag\">" + esc(x.form) + "</span> " +
     "<span class=\"tag " + bd[1] + "\">" + (x.ratio != null ? "조회÷구독 " + x.ratio + "배 · " : "") + bd[0] + "</span> " +
     (o != null ? "<span class=\"tag " + (o >= 3 ? "ok" : "") + "\">채널 평소의 " + o + "배</span> " : "") + (dv ? "<span class=\"tag " + (dv > 0 ? "ok" : "") + "\">하루 +" + fmt(dv) + "</span> " : "") +
     (x.buyer ? "<span class=\"tag " + (x.buyer === "✓" ? "ok" : "") + "\">구매자 " + x.buyer + "</span> " : "") +
@@ -55,12 +55,17 @@ function viewRef(){
   var b = B(), r = part("ref"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var items = r ? r.items.filter(isLong) : [], nShort = r ? r.items.length - items.length : 0;
   var live = part("live"), chan = part("chan");
-  var h = "<div class=\"chips\"><button class=\"chip" + (ui.refView === "videos" ? " on" : "") + "\" data-ui=\"refView=videos\">레퍼런스 영상<span>" + items.length + "</span></button>" +
+  var sr = part("search"), nFav = Object.keys((SETS[cur] || {}).favc || {}).length;
+  var h = "<div class=\"chips\"><button class=\"chip" + (ui.refView === "search" ? " on" : "") + "\" data-ui=\"refView=search\">키워드로 찾은 콘텐츠<span>" + (sr && sr.items ? sr.items.length : 0) + "</span></button>" +
+    "<button class=\"chip" + (ui.refView === "fav" ? " on" : "") + "\" data-ui=\"refView=fav\">☆ 즐겨찾기<span>" + nFav + "</span></button>" +
+    "<button class=\"chip" + (ui.refView === "videos" ? " on" : "") + "\" data-ui=\"refView=videos\">레퍼런스 영상<span>" + items.length + "</span></button>" +
     "<button class=\"chip" + (ui.refView === "stages" ? " on" : "") + "\" data-ui=\"refView=stages\">단계 사다리</button>" +
     "<button class=\"chip" + (ui.refView === "chans" ? " on" : "") + "\" data-ui=\"refView=chans\">레퍼런스 채널<span>" + ((b.channels || []).length) + "</span></button>" +
     "<button class=\"chip dash\" data-act=\"refresh\"" + (openCmd("refresh") || !r || !r.items.length ? " disabled" : "") + ">↻ 지금 최신화</button></div>" +
     "<p class=\"lead\">반응 최신화 " + (live ? day(live.updatedAt) : "아직 안 함") + " · 채널 새 영상 " + (chan ? day(chan.updatedAt) : "아직 안 함") + "</p>";
   if(ui.refView === "chans") return h + chansHtml(b, chan);
+  if(ui.refView === "search") return h + searchResultsHtml();
+  if(ui.refView === "fav") return h + favListHtml();
   if(!r) return h + "<p class=\"empty\">아직 레퍼런스가 없어요. 키워드 탭에서 조사를 돌리면 채워져요.</p>";
   if(ui.refView === "stages") return h + stagesHtml(items);
   var list = items.filter(function(x){
@@ -74,7 +79,7 @@ function viewRef(){
     "<div class=\"chips\">" + chip("refRole", "all", "역할 전체") + roleNames().map(function(n){ return chip("refRole", esc(n), esc(n)) }).join("") + "</div>" +
     (nShort ? "<p class=\"lead\">미드폼·롱폼만 보여요 — 지난 조사의 숏폼 " + nShort + "개는 뺐어요 (시트에는 남아 있어요).</p>" : "") +
     "<div class=\"chips\" style=\"margin-top:6px\"><button class=\"chip" + (ui.refBuyer ? " on" : "") + "\" data-ui=\"refBuyer=" + !ui.refBuyer + "\">구매자 ✓ · 성과 근거만</button></div>" +
-    "<div class=\"chips\" style=\"margin-top:6px\">" + chip("refSort", "mix", "믹서 점수순") + chip("refSort", "ratio", "조회÷구독순") + chip("refSort", "out", "채널 평소 대비순") + chip("refSort", "grow", "요즘 조회 늘어난 순") + chip("refSort", "date", "최근 조사순") + "</div>" +
+    "<div class=\"chips\" style=\"margin-top:6px\">" + chip("refSort", "mix", "종합 점수순") + chip("refSort", "ratio", "조회÷구독순") + chip("refSort", "out", "채널 평소 대비순") + chip("refSort", "grow", "요즘 조회 늘어난 순") + chip("refSort", "date", "최근 조사순") + "</div>" +
     (ui.refSort === "out" ? "<p class=\"lead\" style=\"margin-top:8px\">채널 평소 = 그 채널 일반 영상 최근 30개의 가운데 조회수예요.</p>" : "") +
     "<div style=\"margin-top:6px\">" + (list.slice(0, ui.refMore).map(refCard).join("") || "<p class=\"empty\">조건에 맞는 레퍼런스가 없어요.</p>") + "</div>" +
     (list.length > ui.refMore ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"refMore=" + (ui.refMore + 30) + "\">더 보기 (" + (list.length - ui.refMore) + "개 남음)</button></div>" : "") + "</section>";
@@ -118,4 +123,44 @@ function weekdayHtml(items){
   return "<section class=\"card\"><div class=\"card-h\"><h3>잘 된 영상이 올라온 요일</h3><span class=\"n\">" + good.length + "개</span></div>" +
     "<p class=\"lead\">구매자 ✓ · 성과 근거가 되는 레퍼런스의 게시 요일이에요. 표본이 작고 남의 채널이라 참고만 하세요 — 내 채널 시청자가 깨어 있는 시간은 유튜브 스튜디오 자료가 있어야 알 수 있어요.</p>" +
     "<div class=\"bars\">" + [1, 2, 3, 4, 5, 6, 0].map(function(i){ return "<div><span class=\"num\">" + n[i] + "</span><i style=\"height:" + Math.round(n[i] / mx * 44) + "px\"></i>" + names[i] + "</div>" }).join("") + "</div></section>";
+}
+
+/* ☆ 콘텐츠 즐겨찾기 — 좋은 콘텐츠를 브랜드가 기억한다 (ct.set favc {영상 id: {title, channel, kw, at}} → 맥이 브랜드.json favorites 에도 적는다) */
+function favOf(vid){ return ((SETS[cur] || {}).favc || {})[vid] }
+function favBtn(vid){ var on = !!favOf(vid); return "<button class=\"mk fav\" data-act=\"favc\" data-vid=\"" + esc(vid) + "\" aria-pressed=\"" + on + "\" title=\"" + (on ? "즐겨찾기 풀기" : "즐겨찾기 — 브랜드가 기억") + "\" aria-label=\"즐겨찾기\">" + (on ? "★" : "☆") + "</button>" }
+function videoOf(vid){   // 즐겨찾기에 적을 영상 정보 — 검색 결과나 레퍼런스에서 찾는다
+  var sr = part("search"), r = part("ref"), x = ((sr && sr.items) || []).filter(function(y){ return y.vid === vid })[0];
+  if(x) return { title: x.title, channel: x.channel, kw: x.kw };
+  x = ((r && r.items) || []).filter(function(y){ return y.vid === vid })[0];
+  return x ? { title: x.title, channel: x.channel, kw: x.query || "" } : {};
+}
+function searchCard(x){
+  var url = "https://www.youtube.com/watch?v=" + x.vid, bd = band(x.ratio);
+  return "<div class=\"ref\"><a href=\"" + url + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(x.vid) + "/mqdefault.jpg\"></a>" +
+    "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"" + url + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title) + "</a>" + favBtn(x.vid) + "</div>" +
+    "<div class=\"it-d\">" + esc(x.channel) + " · 구독 " + fmt(x.subs) + " · 조회 " + fmt(x.views) + " · " + esc(x.len) + " · " + esc(x.date) + "</div>" +
+    "<div><span class=\"tag " + bd[1] + "\">" + (x.ratio != null ? "조회÷구독 " + x.ratio + "배 · " : "") + bd[0] + "</span>" +
+    (Array.isArray(x.replayed) ? " <span class=\"tag\">다시 본 구간 " + esc(x.replayed.join(" · ")) + "</span>" : "") + (x.comments ? " <span class=\"tag\">댓글 " + esc(x.comments) + "</span>" : "") + "</div></div></div>";
+}
+function searchResultsHtml(){
+  var d = part("search"), st = searchState();
+  if(!d || !d.items || !d.items.length) return "<section class=\"card\"><p class=\"empty\">" + (st.busy ? "맥이 검색하는 중이에요…" : "아직 검색한 콘텐츠가 없어요.") + "</p><div class=\"acts\"><button class=\"btn\" data-go=\"kw\">키워드 탭에서 ★ 키워드로 검색 →</button></div></section>";
+  var kws = [], by = {};
+  d.items.forEach(function(x){ if(!by[x.kw]){ by[x.kw] = []; kws.push(x.kw) } by[x.kw].push(x) });
+  var sort = ui.srSort || "ratio";
+  return "<section class=\"card\"><div class=\"card-h\"><h3>키워드로 찾은 콘텐츠</h3><span class=\"n\">" + d.items.length + "개 · " + esc(day(d.updatedAt)) + "</span></div>" +
+    "<p class=\"lead\">★ 키워드마다 유튜브 검색 상위의 미드폼·롱폼이에요. 좋은 콘텐츠는 ☆를 눌러 즐겨찾기 하면 브랜드가 기억해요." + (st.busy ? " 지금 새로 검색하는 중이에요." : "") + "</p>" +
+    "<div class=\"chips\">" + [["ratio", "조회÷구독순"], ["views", "조회순"], ["date", "최신순"]].map(function(o){ return "<button class=\"chip" + (sort === o[0] ? " on" : "") + "\" data-ui=\"srSort=" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div></section>" +
+    kws.map(function(k){
+      var l = by[k].slice().sort(function(a, c){ return sort === "views" ? c.views - a.views : sort === "date" ? String(c.date).localeCompare(String(a.date)) : (c.ratio || 0) - (a.ratio || 0) });
+      return "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(k) + "</h3><span class=\"n\">" + l.length + "개</span></div>" + l.map(searchCard).join("") + "</section>";
+    }).join("");
+}
+function favListHtml(){
+  var f = (SETS[cur] || {}).favc || {}, ids = Object.keys(f).sort(function(a, c){ return String(f[c].at).localeCompare(String(f[a].at)) });
+  if(!ids.length) return "<section class=\"card\"><p class=\"empty\">아직 즐겨찾기 한 콘텐츠가 없어요. 콘텐츠 옆 ☆를 누르세요.</p></section>";
+  return "<section class=\"card\"><div class=\"card-h\"><h3>☆ 즐겨찾기 콘텐츠</h3><span class=\"n\">" + ids.length + "개</span></div><div class=\"list\">" + ids.map(function(vid){ var x = f[vid];
+    return "<div class=\"ref\"><a href=\"https://www.youtube.com/watch?v=" + esc(vid) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(vid) + "/mqdefault.jpg\"></a>" +
+      "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"https://www.youtube.com/watch?v=" + esc(vid) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title || vid) + "</a>" + favBtn(vid) + "</div>" +
+      "<div class=\"it-d\">" + esc(x.channel || "") + (x.kw ? " · 키워드 " + esc(x.kw) : "") + " · " + esc(day(x.at)) + "</div></div></div>" }).join("") + "</div></section>";
 }

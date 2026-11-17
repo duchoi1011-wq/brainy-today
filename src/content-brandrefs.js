@@ -36,3 +36,25 @@ function brandRefsHtml(b){
   var src = b.refCards ? Object.keys(b.refCards).map(function(k){ return String(b.refCards[k]).split("/").pop().replace(/\.md$/, "") }).join(" · ") : "";
   return h + (src ? "<p class=\"lead\" style=\"margin-top:10px\">정본 카드 · " + esc(src) + "</p>" : "") + "</section>";
 }
+/* 소재 채널 찾기 — 동욱이 정한 정체성 단어·상품 판매 단어마다, 소재(사례·숫자·연구·현장 목소리)를 꾸준히 주는 전 세계 채널을 맥의 Claude가 찾는다 (cmd kind "chanfind").
+   후보는 볼트 <브랜드>/채널 후보.json (ct.data .chancand). 「넣기」(ct.set chanpick = add)한 것만 맥 동기화가 기획 레퍼런스 카드 1-1·1-2 표에 한 줄씩 넣고,
+   카드가 바뀌면 위 「브랜드 레퍼런스」가 저절로 바뀐다. 「빼기」(skip)는 다음 후보에서도 다시 권하지 않는다. */
+function chanFindHtml(b){
+  var sd = seedsOf(), cd = part("chancand"), pick = (SETS[cur] || {}).chanpick || {}, busy = openCmd("chanfind");
+  var items = ((cd && cd.items) || []).filter(function(x){ return !x.added && pick[x.id] !== "skip" });
+  var h = "<section class=\"card\"><div class=\"card-h\"><h3>소재 채널 찾기</h3><span class=\"n\">단어 " + sd.length + "개</span></div>" +
+    "<p class=\"lead\">정체성 단어와 상품 판매 단어마다 소재를 꾸준히 주는 채널을 전 세계에서 찾아요 — 유튜브 · 업계 매체 · 뉴스레터 · 팟캐스트 · 리서치 · 커뮤니티, 언어 무관. 맥의 Claude가 채널을 열어 최근에도 올리는지 확인하고, 「넣기」 한 것만 브랜드 레퍼런스 카드에 들어가요.</p>" +
+    "<div class=\"chips\">" + sd.map(function(x){ return "<span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" + esc(x.word) + "</span>" }).join("") + "</div>" +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"chanfind\"" + (busy || !sd.length ? " disabled" : "") + ">" + (busy ? "맥이 찾는 중…" : "이 단어로 소재 채널 찾기") + "</button>" +
+    (cd && cd.updatedAt ? "<span class=\"lead\" style=\"margin:0\">마지막 " + esc(day(cd.updatedAt)) + "</span>" : "") + "</div>";
+  if(items.length) h += "<h4>찾은 후보 <span class=\"num muted\">" + items.length + "</span></h4><div class=\"list\">" + items.map(function(x){
+    var on = pick[x.id] === "add";
+    return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\">" + (x.url ? "<a href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(x.name) + "</b></a>" : "<b>" + esc(x.name) + "</b>") +
+      " <span class=\"tag " + (x.side === "상품" ? "p" : "i") + "\">" + esc(x.seed || x.side || "") + "</span> <span class=\"tag\">" + esc(x.kind || "") + "</span> <span class=\"tag\">" + esc(x.lang || "") + "</span>" + (x.grade ? " <span class=\"tag\">" + esc(x.grade) + "</span>" : "") + "</div>" +
+      "<div class=\"it-d\">" + esc(x.take || "") + "</div>" + (x.example ? "<div class=\"apply\"><b>대본 적용 예</b> " + esc(x.example) + "</div>" : "") +
+      "<div class=\"it-d\">" + esc(x.proof || x.why || "") + "</div>" +
+      "<div class=\"acts\"><button class=\"btn sm" + (on ? "" : " primary") + "\" data-act=\"chanpick\" data-id=\"" + esc(x.id) + "\" data-v=\"" + (on ? "" : "add") + "\">" + (on ? "넣는 중 — 취소" : "레퍼런스에 넣기") + "</button>" +
+      "<button class=\"btn sm\" data-act=\"chanpick\" data-id=\"" + esc(x.id) + "\" data-v=\"skip\">빼기</button></div></div></div>" }).join("") + "</div>";
+  else if(cd && cd.items && cd.items.length) h += "<p class=\"lead\" style=\"margin-top:8px\">찾은 후보를 모두 넣거나 뺐어요. 단어를 바꾸고 다시 찾을 수 있어요.</p>";
+  return h + "</section>";
+}

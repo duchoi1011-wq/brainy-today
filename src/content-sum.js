@@ -7,21 +7,23 @@ function nextStep(){
   var b = B(); if(!b) return null;
   var s = S(), sd = seedsOf(), all = scored(), pins = all.filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] });
   var rc = part("rec"), rd = rc && rc.rounds && rc.rounds[rc.rounds.length - 1], picks = pickedIds(s), noScript = picks.filter(function(id){ return !scriptOf(id) });
-  var fresh = pins.filter(function(x){ return !x.surveyed });
-  if(!sd.length) return { n: 1, t: "검색어를 뽑을 단어 넣기", d: "브랜드 탭에서 브랜드 정체성 단어와 상품 판매 단어를 넣으세요.", go: "brand" };
+    if(!sd.length) return { n: 1, t: "검색어를 뽑을 단어 넣기", d: "브랜드 탭에서 브랜드 정체성 단어와 상품 판매 단어를 넣으세요.", go: "brand" };
   if(seedsPending()) return { n: 2, t: "연관 검색어 받는 중", d: "맥이 단어마다 연관 검색어를 받고 있어요 (1분 안팎). 다 받으면 키워드 탭에서 ★로 고르세요.", go: "kw" };
   if(!pins.length) return { n: 3, t: "쓸 검색어 ★로 고르기", d: "키워드 탭에서 씨앗 단어별 연관 검색어를 보고 쓸 것에 ★을 누르세요. 다음 단계는 ★한 것 위주로 가요.", go: "kw" };
-  if(fresh.length) return { n: 4, t: "★한 검색어로 조사 돌리기", d: "★한 " + pins.length + "개 중 " + fresh.length + "개가 아직 조사 전이에요 (" + fresh.slice(0, 4).map(function(x){ return x.kw }).join(" · ") + (fresh.length > 4 ? " …" : "") + "). 조사하면 이 검색어로 잘 된 영상·경쟁사를 찾아 와요.", act: "discover", btn: "★ 검색어로 조사 돌리기", busy: openCmd("discover") };
-  if(!rd || (rc.updatedAt && part("ref") && Date.parse(part("ref").updatedAt) > Date.parse(rc.updatedAt))) return { n: 5, t: "★ 검색어 위주로 추천 받기", d: "조사가 끝났어요. ★한 " + pins.length + "개 검색어 위주로 찍을 주제를 추천받으세요.", act: "recommend", btn: "★ 위주로 추천 받기", busy: openCmd("recommend") };
-  if(!picks.length) return { n: 6, t: "찍을 주제 ＋로 고르기", d: "추천 탭에서 찍을 주제에 ＋를 누르세요. 고른 것만 대본으로 넘어가요.", go: "rec" };
-  if(noScript.length) return { n: 7, t: "고른 주제로 대본 초안", d: "고른 " + picks.length + "개 중 " + noScript.length + "개가 대본 전이에요. 레퍼런스 채널의 말하는 방식·구성에 맞춰 대본 초안을 써요.", act: "script", btn: "고른 " + noScript.length + "개 대본 초안 만들기", busy: openCmd("script") };
-  return { n: 8, t: "대본 검토", d: "고른 주제의 대본이 다 나왔어요. 대본 탭에서 읽고 고칠 점을 남기세요.", go: "script" };
+  var sr = part("search"), searched = {}; ((sr && sr.runs) || []).forEach(function(r){ searched[r.kw] = 1 });
+  var unsearched = pins.filter(function(x){ return !searched[x.kw] });
+  if(unsearched.length) return { n: 4, t: "★ 키워드로 콘텐츠 검색", d: "★한 " + pins.length + "개 중 " + unsearched.length + "개로 아직 콘텐츠를 안 찾아봤어요 (" + unsearched.slice(0, 4).map(function(x){ return x.kw }).join(" · ") + (unsearched.length > 4 ? " …" : "") + "). 맥이 유튜브에서 미드폼·롱폼을 찾아 와요.", act: "search", btn: "★ 키워드로 콘텐츠 검색", busy: searchState().busy };
+  if(!Object.keys((SETS[cur] || {}).favc || {}).length) return { n: 5, t: "좋은 콘텐츠 ☆ 즐겨찾기", d: "콘텐츠 탭 「키워드로 찾은 콘텐츠」에서 좋은 영상에 ☆를 누르세요. 추천은 ☆한 콘텐츠와 ★ 키워드 위주로 가요.", go: "ref|refView=search" };
+  if(!rd || (rc.updatedAt && sr && Date.parse(sr.updatedAt) > Date.parse(rc.updatedAt))) return { n: 6, t: "★ 검색어 위주로 추천 받기", d: "★ 키워드 " + pins.length + "개와 ☆ 콘텐츠 위주로 찍을 주제를 추천받으세요.", act: "recommend", btn: "★ 위주로 추천 받기", busy: openCmd("recommend") };
+  if(!picks.length) return { n: 7, t: "찍을 주제 ＋로 고르기", d: "추천 탭에서 찍을 주제에 ＋를 누르세요. 고른 것만 대본으로 넘어가요.", go: "rec" };
+  if(noScript.length) return { n: 8, t: "고른 주제로 대본 초안", d: "고른 " + picks.length + "개 중 " + noScript.length + "개가 대본 전이에요. 레퍼런스 채널의 말하는 방식·구성에 맞춰 대본 초안을 써요.", act: "script", btn: "고른 " + noScript.length + "개 대본 초안 만들기", busy: openCmd("script") };
+  return { n: 9, t: "대본 검토", d: "고른 주제의 대본이 다 나왔어요. 대본 탭에서 읽고 고칠 점을 남기세요.", go: "script" };
 }
 function nextHtml(){
   var x = nextStep(); if(!x) return "";
-  return "<section class=\"card next\"><div class=\"card-h\"><h3>다음 할 일 · " + esc(x.t) + "</h3><span class=\"n\">" + x.n + " / 8</span></div><p class=\"lead\">" + esc(x.d) + "</p><div class=\"acts\">" +
+  return "<section class=\"card next\"><div class=\"card-h\"><h3>다음 할 일 · " + esc(x.t) + "</h3><span class=\"n\">" + x.n + " / 9</span></div><p class=\"lead\">" + esc(x.d) + "</p><div class=\"acts\">" +
     (x.act ? "<button class=\"btn primary\" data-act=\"" + x.act + "\"" + (x.busy ? " disabled" : "") + ">" + esc(x.busy ? "맥이 하는 중…" : x.btn) + "</button>" : "") +
-    (x.go ? "<button class=\"btn primary\" data-go=\"" + x.go + "\">" + esc({ brand: "브랜드 탭", kw: "키워드 탭", rec: "추천 탭", script: "대본 탭" }[x.go] || x.go) + "으로 →</button>" : "") + "</div></section>";
+    (x.go ? "<button class=\"btn primary\" data-go=\"" + x.go + "\">" + esc({ brand: "브랜드 탭", kw: "키워드 탭", rec: "추천 탭", script: "대본 탭", "ref|refView=search": "콘텐츠 탭" }[x.go] || x.go) + "으로 →</button>" : "") + "</div></section>";
 }
 function viewSum(){
   var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
@@ -81,4 +83,14 @@ function viewSum(){
     return "<div class=\"it\"><span class=\"num muted\">" + esc(x.date.slice(5)) + "</span><div class=\"it-m\">" + esc(String(x.file).replace(/^\S+ /, "").replace(/\.pdf$/, "")) + "</div></div>" }).join("") + "</div>" +
     "<p class=\"lead\" style=\"margin-top:6px\">볼트 · 드라이브에 저장돼요 — " + esc(lg.where || "") + "</p></section>";
   return h;
+}
+
+/* 즐겨찾기 — 브랜드가 기억하는 좋은 키워드(★ pin)·콘텐츠(☆ favc). 맥이 브랜드.json favorites 에도 적어 스킬이 읽는다 */
+function favHtml(){
+  var s = S(), kws = scored().filter(function(x){ return s.pin[x.kw] }), f = (SETS[cur] || {}).favc || {}, ids = Object.keys(f);
+  return "<section class=\"card\"><div class=\"card-h\"><h3>즐겨찾기 — 브랜드가 기억하는 것</h3><span class=\"n\">키워드 " + kws.length + " · 콘텐츠 " + ids.length + "</span></div>" +
+    "<p class=\"lead\">키워드 탭에서 ★, 콘텐츠 탭에서 ☆를 누른 것이에요. 추천·대본·소재 찾기가 이것을 먼저 봐요.</p>" +
+    "<h4>★ 키워드</h4>" + (kws.length ? "<div class=\"chips\">" + kws.map(function(x){ return "<span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" + esc(x.kw) + " · " + fmt(x.total) + " <button class=\"x0\" data-pin=\"" + esc(x.kw) + "\" aria-label=\"즐겨찾기 풀기\">✕</button></span>" }).join("") + "</div>" : "<p class=\"lead\">아직 없어요.</p>") +
+    "<h4>☆ 콘텐츠</h4>" + (ids.length ? "<div class=\"list\">" + ids.slice(0, 8).map(function(vid){ var x = f[vid]; return "<div class=\"it\"><div class=\"it-m\"><a href=\"https://www.youtube.com/watch?v=" + esc(vid) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title || vid) + "</a><div class=\"it-d\">" + esc(x.channel || "") + (x.kw ? " · " + esc(x.kw) : "") + "</div></div>" + favBtn(vid) + "</div>" }).join("") + "</div>" +
+      (ids.length > 8 ? "<div class=\"acts\"><button class=\"btn sm\" data-go=\"ref|refView=fav\">전체 " + ids.length + "개 보기 →</button></div>" : "") : "<p class=\"lead\">아직 없어요.</p>") + "</section>";
 }

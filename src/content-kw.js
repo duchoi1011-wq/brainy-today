@@ -67,6 +67,20 @@ function seedsHtml(){
   }
   return h;
 }
+/* 선별한 키워드로 콘텐츠 검색 — ★(즐겨찾기)한 키워드 중 고른 것으로 맥이 유튜브를 검색해 미드폼·롱폼 영상을 읽어 온다 (Claude 없이, content_app.py search).
+   요청은 ct.set searchReq {at, kws} 하나 — 맥 동기화가 보고 검색해 검색.json(ct.data .search)에 쓴다. 결과는 콘텐츠 탭 「키워드로 찾은 콘텐츠」. */
+function searchState(){ var r = (SETS[cur] || {}).searchReq, d = part("search"); return { req: r, data: d, busy: !!(r && (!d || d.reqAt !== r.at || d.busy)) } }
+function searchBoxHtml(){
+  var s = S(), pins = scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] }), off = ui.sOff || {}, use = pins.filter(function(x){ return !off[x.kw] }), st = searchState(), d = st.data;
+  var done = {}; ((d && d.runs) || []).forEach(function(r){ done[r.kw] = r });
+  return "<section class=\"card\" id=\"search-box\"><div class=\"card-h\"><h3>선별한 키워드로 콘텐츠 검색</h3><span class=\"n\">★ " + pins.length + "개</span></div>" +
+    "<p class=\"lead\">위에서 ★한 키워드예요. 칩을 눌러 이번 검색에서 넣고 빼고, 「콘텐츠 검색」을 누르면 맥이 키워드마다 유튜브 상위 미드폼·롱폼 영상 " + 6 + "개씩을 읽어 와요 (조회·구독·조회÷구독). 결과는 콘텐츠 탭에서 보고, 좋은 영상은 ☆로 즐겨찾기 하세요.</p>" +
+    (pins.length ? "<div class=\"chips\">" + pins.map(function(x){ var r = done[x.kw]; return "<button class=\"chip" + (off[x.kw] ? "" : " on") + "\" data-act=\"stoggle\" data-kw=\"" + esc(x.kw) + "\">" + esc(x.kw) + (r ? "<span>" + (r.error ? "!" : r.n) + "</span>" : "") + "</button>" }).join("") + "</div>" +
+      "<div class=\"acts\"><button class=\"btn primary\" data-act=\"search\"" + (!use.length || st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 검색하는 중…" : "★ " + use.length + "개로 콘텐츠 검색") + "</button>" +
+      (d && d.items && d.items.length ? "<button class=\"btn\" data-go=\"ref|refView=search\">찾은 콘텐츠 " + d.items.length + "개 보기 →</button>" : "") + "</div>" +
+      (st.busy ? "<p class=\"lead\" style=\"margin-top:8px\">키워드 하나에 30초쯤 걸려요. 맥이 켜져 있어야 해요.</p>" : d && d.updatedAt ? "<p class=\"lead\" style=\"margin-top:8px\">마지막 검색 " + esc(day(d.updatedAt)) + " " + esc(String(d.updatedAt).slice(11, 16)) + "</p>" : "")
+      : "<p class=\"note\">아직 ★한 키워드가 없어요. 위 씨앗 단어별 연관 검색어에서 좋은 키워드에 ★을 누르세요.</p>") + "</section>";
+}
 function diffOf(x){ return x.comp === "높음" && x.ads >= 9 ? "어려움" : (x.ads <= 5 || x.comp === "낮음") ? "쉬움" : "보통" }
 function clusterOf(kw){
   var cs = (B() && B().clusters) || [];
@@ -136,7 +150,7 @@ function kwRow(x, s, mark){
     esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + (x.gap ? " <span class=\"tag ok\">빈 곳</span>" : "") + "</div>" +
     "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · 경쟁 " + x.diff + " · " + riseHtml(x) + (x.gRise ? " · <span class=\"up\">구글 ▲" + esc(x.gRise) + "</span>" : x.gTop != null ? " · 구글 인기 " + x.gTop : "") + " · <b class=\"num\">" + x.score + "점</b></div>" +
     "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">" + esc(x.intent) + "</span>" : esc(x.intent || "")) + "</div></div>" +
-    (mark ? "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"검증한 키워드로 고정\" aria-label=\"검증한 키워드로 고정\">★</button>" +
+    (mark ? "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"즐겨찾기 — 브랜드가 기억하고 콘텐츠 검색에 씀\" aria-label=\"즐겨찾기\">★</button>" +
             "<button class=\"mk no\" data-ex=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.ex[x.kw] + "\" title=\"후보에서 빼기\" aria-label=\"후보에서 빼기\">✕</button>" : "") + "</div>";
 }
 function viewKw(){
@@ -146,15 +160,15 @@ function viewKw(){
   var s = S(), all = scored(), c = candidates(s), sp = split(s), t = part("trend");
   var h0 = seedsHtml();
   var nP = c.filter(function(x){ return x.kind === "상품" }).length;
-  var h = h0 + "<section class=\"card\"><div class=\"card-h\"><h3>이번 조사 후보</h3><span class=\"n\">상품 " + nP + " · 정체성 " + (c.length - nP) + "</span></div>" +
-    "<p class=\"lead\">비율 탭 값(상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + ")대로 뽑되, ★한 검증 키워드를 먼저 다 넣고 남은 자리만 점수순으로 채워요. 「★만 조사」를 켜면 ★한 것만 조사해요. ✕는 빼기 — 뺀 것은 아래 「뺀 것」 칩에서 되살려요." +
+  var h = h0 + searchBoxHtml() + "<section class=\"card\"><details><summary>깊게 조사 — 경쟁사·레퍼런스 20개·시트·카드까지 (맥의 Claude) · 후보 " + c.length + "개</summary>" +
+    "<p class=\"lead\" style=\"margin-top:8px\">상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " 비율로 뽑되, ★한 검증 키워드를 먼저 다 넣고 남은 자리만 점수순으로 채워요. 「★만 조사」를 켜면 ★한 것만 조사해요. ✕는 빼기 — 뺀 것은 아래 「뺀 것」 칩에서 되살려요." +
     (c.length < s.count ? " 조건에 맞는 키워드가 " + (s.count - c.length) + "개 모자라요 — 아래 조건을 풀거나 조사를 돌려 새 키워드를 받으세요." : "") + "</p>" +
     "<div class=\"chips\" style=\"margin-bottom:6px\"><button class=\"chip" + (s.pinOnly ? " on" : "") + "\" data-set=\"pinOnly=" + !s.pinOnly + "\">★만 조사</button><button class=\"chip" + (s.buyOnly ? " on" : "") + "\" data-set=\"buyOnly=" + !s.buyOnly + "\">상품은 구매 결만</button>" +
     "<button class=\"chip" + (s.fresh ? " on" : "") + "\" data-set=\"fresh=" + !s.fresh + "\">이미 조사한 것 빼기</button></div>" +
     "<div class=\"list\">" + (c.map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">후보가 없어요.</p>") + "</div>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"discover\"" + (openCmd("discover") || !c.length ? " disabled" : "") + ">이 구성으로 조사 돌리기</button>" +
     "<button class=\"btn\" data-act=\"trends\"" + (openCmd("trends") ? " disabled" : "") + ">구글 트렌드 다시 받기</button></div>" +
-    "<p class=\"lead\" style=\"margin-top:10px\">조사는 맥의 Claude가 콘텐츠 발굴 스킬로 돌려요 (키워드 검색량 → 경쟁사 → 레퍼런스 20개 → 시트·카드 → 이 앱). 누르면 진행 상태가 화면 맨 위에 떠요.</p></section>";
+    "<p class=\"lead\" style=\"margin-top:10px\">조사는 맥의 Claude가 콘텐츠 발굴 스킬로 돌려요 (키워드 검색량 → 경쟁사 → 레퍼런스 20개 → 시트·카드 → 이 앱). 누르면 진행 상태가 화면 맨 위에 떠요.</p></details></section>";
   h += clustersHtml(all);
   var pool = all.filter(function(x){ return !ui.kwCluster || x.cluster === ui.kwCluster });   // 묶음을 골랐으면 칩 숫자도 그 묶음 안에서 센다
   var KF = { all: function(){ return true }, "상품": function(x){ return x.kind === "상품" }, "정체성": function(x){ return x.kind === "정체성" }, up: isUp, gap: function(x){ return x.gap },
@@ -162,14 +176,14 @@ function viewKw(){
   var list = pool.filter(KF[ui.kwKind] || KF.all);
   h += "<section class=\"card\" id=\"kw-list\"><div class=\"card-h\"><h3>" + (ui.kwCluster ? esc(ui.kwCluster) + " 묶음" : "전체 키워드") + "</h3><span class=\"n\">" + list.length + "개</span></div><div class=\"chips\">" +
     (ui.kwCluster ? "<button class=\"chip on\" data-ui=\"kwCluster=\">" + esc(ui.kwCluster) + " ✕</button>" : "") +
-    [["all", "전체"], ["상품", "상품"], ["정체성", "정체성"], ["up", "▲ 오르는 중"], ["gap", "빈 곳"], ["pin", "★ 고정"], ["ex", "✕ 뺀 것"]]
+    [["all", "전체"], ["상품", "상품"], ["정체성", "정체성"], ["up", "▲ 오르는 중"], ["gap", "빈 곳"], ["pin", "★ 즐겨찾기"], ["ex", "✕ 뺀 것"]]
       .map(function(f){ return "<button class=\"chip" + (ui.kwKind === f[0] ? " on" : "") + "\" data-ui=\"kwKind=" + f[0] + "\">" + f[1] + "<span>" + pool.filter(KF[f[0]]).length + "</span></button>" }).join("") + "</div>" +
     "<div class=\"list\" style=\"margin-top:6px\">" + list.slice(0, ui.kwMore).map(function(x){ return kwRow(x, s, true) }).join("") + "</div>" +
     (list.length > ui.kwMore ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"kwMore=" + (ui.kwMore + 100) + "\">더 보기 (" + (list.length - ui.kwMore) + "개 남음)</button></div>" : "") + "</section>";
   h += "<section class=\"card\"><details><summary>점수 계산 · 자료 출처</summary><div class=\"small\" style=\"margin-top:8px;display:grid;gap:6px\">" +
     "<p><span class=\"tag p\">상품</span> 검색량 " + M().kw_vol + " : 광고 클릭률 " + M().kw_ctr + " : 상승세 " + M().kw_rise + " 비중. 클릭률이 높을수록 사려는 사람이 찾는 말이에요. 월 검색 200 미만이면 클릭률을 그만큼 덜 믿어요.</p>" +
     "<p><span class=\"tag i\">정체성</span> 검색량 " + M().id_vol + " : 상승세 " + M().id_rise + " 비중. 채널 성격에 맞는 넓은 주제라 클릭률은 안 봐요.</p>" +
-    "<p>비중은 <button class=\"chip\" data-tab=\"mixer\">믹서 탭</button>에서 바꿔요 (지금 템플릿: " + esc(mixTpl().name) + ").</p>" +
+    "<p>비중은 참고용 점수 기준이에요 (볼트 믹서.json 「" + esc(mixTpl().name) + "」). 바꿔야 하면 Claude에게 말해 주세요.</p>" +
     "<p>검색량·클릭률: " + esc(k.source || "") + " · " + day(k.updatedAt) + "</p>" +
     "<p>상승세(최근 4주 ÷ 그 앞 8주): " + (t ? esc(t.source || "") + " · " + day(t.updatedAt) + " · " + Object.keys(t.items || {}).length + "개 키워드" : "아직 받지 않음") + ". 검색이 적은 키워드는 구글이 값을 0으로 줘서 「값 적음」으로 두고 점수에서는 중간값으로 봐요.</p>" +
     "<p>경쟁(난이도): 네이버 경쟁정도와 월평균 노출 광고 수로 봐요 — 높음 + 광고 9개 이상이면 어려움, 광고 5개 이하면 쉬움. 주제 묶음: 같은 주제 말이 든 키워드의 검색량을 더한 값. 빈 곳: 구매 결인데 아직 조사·추천에 안 나온 키워드.</p>" +
