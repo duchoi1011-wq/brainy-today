@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "495a3b04d3"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=495a3b04d3"></script>
+<script>window.BRAINY_VERSION = "d1dced9065"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=d1dced9065"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -1262,7 +1262,12 @@ function stepRow(label, key, val, by){
   return "<div><span>" + label + "</span><span class=\"step\"><button data-step=\"" + key + "\" data-by=\"-" + by + "\" aria-label=\"줄이기\">−</button><b>" + val + "</b><button data-step=\"" + key + "\" data-by=\"" + by + "\" aria-label=\"늘리기\">＋</button></span></div>";
 }
 
-/* ── 그리기 ── */
+/* ── 그리기 ──
+   맥·저장소에서 온 변화(renderSoft)는 동욱이 칸에 글을 쓰는 중이면 그리지 않고 미뤘다가, 칸에서 나가면 그린다
+   (2026-11-17 동욱: "씨앗 단어 자체가 새로 안 써져" — 단어를 넣으면 맥이 검색어를 받아 올리는 동안 화면이 여러 번 다시 그려져 쓰던 칸·한글 조합이 끊겼다) */
+function typing(){ var a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && !/^(range|checkbox|file|date)$/.test(a.type) && document.getElementById("view").contains(a)) }
+function renderSoft(){ if(typing()){ ui.later = true; return } render() }
+document.addEventListener("focusout", function(){ if(ui.later) setTimeout(function(){ if(ui.later && !typing()){ ui.later = false; render() } }, 0) });
 function render(){
   var b = B();
   applyKit();
@@ -1271,7 +1276,8 @@ function render(){
   document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join("");
   document.getElementById("nav").innerHTML = TABS.map(function(t, i){ return "<button role=\"tab\" class=\"" + (tab === t[0] ? "on" : "") + "\" data-tab=\"" + t[0] + "\"><span>" + (i + 1) + "</span>" + t[1] + "</button>" }).join("");
   var v0 = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, script: viewScript }[tab] || viewBrand;
-  var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.id ? "#" + act0.id : "");
+  ui.later = false;
+  var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pin != null ? "[data-pin=\"" + CSS.escape(act0.dataset.pin) + "\"]" : act0.id ? "#" + act0.id : "");
   var v = function(){ return v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") };   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
   document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();
   if(tab === "mix") paintMix();
@@ -1319,15 +1325,28 @@ document.addEventListener("input", function(e){
   if(e.target.dataset.addseed != null){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
   if(e.target.dataset.knob){ var kb = mixDef().knobs.filter(function(k){ return k.id === e.target.dataset.knob })[0], lab = document.getElementById("kv-" + e.target.dataset.knob); if(kb && lab) lab.textContent = knobText(kb, +e.target.value) }
 });
-document.addEventListener("keydown", function(e){
-  if(e.key !== "Enter" || e.isComposing) return;
-  if(e.target.id === "fb-text"){ e.preventDefault(); act("fbadd") }
-  if(e.target.id === "tpl-name"){ e.preventDefault(); act("tplnew") }
-  if(e.target.dataset.addseed != null){ e.preventDefault(); act("seedadd", e.target) }
-  if(e.target.dataset.pin != null && e.target.tagName === "INPUT"){ e.preventDefault(); var pk = e.target.dataset.pin;
-    if(/^prod:new/.test(pk)) act("paddprod", e.target);
+function enterAct(t){   // Enter 로 넣기·저장 — 칸마다 할 일
+  if(t.id === "fb-text"){ act("fbadd"); return true }
+  if(t.id === "tpl-name"){ act("tplnew"); return true }
+  if(t.dataset.addseed != null){ act("seedadd", t); return true }
+  if(t.dataset.pin != null && t.tagName === "INPUT"){ var pk = t.dataset.pin;
+    if(/^prod:new/.test(pk)) act("paddprod", t);
     else if(/:new$/.test(pk)) act("padd", { dataset: { k: pk.replace(/:new$/, "") } });
-    else act("psave", { dataset: { k: ui.pedit } }) }
+    else act("psave", { dataset: { k: ui.pedit } });
+    return true }
+  return false;
+}
+/* 한글을 쓰다 Enter 를 누르면 그 Enter 는 조합을 끝내는 데 쓰인다(keydown isComposing) — 조합이 끝난 뒤 keyup 에서 넣어 한 번에 들어가게 한다 */
+var enterWait = null;
+document.addEventListener("keydown", function(e){
+  if(e.key !== "Enter") return;
+  if(e.isComposing || e.keyCode === 229){ enterWait = e.target; return }
+  enterWait = null;
+  if(enterAct(e.target)) e.preventDefault();
+});
+document.addEventListener("keyup", function(e){
+  if(e.key !== "Enter" || !enterWait || enterWait !== e.target) return;
+  var t = enterWait; enterWait = null; enterAct(t);
 });
 document.addEventListener("change", function(e){
   if(e.target.id === "ratio") setS({ ratio: +e.target.value });
@@ -1392,13 +1411,13 @@ function act(name, el){
       RAW = {}; q.docs.forEach(function(x){ RAW[x.id] = x.data() });
       if(!RAW[cur] || !RAW[cur].name){ var first = brands().filter(function(x){ return RAW[x.id + ".kw"] })[0] || brands()[0]; cur = first ? first.id : ""; }
       if(cur && new URLSearchParams(location.search).get("b") !== cur){ try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){} }   // 주소가 늘 지금 브랜드를 가리키게 (없는 브랜드로 열었을 때도)
-      render();
+      renderSoft();
     }, function(){});
-    DB.collection("ct.set").onSnapshot(function(q){ q.docs.forEach(function(x){ SETS[x.id] = x.data() }); render() }, function(){});
+    DB.collection("ct.set").onSnapshot(function(q){ q.docs.forEach(function(x){ SETS[x.id] = x.data() }); renderSoft() }, function(){});
     DB.collection("cmd").onSnapshot(function(q){
       CMDS = q.docs.map(function(x){ return Object.assign({ id: x.id }, x.data()) }).filter(function(c){ return c.from === "content" })
         .sort(function(a, b){ return String(b.createdAt).localeCompare(String(a.createdAt)) });
-      render();
+      renderSoft();
     }, function(){});
   }, function(){ render() });
 })();
