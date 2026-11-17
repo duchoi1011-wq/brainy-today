@@ -14,12 +14,12 @@ var KWCRIT = [
 ];
 var KW_DEFAULT = ["rel", "vol", "ctr", "rise", "comp"];
 var KW_RANK_W = [5, 4, 3, 2, 1];
-var KW_FAR = [["fold", "아래에 접어 두기"], ["mix", "같이 섞어 보기"], ["hide", "숨기기"]];
+var KW_FAR = [["mix", "같이 섞어 보기"], ["fold", "아래에 접어 두기"], ["hide", "숨기기"]];
 var KW_MINVOL = [[0, "따지지 않음"], [10, "월 10 이상"], [100, "월 100 이상"], [1000, "월 1,000 이상"]];
 var KW_MINREL = [[0, "따지지 않음"], [1, "글자 조각 하나라도 겹침"], [50, "절반 이상 겹침"]];
 function kwCrit(){
   var c = (SETS[cur] || {}).kwCrit || {};
-  return { set: !!c.order, order: c.order || KW_DEFAULT, off: c.off || {}, far: c.far || "fold", minVol: c.minVol || 0, minRel: c.minRel || 0 };
+  return { set: !!c.order, order: c.order || KW_DEFAULT, off: c.off || {}, far: c.far || "mix", minVol: c.minVol || 0, minRel: c.minRel || 0 };
 }
 function kwWeights(){ var c = kwCrit(), w = {}, r = 0; c.order.forEach(function(id){ w[id] = c.off[id] ? 0 : KW_RANK_W[r++] || 1 }); return w }
 /* 씨앗과 가까움 0~100 — 통째로 들었으면 100, 아니면 씨앗을 두 글자씩 밀어 끊은 조각 중 든 비율 × 80 (통째로 든 말이 늘 위) */
