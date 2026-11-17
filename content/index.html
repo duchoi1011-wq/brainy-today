@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "566ad7f17a"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=566ad7f17a"></script>
+<script>window.BRAINY_VERSION = "bf1446c2e9"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=bf1446c2e9"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -336,9 +336,12 @@ function setS(patch){
   var s = Object.assign({}, SETS[cur] || {}, patch, { updatedAt: new Date().toISOString() });
   SETS[cur] = s;
   s.cand = candidates(S()).map(function(k){ return { kw: k.kw, score: k.score } });   // 그때 조사 후보 — 맥이 설정.json 으로 받아 기록 PDF 에 쓴다
-  saveSet(cur);
+  if(SETS_LIVE) saveSet(cur); else SET_Q[cur] = Object.assign(SET_Q[cur] || {}, patch);   // 서버 값을 받기 전(이 기기에 남은 옛 사본)이면 바꾼 칸만 모아 뒀다가 받은 뒤에 얹는다
   render();
 }
+/* 2026-11-17: 이 기기에 남은 옛 사본으로 화면을 먼저 띄운 사이에 누르면, 옛 사본 전체가 저장돼 다른 칸(☆ 즐겨찾기)이 지워졌다.
+   그래서 서버에서 진짜 값을 받기(SETS_LIVE) 전에는 저장하지 않고, 바꾼 칸(SET_Q)만 받은 값 위에 얹어 저장한다 */
+var SETS_LIVE = false, SET_Q = {};
 /* 설정 저장은 브랜드마다 한 줄로 — 연달아 누르면 저장 요청이 겹쳐 먼저 보낸 옛 값이 나중에 도착해 덮던 문제 (2026-11-17).
    보내는 중에 또 바뀌면 끝난 뒤 그때의 최신 값을 한 번 더 보낸다 */
 var SAVING = {};
@@ -1685,9 +1688,13 @@ function act(name, el){
       if(cur && new URLSearchParams(location.search).get("b") !== cur){ try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){} }   // 주소가 늘 지금 브랜드를 가리키게 (없는 브랜드로 열었을 때도)
       renderSoft();
     }, function(){});
-    DB.collection("ct.set").onSnapshot(function(q){ q.docs.forEach(function(x){ var d = x.data(), l = SETS[x.id];
-      if((SAVING[x.id] || {}).busy || (l && l.updatedAt && d.updatedAt && d.updatedAt < l.updatedAt)) return;   // 내가 저장 중이거나 더 옛 값이면 화면 값을 지킨다
-      SETS[x.id] = d }); renderSoft() }, function(){});
+    DB.collection("ct.set").onSnapshot(function(q){
+      var first = !SETS_LIVE && !(q.metadata && q.metadata.fromCache);
+      q.docs.forEach(function(x){ var d = x.data(), l = SETS[x.id];
+        if(!first && ((SAVING[x.id] || {}).busy || (l && l.updatedAt && d.updatedAt && d.updatedAt < l.updatedAt))) return;   // 내가 저장 중이거나 더 옛 값이면 화면 값을 지킨다
+        SETS[x.id] = d });
+      if(first){ SETS_LIVE = true; Object.keys(SET_Q).forEach(function(id){ SETS[id] = Object.assign({}, SETS[id] || {}, SET_Q[id], { updatedAt: new Date().toISOString() }); saveSet(id) }); SET_Q = {} }
+      renderSoft() }, function(){});
     DB.collection("cmd").onSnapshot(function(q){
       CMDS = q.docs.map(function(x){ return Object.assign({ id: x.id }, x.data()) }).filter(function(c){ return c.from === "content" })
         .sort(function(a, b){ return String(b.createdAt).localeCompare(String(a.createdAt)) });
