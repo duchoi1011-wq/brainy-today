@@ -4,6 +4,9 @@
    왼쪽: 퍼널(아이템 → 키콘 → 풀링) 목록 · 가운데: 고른 문서 (세로 / 시트 보기) · 오른쪽: 댓글·파동에서 다시 착안한 추천(ideas).
    PDF 는 브라우저 인쇄(「PDF로 보기」) — 인쇄할 때는 가운데 문서만 남는다 (content.html @media print). */
 function buildDef(){ return RAW["build.def"] || { sections: [], funnel: [] } }
+/* 역할별 틀 (2026-11-18 동욱 "풀링에 있어야 할 것과 키에 있어야 할 것이 같이 붙어 있다 — 템플릿을 나눠") — 구축 틀.json 칸의 only: "키"|"풀링" 이 그 역할 문서에만 나온다 */
+function bFields(sec, doc){ return sec.fields.filter(function(f){ return !f.only || f.only === (doc && doc.role) }) }
+function bSecs(doc){ return buildDef().sections.map(function(sec){ return Object.assign({}, sec, { fields: bFields(sec, doc) }) }).filter(function(sec){ return sec.fields.length }) }
 function buildDocs(){ var b = part("build"); return (b && b.items) || [] }
 function buildRefCell(n){
   var r = refByRow(n);
@@ -26,13 +29,17 @@ function buildVal(f, v){
 }
 function buildFilled(doc){
   var n = 0, all = 0, vals = doc.values || {};
-  buildDef().sections.forEach(function(s){ s.fields.forEach(function(f){ all++; var v = vals[f.id]; if(Array.isArray(v) ? v.length : (v && typeof v === "object") ? v.verdict : v) n++ }) });
+  bSecs(doc).forEach(function(s){ s.fields.forEach(function(f){ all++; var v = vals[f.id]; if(Array.isArray(v) ? v.length : (v && typeof v === "object") ? v.verdict : v) n++ }) });
   return [n, all];
 }
 function buildDocHtml(doc){
-  var vals = doc.values || {}, secs = buildDef().sections, fl = buildFilled(doc);
+  var vals = doc.values || {}, secs = bSecs(doc), fl = buildFilled(doc), sc = scriptOf(doc.id), tpl = ((buildDef().templates || {})[doc.role]) || "";
   var head = "<div class=\"bd-head\"><div><span class=\"tag fill\">" + esc(doc.role) + "</span> " + stageTag(doc) + " <span class=\"tag p\">" + esc(doc.item || "") + "</span> <span class=\"tag\">" + esc(doc.status || "") + "</span> <span class=\"tag\">" + fl[0] + " / " + fl[1] + "칸</span></div>" +
-    "<h2>" + esc(doc.id) + " · " + esc(doc.title) + "</h2>" + (doc.from ? "<p class=\"lead\">" + esc(doc.from) + "</p>" : "") + "</div>";
+    "<h2>" + esc(doc.id) + " · " + esc(doc.title) + "</h2>" + (doc.from ? "<p class=\"lead\">" + esc(doc.from) + "</p>" : "") +
+    (tpl ? "<p class=\"lead\"><b>틀: " + esc(doc.role) + "</b> — " + esc(tpl) + "</p>" : "") +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"buildscript\" data-id=\"" + esc(doc.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">" + (openCmd("script") ? "맥이 대본 쓰는 중…" : sc ? "📝 이 문서로 대본 다시 만들기" : "📝 이 문서로 대본 만들기") + "</button>" +
+    (sc ? "<button class=\"btn\" data-tab=\"script\">대본 보기 →</button>" : "") + "</div>" +
+    promptBoxHtml("build:" + doc.id, "이 문서 고치기 · 다른 버전 만들기", "예: 도입부를 현장에서 줄 서는 장면으로 시작하게 다시 쓰고, 썸네일 문구 후보 3개 더 줘") + "</div>";
   if(ui.bdView === "sheet"){
     return head + "<div class=\"orig bd-sheet\"><table><thead><tr><th>구분</th><th>칸</th><th>내용</th></tr></thead><tbody>" +
       secs.map(function(s){ return s.fields.map(function(f, i){
@@ -67,7 +74,9 @@ function buildIdeasHtml(){
     (ideas.map(function(x){
       return "<div class=\"bd-idea\"><div><span class=\"tag fill\">" + esc(x.role) + "</span> " + stageTag(x) + (x.product ? " <span class=\"tag p\">" + esc(x.product) + "</span>" : "") + " <span class=\"tag\">" + esc(x.from || "") + "</span></div>" +
         "<b>" + esc(x.title) + "</b><div class=\"it-d\">" + esc(x.basis || "") + "</div>" +
-        ((x.refs || []).length ? "<details><summary>근거 레퍼런스 " + x.refs.length + "개</summary>" + x.refs.map(buildRefCell).join("") + "</details>" : "") + "</div>";
+        ((x.refs || []).length ? "<details><summary>근거 레퍼런스 " + x.refs.length + "개</summary>" + x.refs.map(buildRefCell).join("") + "</details>" : "") +
+        "<div class=\"acts\"><button class=\"btn sm primary\" data-act=\"buildidea\" data-id=\"" + esc(x.id) + "\"" + (openCmd("build") ? " disabled" : "") + ">" + (openCmd("build") ? "맥이 만드는 중…" : "이걸로 구축 문서 만들기") + "</button>" +
+        "<button class=\"btn sm\" data-act=\"ideascript\" data-id=\"" + esc(x.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">바로 대본</button></div></div>";
     }).join("") || "<p class=\"empty\">아직 없어요.</p>");
 }
 function viewBuild(){
