@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "bf1446c2e9"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=bf1446c2e9"></script>
+<script>window.BRAINY_VERSION = "f38998bb49"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=f38998bb49"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -1241,15 +1241,27 @@ var RP_SIDES = [
 var RP_REGION = [["world", "전 세계"], ["ko", "한국"], ["en", "영어권"], ["ja", "일본"], ["zh", "중국어권"], ["eu", "유럽"]];
 function rpOpt(){ var o = (SETS[cur] || {}).rpOpt || {}; return { sides: o.sides || { "정체성": true, "상품": true, "연출": true }, region: o.region || "world", words: o.words || null } }
 function rpWords(){ var o = rpOpt(); return seedsOf().filter(function(x){ return !o.words || o.words[x.word] !== false }) }
+/* Claude 추천 — 동욱이 하나하나 확인하지 않아도 「추천대로 넣기」로 넣는다 (2026-11-17 동욱: "내가 다 확인할 수 없으니 너의 추천대로 넣기도 눌러서 진행하게").
+   후보에 recommend(true/false)·recommendWhy 가 있으면 그것(맥의 Claude 판단), 없던 옛 후보는 기준으로: 소재·상품은 등급 A 이면서 소재 보통 이상이거나 소재 많음, 연출은 등급 A */
+function rpRec(c){
+  if(c.recommend != null) return !!c.recommend;
+  var a = /^A/.test(c.grade || ""), am = c.amount || "";
+  return (c.side || "정체성") === "연출" ? a : (a && !/적음/.test(am)) || /많음/.test(am);
+}
+function rpRecWhy(c){ return c.recommendWhy || (rpRec(c) ? "등급 " + (c.grade || "—") + (c.amount ? " · 소재 " + c.amount : "") : "") }
+function rpRecBtn(list, label){
+  var pick = (SETS[cur] || {}).chanpick || {}, ids = list.filter(function(c){ return rpRec(c) && pick[c.id] !== "add" }).map(function(c){ return c.id });
+  return ids.length ? "<button class=\"btn primary\" data-act=\"chanrec\" data-ids=\"" + esc(ids.join(",")) + "\">" + label + " " + ids.length + "곳 넣기</button>" : "";
+}
 function amountTag(a){ return a ? "<span class=\"tag" + (/많음/.test(a) ? " ok" : "") + "\">소재 " + esc(a) + "</span>" : "" }
 function rpRow(c, cand){
   var on = cand && ((SETS[cur] || {}).chanpick || {})[c.id] === "add";
   return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\">" + (c.url ? "<a href=\"" + esc(c.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(c.name) + "</b></a>" : "<b>" + esc(c.name) + "</b>") +
       (c.seed ? " <span class=\"tag " + (c.side === "상품" ? "p" : "i") + "\">" + esc(c.seed) + "</span>" : "") + (c.kind ? " <span class=\"tag\">" + esc(c.kind) + "</span>" : "") + (c.lang ? " <span class=\"tag\">" + esc(c.lang) + "</span>" : "") +
-      (c.grade && c.grade !== "—" ? " <span class=\"tag\">" + esc(c.grade) + "</span>" : "") + " " + amountTag(c.amount) + "</div>" +
+      (c.grade && c.grade !== "—" ? " <span class=\"tag\">" + esc(c.grade) + "</span>" : "") + " " + amountTag(c.amount) + (cand && rpRec(c) ? " <span class=\"tag fill\" title=\"" + esc(rpRecWhy(c)) + "\">Claude 추천</span>" : "") + "</div>" +
     "<div class=\"it-d\">" + esc(c.take || "") + "</div>" +
     "<details><summary>자세히</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
-      (c.amountProof ? "<dt>소재가 많나</dt><dd>" + esc(c.amountProof) + "</dd>" : "") + (c.direction ? "<dt>연출 참고</dt><dd>" + esc(c.direction) + "</dd>" : "") +
+      (cand && rpRec(c) ? "<dt>추천 이유</dt><dd>" + esc(rpRecWhy(c)) + "</dd>" : "") + (c.amountProof ? "<dt>소재가 많나</dt><dd>" + esc(c.amountProof) + "</dd>" : "") + (c.direction ? "<dt>연출 참고</dt><dd>" + esc(c.direction) + "</dd>" : "") +
       (c.example ? "<dt>대본 적용 예</dt><dd>" + esc(c.example) + "</dd>" : "") + ((c.proof || c.why) ? "<dt>확인한 것</dt><dd>" + esc([c.proof, c.why].filter(Boolean).join(" · ")) + "</dd>" : "") +
       (c.pillar && c.pillar !== "—" ? "<dt>필러</dt><dd>" + esc(c.pillar) + "</dd>" : "") + "</dl></details>" +
     (cand ? "<div class=\"acts\"><button class=\"btn sm" + (on ? "" : " primary") + "\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"" + (on ? "" : "add") + "\">" + (on ? "넣는 중 — 취소" : "참고 페이지에 넣기") + "</button>" +
@@ -1266,7 +1278,8 @@ function viewRefPage(){
     "<h4>무엇을 찾을까</h4><div class=\"chips\">" + RP_SIDES.map(function(x){ return "<button class=\"chip" + (o.sides[x.id] ? " on" : "") + "\" data-act=\"rpside\" data-side=\"" + x.id + "\">" + x.name + "</button>" }).join("") + "</div>" +
     "<h4>어디서</h4><div class=\"chips\">" + RP_REGION.map(function(r){ return "<button class=\"chip" + (o.region === r[0] ? " on" : "") + "\" data-act=\"rpregion\" data-v=\"" + r[0] + "\">" + r[1] + "</button>" }).join("") + "</div>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"chanfind\"" + (busy || !rpWords().length || !RP_SIDES.some(function(x){ return o.sides[x.id] }) ? " disabled" : "") + ">" + (busy ? "맥이 찾는 중…" : "고른 단어로 참고 페이지 채우기") + "</button>" +
-    (cd && cd.updatedAt ? "<span class=\"lead\" style=\"margin:0\">마지막 " + esc(day(cd.updatedAt)) + "</span>" : "") + "</div></section>";
+    (cd && cd.updatedAt ? "<span class=\"lead\" style=\"margin:0\">마지막 " + esc(day(cd.updatedAt)) + "</span>" : "") + "</div>" +
+    (cands.some(rpRec) ? "<div class=\"note\" style=\"margin-top:10px\">하나하나 보지 않아도 돼요 — 「Claude 추천」 표시가 붙은 곳만 한 번에 넣을 수 있어요. 넣은 곳은 기획 레퍼런스 카드에 들어가고, 나중에 카드에서 빼면 여기서도 빠져요.</div><div class=\"acts\">" + rpRecBtn(cands, "Claude 추천 전부 —") + "</div>" : "") + "</section>";
   /* 단어마다 소재가 충분한가 — 후보·넣은 곳을 단어별로 센다 */
   var all = (cd && cd.items) || [];
   if(all.length) h += "<section class=\"card\"><div class=\"card-h\"><h3>단어마다 소재가 충분한가</h3></div><div class=\"list\">" + sd.map(function(x){
@@ -1276,7 +1289,8 @@ function viewRefPage(){
   RP_SIDES.forEach(function(sd0){
     var have = (b.channels || []).filter(function(c){ return sd0.group.test(c.group) }), cl = cands.filter(function(c){ return (c.side || "정체성") === sd0.id });
     h += "<section class=\"card\"><div class=\"card-h\"><h3>" + sd0.name + "</h3><span class=\"n\">넣은 곳 " + have.length + " · 후보 " + cl.length + "</span></div><p class=\"lead\">" + sd0.what + " · 기획 레퍼런스 카드 " + sd0.card + "</p>" +
-      (cl.length ? "<h4>찾은 후보</h4><div class=\"list\">" + cl.map(function(c){ return rpRow(c, true) }).join("") + "</div>" : "") +
+      (cl.length ? "<h4>찾은 후보 <span class=\"num muted\">추천 " + cl.filter(rpRec).length + " / " + cl.length + "</span></h4><div class=\"acts\" style=\"margin-top:0\">" + rpRecBtn(cl, "이 칸 추천") + "</div>" +
+        "<div class=\"list\">" + cl.slice().sort(function(a, c){ return (rpRec(c) ? 1 : 0) - (rpRec(a) ? 1 : 0) }).map(function(c){ return rpRow(c, true) }).join("") + "</div>" : "") +
       (have.length ? "<details" + (cl.length ? "" : " open") + " style=\"margin-top:10px\"><summary>넣은 곳 " + have.length + "</summary><div class=\"list\" style=\"margin-top:4px\">" + have.map(function(c){ return rpRow(c, false) }).join("") + "</div></details>"
         : (cl.length ? "" : "<p class=\"lead\">아직 없어요. 위에서 「참고 페이지 채우기」를 누르세요.</p>")) + "</section>";
   });
@@ -1645,6 +1659,8 @@ function act(name, el){
     var pk2 = (SETS[cur] || {}).chanpick || {}, skip = (((part("chancand") || {}).items) || []).filter(function(x){ return pk2[x.id] === "skip" }).map(function(x){ return x.name });
     var sides = RP_SIDES.filter(function(x){ return ro2.sides[x.id] }).map(function(x){ return x.id }), rg = RP_REGION.filter(function(r){ return r[0] === ro2.region })[0][1];
     send("chanfind", "참고 페이지 채우기 — " + sides.join(" · ") + " · " + rg + " · " + sd2.map(function(x){ return x.word }).join(" · "), { seeds: sd2, sides: sides, region: rg, have: (B().channels || []).map(function(c){ return c.name }), skip: skip }); return }
+  if(name === "chanrec"){ var rids = el.dataset.ids.split(","); if(!confirm("Claude 추천 " + rids.length + "곳을 기획 레퍼런스 카드에 넣을까요? (카드에서 다시 뺄 수 있어요)")) return;   // 참고 페이지 — 추천대로 한 번에 넣기
+    var rc = Object.assign({}, (SETS[cur] || {}).chanpick || {}); rids.forEach(function(id){ rc[id] = "add" }); setS({ chanpick: rc }); return }
   if(name === "chanpick"){ var cp = Object.assign({}, (SETS[cur] || {}).chanpick || {}); if(el.dataset.v) cp[el.dataset.id] = el.dataset.v; else delete cp[el.dataset.id]; setS({ chanpick: cp }); return }
   if(name === "ideapick"){ var ip = Object.assign({}, ideaPicks()); if(ip[el.dataset.vid]) delete ip[el.dataset.vid]; else ip[el.dataset.vid] = 1; setS({ ideaPick: ip }); return }
   if(name === "ideaclear"){ setS({ ideaPick: {} }); return }

@@ -501,6 +501,8 @@ function act(name, el){
     var pk2 = (SETS[cur] || {}).chanpick || {}, skip = (((part("chancand") || {}).items) || []).filter(function(x){ return pk2[x.id] === "skip" }).map(function(x){ return x.name });
     var sides = RP_SIDES.filter(function(x){ return ro2.sides[x.id] }).map(function(x){ return x.id }), rg = RP_REGION.filter(function(r){ return r[0] === ro2.region })[0][1];
     send("chanfind", "참고 페이지 채우기 — " + sides.join(" · ") + " · " + rg + " · " + sd2.map(function(x){ return x.word }).join(" · "), { seeds: sd2, sides: sides, region: rg, have: (B().channels || []).map(function(c){ return c.name }), skip: skip }); return }
+  if(name === "chanrec"){ var rids = el.dataset.ids.split(","); if(!confirm("Claude 추천 " + rids.length + "곳을 기획 레퍼런스 카드에 넣을까요? (카드에서 다시 뺄 수 있어요)")) return;   // 참고 페이지 — 추천대로 한 번에 넣기
+    var rc = Object.assign({}, (SETS[cur] || {}).chanpick || {}); rids.forEach(function(id){ rc[id] = "add" }); setS({ chanpick: rc }); return }
   if(name === "chanpick"){ var cp = Object.assign({}, (SETS[cur] || {}).chanpick || {}); if(el.dataset.v) cp[el.dataset.id] = el.dataset.v; else delete cp[el.dataset.id]; setS({ chanpick: cp }); return }
   if(name === "ideapick"){ var ip = Object.assign({}, ideaPicks()); if(ip[el.dataset.vid]) delete ip[el.dataset.vid]; else ip[el.dataset.vid] = 1; setS({ ideaPick: ip }); return }
   if(name === "ideaclear"){ setS({ ideaPick: {} }); return }
