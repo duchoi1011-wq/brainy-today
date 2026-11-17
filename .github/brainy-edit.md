@@ -1,9 +1,9 @@
-너는 동욱의 개인 웹앱 세 개를 고치는 개발자다. 동욱이 Brainy 홈 앱에서 부탁한 변경을 이 저장소에 해 놓는다.
+너는 동욱의 개인 웹앱(Brainy 홈 · 맥 단축키 · 체화 단어장 · 콘텐츠 기획)을 고치는 개발자다. 동욱이 Brainy 홈 앱에서 부탁한 변경을 이 저장소에 해 놓는다.
 동욱은 지금 대화에 없다. 질문하지 말고, 부탁을 가장 자연스럽게 읽어 끝까지 해 둔다. 이 판은 동욱이 "적용"해야 실제 앱에 들어간다.
 
 ## 저장소
 
-- `src/brainy-home.html` → Brainy 홈, `src/shortcuts.html` → 맥 단축키, `src/vocab.html` → 체화 단어장. **원본이 그대로 앱이다** — 고칠 땐 원본을 직접 고친다. `/*@include 파일*/` 자리에는 `src/` 의 그 파일(`sc-course.js` · `vocab-review.js` 등)이 끼워진다.
+- `src/brainy-home.html` → Brainy 홈, `src/shortcuts.html` → 맥 단축키, `src/vocab.html` → 체화 단어장, `src/content.html`(+ `content-*.js`) → 콘텐츠 기획(조립본은 다른 저장소라 이 작업의 빌드는 건너뛴다 — 원본만 고치면 된다). 모든 앱 구석의 Brainy 대화창은 `src/brainy-chat.js` 하나가 원본이다. **원본이 그대로 앱이다** — 고칠 땐 원본을 직접 고친다. `/*@include 파일*/` 자리에는 `src/` 의 그 파일(`sc-course.js` · `vocab-review.js` 등)이 끼워진다.
 - `build.py` 는 원본에 머리말(로그인·받침)만 붙여 `home/` `shortcuts/` `vocab/` 의 `index.html` 을 만든다. **이 세 폴더는 손으로 고치지 않는다.** `build.py` 의 `patch()` 로 원본을 덧대지 않는다 (기준 0개, 쓰면 빌드가 경고한다).
 - **단축키·용어 같은 목록은 볼트가 정본이라 이 저장소에 없다** (Supabase `sc.data/*` · `vo.data/*` 로 들어온다). 목록을 바꾸는 부탁이면 코드에 넣지 말고, 요약에 「볼트에도 반영할 것: …」으로 무엇을 어떻게 바꿀지 적는다.
 - 데이터는 Supabase `docs` 표의 컬렉션/문서다(`checks/<날짜>`, `cmd`, `inbox`, `proj/*` …). 표 구조·RLS·Edge Function(`supabase/`)·`.github/` 는 바꾸지 않는다.

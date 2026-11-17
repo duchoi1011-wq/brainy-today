@@ -145,11 +145,12 @@ emit("home", "Brainy 홈", "Brainy 홈", ("#eef0ec", "#101513"),
      '{"id":"/brainy-today/home/","name":"Brainy 홈","short_name":"Brainy 홈","start_url":"./","scope":"./","display":"standalone","background_color":"#eef0ec","theme_color":"#1f5e52","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]}',
      ".app{padding-top:calc(48px + env(safe-area-inset-top,0px))!important}.plan{display:grid;gap:6px;margin:6px 0 8px}.plh{margin:8px 0 0}.planrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.planrow .ptx{flex:1;min-width:0;line-height:1.45}.planrow .pbox{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:7px;border:1.5px solid var(--muted);font-size:13px;font-weight:700}.planrow.on .pbox{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.planrow.on .ptx{color:var(--muted);text-decoration:line-through}")
 
-# Brainy 대화창 — 맥 단축키·체화 단어장 안에서 묻기·이 앱 고쳐 달라기 (클라우드 Brainy 의 app_edit_* 도구)
+# Brainy 대화창 — 모든 앱 공통 원본(구석에 붙는 서비스형 채팅). 웹 앱은 여기서 끝에 붙이고, 로컬 앱(편집 믹서·검증 대시보드)은 그 서버가 같은 파일을 내준다
 BRAINY_CHAT = "\n" + (root / "src" / "brainy-chat.js").read_text(encoding="utf-8")
 # 앱마다 Brainy 연결 — 지금 앱 상태(ctx)와 앱 도구(✓★·강의 진도 / 단어 단계·화면 열기)
 SC_BRAINY = "\n" + (root / "src" / "sc-brainy.js").read_text(encoding="utf-8")
 VO_BRAINY = "\n" + (root / "src" / "vo-brainy.js").read_text(encoding="utf-8")
+CT_BRAINY = "\n" + (root / "src" / "content-brainy.js").read_text(encoding="utf-8")
 
 # ═════════════════════════ 맥 단축키 ═════════════════════════
 load("shortcuts.html")
@@ -184,7 +185,7 @@ if (CP / ".git").exists():
          '<link rel="apple-touch-icon" href="ct-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="ct-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="ct-icon-64.png">',
          '{key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]}',
          '{"id":"/content-plan/","name":"콘텐츠 기획","short_name":"콘텐츠 기획","start_url":"./","scope":"./","display":"standalone","background_color":"#F7F6F2","theme_color":"#F7F6F2","icons":[{"src":"ct-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ct-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
-         up="")
+         tail=CT_BRAINY + BRAINY_CHAT, up="")
     import shutil
     shutil.copyfile(root / "shim.js", CP / "shim.js")
     for f in ("ct-icon-180.png", "ct-icon-192.png", "ct-icon-512.png", "ct-icon-64.png", "ct-icon.svg"):

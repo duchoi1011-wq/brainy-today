@@ -281,14 +281,20 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* Brainy chat sheet */
 .fab { position: fixed; z-index: 6; right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 13px 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
 .fab svg { width: 18px; height: 18px; }
-.sheet { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; grid-template-rows: auto 1fr auto; padding-top: env(safe-area-inset-top, 0px); }
+/* 대화창 = 서비스형 채팅 (2026-11-18 동욱 "모든 칸을 다 덮지 않고 플랫폼 서비스의 채팅 칸처럼") — 컴퓨터는 오른쪽 아래에 붙는 창, 폰은 아래에서 올라오는 창. 다른 앱의 대화창(brainy-chat.js)과 같은 모양 */
+.sheet { position: fixed; z-index: 20; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: 420px; height: min(680px, calc(100vh - 100px)); height: min(680px, calc(100dvh - 100px)); background: var(--bg); display: grid; grid-template-rows: auto 1fr auto; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 18px 50px rgba(0,0,0,.28); overflow: hidden; overscroll-behavior: contain; transform-origin: bottom right; animation: sheet-in .18s ease-out; }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
 .sheet[hidden] { display: none !important; }
-/* 대화창은 보이는 화면(키보드 위)에 딱 맞춘다 — 아이폰에서 입력창이 키보드 뒤로 숨거나 가운데 뜨지 않게 */
-.sheet { bottom: auto; height: 100vh; height: 100dvh; overscroll-behavior: contain; }
 .sheet .msgs { min-height: 0; overscroll-behavior: contain; }
 .sheet.kb .composer2 { padding-bottom: 10px; }
-html.chat-open, html.chat-open body { overflow: hidden; overscroll-behavior: none; }
-.sheet .bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--line); background: var(--surface); }
+@media (max-width: 640px) {
+  .sheet { left: 8px; right: 8px; width: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); height: min(72vh, calc(100vh - 80px)); height: min(72dvh, calc(100dvh - 80px)); transform-origin: bottom center; }
+  .sheet.kb { bottom: var(--kb, 8px); }
+}
+.sheet .bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 10px 10px 14px; background: var(--accent); color: var(--accent-ink); }
+.sheet .bar h2, .sheet .bar .ctxchip { color: inherit !important; }
+.sheet .bar .ctxchip { opacity: .85; }
+.sheet .bar .btn { background: rgba(255,255,255,.18); color: inherit; border-color: transparent; }
 .sheet .bar { flex-wrap: wrap; row-gap: 8px; }
 .sheet .bar > div:first-child { flex: 1 1 220px; min-width: 0; word-break: keep-all; overflow-wrap: break-word; }
 .sheet .bar .row { flex-wrap: nowrap; gap: 4px; margin-left: auto; }
@@ -296,7 +302,7 @@ html.chat-open, html.chat-open body { overflow: hidden; overscroll-behavior: non
 .sheet .bar h2 { color: var(--ink); font-size: 16px; letter-spacing: 0; }
 .sheet .bar .ctxchip { margin-top: 2px; line-height: 1.45; }
 .sheet .chip { white-space: normal; word-break: keep-all; text-align: left; line-height: 1.4; }
-.sheet .msgs { overflow-y: auto; padding: 14px max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 10px; align-content: start; }
+.sheet .msgs { overflow-y: auto; padding: 14px; display: grid; gap: 10px; align-content: start; }
 .sheet .in2 { max-width: 720px; width: 100%; margin: 0 auto; display: grid; gap: 10px; }
 .bub { padding: 10px 14px; border-radius: 14px; white-space: pre-wrap; line-height: 1.65; font-size: 15px; max-width: 92%; overflow-wrap: anywhere; }
 .bub.me { background: var(--accent); color: var(--accent-ink); justify-self: end; border-bottom-right-radius: 4px; }
@@ -309,7 +315,7 @@ html.chat-open, html.chat-open body { overflow: hidden; overscroll-behavior: non
 .thr > .h { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
 .acts2 { display: grid; gap: 4px; justify-self: start; }
 .acts2 span { font-size: 12px; color: var(--good); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; }
-.sheet .composer2 { border-top: 1px solid var(--line); background: var(--surface); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sheet .composer2 { border-top: 1px solid var(--line); background: var(--surface); padding: 10px 10px 10px 12px; }
 .sheet .composer2 .in2 { grid-template-columns: auto 1fr auto; align-items: end; gap: 8px; }
 .sheet .composer2 .btn { min-height: 44px; white-space: nowrap; }
 .sheet .composer2 .attach { width: 44px; padding: 0; justify-content: center; cursor: pointer; }
@@ -2372,18 +2378,20 @@ html.chat-open, html.chat-open body { overflow: hidden; overscroll-behavior: non
     if (!S.sample || S.sampleOff) { S.chatUnavailable = true; }
     if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }
     if (!S.chat.turns.length && !S.chat.task && !q) { var rec = (S.threads || []).filter(function (x) { return (x.project || null) === (S.chat.project || null) && !x.task && (x.turns || []).length && Date.now() - Date.parse(x.updatedAt || 0) < 6 * 3600e3; })[0]; if (rec) resumeChat(rec); }
-    sheet.hidden = false; document.getElementById("fab").hidden = true; document.documentElement.classList.add("chat-open"); fitSheet();
+    sheet.hidden = false; document.getElementById("fab").hidden = true; fitSheet();
     document.getElementById("chat-ctx").textContent = S.chat.project ? "보고 있는 프로젝트: " + S.chat.project + " · 볼트 전체도 함께 봐요" : "내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요";
     renderChat();
     if (q) { chatInput.value = q; sendChat(); } else setTimeout(function () { try { chatInput.focus(); } catch (e) {} }, 50);
   }
-  function closeChat() { sheet.hidden = true; document.getElementById("fab").hidden = false; document.documentElement.classList.remove("chat-open"); sheet.style.top = sheet.style.height = ""; sheet.classList.remove("kb"); render(); }
-  /* 아이폰 키보드: 보이는 화면(visualViewport)의 높이·위치에 대화창을 맞춰 입력창이 늘 화면 아래(키보드 바로 위)에 붙게 한다 */
+  function closeChat() { sheet.hidden = true; document.getElementById("fab").hidden = false; sheet.style.height = ""; sheet.style.removeProperty("--kb"); sheet.classList.remove("kb"); render(); }
+  /* 아이폰 키보드: 키보드가 올라오면 대화창을 키보드 바로 위로 올리고 보이는 높이에 맞춘다 (그 밖엔 CSS 크기 그대로) */
   function fitSheet() {
     if (sheet.hidden) return;
     var vv = window.visualViewport, box = document.getElementById("msgs"), atEnd = box && box.scrollHeight - box.scrollTop - box.clientHeight < 40;
-    if (vv) { sheet.style.top = Math.max(0, vv.offsetTop) + "px"; sheet.style.height = vv.height + "px"; sheet.classList.toggle("kb", window.innerHeight - vv.height > 120); }
-    else { sheet.style.top = "0px"; sheet.style.height = window.innerHeight + "px"; }
+    var kb = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0, phone = window.matchMedia("(max-width: 640px)").matches;
+    sheet.classList.toggle("kb", phone && kb > 80);
+    if (phone && kb > 80) { sheet.style.setProperty("--kb", (kb + 8) + "px"); sheet.style.height = Math.min(Math.round(vv.height - 16), Math.round(window.innerHeight * 0.72)) + "px"; }
+    else { sheet.style.removeProperty("--kb"); sheet.style.height = ""; }
     if (atEnd) box.scrollTop = box.scrollHeight;
   }
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", fitSheet); window.visualViewport.addEventListener("scroll", fitSheet); }
