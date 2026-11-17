@@ -44,12 +44,12 @@ function refCard(x){
     "<span class=\"tag " + bd[1] + "\">" + (x.ratio != null ? "조회÷구독 " + x.ratio + "배 · " : "") + bd[0] + "</span> " +
     (o != null ? "<span class=\"tag " + (o >= 3 ? "ok" : "") + "\">채널 평소의 " + o + "배</span> " : "") + (dv ? "<span class=\"tag " + (dv > 0 ? "ok" : "") + "\">하루 +" + fmt(dv) + "</span> " : "") +
     (x.buyer ? "<span class=\"tag " + (x.buyer === "✓" ? "ok" : "") + "\">구매자 " + x.buyer + "</span> " : "") +
-    (/Great|Good/.test(x.vtPerf) ? "<span class=\"tag ok\">뷰트랩 " + esc(x.vtPerf) + "</span> " : "") +
+    (/Great|Good/.test(x.vtPerf) ? "<span class=\"tag ok\">뷰트랩 영상 성과 " + esc(VT_KO[x.vtPerf]) + "</span> " : "") +
     (x.ad ? "<span class=\"tag\">광고 추정</span> " : "") + (proof ? "" : "<span class=\"tag\">성과 근거 ✕</span>") + "</div>" +
     (x.apply ? "<div class=\"apply\"><b>적용</b> " + esc(x.apply) + "</div>" : "") +
     "<details><summary>구성 · 다시 본 구간 · 댓글</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
     "<dt>레퍼런스</dt><dd>" + esc(x.refLine) + "</dd><dt>구성</dt><dd>" + esc(x.structure) + "</dd><dt>파동</dt><dd>" + esc(x.wave) + "</dd><dt>댓글</dt><dd>" + esc(x.comments) + "</dd>" +
-    "<dt>구매 결</dt><dd>" + esc(x.buyerNote) + "</dd><dt>검색어</dt><dd>" + esc(x.query) + " · " + x.round + "회차 " + esc(x.date) + " · 시트 " + x.row + "행</dd></dl></details></div></div>";
+    "<dt>살 사람의 말인가</dt><dd>" + esc(x.buyerNote) + "</dd><dt>검색어</dt><dd>" + esc(x.query) + " · " + x.round + "회차 " + esc(x.date) + " · 조사 시트 " + x.row + "번째 줄</dd></dl></details></div></div>";
 }
 function viewRef(){
   var b = B(), r = part("ref"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
@@ -230,7 +230,7 @@ function searchResultsHtml(){
   function keep(x){ return (!ui.srFit || fitV(x) >= 60) && (!ui.srTopic || topicHits(x, words).length) && (!ui.srCmt || cmtN(x) > 0) && (!ui.srWave || hasWave(x)) }
   function tog(key, label){ return "<button class=\"chip" + (ui[key] ? " on" : "") + "\" data-ui=\"" + key + "=" + !ui[key] + "\">" + label + "</button>" }
   return "<section class=\"card\"><div class=\"card-h\"><h3>키워드로 찾은 콘텐츠</h3><span class=\"n\">" + d.items.length + "개 · " + esc(day(d.updatedAt)) + "</span></div>" +
-    "<p class=\"lead\">★ 키워드마다 유튜브 검색 상위의 미드폼·롱폼이에요. 점수는 브랜드 탭에 정해 둔 주제(정체성·축·상품)와 댓글·파동·구독 대비 조회로 매겨요. 좋은 콘텐츠는 ☆로 즐겨찾기 하면 추천에 쓰여요." + (st.busy ? " 지금 새로 검색하는 중이에요." : "") + "</p>" +
+    "<details class=\"help\"><summary>이 목록은 뭔가요?</summary><p class=\"lead\">★ 키워드마다 유튜브 검색 상위의 미드폼·롱폼이에요. 점수는 브랜드 탭에 정해 둔 주제(정체성·축·상품)와 댓글·파동·구독 대비 조회로 매겨요. 좋은 콘텐츠는 ☆로 즐겨찾기 하면 추천에 쓰여요." + (st.busy ? " 지금 새로 검색하는 중이에요." : "") + "</p></details>" +
     "<div class=\"chips\">" + SR_SORT.map(function(o){ return "<button class=\"chip" + (sort === o[0] ? " on" : "") + "\" data-ui=\"srSort=" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\">" + tog("srFit", "구매 욕구 같음·비슷만") + tog("srTopic", "주제 맞는 것만") + tog("srCmt", "댓글 있는 것만") + tog("srWave", "파동 있는 것만") + "</div>" +
     "<details style=\"margin-top:8px\"><summary>점수는 어떻게 매기나 · 주제로 보는 말 " + words.length + "개</summary><p class=\"lead\" style=\"margin-top:6px\">주제로 보는 말: " + (words.map(esc).join(" · ") || "없음 — 브랜드 탭에서 정체성 단어·콘텐츠 축·상품을 넣으세요") + "</p>" +

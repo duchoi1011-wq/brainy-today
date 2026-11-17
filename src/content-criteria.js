@@ -55,7 +55,7 @@ function recCritHtml(rd){
         "<button class=\"mk\" data-act=\"rc\" data-k=\"role:" + esc(n) + ":1\" aria-label=\"" + esc(n) + " 한 편 더\"" + (s.roles[n] < 8 ? "" : " disabled") + ">＋</button></span></div>" }).join("") + "</div>";
   /* 기준은 평소엔 접어 두고 지금 기준을 한 줄로만 (2026-11-17 동욱 "이런 기준 탭은 따로 탭을 만들거나 접게") — 바꿀 때만 편다 */
   var now = c.order.filter(function(id){ return !c.off[id] }).slice(0, 3).map(function(id, i){ return (i + 1) + " " + CRIT.filter(function(k){ return k.id === id })[0].name }).join(" · ") +
-    (c.minRatio ? " · 구독자보다 " + c.minRatio + "배 이상" : "") + " · " + roleNames().map(function(n){ return esc(n) + " " + s.roles[n] + "편" }).join(" · ");
+    (c.minRatio ? " · 구독자보다 " + c.minRatio + "배 이상" : "") + " · " + roleNames().map(function(n){ return esc(roleKo(n)) + " " + s.roles[n] + "편" }).join(" · ");
   return "<section class=\"card\"><details><summary>추천 기준 <span class=\"num muted\">" + now + (c.set || (SETS[cur] || {}).recCrit ? "" : " (기본)") + " — 펴서 바꾸기</span></summary>" +
     (c.set || (SETS[cur] || {}).recCrit ? "<div class=\"acts\"><button class=\"btn sm\" data-act=\"rc\" data-k=\"reset\">기본값으로</button></div>" : "") +
     "<p class=\"lead\" style=\"margin-top:6px\">맥의 Claude는 이 네 단계로 추천을 골라요. 바꾸면 바로 저장되고, 다음 「추천 받기」부터 이 기준대로 골라요. 기본값 그대로 둬도 돼요.</p><div class=\"list\">" +

@@ -23,7 +23,7 @@ function nextHtml(){
   var x = nextStep(); if(!x) return "";
   return "<section class=\"card next\"><div class=\"card-h\"><h3>다음 할 일 · " + esc(x.t) + "</h3><span class=\"n\">" + x.n + " / 9</span></div><p class=\"lead\">" + esc(x.d) + "</p><div class=\"acts\">" +
     (x.act ? "<button class=\"btn primary\" data-act=\"" + x.act + "\"" + (x.busy ? " disabled" : "") + ">" + esc(x.busy ? "맥이 하는 중…" : x.btn) + "</button>" : "") +
-    (x.go ? "<button class=\"btn primary\" data-go=\"" + x.go + "\">" + esc({ brand: "브랜드 탭", kw: "키워드 탭", rec: "추천 탭", script: "대본 탭", "ref|refView=search": "콘텐츠 탭" }[x.go] || x.go) + "으로 →</button>" : "") + "</div></section>";
+    (x.go && x.go.split("|")[0] !== tab ? "<button class=\"btn primary\" data-go=\"" + x.go + "\">" + esc({ brand: "브랜드 탭", kw: "키워드 탭", rec: "추천 탭", script: "대본 탭", "ref|refView=search": "콘텐츠 탭" }[x.go] || x.go) + "으로 →</button>" : "") + "</div></section>";
 }
 function viewSum(){
   var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";

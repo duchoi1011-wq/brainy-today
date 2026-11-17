@@ -39,6 +39,7 @@ nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto;scrollbar-width:none;ba
 nav::-webkit-scrollbar{display:none}
 nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;color:var(--muted);background:none;border:0;font:inherit;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer}
 html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 폭이 15px 바뀌던 것 */
+details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:600}
 .runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
 @media (max-width:560px){input,textarea,select{font-size:16px!important}}   /* 아이폰에서 누르면 화면이 확대되던 것 (16px 미만) */
 .subnav{display:flex;gap:6px;margin:0 0 14px;overflow-x:auto}.subnav button{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}.subnav button.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
@@ -237,7 +238,7 @@ var PARTS = { cmts: ".cmts", kwrec: ".kwrec", wordrec: ".wordrec", wordcand: ".w
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
-function md(s){ return esc(s).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, "$1") }
+function md(s){ return plainWords(esc(s)).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, "$1") }
 function fmt(n){ return n == null ? "—" : Number(n).toLocaleString("ko-KR") }
 function ago(iso){ var m = Math.round((Date.now() - Date.parse(iso || 0)) / 60000); return isNaN(m) ? "" : m < 1 ? "방금" : m < 60 ? m + "분 전" : m < 1440 ? Math.round(m / 60) + "시간 전" : Math.round(m / 1440) + "일 전" }
 function day(iso){ return String(iso || "").slice(0, 10) }
@@ -279,6 +280,9 @@ function S(){
 function roleNames(){ var b = B(); return ((b && b.roles) || []).map(function(x){ return x.name }) }
 function stageList(){ var b = B(); return (b && b.stages) || [] }
 /* 추천 번호 쉬운 말 — P1 → 모으기 1 (사람 모으는 영상), K3 → 팔기 3 (상품 파는 영상). 2026-11-17 검증: P1·K1 약어 */
+/* 맥이 쓴 글(대본·구축·결과)에 남은 번호·줄임말·파일 이름을 화면에서 쉬운 말로 (정본 글은 그대로) */
+function plainWords(t){ return String(t).replace(/\b([PK]\d{1,2})\b/g, function(m){ return recNo(m) }).replace(/키콘/g, "상품 파는 영상").replace(/(→\s*)?[^\s·()「」]+\.(json|md)\b/g, "") }
+function roleKo(n){ return { "풀링": "사람 모으는 영상", "키": "상품 파는 영상" }[n] || n }
 function recNo(id){ var m = /^([PK])(\d+)$/.exec(String(id || "")); return m ? (m[1] === "P" ? "모으기 " : "팔기 ") + m[2] : String(id || "") }
 var VT_KO = { Great: "아주 좋음", Good: "좋음", Normal: "보통", Bad: "나쁨", Worst: "아주 나쁨" };
 function stageTag(x){ return x && x.stage ? "<span class=\"tag\">" + esc(x.stage) + "</span>" : "" }
@@ -341,7 +345,7 @@ function runHtml(kinds){
     var step = c.steps ? " · " + c.steps.n + "/" + c.steps.total + " " + esc(c.steps.now || "") : "";
     out += "<div class=\"run" + (open ? "" : bad ? " bad" : " done") + "\"><b>" + (open ? "⏳" : bad ? "⚠" : "✓") + " " + KIND[k] + "</b><span>" +
       (open ? esc(c.status) + step + " · 보낸 지 " + ago(c.createdAt).replace(" 전", "") + (c.status === "처리 중" ? " — 맥의 Claude가 하고 있어요. 몇 분에서 수십 분 걸려요." : " — 맥이 켜져 있으면 곧 받아서 시작해요.")
-            : esc(String(c.result || c.status || "").split("\n").map(function(l){ return l.trim() }).filter(Boolean).slice(0, 4).join(" · ").replace(/(\s*·\s*){2,}/g, " · ")) + " <span class=\"muted\">(" + ago(c.doneAt || c.createdAt) + ")</span>") +
+            : plainWords(esc(String(c.result || c.status || "").split("\n").map(function(l){ return l.trim() }).filter(Boolean).slice(0, 4).join(" · ").replace(/(\s*·\s*){2,}/g, " · "))) + " <span class=\"muted\">(" + ago(c.doneAt || c.createdAt) + ")</span>") +
       "</span>" + (open ? "" : "<button class=\"x\" data-hide=\"" + c.id + "\" aria-label=\"닫기\">✕</button>") + "</div>";
     if(!open){ done.push({ h: out.slice(out.lastIndexOf("<div class=\"run")), t: KIND[k], bad: bad }); out = out.slice(0, out.lastIndexOf("<div class=\"run")) }
   });
@@ -379,7 +383,7 @@ function viewBrand(){
   h += "</section>";
   if(!b) return h + "<p class=\"empty\">아직 브랜드 데이터가 없어요. 맥 동기화가 볼트의 「콘텐츠 기획 앱」 폴더를 올리면 여기에 떠요.</p>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + (b.draft ? " <span class=\"tag p\">확인 전</span>" : "") + "</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div>" +
-    "<p class=\"lead\">칸마다 ✎로 고치고, 목록은 ✕로 빼고 넣기로 더해요. 바꾸면 바로 저장되고 맥이 볼트 정본(브랜드.json)에도 적어요." + (b.profileNote ? " · " + esc(b.profileNote) : "") + "</p>" +
+    "<p class=\"lead\">칸마다 ✎로 고치고, 목록은 ✕로 빼고 넣기로 더해요. 바꾸면 바로 저장되고 맥이 볼트 원본에도 적어요." + (b.profileNote ? " · " + esc(b.profileNote) : "") + "</p>" +
     ptextHtml("name", "브랜드 이름") + ptextHtml("handle", "채널") + ptextHtml("one", "한 줄 소개", true) + ptextHtml("target", "타깃", true) + ptextHtml("firstQuestion", "첫 질문", true) +
     "<dl class=\"kv\" style=\"margin-top:10px\">" +
     (b.kit ? "<dt>브랜드 색</dt><dd><span class=\"sw\" style=\"background:" + esc(b.kit.accent) + "\"></span><span class=\"sw\" style=\"background:" + esc(b.kit.accent2 || b.kit.accent) + "\"></span>" + esc(b.kit.note || "") + "</dd>" : "") +
@@ -400,7 +404,7 @@ function viewBrand(){
   var lg = part("log");
   h += "<section class=\"card\"><div class=\"card-h\"><h3>기록 · 자동 백업</h3><span class=\"n\">" + (lg ? lg.items.length + "개" : "") + "</span></div>" +
     "<p class=\"lead\">단계 자료가 바뀌면 1분 뒤 맥이 그 단계의 PDF와 그날 데이터 사본을 볼트에 남겨요 (같은 날 같은 단계는 최신으로 덮어씀). 볼트라서 구글 드라이브에도 사본이 생겨요. PDF는 맥·드라이브에서 열어요.</p>" +
-    (lg && lg.items.length ? "<p class=\"small mono\" style=\"margin-bottom:6px\">" + esc(lg.where) + "</p><div class=\"list\">" + lg.items.slice(0, 12).map(function(x){
+    (lg && lg.items.length ? "<div class=\"list\">" + lg.items.slice(0, 12).map(function(x){
       return "<div class=\"it\"><span class=\"num muted\">" + esc(x.date) + "</span><div class=\"it-m\"><div>" + esc(String(x.file).replace(/^\S+ /, "").replace(/\.pdf$/, "")) + "</div></div><span class=\"num muted\">" + esc(String(x.at).slice(11, 16)) + "</span></div>" }).join("") + "</div>"
       : "<p class=\"empty\">아직 기록이 없어요.</p>") + "</section>";
   h += "<p class=\"lead\" style=\"text-align:center\">브랜드 정보 원본은 볼트에 있어요" + (b.sheet ? " · <a href=\"" + esc(b.sheet) + "\" target=\"_blank\" rel=\"noopener\">조사 시트</a>" : "") + "</p>";

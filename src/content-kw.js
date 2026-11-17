@@ -91,7 +91,7 @@ function wordRecHtml(name, n){
 function seedsHtml(){
   var sd = seedsOf(), s = S(), src = SEED_SRC.filter(function(o){ return o[0] === seedSrc() })[0];
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>씨앗 단어</h3><button class=\"chip\" data-go=\"brand\">단어 고치기 →</button></div>" +
-    "<p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 " + esc(src ? src[1] : "") + (seedSrc() === "both" ? "(네이버 + 구글)" : "") + "에서 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요.</p>" +
+    "<details class=\"help\"><summary>씨앗 단어가 뭔가요?</summary><p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 " + esc(src ? src[1] : "") + (seedSrc() === "both" ? "(네이버 + 구글)" : "") + "에서 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요.</p></details>" +
     (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + "</section>" + kwRecBarHtml();
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
   if(pickW){
@@ -130,8 +130,8 @@ function wordFindHtml(){
   var st = wordState(), d = st.data, runs = (d && d.runs) || [], src = ui.wSrc || "both", sd = seedsOf(), prods = ((B() || {}).products || []).map(function(p){ return p.name });
   var run = runs.filter(function(r){ return r.word === ui.wRun })[0] || runs[0];
   var h = "<section class=\"card\" id=\"word-find\"><div class=\"card-h\"><h3>단어 후보 찾기</h3><span class=\"n\">정체성 · 상품 단어 고르기</span></div>" +
-    "<p class=\"lead\">넓은 단어(예: 연애, 자기관리, 행사)를 넣으면 맥이 네이버와 구글 트렌드에서 연관 검색어를 받아 와요. 마음에 드는 말을 <b>정체성 단어</b>나 <b>상품 판매 단어</b>로 넣으면 아래 칸에 들어가고, 맥이 그 단어로 다시 연관 검색어를 받아 키워드 탭에 쌓여요.</p>" +
-    "<div class=\"row2\"><input type=\"text\" id=\"word-in\" data-wordin=\"1\" maxlength=\"20\" placeholder=\"찾을 단어 (예: 연애)\" value=\"" + esc(ui.wDraft || "") + "\"><button class=\"btn primary\" data-act=\"wordfind\"" + (st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 받는 중…" : "후보 찾기") + "</button></div>" +
+    "<p class=\"lead\">이 브랜드와 닿는 넓은 단어를 넣으면 맥이 네이버와 구글 트렌드에서 연관 검색어를 받아 와요. 마음에 드는 말을 <b>정체성 단어</b>나 <b>상품 판매 단어</b>로 넣으면 아래 칸에 들어가고, 맥이 그 단어로 다시 연관 검색어를 받아 키워드 탭에 쌓여요.</p>" +
+    "<div class=\"row2\"><input type=\"text\" id=\"word-in\" data-wordin=\"1\" maxlength=\"20\" placeholder=\"찾을 단어" + ((seedsOf()[0] || {}).word ? " (예: " + esc(seedsOf()[0].word) + ")" : "") + "\" value=\"" + esc(ui.wDraft || "") + "\"><button class=\"btn primary\" data-act=\"wordfind\"" + (st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 받는 중…" : "후보 찾기") + "</button></div>" +
     "<div class=\"chips\" style=\"margin-top:6px\">" + SEED_SRC.map(function(o){ return "<button class=\"chip" + (src === o[0] ? " on" : "") + "\" data-ui=\"wSrc=" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div>";
   if(st.busy) h += "<p class=\"note\" style=\"margin-top:10px\">맥이 「" + esc((st.req || {}).word || "") + "」 연관 검색어를 받는 중이에요 — 1~2분 걸려요 (맥이 켜져 있어야 해요). 다 받으면 여기에 저절로 떠요.</p>";
   if(!run || st.busy) return h + "</section>";
@@ -283,7 +283,7 @@ function clustersHtml(all){
   return "<section class=\"card\"><details" + (ui.kwCluster ? " open" : "") + "><summary>주제 묶음 " + order.length + "개 — 키워드 하나가 아니라 주제의 크기로 보기</summary><div class=\"list\" style=\"margin-top:6px\">" +
     order.map(function(c){
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(c.name) + "</b> <span class=\"num muted\">월 " + fmt(c.total) + "</span></div>" +
-        "<div class=\"it-d\">키워드 " + c.n + " · 구매 결 " + c.buy + " · 조사함 " + c.done + (c.gap ? " · <span class=\"up\">빈 곳 " + c.gap + "</span>" : "") + " · " + esc(c.top.join(" · ")) + "</div></div>" +
+        "<div class=\"it-d\">키워드 " + c.n + " · 살 사람이 찾는 말 " + c.buy + " · 조사함 " + c.done + (c.gap ? " · <span class=\"up\">빈 곳 " + c.gap + "</span>" : "") + " · " + esc(c.top.join(" · ")) + "</div></div>" +
         "<button class=\"btn sm\" data-ui=\"kwCluster=" + esc(c.name) + "\">보기</button></div>";
     }).join("") + "</div></details></section>";
 }
