@@ -369,6 +369,7 @@ function viewBrand(){
     (b.kit ? "<dt>브랜드 색</dt><dd><span class=\"sw\" style=\"background:" + esc(b.kit.accent) + "\"></span><span class=\"sw\" style=\"background:" + esc(b.kit.accent2 || b.kit.accent) + "\"></span>" + esc(b.kit.note || "") + "</dd>" : "") +
     (b.cadence ? "<dt>발행</dt><dd>" + esc(b.cadence.note || "") + "</dd>" : "") + "</dl>" +
     (b.todo ? "<p class=\"note\" style=\"margin-top:12px\">" + esc(b.todo) + "</p>" : "") + "</section>";
+  h += wordFindHtml();   // 단어 후보 찾기 — 정체성·판매 단어를 고르는 곳이라 브랜드 탭에 (2026-11-17 동욱 "이건 브랜드에 넣어서 진행해야지")
   h += "<section class=\"card\"><div class=\"card-h\"><h3>연관 검색어 받는 곳</h3><span class=\"n\">단어 " + seedsOf().length + "개</span></div>" + seedSrcHtml() + seedPendingHtml() + "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품과 판매 단어</h3><span class=\"n\">" + (b.products || []).length + "개</span></div>" +
     "<p class=\"lead\">상품 자체도 ✎로 고치고 ✕로 빼고 아래에서 더해요. 상품마다 사려는 사람이 찾을 판매 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지) — 이 단어가 들어간 연관 검색어가 키 콘텐츠(상품 판매) 재료가 돼요.</p>" +
