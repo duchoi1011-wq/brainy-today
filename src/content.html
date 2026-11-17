@@ -213,7 +213,7 @@ var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");
 var tab = load("ct.tab", "sum");
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
 var TABS = [["sum", "한눈에"], ["brand", "브랜드"], ["kw", "키워드"], ["ref", "콘텐츠"], ["rec", "추천"], ["build", "구축"], ["script", "대본"]];
-var PARTS = { search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
+var PARTS = { ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -278,7 +278,7 @@ function setS(patch){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "소재 채널 찾기", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "소재 채널 찾기", ideas: "아이디어 뽑기", brief: "새 브랜드 프로필" };
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -462,6 +462,14 @@ function act(name, el){
     var pk2 = (SETS[cur] || {}).chanpick || {}, skip = (((part("chancand") || {}).items) || []).filter(function(x){ return pk2[x.id] === "skip" }).map(function(x){ return x.name });
     send("chanfind", "소재 채널 찾기 — " + sd2.map(function(x){ return x.word }).join(" · "), { seeds: sd2, have: (B().channels || []).map(function(c){ return c.name }), skip: skip }); return }
   if(name === "chanpick"){ var cp = Object.assign({}, (SETS[cur] || {}).chanpick || {}); if(el.dataset.v) cp[el.dataset.id] = el.dataset.v; else delete cp[el.dataset.id]; setS({ chanpick: cp }); return }
+  if(name === "ideapick"){ var ip = Object.assign({}, ideaPicks()); if(ip[el.dataset.vid]) delete ip[el.dataset.vid]; else ip[el.dataset.vid] = 1; setS({ ideaPick: ip }); return }
+  if(name === "ideaclear"){ setS({ ideaPick: {} }); return }
+  if(name === "ideas"){ var srI = ((part("search") || {}).items) || [], vids = Object.keys(ideaPicks());
+    var vs = vids.map(function(v){ var x = srI.filter(function(y){ return y.vid === v })[0] || videoOf(v); return { vid: v, title: x.title, channel: x.channel, kw: x.kw, replayed: x.replayed } });
+    if(!vs.length) return; send("ideas", "댓글·파동에서 아이디어 뽑기 — 영상 " + vs.length + "개", { videos: vs }); setS({ ideaPick: {} }); ui.refView = "ideas"; render(); return }
+  if(name === "idearesearch" || name === "ideascript"){ var idea = (((part("ideas") || {}).items) || []).filter(function(x){ return x.id === el.dataset.id })[0]; if(!idea) return;
+    if(name === "idearesearch"){ if(searchState().busy) return; setS({ searchReq: { at: new Date().toISOString(), kws: (idea.keywords || []).slice(0, 3) } }); ui.refView = "search"; render(); return }
+    send("script", "아이디어로 바로 원고 — " + (idea.title || idea.idea), { ideas: [idea] }); return }
   if(name === "stoggle"){ ui.sOff = Object.assign({}, ui.sOff); if(ui.sOff[el.dataset.kw]) delete ui.sOff[el.dataset.kw]; else ui.sOff[el.dataset.kw] = 1; render(); return }
   if(name === "search"){ var off = ui.sOff || {}, kws = scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] && !off[x.kw] }).map(function(x){ return x.kw }).slice(0, 10);
     if(!kws.length || searchState().busy) return; setS({ searchReq: { at: new Date().toISOString(), kws: kws } }); return }
