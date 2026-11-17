@@ -70,7 +70,7 @@ function wordRecHtml(name, n){
   var rs = wordRecs(name);
   if(!rs.length) return "";
   var room = Math.max(0, SEED_MAX - n), rec = rs.filter(function(x){ return x.recommend }).slice(0, room);
-  return "<div class=\"wrec\" style=\"margin-top:8px\"><div class=\"it-d\"><span class=\"tag p\">Claude 추천</span> ＋를 누르면 판매 단어로 들어가요" + (room ? "" : " · 이 상품은 " + SEED_MAX + "개가 다 찼어요 — 하나 빼고 넣으세요") + "</div><div class=\"chips\" style=\"margin-top:4px\">" +
+  return "<div class=\"wrec\" style=\"margin-top:8px\"><div class=\"it-d\"><span class=\"tag p\">Claude 추천</span> 진한 칸이 추천 · ＋를 누르면 판매 단어로 들어가요" + (room ? "" : " · 이 상품은 " + SEED_MAX + "개가 다 찼어요 — 하나 빼고 넣으세요") + "</div><div class=\"chips\" style=\"margin-top:4px\">" +
     rs.map(function(x){
       var w = String(x.word).replace(/\s+/g, "");
       return "<button class=\"chip" + (x.recommend ? " on" : "") + "\" data-act=\"wordadd\" data-key=\"상품:" + esc(name) + "\" data-w=\"" + esc(w) + "\" title=\"" + esc(x.why || "") + "\"" + (room ? "" : " disabled") + ">＋ " + esc(w) +
