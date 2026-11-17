@@ -37,6 +37,30 @@ function refByRow(n){
   return { vid: n, url: "https://www.youtube.com/watch?v=" + n, title: x.title || f.title, channel: x.channel || f.channel, subs: x.subs != null ? fmt(x.subs) : "", views: x.views != null ? fmt(x.views) : "",
     ratio: x.ratio, published: x.date, len: x.len, wave: Array.isArray(x.replayed) ? "많이 다시 본 구간 " + x.replayed.join(" · ") : "", comments: x.comments != null ? "댓글 " + x.comments + "개" : "" };
 }
+/* 이 추천은 어디서 나왔나 — ☆ 즐겨찾기 영상 · ★ 키워드로 찾은 영상 · 씨앗 단어 (2026-11-17 동욱: "즐겨찾기를 제외한 추천 기준은 뭐야? 직관적으로") */
+function recFrom(x){
+  var s = S(), favs = (SETS[cur] || {}).favc || {}, refs = x.refs || [];
+  var fv = refs.filter(function(v){ return typeof v === "string" && favs[v] })[0];
+  if(fv) return { k: "fav", t: "☆ 즐겨찾기 영상에서", ref: favs[fv].title };
+  var r = refs.map(refByRow).filter(Boolean)[0], rt = r ? r.title : "";
+  if(x.keyword && s.pin[x.keyword]) return { k: "pin", t: "★ 키워드 「" + x.keyword + "」로 찾은 영상에서", ref: rt };
+  if(x.keyword) return { k: "seed", t: "씨앗 단어 「" + x.keyword + "」에서", ref: rt };
+  return { k: "ref", t: "조사한 레퍼런스에서", ref: rt };
+}
+function recWhyHtml(rd){
+  var n = { fav: 0, pin: 0, seed: 0, ref: 0 }; rd.items.forEach(function(x){ n[recFrom(x).k]++ });
+  return "<section class=\"card\"><div class=\"card-h\"><h3>이 추천은 이렇게 골랐어요</h3></div><div class=\"list\">" +
+    [["1", "재료", "☆ 즐겨찾기 영상 " + n.fav + "개 · ★ 키워드로 찾은 영상 " + n.pin + "개" + (n.seed ? " · 씨앗 단어 " + n.seed + "개" : "") + (n.ref ? " · 조사한 레퍼런스 " + n.ref + "개" : "") + " — 콘텐츠 탭에 있는 남의 영상이에요"],
+     ["2", "잘된 영상만", "조회수가 아니라 「구독자 수보다 얼마나 더 봤나」로 봐요. 구독자가 적은데 많이 본 영상 = 채널 덕이 아니라 주제 덕에 터진 영상"],
+     ["3", "시청자의 말", "좋아요 많이 받은 댓글 속 고민·질문(예: 「썸 각을 못 봄」)과 많이 다시 본 구간 — 이게 우리 영상의 주제가 돼요"],
+     ["4", "우리 채널로 바꾸기", "두 종류로 나눠요 — <b>사람 모으는 영상</b>(풀링, 상품을 팔지 않음)과 <b>상품 파는 영상</b>(키, 내 상품으로 고민을 해결해 보여 줌)"]]
+    .map(function(r){ return "<div class=\"it\"><span class=\"num muted\">" + r[0] + "</span><div class=\"it-m\"><div class=\"it-h\"><b>" + r[1] + "</b></div><div class=\"it-d\">" + r[2] + "</div></div></div>" }).join("") + "</div></section>";
+}
+/* 순서 줄의 P1·K1 같은 번호를 추천 제목으로 */
+function orderText(rd){
+  var t = esc(rd.order || ""), byId = {}; rd.items.forEach(function(x){ byId[x.id] = x.title });
+  return t.replace(/\b([PK]\d+)\b/g, function(m){ return byId[m] ? "<b>" + m + "</b> 「" + esc(byId[m]) + "」" : m });
+}
 /* 추천 재료 — 「추천 받기」를 누를 때 맥으로 가는 ★ 키워드와 ☆ 즐겨찾기 콘텐츠. ☆는 누른 뒤 추천을 새로 받아야 들어간다 (2026-11-17 동욱: "즐겨찾기 누른 게 왜 추천에 안 보이지") */
 function recMaterialHtml(r){
   var s = S(), pins = Object.keys(s.pin).filter(function(k){ return s.pin[k] && !s.ex[k] }), f = (SETS[cur] || {}).favc || {}, ids = Object.keys(f);
@@ -52,10 +76,11 @@ function recMaterialHtml(r){
 function topicCell(x, s){
   var sc = scriptOf(x.id);
   return "<div class=\"o-top\"><span class=\"num muted\">" + esc(x.id) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>" +
+    (function(f){ return "<div class=\"small\" style=\"margin:2px 0 4px\"><span class=\"tag" + (f.k === "fav" ? " ok" : "") + "\">" + esc(f.t) + "</span>" + (f.ref ? " <span class=\"muted\">「" + esc(f.ref) + "」</span>" : "") + "</div>" })(recFrom(x)) +
     "<b>" + ([x.product, x.format].filter(Boolean).length ? "[" + [x.product, x.format].filter(Boolean).map(esc).join(" · ") + "] " : "") + esc(x.title) + "</b>" +
     (x.structure ? "<div class=\"apply\">" + esc(x.structure) + "</div>" : "") +
     "<div class=\"it-d\">" + [sc ? "<span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "", s.plan[x.id] ? "<span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : ""].filter(Boolean).join(" ") + "</div>" +
-    "<details><summary>근거 · 다음 연결 · 이어 쓸 카드</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+    "<details><summary>왜 추천했나 · 다음 연결</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
     (x.scene ? "<dt>찍을 장면</dt><dd>" + esc(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + esc(x.basis) + "</dd>" +
     (x.next ? "<dt>다음 연결</dt><dd>" + esc(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + esc(x.bank) + "</dd>" : "") + "</dl></details>";
 }
@@ -83,12 +108,12 @@ function viewRec(){
   var rd0 = r.rounds[r.rounds.length - 1], rd = Object.assign({}, rd0, { items: rd0.items.filter(isLongRec) }), nShort = rd0.items.length - rd.items.length, picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
   var need = picked.filter(function(id){ return !scriptOf(id) });
   h += "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
-    "<p>" + esc(rd.summary) + "</p>" + (nShort ? "<p class=\"lead\" style=\"margin-top:8px\">미드폼·롱폼만 보여요 — 이 회차의 숏폼 추천 " + nShort + "개는 뺐어요.</p>" : "") + (rd.order ? "<p class=\"lead\" style=\"margin-top:8px\">바로 찍을 수 있는 순서 · " + esc(rd.order) + "</p>" : "") +
+    "<p>" + esc(rd.summary) + "</p>" + (nShort ? "<p class=\"lead\" style=\"margin-top:8px\">미드폼·롱폼만 보여요 — 이 회차의 숏폼 추천 " + nShort + "개는 뺐어요.</p>" : "") + (rd.order ? "<details style=\"margin-top:8px\"><summary>찍는 순서 (" + rd.items.length + "편)</summary><p class=\"lead\" style=\"margin-top:6px\">" + orderText(rd) + "</p></details>" : "") +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!need.length || openCmd("script") ? " disabled" : "") + ">고른 " + need.length + "개 대본 초안 만들기</button>" +
     "<button class=\"btn\" data-act=\"source\"" + (!picked.length || openCmd("source") ? " disabled" : "") + ">고른 " + picked.length + "개 소재 찾기</button>" +
     "<button class=\"btn\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole ? " disabled" : "") + ">" + (openCmd("recommend") ? "맥이 추천 만드는 중…" : "추천 새로 받기 (☆·★ 반영)") + "</button></div>" +
     "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋로 고른 뒤 「대본 초안 만들기」를 누르면, 맥의 Claude가 대본을 쓰면서 이 주제로 잘된 영상과 레퍼런스 채널에서 가져온 구성을 같이 붙여요. 새 추천은 역할마다 " + roleNames().map(function(n){ return esc(n) + " " + s.roles[n] + "편" }).join(" · ") + "씩 받아요.</p></section>";
-  h += planHtml(rd, s);
+  h += recWhyHtml(rd) + planHtml(rd, s);
   roleNames().forEach(function(role){
     var items = rd.items.filter(function(x){ return x.role === role });
     if(!items.length) return;
