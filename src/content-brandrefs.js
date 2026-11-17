@@ -81,10 +81,12 @@ function viewRefPage(){
   var cands = ((cd && cd.items) || []).filter(function(x){ return !x.added && pick[x.id] !== "skip" });
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>참고 페이지</h3><span class=\"n\">넣은 곳 " + (b.channels || []).filter(function(c){ return RP_SIDES.some(function(sd0){ return sd0.group.test(c.group) }) }).length + " · 후보 " + cands.length + "</span></div>" +
     "<p class=\"lead\">대본은 이 페이지를 기반으로 써요. 정체성 단어·상품 단어에 맞는 <b>소재가 많은 곳</b>과 내 채널 <b>연출에 참고할 곳</b>을 한국만이 아니라 전 세계에서 모아요 — 유튜브 · 매체 · 리서치 · 뉴스레터 · 팟캐스트 · 커뮤니티. 「대본 초안」과 「소재 찾기」는 여기 넣은 곳을 돌아요.</p>" +
+    "<details style=\"margin-top:8px\"><summary>찾는 범위 <span class=\"num muted\">" + rpWords().length + "개 단어 · " + RP_SIDES.filter(function(x){ return o.sides[x.id] }).map(function(x){ return x.name }).join(" · ") + " · " + RP_REGION.filter(function(r){ return r[0] === o.region })[0][1] + " — 펴서 바꾸기</span></summary>" +   // 범위는 접어 두고 지금 값만 한 줄 (2026-11-17 동욱 "기준은 따로 탭이나 접게")
     "<h4>어떤 단어로 찾을까</h4><div class=\"chips\">" + (sd.map(function(x){ var off = o.words && o.words[x.word] === false;
       return "<button class=\"chip" + (off ? "" : " on") + "\" data-act=\"rpword\" data-word=\"" + esc(x.word) + "\">" + (x.kind === "상품" ? "🛒 " : "") + esc(x.word) + "</button>" }).join("") || "<span class=\"lead\">브랜드 탭에서 정체성 단어·상품 판매 단어를 먼저 넣으세요.</span>") + "</div>" +
     "<h4>무엇을 찾을까</h4><div class=\"chips\">" + RP_SIDES.map(function(x){ return "<button class=\"chip" + (o.sides[x.id] ? " on" : "") + "\" data-act=\"rpside\" data-side=\"" + x.id + "\">" + x.name + "</button>" }).join("") + "</div>" +
     "<h4>어디서</h4><div class=\"chips\">" + RP_REGION.map(function(r){ return "<button class=\"chip" + (o.region === r[0] ? " on" : "") + "\" data-act=\"rpregion\" data-v=\"" + r[0] + "\">" + r[1] + "</button>" }).join("") + "</div>" +
+    "</details>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"chanfind\"" + (busy || !rpWords().length || !RP_SIDES.some(function(x){ return o.sides[x.id] }) ? " disabled" : "") + ">" + (busy ? "맥이 찾는 중…" : "고른 단어로 참고 페이지 채우기") + "</button>" +
     (cd && cd.updatedAt ? "<span class=\"lead\" style=\"margin:0\">마지막 " + esc(day(cd.updatedAt)) + "</span>" : "") + "</div>" +
     (cands.some(rpRec) ? "<div class=\"note\" style=\"margin-top:10px\">하나하나 보지 않아도 돼요 — 「Claude 추천」 표시가 붙은 곳만 한 번에 넣을 수 있어요. 넣은 곳은 기획 레퍼런스 카드에 들어가고, 나중에 카드에서 빼면 여기서도 빠져요.</div><div class=\"acts\">" + rpRecBtn(cands, "Claude 추천 전부 —") + "</div>" : "") + "</section>";

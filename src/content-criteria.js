@@ -53,10 +53,14 @@ function recCritHtml(rd){
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(n) + "</b> <span class=\"num\">" + s.roles[n] + "편</span></div><div class=\"it-d\">" + esc(what) + "</div></div>" +
         "<span style=\"display:flex;gap:2px\"><button class=\"mk\" data-act=\"rc\" data-k=\"role:" + esc(n) + ":-1\" aria-label=\"" + esc(n) + " 한 편 빼기\"" + (s.roles[n] > 0 ? "" : " disabled") + ">−</button>" +
         "<button class=\"mk\" data-act=\"rc\" data-k=\"role:" + esc(n) + ":1\" aria-label=\"" + esc(n) + " 한 편 더\"" + (s.roles[n] < 8 ? "" : " disabled") + ">＋</button></span></div>" }).join("") + "</div>";
-  return "<section class=\"card\"><div class=\"card-h\"><h3>추천 기준 — 조절 · 우선</h3>" + (c.set || (SETS[cur] || {}).recCrit ? "<button class=\"btn sm\" data-act=\"rc\" data-k=\"reset\">기본값으로</button>" : "") + "</div>" +
-    "<p class=\"lead\">맥의 Claude는 이 네 단계로 추천을 골라요. 바꾸면 바로 저장되고, 다음 「추천 받기」부터 이 기준대로 골라요.</p><div class=\"list\">" +
+  /* 기준은 평소엔 접어 두고 지금 기준을 한 줄로만 (2026-11-17 동욱 "이런 기준 탭은 따로 탭을 만들거나 접게") — 바꿀 때만 편다 */
+  var now = c.order.filter(function(id){ return !c.off[id] }).slice(0, 3).map(function(id, i){ return (i + 1) + " " + CRIT.filter(function(k){ return k.id === id })[0].name }).join(" · ") +
+    (c.minRatio ? " · 구독자보다 " + c.minRatio + "배 이상" : "") + " · " + roleNames().map(function(n){ return esc(n) + " " + s.roles[n] + "편" }).join(" · ");
+  return "<section class=\"card\"><details><summary>추천 기준 <span class=\"num muted\">" + now + (c.set || (SETS[cur] || {}).recCrit ? "" : " (기본)") + " — 펴서 바꾸기</span></summary>" +
+    (c.set || (SETS[cur] || {}).recCrit ? "<div class=\"acts\"><button class=\"btn sm\" data-act=\"rc\" data-k=\"reset\">기본값으로</button></div>" : "") +
+    "<p class=\"lead\" style=\"margin-top:6px\">맥의 Claude는 이 네 단계로 추천을 골라요. 바꾸면 바로 저장되고, 다음 「추천 받기」부터 이 기준대로 골라요. 기본값 그대로 둬도 돼요.</p><div class=\"list\">" +
     step(1, "재료 — 어떤 영상에서 고를까", use) + step(2, "잘된 영상만", ratio) + step(3, "무엇을 먼저 볼까 (우선순위)", pri) +
-    step(4, "우리 채널로 — 몇 편씩", "<div class=\"it-d\">사람 모으는 영상(풀링)은 상품을 팔지 않고, 상품 파는 영상(키)은 내 상품으로 고민을 해결해 보여 줘요.</div>" + roles) + "</div>" +
+    step(4, "우리 채널로 — 몇 편씩", "<div class=\"it-d\">사람 모으는 영상(풀링)은 상품을 팔지 않고, 상품 파는 영상(키)은 내 상품으로 고민을 해결해 보여 줘요.</div>" + roles) + "</div></details>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"recommend\"" + (busy || !nRole || !hasMat ? " disabled" : "") + ">" + (busy ? "맥이 추천 만드는 중…" : rd ? "이 기준으로 추천 새로 받기" : "이 기준으로 추천 받기") + "</button>" +
     (!hasMat ? "<span class=\"lead\" style=\"margin:0\">켠 재료가 비어 있어요.</span>" : !nRole ? "<span class=\"lead\" style=\"margin:0\">편 수가 0이에요.</span>" : "") + "</div></section>";
 }

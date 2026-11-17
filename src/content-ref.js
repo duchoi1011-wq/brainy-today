@@ -179,7 +179,7 @@ function anaTargets(words){
 function anaBarHtml(words){
   var o = anaOpt(), t = anaTargets(words), todo = t.filter(function(x){ return !anaOf(x.vid) }), busy = openCmd("analyze"), nDone = Object.keys(((part("analysis") || {}).items) || {}).length;
   function tg(k, label){ return "<button class=\"chip" + (o[k] ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"" + k + "\">" + label + "</button>" }
-  return "<details style=\"margin-top:8px\"" + (nDone ? "" : " open") + "><summary>🔍 영상 분석 조절 · 분석한 영상 " + nDone + "개</summary>" +
+  return "<details style=\"margin-top:8px\"><summary>🔍 영상 분석 조절 · 분석한 영상 " + nDone + "개</summary>" +
     "<p class=\"lead\" style=\"margin-top:6px\">맥의 Claude가 영상을 열어 읽어요. 켠 것만 읽고, 카드 「자세히」에도 켠 것만 보여요.</p>" +
     "<div class=\"chips\">" + ANA_PARTS.map(function(p){ return tg(p[0], p[1]) }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">댓글</span>" + [5, 10, 20].map(function(n){ return "<button class=\"chip" + (o.nCmt === n ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"nCmt\" data-v=\"" + n + "\">" + n + "개</button>" }).join("") + "</div>" +
