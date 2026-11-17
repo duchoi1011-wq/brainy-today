@@ -15,13 +15,14 @@ var SEED_MAX = 10;
 var SEED_SRC = [["naver", "네이버 검색광고"], ["google", "구글 트렌드"], ["both", "둘 다"]];
 function seedsOf(){ return ((SETS[cur] || {}).seeds || (B() && B().seeds) || []).filter(function(x){ return x.word }) }
 function seedSrc(){ return (SETS[cur] || {}).seedSrc || (B() && B().seedSrc) || "naver" }
-function seedItems(word){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 }).sort(function(a, b){ return b.total - a.total || (b.gTop || 0) - (a.gTop || 0) }) }
+function isFar(x, word){ return (x.far || []).indexOf(word) >= 0 }   // 씨앗이 안 든 말 — 구글 관련 검색어로만 들어온 것
+function seedItems(word, far){ return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 && (far == null || isFar(x, word) === far) }).sort(function(a, b){ return b.total - a.total || (b.gTop || 0) - (a.gTop || 0) }) }
 function seedRun(word){ var k = part("kw"); return ((k && k.seeds) || []).filter(function(x){ return x.word === word })[0] || null }
 function seedsPending(){ var k = part("kw"), have = ((k && k.seeds) || []).map(function(x){ return x.word }).join("|") + "@" + ((k && k.seedSrc) || "naver"); return seedsOf().map(function(x){ return x.word }).join("|") + "@" + seedSrc() !== have }
 function seedRowHtml(x, s){
-  var r = seedRun(x.word), n = seedItems(x.word);
+  var r = seedRun(x.word), n = seedItems(x.word, false), nf = seedItems(x.word, true).length;
   return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b></div>" +
-    "<div class=\"it-d\">" + (r ? "연관 검색어 " + n.length + "개" + (r.google != null ? " (네이버 " + (r.naver || 0) + " · 구글 " + r.google + ")" : "") + " · 검색량 합 월 " + fmt(n.reduce(function(a, y){ return a + y.total }, 0)) + " · ★ " + n.filter(function(y){ return s.pin[y.kw] }).length +
+    "<div class=\"it-d\">" + (r ? "연관 검색어 " + n.length + "개" + (nf ? " · 구글이 같이 찾은 말 " + nf + "개" : "") + " · 검색량 합 월 " + fmt(n.reduce(function(a, y){ return a + y.total }, 0)) + " · ★ " + n.filter(function(y){ return s.pin[y.kw] }).length +
       (r.error ? " · <span class=\"down\">" + esc(r.error) + "</span>" : "") : (seedsPending() ? "맥이 받는 중" : "아직 안 받음")) + "</div></div>" +
     "<button class=\"btn sm\" data-go=\"kw|seed=" + esc(x.word) + "\">검색어</button><button class=\"mk no\" data-act=\"seeddel\" data-word=\"" + esc(x.word) + "\" aria-label=\"" + esc(x.word) + " 빼기\" title=\"빼기\">✕</button></div>";
 }
@@ -56,11 +57,13 @@ function seedsHtml(){
     (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + "</section>";
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
   if(pickW){
-    var list = seedItems(pickW), more = ui.seedMore || 15;
+    var list = seedItems(pickW, false), far = seedItems(pickW, true), more = ui.seedMore || 15;
     h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">검색량 순 · " + list.length + "개</span></div><div class=\"chips\">" +
-      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word).length + "</span></button>" }).join("") + "</div>" +
+      sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word, false).length + "</span></button>" }).join("") + "</div>" +
       "<div class=\"list\" style=\"margin-top:6px\">" + (list.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">이 씨앗이 들어간 연관 검색어가 없어요. 브랜드 탭에서 더 넓은 단어로 바꿔 보세요.</p>") + "</div>" +
-      (list.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"seedMore=" + (more + 25) + "\">더 보기 (" + (list.length - more) + "개 남음)</button></div>" : "") + "</section>";
+      (list.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"seedMore=" + (more + 25) + "\">더 보기 (" + (list.length - more) + "개 남음)</button></div>" : "") +
+      (far.length ? "<details style=\"margin-top:12px\"><summary>구글이 같이 찾은 말 " + far.length + "개 — 「" + esc(pickW) + "」이 안 든 관련 검색어</summary><p class=\"lead\" style=\"margin-top:6px\">구글 트렌드에서 이 단어와 함께 검색된 말이에요. 쓸 만한 것만 ★하세요.</p><div class=\"list\">" +
+        far.map(function(x){ return kwRow(x, s, true) }).join("") + "</div></details>" : "") + "</section>";
   }
   return h;
 }

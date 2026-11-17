@@ -43,7 +43,7 @@ function viewSum(){
   /* ① 씨앗 → 검색어 */
   h += "<section class=\"card\"><div class=\"card-h\"><h3>① 씨앗 단어와 뽑은 검색어</h3>" + goBtn("키워드 탭", "kw") + "</div>" +
     (sd.length ? "<div class=\"list\">" + sd.map(function(x){
-      var it = seedItems(x.word);
+      var it = seedItems(x.word, false);
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" + esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span> <b>" + esc(x.word) + "</b> <span class=\"num muted\">" + it.length + "개</span></div>" +
         "<div class=\"it-d\">" + (it.slice(0, 4).map(function(y){ return (s.pin[y.kw] ? "★" : "") + esc(y.kw) + " <span class=\"num\">" + fmt(y.total) + "</span>" }).join(" · ") || "아직 안 받음") + "</div></div>" +
         "<button class=\"btn sm\" data-go=\"kw|seed=" + esc(x.word) + "\">보기</button></div>" }).join("") + "</div>"
