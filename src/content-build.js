@@ -7,9 +7,9 @@ function buildDef(){ return RAW["build.def"] || { sections: [], funnel: [] } }
 function buildDocs(){ var b = part("build"); return (b && b.items) || [] }
 function buildRefCell(n){
   var r = refByRow(n);
-  if(!r) return "<span class=\"muted\">[조사] " + esc(n) + "행 — 레퍼런스 목록에 없음</span>";
+  if(!r) return "<span class=\"muted\">조사 시트 " + esc(n) + "번째 줄 — 레퍼런스 목록에 없음</span>";
   return "<a class=\"bd-ref\" href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\">" + (r.vid ? "<img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(r.vid) + "/mqdefault.jpg\">" : "") +
-    "<span><b>" + esc(r.title) + "</b><br><span class=\"muted\">" + esc([r.channel, r.ratio != null ? "조회÷구독 " + r.ratio + "배" : "", "[조사] " + r.row + "행"].filter(Boolean).join(" · ")) + "</span></span></a>";
+    "<span><b>" + esc(r.title) + "</b><br><span class=\"muted\">" + esc([r.channel, r.ratio != null ? "조회÷구독 " + r.ratio + "배" : "", "조사 시트 " + r.row + "번째 줄"].filter(Boolean).join(" · ")) + "</span></span></a>";
 }
 /* 욕구 결 검증 (2026-11-16 동욱: "시청자의 욕구의 본질과 내 상품의 구매의 본질이 동일하냐") — 행 이름은 구축 틀.json 의 rows */
 function buildFit(f, v){
@@ -57,8 +57,8 @@ function buildListHtml(docs, sel){
   return order.map(function(k){
     return "<div class=\"bd-item\"><b>" + esc(k) + "</b>" + groups[k].sort(function(a, c){ return (rank[a.role] || 0) - (rank[c.role] || 0) }).map(function(d){
       var fl = buildFilled(d);
-      return "<button class=\"bd-doc" + (d.id === sel ? " on" : "") + "\" data-ui=\"bdDoc=" + esc(d.id) + "\"><span class=\"tag fill\">" + esc(d.role === "키" ? "키콘" : d.role) + "</span> " + esc(d.id) +
-        "<span class=\"clip\">" + esc(d.title) + "</span><span class=\"muted small\">" + esc(d.stage || "") + " · " + fl[0] + "/" + fl[1] + "칸</span></button>" }).join("") + "</div>";
+      return "<button class=\"bd-doc" + (d.id === sel ? " on" : "") + "\" data-ui=\"bdDoc=" + esc(d.id) + "\"><span class=\"tag fill\">" + esc(d.role === "키" ? "상품 파는 영상" : d.role === "풀링" ? "사람 모으는 영상" : d.role) + "</span> " + esc(d.id) +
+        "<span class=\"clip\">" + esc(d.title) + "</span><span class=\"muted small\">" + esc(d.stage || "") + " · " + fl[1] + "칸 중 " + fl[0] + "칸 채움</span></button>" }).join("") + "</div>";
   }).join("") || "<p class=\"empty\">아직 구축 문서가 없어요.</p>";
 }
 function buildIdeasHtml(){
@@ -77,7 +77,7 @@ function viewBuild(){
     "<button class=\"chip" + (ui.bdView === "sheet" ? " on" : "") + "\" data-ui=\"bdView=sheet\">시트</button></div>" +
     "<button class=\"btn sm\" data-act=\"buildpdf\"" + (sel ? "" : " disabled") + ">PDF로 보기</button>" +
     "<span class=\"lead\" style=\"margin:0\">원문 [구축 - 콘텐츠] 칸 그대로예요. 문서는 맥의 Claude(추천 스킬)가 채워요.</span></div>";
-  return bar + "<div class=\"bd\"><aside class=\"bd-left\"><h3>퍼널</h3><p class=\"lead\">" + esc((buildDef().funnel || []).join(" → ")) + "</p>" + buildListHtml(docs, sel && sel.id) + "</aside>" +
+  return bar + "<div class=\"bd\"><aside class=\"bd-left\"><h3>영상이 이어지는 순서</h3><p class=\"lead\">" + esc((buildDef().funnel || []).join(" → ")) + "</p>" + buildListHtml(docs, sel && sel.id) + "</aside>" +
     "<div class=\"bd-main\" id=\"bd-print\">" + (sel ? buildDocHtml(sel) : "<p class=\"empty\">왼쪽에서 문서를 고르세요.</p>") + "</div>" +
     "<aside class=\"bd-right\">" + buildIdeasHtml() + "</aside></div>";
 }

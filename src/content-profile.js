@@ -5,9 +5,9 @@
 var PROF_KEYS = ["name", "handle", "one", "target", "firstQuestion", "hook", "products", "identity", "roles", "stages"];
 /* 목록 칸 — 어디에 있고, 한 줄 글과 어떻게 오가나 (짝 칸은 「앞 — 뒤」로 적는다) */
 var PLIST = {
-  "identity.axes": { label: "콘텐츠 축", hint: "콘텐츠 축 넣기" },
-  "identity.needs": { label: "구매자 욕구", hint: "구매자 욕구 넣기" },
-  "identity.pillars": { label: "필러", hint: "A — 사람이 안 오는 이유", pair: ["id", "name"] },
+  "identity.axes": { label: "콘텐츠 축", hint: "콘텐츠 축 넣기", what: "이 채널이 꾸준히 다루는 큰 주제 갈래예요. 모든 영상은 이 중 하나에 속해요." },
+  "identity.needs": { label: "구매자 욕구", hint: "구매자 욕구 넣기", what: "내 상품을 사는 사람이 진짜 원하는 것이에요. 영상 분석의 「구매 욕구 검증」이 이걸 기준으로 봐요." },
+  "identity.pillars": { label: "필러", hint: "A — 이 필러가 다루는 것", pair: ["id", "name"], what: "콘텐츠 축을 실제 영상 시리즈로 나눈 기둥이에요(A·B·C… 표시). 추천과 참고 페이지가 「어느 필러 영상인지」 붙일 때 써요." },
   "roles": { label: "역할", hint: "풀링 — 사람을 모으기", pair: ["name", "what"] },
   "stages": { label: "단계", hint: "궁금 의문 — 저건 왜 저래?", pair: ["name", "what"] }
 };
@@ -45,7 +45,7 @@ function ptextHtml(key, label, multi){
 /* 목록 칸 — 줄마다 ✎ · ✕, 맨 아래 넣기 */
 function plistHtml(path){
   var def = PLIST[path], list = pget(profNow(), path) || [];
-  return "<div class=\"pfield\"><span class=\"pl\">" + esc(def.label) + " <span class=\"num muted\">" + list.length + "</span></span><div class=\"list\">" + list.map(function(x, i){
+  return "<div class=\"pfield\"><span class=\"pl\">" + esc(def.label) + " <span class=\"num muted\">" + list.length + "</span></span>" + (def.what ? "<div class=\"it-d\">" + esc(def.what) + "</div>" : "") + "<div class=\"list\">" + list.map(function(x, i){
     var key = path + ":" + i;
     if(ui.pedit === key) return "<div class=\"it\"><div class=\"it-m\"><input type=\"text\" data-pfin=\"" + esc(key) + "\" value=\"" + esc(draft(key, itemText(def, x))) + "\"><div class=\"acts\">" + editBtns(key) + "</div></div></div>";
     return "<div class=\"it\"><div class=\"it-m\">" + (def.pair ? "<div><b>" + esc(x[def.pair[0]]) + "</b>" + (x[def.pair[1]] ? " " + esc(x[def.pair[1]]) : "") + "</div>" : "<div>" + esc(x) + "</div>") + "</div>" +

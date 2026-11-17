@@ -179,7 +179,7 @@ function anaTargets(words){
 function anaBarHtml(words){
   var o = anaOpt(), t = anaTargets(words), todo = t.filter(function(x){ return !anaOf(x.vid) }), busy = openCmd("analyze"), nDone = Object.keys(((part("analysis") || {}).items) || {}).length;
   function tg(k, label){ return "<button class=\"chip" + (o[k] ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"" + k + "\">" + label + "</button>" }
-  return "<details style=\"margin-top:8px\"><summary>🔍 영상 분석 조절 · 분석한 영상 " + nDone + "개</summary>" +
+  return "<details style=\"margin-top:8px\"><summary>🔍 영상 분석 조절 <span class=\"num muted\">" + ANA_PARTS.filter(function(p){ return o[p[0]] }).map(function(p){ return p[1] }).join(" · ") + " · 댓글 " + o.nCmt + "개 · " + (o.target === "picked" ? "💡 담은 영상" : "키워드마다 상위 " + o.topN + "개") + " · 분석한 영상 " + nDone + "개 — 펴서 바꾸기</span></summary>" +
     "<p class=\"lead\" style=\"margin-top:6px\">맥의 Claude가 영상을 열어 읽어요. 켠 것만 읽고, 카드 「자세히」에도 켠 것만 보여요.</p>" +
     "<div class=\"chips\">" + ANA_PARTS.map(function(p){ return tg(p[0], p[1]) }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">분석할 영상</span>" + [1, 3, 5].map(function(n){ return "<button class=\"chip" + (o.target === "top" && o.topN === n ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"topN\" data-v=\"" + n + "\">키워드마다 점수 상위 " + n + "개</button>" }).join("") +

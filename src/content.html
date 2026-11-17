@@ -38,6 +38,9 @@ h1::before{content:"";width:22px;height:22px;border-radius:7px;background:linear
 nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto;scrollbar-width:none;background:var(--surface);border-radius:14px;padding:4px;box-shadow:var(--shadow)}
 nav::-webkit-scrollbar{display:none}
 nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;color:var(--muted);background:none;border:0;font:inherit;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer}
+html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 폭이 15px 바뀌던 것 */
+.runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
+@media (max-width:560px){input,textarea,select{font-size:16px!important}}   /* 아이폰에서 누르면 화면이 확대되던 것 (16px 미만) */
 .subnav{display:flex;gap:6px;margin:0 0 14px;overflow-x:auto}.subnav button{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}.subnav button.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
 nav button.on{background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 30%,transparent)}
 nav button span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-right:4px}
@@ -274,6 +277,9 @@ function S(){
 /* 역할(풀링·키)과 단계(5개)는 브랜드.json 이 정본 — roles · stages 를 읽는다 (2026-11-16 동욱: 신뢰 역할 없앰) */
 function roleNames(){ var b = B(); return ((b && b.roles) || []).map(function(x){ return x.name }) }
 function stageList(){ var b = B(); return (b && b.stages) || [] }
+/* 추천 번호 쉬운 말 — P1 → 모으기 1 (사람 모으는 영상), K3 → 팔기 3 (상품 파는 영상). 2026-11-17 검증: P1·K1 약어 */
+function recNo(id){ var m = /^([PK])(\d+)$/.exec(String(id || "")); return m ? (m[1] === "P" ? "모으기 " : "팔기 ") + m[2] : String(id || "") }
+var VT_KO = { Great: "아주 좋음", Good: "좋음", Normal: "보통", Bad: "나쁨", Worst: "아주 나쁨" };
 function stageTag(x){ return x && x.stage ? "<span class=\"tag\">" + esc(x.stage) + "</span>" : "" }
 /* 사다리 — items 를 단계 칸에 나눠 위(마지막 단계)부터 그린다. cell(x) 는 칸 안 한 개의 HTML */
 function ladderHtml(items, cell){
@@ -325,7 +331,7 @@ function send(kind, text, params){
   window.scrollTo({ top: 0, behavior: "smooth" });   // 상태 줄은 맨 위에 뜬다 — 버튼이 아래에 있어도 보이게
 }
 function runHtml(kinds){
-  var out = "";
+  var out = "", done = [];
   kinds.forEach(function(k){
     var c = CMDS.filter(function(x){ return x.kind === k && (x.brand === cur || k === "brief") })[0];
     if(!c || ui.hide[c.id]) return;
@@ -334,9 +340,12 @@ function runHtml(kinds){
     var step = c.steps ? " · " + c.steps.n + "/" + c.steps.total + " " + esc(c.steps.now || "") : "";
     out += "<div class=\"run" + (open ? "" : bad ? " bad" : " done") + "\"><b>" + (open ? "⏳" : bad ? "⚠" : "✓") + " " + KIND[k] + "</b><span>" +
       (open ? esc(c.status) + step + " · 보낸 지 " + ago(c.createdAt).replace(" 전", "") + (c.status === "처리 중" ? " — 맥의 Claude가 하고 있어요. 몇 분에서 수십 분 걸려요." : " — 맥이 켜져 있으면 곧 받아서 시작해요.")
-            : esc(String(c.result || c.status || "").split("\n").slice(0, 4).join(" · ")) + " <span class=\"muted\">(" + ago(c.doneAt || c.createdAt) + ")</span>") +
+            : esc(String(c.result || c.status || "").split("\n").map(function(l){ return l.trim() }).filter(Boolean).slice(0, 4).join(" · ").replace(/(\s*·\s*){2,}/g, " · ")) + " <span class=\"muted\">(" + ago(c.doneAt || c.createdAt) + ")</span>") +
       "</span>" + (open ? "" : "<button class=\"x\" data-hide=\"" + c.id + "\" aria-label=\"닫기\">✕</button>") + "</div>";
+    if(!open){ done.push({ h: out.slice(out.lastIndexOf("<div class=\"run")), t: KIND[k], bad: bad }); out = out.slice(0, out.lastIndexOf("<div class=\"run")) }
   });
+  /* 끝난 맥 작업은 접어 둔다 — 본 목록이 첫 화면에 보이게 (2026-11-17 검증: 상태 카드 5개가 첫 화면을 다 차지) */
+  if(done.length) out += "<details class=\"runs\"><summary>맥이 끝낸 일 " + done.length + "개 <span class=\"num muted\">" + done.map(function(d){ return (d.bad ? "⚠ " : "✓ ") + d.t }).join(" · ") + "</span></summary>" + done.map(function(d){ return d.h }).join("") + "</details>";
   return out;
 }
 
@@ -392,7 +401,7 @@ function viewBrand(){
     (lg && lg.items.length ? "<p class=\"small mono\" style=\"margin-bottom:6px\">" + esc(lg.where) + "</p><div class=\"list\">" + lg.items.slice(0, 12).map(function(x){
       return "<div class=\"it\"><span class=\"num muted\">" + esc(x.date) + "</span><div class=\"it-m\"><div>" + esc(String(x.file).replace(/^\S+ /, "").replace(/\.pdf$/, "")) + "</div></div><span class=\"num muted\">" + esc(String(x.at).slice(11, 16)) + "</span></div>" }).join("") + "</div>"
       : "<p class=\"empty\">아직 기록이 없어요.</p>") + "</section>";
-  h += "<p class=\"lead\" style=\"text-align:center\">정본: 볼트 <span class=\"mono\">" + esc(b.profile || b.planCard || "") + "</span>" + (b.sheet ? " · <a href=\"" + esc(b.sheet) + "\" target=\"_blank\" rel=\"noopener\">조사 시트</a>" : "") + "</p>";
+  h += "<p class=\"lead\" style=\"text-align:center\">브랜드 정보 원본은 볼트에 있어요" + (b.sheet ? " · <a href=\"" + esc(b.sheet) + "\" target=\"_blank\" rel=\"noopener\">조사 시트</a>" : "") + "</p>";
   return h;
 }
 
@@ -401,8 +410,14 @@ function viewBrand(){
 /* ── 그리기 ──
    맥·저장소에서 온 변화(renderSoft)는 동욱이 칸에 글을 쓰는 중이면 그리지 않고 미뤘다가, 칸에서 나가면 그린다
    (2026-11-17 동욱: "씨앗 단어 자체가 새로 안 써져" — 단어를 넣으면 맥이 검색어를 받아 올리는 동안 화면이 여러 번 다시 그려져 쓰던 칸·한글 조합이 끊겼다) */
-function typing(){ var a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && !/^(range|checkbox|file|date)$/.test(a.type) && document.getElementById("view").contains(a)) }
-function renderSoft(){ if(typing()){ ui.later = true; return } render() }
+/* 「쓰는 중」 = 글칸에 초점이 있고, 한글을 조합 중이거나 마지막 입력 뒤 2초가 안 됐을 때만. 초점만 남아 있으면 그린다(그린 뒤 초점은 render 가 돌려준다).
+   2026-11-17 검증: Enter 뒤 커서가 칸에 남아 있으면 결과가 와도 「받는 중」에서 안 바뀌던 문제 */
+var lastInput = 0, composing = false;
+document.addEventListener("compositionstart", function(){ composing = true });
+document.addEventListener("compositionend", function(){ composing = false; lastInput = Date.now() });
+document.addEventListener("input", function(){ lastInput = Date.now() }, true);
+function typing(){ var a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && !/^(range|checkbox|file|date)$/.test(a.type) && document.getElementById("view").contains(a) && (composing || Date.now() - lastInput < 2000)) }
+function renderSoft(){ if(typing()){ if(!ui.later){ ui.later = true; (function wait(){ setTimeout(function(){ if(!ui.later) return; if(typing()) return wait(); ui.later = false; render() }, 800) })() } return } render() }
 document.addEventListener("focusout", function(){ if(ui.later) setTimeout(function(){ if(ui.later && !typing()){ ui.later = false; render() } }, 0) });
 function render(){
   var b = B();

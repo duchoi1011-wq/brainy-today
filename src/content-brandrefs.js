@@ -9,7 +9,7 @@ function refGroupHtml(g, list, chan){
     var now = chan && chan.items && chan.items[c.name], vs = now ? now.videos : [], fresh = vs.filter(isNew); nNew += fresh.length;
     var top = fresh[0] || vs[0];
     return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\">" + (c.url ? "<a href=\"" + esc(c.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(c.name) + "</b></a>" : "<b>" + esc(c.name) + "</b>") +
-      (c.grade && c.grade !== "—" ? " <span class=\"tag\">" + esc(c.grade) + "</span>" : "") + (c.pillar && c.pillar !== "—" ? " <span class=\"tag\">필러 " + esc(c.pillar) + "</span>" : "") +
+      (c.grade && c.grade !== "—" ? " <span class=\"tag\" title=\"이 브랜드에 얼마나 맞나 — A+ 매번 볼 곳 · A 자주 · A-·B+ 가끔 · B 참고\">맞음 " + esc(c.grade) + "</span>" : "") + (c.pillar && c.pillar !== "—" ? " <span class=\"tag\">필러 " + esc(c.pillar) + "</span>" : "") +
       (fresh.length ? " <span class=\"tag ok\">새 영상 " + fresh.length + "</span>" : "") + "</div>" +
       "<div class=\"it-d\">" + esc(c.take) + "</div>" + (c.example ? "<div class=\"apply\"><b>대본 적용 예</b> " + esc(c.example) + "</div>" : "") +
       (top ? "<div class=\"it-d\">" + (isNew(top) ? "새 영상" : "최근 영상") + " · <a href=\"https://www.youtube.com/watch?v=" + esc(top.id) + "\" target=\"_blank\" rel=\"noopener\">" + esc(top.title) + "</a> · " + esc(top.when) +
@@ -66,7 +66,7 @@ function rpRow(c, cand){
   var on = cand && ((SETS[cur] || {}).chanpick || {})[c.id] === "add";
   return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\">" + (c.url ? "<a href=\"" + esc(c.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(c.name) + "</b></a>" : "<b>" + esc(c.name) + "</b>") +
       (c.seed ? " <span class=\"tag " + (c.side === "상품" ? "p" : "i") + "\">" + esc(c.seed) + "</span>" : "") + (c.kind ? " <span class=\"tag\">" + esc(c.kind) + "</span>" : "") + (c.lang ? " <span class=\"tag\">" + esc(c.lang) + "</span>" : "") +
-      (c.grade && c.grade !== "—" ? " <span class=\"tag\">" + esc(c.grade) + "</span>" : "") + " " + amountTag(c.amount) + (cand && rpRec(c) ? " <span class=\"tag fill\" title=\"" + esc(rpRecWhy(c)) + "\">Claude 추천</span>" : "") + "</div>" +
+      (c.grade && c.grade !== "—" ? " <span class=\"tag\" title=\"이 브랜드에 얼마나 맞나 — A+ 매번 볼 곳 · A 자주 · A-·B+ 가끔 · B 참고\">맞음 " + esc(c.grade) + "</span>" : "") + " " + amountTag(c.amount) + (cand && rpRec(c) ? " <span class=\"tag fill\" title=\"" + esc(rpRecWhy(c)) + "\">Claude 추천</span>" : "") + "</div>" +
     "<div class=\"it-d\">" + esc(c.take || "") + "</div>" +
     "<details><summary>자세히</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
       (cand && rpRec(c) ? "<dt>추천 이유</dt><dd>" + esc(rpRecWhy(c)) + "</dd>" : "") + (c.amountProof ? "<dt>소재가 많나</dt><dd>" + esc(c.amountProof) + "</dd>" : "") + (c.direction ? "<dt>연출 참고</dt><dd>" + esc(c.direction) + "</dd>" : "") +

@@ -15,7 +15,7 @@ function nextStep(){
   if(unsearched.length) return { n: 4, t: "★ 키워드로 콘텐츠 검색", d: "★한 " + pins.length + "개 중 " + unsearched.length + "개로 아직 콘텐츠를 안 찾아봤어요 (" + unsearched.slice(0, 4).map(function(x){ return x.kw }).join(" · ") + (unsearched.length > 4 ? " …" : "") + "). 맥이 유튜브에서 미드폼·롱폼을 찾아 와요.", act: "search", btn: "★ 키워드로 콘텐츠 검색", busy: searchState().busy };
   if(!Object.keys((SETS[cur] || {}).favc || {}).length) return { n: 5, t: "좋은 콘텐츠 ☆ 즐겨찾기", d: "콘텐츠 탭 「키워드로 찾은 콘텐츠」에서 좋은 영상에 ☆를 누르세요. 추천은 ☆한 콘텐츠와 ★ 키워드 위주로 가요.", go: "ref|refView=search" };
   if(!rd || (rc.updatedAt && sr && Date.parse(sr.updatedAt) > Date.parse(rc.updatedAt))) return { n: 6, t: "★ 검색어 위주로 추천 받기", d: "★ 키워드 " + pins.length + "개와 ☆ 콘텐츠 위주로 찍을 주제를 추천받으세요.", act: "recommend", btn: "★ 위주로 추천 받기", busy: openCmd("recommend") };
-  if(!picks.length) return { n: 7, t: "찍을 주제 ＋로 고르기", d: "추천 탭에서 찍을 주제에 ＋를 누르세요. 고른 것만 대본으로 넘어가요.", go: "rec" };
+  if(!picks.length) return { n: 7, t: "찍을 주제 ＋로 고르기", d: "콘텐츠 탭 「추천」 칸에서 찍을 주제에 ＋를 누르세요. 고른 것만 대본으로 넘어가요.", go: "rec" };
   if(noScript.length) return { n: 8, t: "고른 주제로 대본 초안", d: "고른 " + picks.length + "개 중 " + noScript.length + "개가 대본 전이에요. 레퍼런스 채널의 말하는 방식·구성에 맞춰 대본 초안을 써요.", act: "script", btn: "고른 " + noScript.length + "개 대본 초안 만들기", busy: openCmd("script") };
   return { n: 9, t: "대본 검토", d: "고른 주제의 대본이 다 나왔어요. 대본 탭에서 읽고 고칠 점을 남기세요.", go: "script" };
 }
@@ -58,11 +58,11 @@ function viewSum(){
     "<h4>고른 주제 → 대본 <span class=\"num muted\">" + picks.length + "</span></h4>" +
     (picks.length ? "<div class=\"list\">" + picks.map(function(x){
       var t = scriptOf(x.id);
-      return "<div class=\"it\"><span class=\"num muted\">" + esc(x.id) + "</span><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.title) + "</b></div>" +
+      return "<div class=\"it\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.title) + "</b></div>" +
         "<div class=\"it-d\"><span class=\"tag fill\">" + esc(x.role || "") + "</span> " + esc(x.product || "") +
         " · 대본 " + (t ? "<span class=\"tag ok\">" + esc(t.status || "있음") + "</span>" : "<span class=\"tag\">아직</span>") + "</div></div>" +
         "<button class=\"btn sm\" data-go=\"" + (t ? "script" : "rec") + "\">" + (t ? "대본" : "추천") + "</button></div>" }).join("") + "</div>"
-      : "<p class=\"lead\">아직 고른 주제가 없어요. 추천 탭에서 ＋로 고르면 대본으로 이어져요.</p>") + "</section>";
+      : "<p class=\"lead\">아직 고른 주제가 없어요. 콘텐츠 탭 「추천」 칸에서 ＋로 고르면 대본으로 이어져요.</p>") + "</section>";
   /* ③ 레퍼런스 채널 · 조사 시트 */
   var groups = {}, order = [];
   chs.forEach(function(c){ if(!groups[c.group]){ groups[c.group] = []; order.push(c.group) } groups[c.group].push(c) });

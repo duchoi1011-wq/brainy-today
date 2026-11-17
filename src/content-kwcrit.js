@@ -6,7 +6,7 @@
      ③ 최소 검색량 · ④ 최소 가까움
    점수(scored)·씨앗 연관 검색어 줄(seedItems)·전체 키워드 목록이 모두 이 값을 쓴다. 손대지 않은 브랜드는 KW_DEFAULT 순서. */
 var KWCRIT = [
-  { id: "rel", name: "씨앗과 가까운 말", what: "씨앗 단어가 통째로 들었으면 만점, 아니면 글자 조각(흑염소사육 → 흑염·염소·소사·사육)이 겹치는 만큼" },
+  { id: "rel", name: "씨앗과 가까운 말", what: "씨앗 단어가 통째로 들었으면 만점, 아니면 씨앗을 두 글자씩 끊은 조각이 겹치는 만큼" },
   { id: "vol", name: "많이 찾는 말", what: "한 달 검색량 — 같은 종류(상품·정체성)에서 가장 큰 말과 비교 (큰 말 하나가 다 가져가지 않게 눌러서)" },
   { id: "ctr", name: "살 사람이 찾는 말", what: "광고 클릭률 — 높을수록 사러 온 사람이 많아요 (월 검색 200 미만이면 덜 믿어요)" },
   { id: "rise", name: "요즘 오르는 말", what: "구글 트렌드 최근 4주 ÷ 그 앞 8주 (값이 없으면 중간)" },
@@ -50,10 +50,11 @@ function kwCritHtml(){
         "<span style=\"display:flex;gap:2px\"><button class=\"mk\" data-act=\"kc\" data-k=\"up:" + id + "\" aria-label=\"" + esc(x.name) + " 위로\" title=\"위로\"" + (i ? "" : " disabled") + ">↑</button>" +
         "<button class=\"mk\" data-act=\"kc\" data-k=\"down:" + id + "\" aria-label=\"" + esc(x.name) + " 아래로\" title=\"아래로\"" + (i < c.order.length - 1 ? "" : " disabled") + ">↓</button>" +
         "<button class=\"mk" + (off ? "" : " no") + "\" data-act=\"kc\" data-k=\"off:" + id + "\" aria-pressed=\"" + !off + "\" title=\"" + (off ? "다시 보기" : "안 보기") + "\">" + (off ? "○" : "✓") + "</button></span></div>" }).join("") + "</div>";
-  var far = "<div class=\"it-d\">「흑염소사육」을 넣으면 네이버는 흑염소농장 · 염소키우기처럼 「사육」이 없는 말도 같이 줘요. 이런 말을 어떻게 볼지 골라요.</div><div class=\"chips\">" +
+  var ex0 = (seedsOf()[0] || {}).word || "씨앗 단어";
+  var far = "<div class=\"it-d\">「" + esc(ex0) + "」 같은 씨앗을 넣으면 네이버는 씨앗 글자가 안 든 말도 같이 줘요. 이런 말을 어떻게 볼지 골라요.</div><div class=\"chips\">" +
     KW_FAR.map(function(o){ return chip(c.far === o[0], "far:" + o[0], o[1]) }).join("") + "</div>";
   var minVol = "<div class=\"chips\">" + KW_MINVOL.map(function(o){ return chip(c.minVol === o[0], "minVol:" + o[0], o[1]) }).join("") + "</div>";
-  var minRel = "<div class=\"it-d\">씨앗과 글자가 하나도 안 겹치는 말(예: 「흑염소사육」에 「설선물세트」)을 거를지 골라요.</div><div class=\"chips\">" +
+  var minRel = "<div class=\"it-d\">씨앗과 글자가 하나도 안 겹치는 말을 거를지 골라요.</div><div class=\"chips\">" +
     KW_MINREL.map(function(o){ return chip(c.minRel === o[0], "minRel:" + o[0], o[1]) }).join("") + "</div>";
   return "<section class=\"card\"><div class=\"card-h\"><h3>키워드 순위 기준 — 조절 · 우선</h3>" + ((SETS[cur] || {}).kwCrit ? "<button class=\"btn sm\" data-act=\"kc\" data-k=\"reset\">기본값으로</button>" : "") + "</div>" +
     "<p class=\"lead\">씨앗 단어의 연관 검색어와 전체 키워드를 이 기준으로 점수 매기고 줄 세워요. 바꾸면 바로 저장되고 키워드 칸에 바로 반영돼요." + (k ? " 지금 키워드 " + all.length + "개 중 " + seen + "개가 보여요 (★한 말은 늘 보여요)." : "") + "</p><div class=\"list\">" +

@@ -77,11 +77,11 @@ function recFrom(x){
 /* 순서 줄의 P1·K1 같은 번호를 추천 제목으로 */
 function orderText(rd){
   var t = esc(rd.order || ""), byId = {}; rd.items.forEach(function(x){ byId[x.id] = x.title });
-  return t.replace(/\b([PK]\d+)\b/g, function(m){ return byId[m] ? "<b>" + m + "</b> 「" + esc(byId[m]) + "」" : m });
+  return t.replace(/\b([PK]\d+)\b/g, function(m){ return byId[m] ? "<b>" + recNo(m) + "</b> 「" + esc(byId[m]) + "」" : m });
 }
 function topicCell(x, s){
   var sc = scriptOf(x.id);
-  return "<div class=\"o-top\"><span class=\"num muted\">" + esc(x.id) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>" +
+  return "<div class=\"o-top\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>" +
     (function(f){ return "<div class=\"small\" style=\"margin:2px 0 4px\"><span class=\"tag" + (f.k === "fav" ? " ok" : "") + "\">" + esc(f.t) + "</span>" + (f.ref ? " <span class=\"muted\">「" + esc(f.ref) + "」</span>" : "") + "</div>" })(recFrom(x)) +
     "<b>" + ([x.product, x.format].filter(Boolean).length ? "[" + [x.product, x.format].filter(Boolean).map(esc).join(" · ") + "] " : "") + esc(x.title) + "</b>" +
     (x.structure ? "<div class=\"apply\">" + esc(x.structure) + "</div>" : "") +
@@ -91,7 +91,7 @@ function topicCell(x, s){
     (x.next ? "<dt>다음 연결</dt><dd>" + esc(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + esc(x.bank) + "</dd>" : "") + "</dl></details>";
 }
 function refCells(r, x, key){
-  var vt = [VT_GRADE.test(r.vtContrib || "") ? "기여도 " + r.vtContrib : "", VT_GRADE.test(r.vtPerf || "") ? "성과도 " + r.vtPerf : ""].filter(Boolean);
+  var vt = [VT_GRADE.test(r.vtContrib || "") ? "뷰트랩 채널 기여 " + VT_KO[r.vtContrib] : "", VT_GRADE.test(r.vtPerf || "") ? "뷰트랩 영상 성과 " + VT_KO[r.vtPerf] : ""].filter(Boolean);
   var ch = [r.channel, "구독 " + (r.subs || "—"), "조회 " + (r.views || "—"), r.ratio != null ? "조회÷구독 " + r.ratio + "배" + (r.ad ? "(광고 집행 추정)" : "") : "", r.published, r.len].concat(vt).filter(Boolean);
   return refBasisCell(x, r, key) + "<td>" + (r.vid ? "<a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(r.vid) + "/mqdefault.jpg\"></a>" : "") + "</td>" +
     "<td>" + esc(r.thumbText || "확인 못 함") + "</td>" +
@@ -125,7 +125,7 @@ function viewRec(){
     var order = stageList().map(function(g){ return g.name });
     items = items.slice().sort(function(a, c){ return order.indexOf(c.stage) - order.indexOf(a.stage) });   // 사다리와 같은 순서 — 마지막 단계부터
     h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag fill\">" + esc(role) + "</span> " + esc(what) + "</h3><span class=\"n\">" + items.length + "개</span></div>" +
-      ladderHtml(items, function(x){ return "<span class=\"chipx\"><span class=\"num muted\">" + esc(x.id) + "</span> <span class=\"clip\">" + esc(x.title) + "</span></span>" }) + "<div class=\"orig\"><table><thead><tr>" + ORIG_COLS.map(function(c){ return "<th>" + c + "</th>" }).join("") + "</tr></thead><tbody>" +
+      ladderHtml(items, function(x){ return "<span class=\"chipx\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span> <span class=\"clip\">" + esc(x.title) + "</span></span>" }) + "<div class=\"orig\"><table><thead><tr>" + ORIG_COLS.map(function(c){ return "<th>" + c + "</th>" }).join("") + "</tr></thead><tbody>" +
       items.map(function(x){ return origRows(x, s) }).join("") + "</tbody></table></div></section>";
   });
   return h;
@@ -147,8 +147,8 @@ function sourceHtml(id){
 function viewScript(){
   var b = B(), sc = part("script"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var h = "";
-  if(!sc || !sc.items || !sc.items.length) return "<p class=\"empty\">아직 대본 초안이 없어요. 추천 탭에서 ＋로 고른 뒤 「대본 초안 만들기」를 누르세요.</p>";
-  h += "<p class=\"lead\">여기까지가 편집 믹서 바로 앞 단계예요. 편집 믹서가 생기면 이 대본 자료(볼트 「콘텐츠 기획 앱/" + esc(b.id) + "/대본.json」)를 그대로 읽어 템플릿에 맞춰요. 본문 정본은 각 카드입니다.</p>";
+  if(!sc || !sc.items || !sc.items.length) return "<p class=\"empty\">아직 대본 초안이 없어요. 콘텐츠 탭 「추천」 칸에서 ＋로 고른 뒤 「대본 초안 만들기」를 누르세요.</p>";
+  h += "<p class=\"lead\">여기까지가 편집 믹서 바로 앞 단계예요. 편집 믹서가 이 대본을 그대로 읽어 템플릿에 맞춰요.</p>";
   sc.items.forEach(function(x, i){
     h += "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(x.title) + "</h3><span class=\"n\">" + esc(x.rec || "") + " · " + esc(x.status || "") + "</span></div>" +
       (x.meta ? "<p class=\"lead\">" + md(x.meta) + "</p>" : "") +

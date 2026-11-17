@@ -47,8 +47,8 @@ function identityWordsHtml(){
   var s = S(), list = seedsOf().filter(function(x){ return x.kind === "정체성" });
   return "<h4><span class=\"tag i\">정체성</span> 브랜드 정체성 단어 <span class=\"num muted\">" + list.length + "</span></h4>" +
     "<p class=\"lead\">채널 성격을 말하는 단어예요. 이 단어가 들어간 연관 검색어가 풀링(처음 보는 사람 끌어오기) 재료가 돼요.</p>" +
-    "<div class=\"list\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("정체성", list.length, "정체성 단어 넣기 (예: 사내행사)") +
-    "<div class=\"acts\" style=\"margin-top:6px\"><button class=\"btn sm\" data-go=\"kw\">어떤 단어가 좋을지 모르겠으면 — 키워드 탭 「단어 후보 찾기」 →</button></div>";
+    "<div class=\"list\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("정체성", list.length, "정체성 단어 넣기") +
+    "<p class=\"lead\" style=\"margin-top:6px\">어떤 단어가 좋을지 모르겠으면 이 탭 위쪽 「단어 후보 찾기」에서 고르세요.</p>";
 }
 /* 브랜드 탭 — 판매 상품 카드 안, 상품마다 「판매 단어」 */
 function productWordsHtml(name){
@@ -139,7 +139,7 @@ function wordFindHtml(){
   var list = items.filter(function(x){ return inTab(x.via || [], t) }), more = ui.wMore || 20;
   h += (runs.length > 1 ? "<div class=\"chips\" style=\"margin-top:10px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">찾은 단어</span>" + runs.map(function(r){ return "<button class=\"chip" + (r === run ? " on" : "") + "\" data-ui=\"wRun=" + esc(r.word) + "\">" + esc(r.word) + "</button>" }).join("") + "</div>" : "") +
     "<h4>「" + esc(run.word) + "」 후보 <span class=\"num muted\">" + esc(day(run.at)) + (run.error ? " · " + esc(run.error) : "") + "</span></h4>" +
-    "<div class=\"chips\"><button class=\"chip" + (hitOnly ? " on" : "") + "\" data-ui=\"wHit=" + !hitOnly + "\">「" + esc(run.word) + "」가 든 말만 (" + run.items.filter(function(x){ return x.hit }).length + ")</button></div>" +
+    "<div class=\"chips\"><button class=\"chip" + (hitOnly ? " on" : "") + "\" data-ui=\"wHit=" + !hitOnly + "\">「" + esc(run.word) + "」가 든 말만 (" + run.items.filter(function(x){ return x.hit && inTab(x.via || [], t) }).length + ")</button></div>" +
     srcTabsHtml("wTab", items) +
     "<div class=\"list\" style=\"margin-top:6px\">" + (list.slice(0, more).map(function(x){
       var have = sd.filter(function(y){ return y.word === x.kw.replace(/\s+/g, "") })[0];
@@ -226,13 +226,13 @@ function spark(w){
 var RISE_UP = 1.15, RISE_DOWN = 0.85;   // 상승세를 「오르는 중」·「내리는 중」으로 보는 선
 function isUp(x){ return x.rise != null && x.rise >= RISE_UP }
 function riseHtml(x){
-  if(x.rise == null) return x.w ? "<span class=\"muted\">" + spark(x.w) + " 값 적음</span>" : "<span class=\"muted\">추세 없음</span>";
+  if(x.rise == null) return x.w ? "<span class=\"muted\">" + spark(x.w) + " 검색이 적어 추세 모름</span>" : "<span class=\"muted\">추세 없음</span>";
   var cls = isUp(x) ? "up" : x.rise <= RISE_DOWN ? "down" : "muted";
-  return "<span class=\"" + cls + "\">" + spark(x.w) + " " + (isUp(x) ? "▲" : x.rise <= RISE_DOWN ? "▼" : "") + "×" + x.rise.toFixed(2) + "</span>";
+  return "<span class=\"" + cls + "\">" + spark(x.w) + " " + (isUp(x) ? "요즘 " + x.rise.toFixed(1) + "배 오름" : x.rise <= RISE_DOWN ? "요즘 줄어듦(" + x.rise.toFixed(1) + "배)" : "비슷함") + "</span>";
 }
 function kwRow(x, s, mark){
   return "<div class=\"it" + (s.ex[x.kw] ? " off" : "") + "\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b> <span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" +
-    esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + (x.gap ? " <span class=\"tag ok\">빈 곳</span>" : "") + (kwRecOf(x.kw) ? " <span class=\"tag p\">Claude 추천</span>" : "") + "</div>" +
+    esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + (x.gap ? " <span class=\"tag ok\" title=\"사려는 사람이 찾는 말인데 아직 아무도(우리 조사·추천도) 안 다룬 말\">빈 곳 — 아직 아무도 안 다룸</span>" : "") + (kwRecOf(x.kw) ? " <span class=\"tag p\">Claude 추천</span>" : "") + "</div>" +
     "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · 경쟁 " + x.diff + " · " + riseHtml(x) + (x.gRise ? " · <span class=\"up\">구글 ▲" + esc(x.gRise) + "</span>" : x.gTop != null ? " · 구글 인기 " + x.gTop : "") + " · <b class=\"num\">" + x.score + "점</b></div>" +
     "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">" + esc(x.intent) + "</span>" : esc(x.intent || "")) + "</div></div>" +
     (mark ? "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"즐겨찾기 — 브랜드가 기억하고 콘텐츠 검색에 씀\" aria-label=\"즐겨찾기\">★</button>" +
