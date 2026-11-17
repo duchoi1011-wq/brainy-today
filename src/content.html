@@ -183,7 +183,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .orig th{position:sticky;top:0;background:var(--ink);color:#fff;font-weight:600;padding:8px 10px;text-align:left;white-space:nowrap}
 .orig td{border-top:1px solid var(--line);padding:10px;vertical-align:top;max-width:220px}
 .auto-card .card-h h3{font-size:18px}#kwrec .auto-card{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.auto-steps{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-wrap:wrap;gap:6px 14px}.auto-steps li{font-size:14px}.auto-steps .s-대기{opacity:.5}.auto-steps .s-실패 b{color:var(--warn,#c0392b)}
-.prbar{margin:0 0 14px;background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:10px 14px}.prbar>summary{cursor:pointer;font-weight:600}.prbox{margin-top:8px}.prbox-h{font-weight:600;margin-bottom:6px}.prbox textarea{width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);resize:vertical}.bd-idea .acts{margin-top:6px}
+.prbar{margin:0 0 14px;background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:10px 14px}.prbar>summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center;gap:6px}.prbox .btn,.bd-idea .btn{min-height:44px}.prbox{margin-top:8px}.prbox-h{font-weight:600;margin-bottom:6px}.prbox textarea{width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);resize:vertical}.bd-idea .acts{margin-top:6px}
 .orig td.o-cmt{max-width:320px;min-width:240px}.orig td.o-basis{min-width:200px}.orig ol.cmts{margin:6px 0 0;padding-left:18px}.orig ol.cmts li{margin-bottom:8px;white-space:pre-wrap}
 .orig td img{width:150px;height:84px;object-fit:cover;border-radius:8px;display:block}
 .orig td.o-topic{min-width:240px;max-width:280px;background:var(--surface-2)}
@@ -441,8 +441,9 @@ function render(){
   ui.later = false;
   var act0 = document.activeElement, key = act0 && (act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
   var v = function(){ return v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") };   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
+  var selA = null, selB = null; try{ if(act0 && /^(INPUT|TEXTAREA)$/.test(act0.tagName)){ selA = act0.selectionStart; selB = act0.selectionEnd } }catch(e){}   // 커서 위치도 지킨다 (2026-11-18 검증: 다시 그리면 커서가 맨 앞으로 가서 이어 쓴 글이 앞에 붙음)
   document.getElementById("view").innerHTML = sub + runHtml(Object.keys(KIND)) + promptBarHtml() + v();   // ✍️ 탭마다 내 말로 끼어들기
-  if(key){ var back = document.querySelector(key); if(back) back.focus({ preventScroll: true }) }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
+  if(key){ var back = document.querySelector(key); if(back){ back.focus({ preventScroll: true }); try{ if(selA != null && back.setSelectionRange) back.setSelectionRange(selA, selB) }catch(e){} } }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
 }
 
 document.addEventListener("click", function(e){

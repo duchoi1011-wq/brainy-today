@@ -39,7 +39,7 @@ function buildDocHtml(doc){
     (tpl ? "<p class=\"lead\"><b>틀: " + esc(doc.role) + "</b> — " + esc(tpl) + "</p>" : "") +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"buildscript\" data-id=\"" + esc(doc.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">" + (openCmd("script") ? "맥이 대본 쓰는 중…" : sc ? "📝 이 문서로 대본 다시 만들기" : "📝 이 문서로 대본 만들기") + "</button>" +
     (sc ? "<button class=\"btn\" data-tab=\"script\">대본 보기 →</button>" : "") + "</div>" +
-    promptBoxHtml("build:" + doc.id, "이 문서 고치기 · 다른 버전 만들기", "예: 도입부를 현장에서 줄 서는 장면으로 시작하게 다시 쓰고, 썸네일 문구 후보 3개 더 줘") + "</div>";
+    "<details class=\"prbar\"" + (prDraft("build:" + doc.id) ? " open" : "") + "><summary>✍️ 이 문서 고치기 · 다른 버전 만들기</summary>" + promptBoxHtml("build:" + doc.id, "무엇을 고칠까요?", "예: 도입부를 시청자가 겪는 장면으로 시작하게 다시 쓰고, 썸네일 문구 후보 3개 더 줘") + "</details></div>";
   if(ui.bdView === "sheet"){
     return head + "<div class=\"orig bd-sheet\"><table><thead><tr><th>구분</th><th>칸</th><th>내용</th></tr></thead><tbody>" +
       secs.map(function(s){ return s.fields.map(function(f, i){
