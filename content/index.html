@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "1233dd1156"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=1233dd1156"></script>
+<script>window.BRAINY_VERSION = "495a3b04d3"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=495a3b04d3"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -162,7 +162,8 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .knobs{display:grid;gap:16px}.knob-h{display:flex;justify-content:space-between;align-items:baseline}.knob input[type=range]{margin:2px 0 0;accent-color:var(--accent)}
 .row2{display:flex;gap:8px;align-items:center}.row2>input,.row2>select{flex:1;min-width:0}
 /* 한눈에 — 여섯 단계 상자 */
-.fld{display:block;margin-top:10px}.fld span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px}.fld textarea{min-height:0}
+.pfield{margin-top:12px}.pfield .pl{display:block;font-size:13px;font-weight:650;color:var(--muted);margin-bottom:3px}.pfield textarea{min-height:0}
+.pv{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.pv>span:first-child,.pv>div:first-child{flex:1;min-width:0}
 .prow{display:flex;gap:6px;align-items:center;margin-top:6px}.prow input{min-width:0}.prow input[data-pf=name]{flex:0 0 32%}.prow input[data-pf=what]{flex:1}
 .card.next{border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
 .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
@@ -1083,55 +1084,106 @@ function viewSum(){
   return h;
 }
 
-/* ── 브랜드 정보 고치기 — 브랜드 탭의 모든 칸(소개·타깃·첫 질문·훅 규칙·판매 상품·콘텐츠 축·필러·구매자 욕구·역할·단계)을 고치고 더한다 ──
-   (2026-11-17 동욱: "모든 부분은 다 수정하거나 추가 지정할 수 있게")
-   고친 것은 ct.set/<브랜드> profile 에 바로 쓰이고(Supabase), 맥 동기화가 볼트 브랜드.json 정본에 적는다 → ct.data/<브랜드> 도 따라 바뀐다.
-   맥이 받기 전에도 화면이 고친 값으로 보이게 B() 가 profile 을 겹쳐 본다. 레퍼런스 채널·포맷은 볼트 레퍼런스 카드가 정본이라 여기서 고치지 않는다. */
-var PROF_TEXT = [["one", "한 줄 소개"], ["target", "타깃"], ["firstQuestion", "첫 질문"], ["hook", "훅 규칙"]];
-function lines(v){ return String(v || "").split("\n").map(function(x){ return x.trim() }).filter(Boolean) }
-function pairLines(list, a, b){ return (list || []).map(function(x){ return x[a] + (x[b] ? " — " + x[b] : "") }).join("\n") }
-function parsePairs(v, a, b){ return lines(v).map(function(x){ var i = x.indexOf("—"); var o = {}; o[a] = (i < 0 ? x : x.slice(0, i)).trim(); o[b] = i < 0 ? "" : x.slice(i + 1).trim(); return o }) }
-function profileFormHtml(){
-  var b = B(), id = b.identity || {};
-  function ta(k, label, val, rows, hint){ return "<label class=\"fld\"><span>" + label + "</span><textarea data-prof=\"" + k + "\" rows=\"" + (rows || 2) + "\" placeholder=\"" + esc(hint || "") + "\">" + esc(val || "") + "</textarea></label>" }
-  var h = "<section class=\"card\" id=\"prof-form\"><div class=\"card-h\"><h3>브랜드 정보 고치기</h3><span class=\"n\">" + esc(b.name) + "</span></div>" +
-    "<p class=\"lead\">칸을 고치거나 줄을 더해 「저장」을 누르세요. 목록 칸은 한 줄에 하나씩 적어요. 저장하면 바로 앱에 쓰이고, 맥이 볼트 정본(브랜드.json)에도 적어요.</p>";
-  PROF_TEXT.forEach(function(f){ h += ta(f[0], f[1], b[f[0]], f[0] === "one" ? 3 : 2) });
-  h += "<h4>판매 상품</h4><div id=\"prof-prods\">" + (b.products || []).map(function(p, i){ return prodRowHtml(p, i) }).join("") + "</div>" +
-    "<div class=\"acts\"><button class=\"btn sm\" data-act=\"profprod\">＋ 상품 더하기</button></div>";
-  h += ta("axes", "콘텐츠 축 (한 줄에 하나)", (id.axes || []).join("\n"), 4) +
-    ta("pillars", "필러 (한 줄에 「A — 이름」)", pairLines(id.pillars, "id", "name"), 5, "A — 사람이 안 오는 이유") +
-    ta("needs", "구매자 욕구 (한 줄에 하나)", (id.needs || []).join("\n"), 4) +
-    ta("roles", "역할 (한 줄에 「이름 — 하는 일」)", pairLines(b.roles, "name", "what"), 3, "풀링 — 사람을 모으기") +
-    ta("stages", "단계 (한 줄에 「이름 — 시청자 마음」)", pairLines(b.stages, "name", "what"), 5, "궁금 의문 — 저건 왜 저래?");
-  return h + "<div class=\"acts\"><button class=\"btn primary\" data-act=\"profsave\">저장</button><button class=\"btn\" data-act=\"profedit\">그만두기</button></div></section>";
+/* ── 브랜드 탭 그 자리에서 고치기 — 브랜드의 모든 칸(이름·채널·소개·타깃·첫 질문·훅 규칙·판매 상품·콘텐츠 축·필러·구매자 욕구·역할·단계)을
+   칸마다 ✎ 고치기 · ✕ 빼기 · 넣기로 바로 바꾼다 (2026-11-17 동욱: "처음에 정한 게 기본값이 되는 게 아니라 모든 자체를 수정하고 뺄 수 있게").
+   바꾼 것은 ct.set/<브랜드> profile 에 바로 쓰이고(Supabase), 맥 동기화가 볼트 브랜드.json 정본에 적는다 → ct.data/<브랜드> 도 따라 바뀐다.
+   맥이 받기 전에도 화면이 바뀐 값으로 보이게 B() 가 profile 을 겹쳐 본다. 레퍼런스 채널·포맷·주제 은행은 볼트 레퍼런스 카드가 정본이라 여기서 고치지 않는다. */
+var PROF_KEYS = ["name", "handle", "one", "target", "firstQuestion", "hook", "products", "identity", "roles", "stages"];
+/* 목록 칸 — 어디에 있고, 한 줄 글과 어떻게 오가나 (짝 칸은 「앞 — 뒤」로 적는다) */
+var PLIST = {
+  "identity.axes": { label: "콘텐츠 축", hint: "콘텐츠 축 넣기" },
+  "identity.needs": { label: "구매자 욕구", hint: "구매자 욕구 넣기" },
+  "identity.pillars": { label: "필러", hint: "A — 사람이 안 오는 이유", pair: ["id", "name"] },
+  "roles": { label: "역할", hint: "풀링 — 사람을 모으기", pair: ["name", "what"] },
+  "stages": { label: "단계", hint: "궁금 의문 — 저건 왜 저래?", pair: ["name", "what"] }
+};
+function profNow(){
+  var b = B() || {}, o = {};
+  PROF_KEYS.forEach(function(k){ if(b[k] != null) o[k] = JSON.parse(JSON.stringify(b[k])) });
+  o.identity = o.identity || {}; o.products = o.products || [];
+  return o;
 }
-function prodRowHtml(p, i){
-  return "<div class=\"prow\" data-old=\"" + esc(p.name || "") + "\"><input type=\"text\" data-pf=\"name\" maxlength=\"30\" placeholder=\"상품 이름\" value=\"" + esc(p.name || "") + "\">" +
-    "<input type=\"text\" data-pf=\"what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(p.what || "") + "\">" +
-    "<button class=\"mk no\" data-act=\"profprodx\" aria-label=\"이 상품 빼기\" title=\"빼기\">✕</button></div>";
-}
-/* 폼 → profile. 상품 이름을 바꾸면 그 상품의 판매 단어(seeds)·비중(share)도 새 이름으로 옮긴다 */
-function profileSave(){
-  var b = B(), f = document.getElementById("prof-form"); if(!f) return;
-  function v(k){ var el = f.querySelector("[data-prof=\"" + k + "\"]"); return el ? el.value : "" }
-  var ren = {}, old = {}; (b.products || []).forEach(function(p){ old[p.name] = p });
-  var prods = [].map.call(f.querySelectorAll(".prow"), function(r){
-    var nm = r.querySelector("[data-pf=name]").value.trim(), was = r.dataset.old, o = old[was] || {};
-    if(was && nm && was !== nm) ren[was] = nm;
-    return nm ? Object.assign({}, o, { name: nm, what: r.querySelector("[data-pf=what]").value.trim(), share: o.share != null ? o.share : 5 }) : null;
-  }).filter(Boolean);
-  var names = prods.map(function(p){ return p.name });
-  if(names.length !== new Set(names).size){ alert("같은 이름의 상품이 둘 있어요. 이름을 다르게 적어 주세요."); return }
-  var pf = { products: prods, identity: Object.assign({}, b.identity || {}, { axes: lines(v("axes")), pillars: parsePairs(v("pillars"), "id", "name"), needs: lines(v("needs")) }),
-    roles: parsePairs(v("roles"), "name", "what"), stages: parsePairs(v("stages"), "name", "what") };
-  PROF_TEXT.forEach(function(x){ pf[x[0]] = v(x[0]).trim() });
-  var patch = { profile: pf };
+function pget(o, path){ return path.split(".").reduce(function(a, k){ return a ? a[k] : undefined }, o) }
+function pset(o, path, v){ var ks = path.split("."), t = o; ks.slice(0, -1).forEach(function(k){ t = t[k] = t[k] || {} }); t[ks[ks.length - 1]] = v }
+function itemText(def, x){ return def.pair ? x[def.pair[0]] + (x[def.pair[1]] ? " — " + x[def.pair[1]] : "") : x }
+function itemParse(def, t){ t = t.trim(); if(!def.pair) return t; var i = t.indexOf("—"), o = {}; o[def.pair[0]] = (i < 0 ? t : t.slice(0, i)).trim(); o[def.pair[1]] = i < 0 ? "" : t.slice(i + 1).trim(); return o }
+/* 고친 값 저장 — 상품 이름이 바뀌면 그 상품의 판매 단어(seeds)·비중(share)도 따라가고, 뺀 상품의 판매 단어는 같이 뺀다 */
+function profSave(p, ren){
+  var patch = { profile: p }, names = (p.products || []).map(function(x){ return x.name });
+  ren = ren || {};
   var sd = seedsOf().map(function(x){ return x.kind === "상품" && ren[x.product] ? Object.assign({}, x, { product: ren[x.product] }) : x })
-    .filter(function(x){ return x.kind !== "상품" || names.indexOf(x.product) >= 0 });   // 뺀 상품의 판매 단어는 같이 뺀다
+    .filter(function(x){ return x.kind !== "상품" || names.indexOf(x.product) >= 0 });
   if(JSON.stringify(sd) !== JSON.stringify(seedsOf())) patch.seeds = sd;
   var sh = (SETS[cur] || {}).share; if(sh){ var ns = {}; Object.keys(sh).forEach(function(k){ var nk = ren[k] || k; if(names.indexOf(nk) >= 0) ns[nk] = sh[k] }); patch.share = ns }
-  ui.profEdit = false; setS(patch);
+  ui.pedit = ""; ui.pdraft = {}; setS(patch);
+}
+function draft(key, val){ return (ui.pdraft || {})[key] != null ? ui.pdraft[key] : (val == null ? "" : val) }
+function editBtns(key){ return "<button class=\"btn sm primary\" data-act=\"psave\" data-k=\"" + esc(key) + "\">저장</button><button class=\"btn sm\" data-act=\"pcancel\">취소</button>" }
+function penBtn(key, label){ return "<button class=\"mk\" data-act=\"pedit\" data-k=\"" + esc(key) + "\" aria-label=\"" + esc(label) + " 고치기\" title=\"고치기\">✎</button>" }
+/* 글 칸 하나 — 보기 ↔ 고치기 */
+function ptextHtml(key, label, multi){
+  var v = profNow()[key] || "";
+  if(ui.pedit === key) return "<div class=\"pfield\"><span class=\"pl\">" + esc(label) + "</span>" +
+    (multi ? "<textarea data-pin=\"" + key + "\" rows=\"3\">" + esc(draft(key, v)) + "</textarea>" : "<input type=\"text\" data-pin=\"" + key + "\" value=\"" + esc(draft(key, v)) + "\">") +
+    "<div class=\"acts\">" + editBtns(key) + "</div></div>";
+  return "<div class=\"pfield\"><span class=\"pl\">" + esc(label) + "</span><div class=\"pv\"><span>" + (v ? esc(v) : "<span class=\"muted\">비어 있음</span>") + "</span>" + penBtn(key, label) + "</div></div>";
+}
+/* 목록 칸 — 줄마다 ✎ · ✕, 맨 아래 넣기 */
+function plistHtml(path){
+  var def = PLIST[path], list = pget(profNow(), path) || [];
+  return "<div class=\"pfield\"><span class=\"pl\">" + esc(def.label) + " <span class=\"num muted\">" + list.length + "</span></span><div class=\"list\">" + list.map(function(x, i){
+    var key = path + ":" + i;
+    if(ui.pedit === key) return "<div class=\"it\"><div class=\"it-m\"><input type=\"text\" data-pin=\"" + esc(key) + "\" value=\"" + esc(draft(key, itemText(def, x))) + "\"><div class=\"acts\">" + editBtns(key) + "</div></div></div>";
+    return "<div class=\"it\"><div class=\"it-m\">" + (def.pair ? "<div><b>" + esc(x[def.pair[0]]) + "</b>" + (x[def.pair[1]] ? " " + esc(x[def.pair[1]]) : "") + "</div>" : "<div>" + esc(x) + "</div>") + "</div>" +
+      penBtn(key, def.label) + "<button class=\"mk no\" data-act=\"pdel\" data-k=\"" + esc(key) + "\" aria-label=\"빼기\" title=\"빼기\">✕</button></div>";
+  }).join("") + "</div>" +
+    "<div class=\"row2\" style=\"margin-top:6px\"><input type=\"text\" data-pin=\"" + esc(path + ":new") + "\" placeholder=\"" + esc(def.hint) + "\" value=\"" + esc(draft(path + ":new", "")) + "\"><button class=\"btn sm\" data-act=\"padd\" data-k=\"" + esc(path) + "\">넣기</button></div></div>";
+}
+/* 판매 상품 — 이름·설명 ✎, 상품 ✕, 맨 아래 ＋ 상품 더하기. 상품마다 판매 단어(씨앗)가 붙는다 */
+function productsHtml(){
+  var ps = profNow().products;
+  return "<div class=\"list\">" + ps.map(function(p, i){
+    var key = "prod:" + i;
+    var head = ui.pedit === key ?
+      "<div class=\"prow\"><input type=\"text\" data-pin=\"" + key + ":name\" maxlength=\"30\" placeholder=\"상품 이름\" value=\"" + esc(draft(key + ":name", p.name)) + "\">" +
+        "<input type=\"text\" data-pin=\"" + key + ":what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(draft(key + ":what", p.what)) + "\"></div><div class=\"acts\">" + editBtns(key) + "</div>"
+      : "<div class=\"pv\"><div><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what || "") + "</div></div><span style=\"display:flex;gap:2px\">" + penBtn(key, p.name) +
+        "<button class=\"mk no\" data-act=\"pdelprod\" data-i=\"" + i + "\" aria-label=\"" + esc(p.name) + " 빼기\" title=\"상품 빼기\">✕</button></span></div>";
+    return "<div class=\"it\"><div class=\"it-m\">" + head + productWordsHtml(p.name) + "</div></div>";
+  }).join("") + "</div>" +
+    "<h4>＋ 상품 더하기</h4><div class=\"prow\"><input type=\"text\" data-pin=\"prod:new:name\" maxlength=\"30\" placeholder=\"새 상품 이름\" value=\"" + esc(draft("prod:new:name", "")) + "\">" +
+    "<input type=\"text\" data-pin=\"prod:new:what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(draft("prod:new:what", "")) + "\"><button class=\"btn sm primary\" data-act=\"paddprod\">더하기</button></div>";
+}
+function pval(key){ var el = [].filter.call(document.querySelectorAll("[data-pin]"), function(x){ return x.dataset.pin === key })[0]; return el ? el.value.trim() : "" }
+function profAct(name, el){
+  var k = el && el.dataset.k, p = profNow();
+  if(name === "pedit"){ ui.pedit = k; ui.pdraft = {}; render(); var f = [].filter.call(document.querySelectorAll("[data-pin]"), function(x){ return x.dataset.pin.indexOf(k) === 0 })[0]; if(f) f.focus(); return true }
+  if(name === "pcancel"){ ui.pedit = ""; ui.pdraft = {}; render(); return true }
+  if(name === "psave"){
+    if(k.indexOf("prod:") === 0){
+      var i = +k.split(":")[1], nm = pval(k + ":name"), old = p.products[i].name, ren = {};
+      if(!nm){ alert("상품 이름을 적어 주세요."); return true }
+      if(p.products.some(function(x, j){ return j !== i && x.name === nm })){ alert("같은 이름의 상품이 이미 있어요."); return true }
+      if(nm !== old) ren[old] = nm;
+      p.products[i] = Object.assign({}, p.products[i], { name: nm, what: pval(k + ":what") }); profSave(p, ren); return true;
+    }
+    if(k.indexOf(":") > 0){ var path = k.split(":")[0], j = +k.split(":")[1], t = pval(k), arr = pget(p, path) || [];
+      if(!t){ arr.splice(j, 1) } else arr[j] = itemParse(PLIST[path], t);
+      pset(p, path, arr); profSave(p); return true }
+    p[k] = pval(k); profSave(p); return true;
+  }
+  if(name === "pdel"){ var pp = k.split(":")[0], jj = +k.split(":")[1], a2 = pget(p, pp) || [];
+    if(!confirm("「" + itemText(PLIST[pp], a2[jj]) + "」을 뺄까요?")) return true;
+    a2.splice(jj, 1); pset(p, pp, a2); profSave(p); return true }
+  if(name === "padd"){ var t2 = pval(k + ":new"); if(!t2){ alert("넣을 내용을 적어 주세요."); return true }
+    var a3 = (pget(p, k) || []).concat([itemParse(PLIST[k], t2)]); pset(p, k, a3); profSave(p); return true }
+  if(name === "pdelprod"){ var di = +el.dataset.i, dn = p.products[di].name;
+    if(!confirm("「" + dn + "」 상품을 뺄까요? 이 상품의 판매 단어도 같이 빠져요.")) return true;
+    p.products.splice(di, 1); profSave(p); return true }
+  if(name === "paddprod"){ var nn = pval("prod:new:name"); if(!nn){ alert("새 상품 이름을 적어 주세요."); return true }
+    if(p.products.some(function(x){ return x.name === nn })){ alert("같은 이름의 상품이 이미 있어요."); return true }
+    p.products.push({ name: nn, what: pval("prod:new:what"), share: 5 }); profSave(p); return true }
+  return false;
 }
 
 
@@ -1151,24 +1203,22 @@ function viewBrand(){
   h += "</section>";
   if(!b) return h + "<p class=\"empty\">아직 브랜드 데이터가 없어요. 맥 동기화가 볼트의 「콘텐츠 기획 앱」 폴더를 올리면 여기에 떠요.</p>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + (b.draft ? " <span class=\"tag p\">확인 전</span>" : "") + "</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div>" +
-    "<p>" + esc(b.one) + "</p><dl class=\"kv\" style=\"margin-top:10px\"><dt>타깃</dt><dd>" + esc(b.target) + "</dd><dt>첫 질문</dt><dd>" + esc(b.firstQuestion) + "</dd>" +
+    "<p class=\"lead\">칸마다 ✎로 고치고, 목록은 ✕로 빼고 넣기로 더해요. 바꾸면 바로 저장되고 맥이 볼트 정본(브랜드.json)에도 적어요." + (b.profileNote ? " · " + esc(b.profileNote) : "") + "</p>" +
+    ptextHtml("name", "브랜드 이름") + ptextHtml("handle", "채널") + ptextHtml("one", "한 줄 소개", true) + ptextHtml("target", "타깃", true) + ptextHtml("firstQuestion", "첫 질문", true) +
+    "<dl class=\"kv\" style=\"margin-top:10px\">" +
     (b.kit ? "<dt>브랜드 색</dt><dd><span class=\"sw\" style=\"background:" + esc(b.kit.accent) + "\"></span><span class=\"sw\" style=\"background:" + esc(b.kit.accent2 || b.kit.accent) + "\"></span>" + esc(b.kit.note || "") + "</dd>" : "") +
     (b.cadence ? "<dt>발행</dt><dd>" + esc(b.cadence.note || "") + "</dd>" : "") + "</dl>" +
-    (b.todo ? "<p class=\"note\" style=\"margin-top:12px\">" + esc(b.todo) + "</p>" : "") +
-    "<div class=\"acts\"><button class=\"btn sm" + (ui.profEdit ? "" : " primary") + "\" data-act=\"profedit\">" + (ui.profEdit ? "고치기 닫기" : "브랜드 정보 고치기 · 더하기") + "</button>" + (b.profileNote ? "<span class=\"lead\" style=\"margin:0\">" + esc(b.profileNote) + "</span>" : "") + "</div></section>" +
-    (ui.profEdit ? profileFormHtml() : "");
+    (b.todo ? "<p class=\"note\" style=\"margin-top:12px\">" + esc(b.todo) + "</p>" : "") + "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3>연관 검색어 받는 곳</h3><span class=\"n\">단어 " + seedsOf().length + "개</span></div>" + seedSrcHtml() + seedPendingHtml() + "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품과 판매 단어</h3><span class=\"n\">" + (b.products || []).length + "개</span></div>" +
-    "<p class=\"lead\">상품마다 사려는 사람이 찾을 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지). 이 단어가 들어간 연관 검색어가 키 콘텐츠(상품 판매) 재료가 돼요.</p><div class=\"list\">" +
-    (b.products || []).map(function(p){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what) + "</div>" + productWordsHtml(p.name) + "</div></div>" }).join("") + "</div></section>";
+    "<p class=\"lead\">상품 자체도 ✎로 고치고 ✕로 빼고 아래에서 더해요. 상품마다 사려는 사람이 찾을 판매 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지) — 이 단어가 들어간 연관 검색어가 키 콘텐츠(상품 판매) 재료가 돼요.</p>" +
+    productsHtml() + "</section>";
   var id = b.identity || {};
-  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityWordsHtml() + "<h4>정체성 정본</h4><dl class=\"kv\">" +
-    [["콘텐츠 축", esc((id.axes || []).join(" · "))], ["필러", (id.pillars || []).map(function(p){ return "<b>" + esc(p.id) + "</b> " + esc(p.name) }).join(" · ")],
-     ["구매자 욕구", esc((id.needs || []).join(" · "))], ["훅 규칙", esc(b.hook)]]
-      .filter(function(r){ return r[1] }).map(function(r){ return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>" }).join("") + "</dl>" +
+  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityWordsHtml() + plistHtml("identity.axes") + plistHtml("identity.pillars") + plistHtml("identity.needs") + ptextHtml("hook", "훅 규칙", true) +
     ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
       b.topicBank.map(function(t){ return "<div class=\"it\"><span class=\"num muted\">" + esc(t.n) + "</span><div class=\"it-m\"><div>" + esc(t.topic) + "</div><div class=\"it-d\">필러 " + esc(t.pillar) + " · " + esc(t.product) + "</div></div></div>" }).join("") + "</div></details>" : "") +
     "</section>";
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>역할 · 단계</h3></div><p class=\"lead\">추천이 콘텐츠를 나누는 기준이에요. 역할(풀링·키 …)과 시청자 단계를 고치고 더하세요.</p>" + plistHtml("roles") + plistHtml("stages") + "</section>";
   h += brandRefsHtml(b);
   var lg = part("log");
   h += "<section class=\"card\"><div class=\"card-h\"><h3>기록 · 자동 백업</h3><span class=\"n\">" + (lg ? lg.items.length + "개" : "") + "</span></div>" +
@@ -1223,9 +1273,7 @@ function render(){
   var v0 = { sum: viewSum, brand: viewBrand, mix: viewMix, mixer: viewMixer, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, script: viewScript }[tab] || viewBrand;
   var act0 = document.activeElement, key = act0 && (act0.dataset.knob ? "[data-knob=\"" + act0.dataset.knob + "\"]" : act0.id ? "#" + act0.id : "");
   var v = function(){ return v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") };   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
-  var keepForm = document.getElementById("prof-form") && ui.profEdit ? document.getElementById("prof-form") : null;   // 고치는 중인 브랜드 정보 칸은 다시 그려도 그대로 둔다 (맥 상태가 바뀌어 화면이 다시 그려질 때)
   document.getElementById("view").innerHTML = runHtml(Object.keys(KIND)) + v();
-  if(keepForm){ var nf = document.getElementById("prof-form"); if(nf) nf.replaceWith(keepForm) }   // 맥에 보낸 일의 상태는 어느 탭에서나 맨 위에
   if(tab === "mix") paintMix();
   if(key){ var back = document.querySelector(key); if(back) back.focus({ preventScroll: true }) }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
 }
@@ -1267,6 +1315,7 @@ document.addEventListener("input", function(e){
   if(e.target.id === "ratio"){ SETS[cur] = Object.assign({}, SETS[cur] || {}, { ratio: +e.target.value }); paintMix() }
   if(e.target.id === "fb-text") ui.fbDraft = e.target.value;
   if(e.target.id === "tpl-name") ui.tplName = e.target.value;
+  if(e.target.dataset.pin != null){ ui.pdraft = Object.assign({}, ui.pdraft); ui.pdraft[e.target.dataset.pin] = e.target.value }
   if(e.target.dataset.addseed != null){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
   if(e.target.dataset.knob){ var kb = mixDef().knobs.filter(function(k){ return k.id === e.target.dataset.knob })[0], lab = document.getElementById("kv-" + e.target.dataset.knob); if(kb && lab) lab.textContent = knobText(kb, +e.target.value) }
 });
@@ -1275,6 +1324,10 @@ document.addEventListener("keydown", function(e){
   if(e.target.id === "fb-text"){ e.preventDefault(); act("fbadd") }
   if(e.target.id === "tpl-name"){ e.preventDefault(); act("tplnew") }
   if(e.target.dataset.addseed != null){ e.preventDefault(); act("seedadd", e.target) }
+  if(e.target.dataset.pin != null && e.target.tagName === "INPUT"){ e.preventDefault(); var pk = e.target.dataset.pin;
+    if(/^prod:new/.test(pk)) act("paddprod", e.target);
+    else if(/:new$/.test(pk)) act("padd", { dataset: { k: pk.replace(/:new$/, "") } });
+    else act("psave", { dataset: { k: ui.pedit } }) }
 });
 document.addEventListener("change", function(e){
   if(e.target.id === "ratio") setS({ ratio: +e.target.value });
@@ -1287,6 +1340,7 @@ document.addEventListener("change", function(e){
   }
 });
 function act(name, el){
+  if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)
   var s = S();
   if(name === "buildpdf"){ window.print(); return }   // 구축 문서 PDF — 인쇄 창에서 「PDF로 저장」 (인쇄할 땐 가운데 문서만 남는다)
   if(name === "newbrand"){ ui.newBrand = !ui.newBrand; render(); return }
@@ -1311,10 +1365,6 @@ function act(name, el){
     ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[key] = ""; ui.seed = w;
     setS({ seeds: cur3.concat([nx]) }); return;
   }
-  if(name === "profedit"){ ui.profEdit = !ui.profEdit; render(); if(ui.profEdit){ var pfm = document.getElementById("prof-form"); if(pfm) window.scrollTo(0, pfm.getBoundingClientRect().top + window.scrollY - 140) } return }
-  if(name === "profsave"){ profileSave(); return }
-  if(name === "profprod"){ var box = document.getElementById("prof-prods"); if(box){ box.insertAdjacentHTML("beforeend", prodRowHtml({}, box.children.length)); box.lastChild.querySelector("input").focus() } return }
-  if(name === "profprodx"){ var row = el.closest(".prow"); if(row && (!row.dataset.old || confirm("「" + row.dataset.old + "」 상품을 뺄까요? 이 상품의 판매 단어도 같이 빠져요 (저장해야 반영돼요)."))) row.remove(); return }
   if(name === "seedsrc"){ if(el.dataset.v !== seedSrc()) setS({ seedSrc: el.dataset.v }); return }
   if(name === "seeddel"){ var wd = el.dataset.word; if(!confirm("씨앗 단어 「" + wd + "」을 뺄까요? 이 단어에서만 나온 검색어는 다음에 받을 때 목록에서 빠져요 (★한 것은 남아요).")) return;
     setS({ seeds: seedsOf().filter(function(x){ return x.word !== wd }) }); return }
