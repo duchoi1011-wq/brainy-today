@@ -53,18 +53,19 @@ function plistHtml(path){
   }).join("") + "</div>" +
     "<div class=\"row2\" style=\"margin-top:6px\"><input type=\"text\" data-pfin=\"" + esc(path + ":new") + "\" placeholder=\"" + esc(def.hint) + "\" value=\"" + esc(draft(path + ":new", "")) + "\"><button class=\"btn sm\" data-act=\"padd\" data-k=\"" + esc(path) + "\">넣기</button></div></div>";
 }
-/* 판매 상품 — 이름·설명 ✎, 상품 ✕, 맨 아래 ＋ 상품 더하기. 상품마다 판매 단어(씨앗)가 붙는다 */
+/* 판매 상품 — 상품마다 상자 하나(.pbox): 위 띠는 상품(이름·설명 ✎ · 상품 ✕), 안쪽은 그 상품의 판매 단어(씨앗).
+   상품 줄과 단어 줄이 같은 모양이라 헷갈리던 것을 나눔 (2026-11-17 동욱 「판매 상품과 단어가 구별되게」) — 맨 아래 ＋ 상품 더하기 */
 function productsHtml(){
   var ps = profNow().products;
-  return "<div class=\"list\">" + ps.map(function(p, i){
+  return ps.map(function(p, i){
     var key = "prod:" + i;
     var head = ui.pedit === key ?
-      "<div class=\"prow\"><input type=\"text\" data-pfin=\"" + key + ":name\" maxlength=\"30\" placeholder=\"상품 이름\" value=\"" + esc(draft(key + ":name", p.name)) + "\">" +
-        "<input type=\"text\" data-pfin=\"" + key + ":what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(draft(key + ":what", p.what)) + "\"></div><div class=\"acts\">" + editBtns(key) + "</div>"
-      : "<div class=\"pv\"><div><div class=\"it-h\"><b>" + esc(p.name) + "</b></div><div class=\"it-d\">" + esc(p.what || "") + "</div></div><span style=\"display:flex;gap:2px\">" + penBtn(key, p.name) +
-        "<button class=\"mk no\" data-act=\"pdelprod\" data-i=\"" + i + "\" aria-label=\"" + esc(p.name) + " 빼기\" title=\"상품 빼기\">✕</button></span></div>";
-    return "<div class=\"it\"><div class=\"it-m\">" + head + productWordsHtml(p.name) + "</div></div>";
-  }).join("") + "</div>" +
+      "<div class=\"it-m\"><div class=\"prow\" style=\"margin-top:0\"><input type=\"text\" data-pfin=\"" + key + ":name\" maxlength=\"30\" placeholder=\"상품 이름\" value=\"" + esc(draft(key + ":name", p.name)) + "\">" +
+        "<input type=\"text\" data-pfin=\"" + key + ":what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(draft(key + ":what", p.what)) + "\"></div><div class=\"acts\">" + editBtns(key) + "</div></div>"
+      : "<div class=\"it-m\"><span class=\"tag p\">상품 " + (i + 1) + "</span><div class=\"pn\">" + esc(p.name) + "</div>" + (p.what ? "<div class=\"it-d\">" + esc(p.what) + "</div>" : "") + "</div>" +
+        penBtn(key, p.name) + "<button class=\"mk no\" data-act=\"pdelprod\" data-i=\"" + i + "\" aria-label=\"" + esc(p.name) + " 빼기\" title=\"상품 빼기\">✕</button>";
+    return "<div class=\"pbox\"><div class=\"pbox-h\">" + head + "</div><div class=\"pbox-b\">" + productWordsHtml(p.name) + "</div></div>";
+  }).join("") +
     "<h4>＋ 상품 더하기</h4><div class=\"prow\"><input type=\"text\" data-pfin=\"prod:new:name\" maxlength=\"30\" placeholder=\"새 상품 이름\" value=\"" + esc(draft("prod:new:name", "")) + "\">" +
     "<input type=\"text\" data-pfin=\"prod:new:what\" maxlength=\"120\" placeholder=\"무엇을 파나 (한 줄)\" value=\"" + esc(draft("prod:new:what", "")) + "\"><button class=\"btn sm primary\" data-act=\"paddprod\">더하기</button></div>";
 }

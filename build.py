@@ -199,6 +199,7 @@ else:
 <meta http-equiv="refresh" content="0; url=/content-plan/"></head>
 <body><p>콘텐츠 기획은 새 주소로 옮겼어요 → <a href="/content-plan/">/content-plan/</a></p></body></html>
 ''', encoding="utf-8")
+(root / "content" / "version.txt").write_text("moved-to-content-plan\n", encoding="utf-8")   # 열려 있던 옛 화면이 판이 바뀐 줄 알고 새로 고쳐 → 위 넘김을 받는다
 
 # ═════════════════════════ 옛 주소 /brainy-today/ → home/ ═════════════════════════
 # 예전엔 Brainy 홈이 맨 위 주소에 있어서 그 앱 범위가 단축키·단어장까지 덮었다 (같은 앱 창으로 열림).

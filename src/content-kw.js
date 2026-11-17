@@ -48,7 +48,8 @@ function identityWordsHtml(){
 /* 브랜드 탭 — 판매 상품 카드 안, 상품마다 「판매 단어」 */
 function productWordsHtml(name){
   var s = S(), list = seedsOf().filter(function(x){ return x.kind === "상품" && x.product === name });
-  return "<div class=\"list\" style=\"margin-top:4px\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + wordRecHtml(name, list.length) + seedAddHtml("상품:" + name, list.length, "「" + name + "」 판매 단어 넣기");
+  return "<div class=\"pw-h\"><i class=\"dot p\"></i>판매 단어 <span class=\"num\">" + list.length + "/" + SEED_MAX + "</span></div>" +
+    "<div class=\"list pwords\">" + (list.map(function(x){ return seedRowHtml(x, s) }).join("") || "<p class=\"empty\">아직 판매 단어가 없어요 — 아래에서 넣거나 Claude 추천에서 ＋ 하세요.</p>") + "</div>" + wordRecHtml(name, list.length) + seedAddHtml("상품:" + name, list.length, "「" + name + "」 판매 단어 넣기");
 }
 /* 판매 단어 Claude 추천 (2026-11-17 동욱 "판매 단어도 너가 추천해 주고 넣을 수 있게 — 검색어 기반도 좋고")
    「판매 단어 추천받기」 → cmd wordrec → 맥 Claude 가 상품마다 네이버 검색량·연관 검색어를 보고 고른 단어를
