@@ -149,14 +149,14 @@ function topicHits(x, words){ var t = String(x.title || "").replace(/\s+/g, "");
 function cmtN(x){ return koNum(x.comments) || 0 }
 function hasWave(x){ return Array.isArray(x.replayed) && x.replayed.length > 0 }
 function srScore(x, words){
-  var m = M(), age = x.date ? (Date.now() - Date.parse(x.date)) / (365 * 86400000) : 3, ok = x.ratio != null && x.ratio >= (m.th_ratio || 1);
+  var w = critWeights(), age = x.date ? (Date.now() - Date.parse(x.date)) / (365 * 86400000) : 3, ok = x.ratio != null && x.ratio >= recCrit().minRatio;   // 비중·최소 배수는 추천 칸 「추천 기준」
   return Math.round(wsum([
-    [m.ref_topic || 0, Math.min(1, topicHits(x, words).length / 2) * 100],
-    [m.ref_ratio || 0, ok ? Math.min(1, Math.log10(x.ratio + 1) / 3) * 100 : 0],
-    [m.ref_comment || 0, Math.min(1, Math.log10(cmtN(x) + 1) / 3) * 100],
-    [m.ref_wave || 0, hasWave(x) ? 100 : 0],
-    [m.ref_fresh || 0, Math.max(0, Math.min(1, (3 - age) / 2)) * 100],
-    [fitV(x) == null || !anaOpt().fit ? 0 : (m.ref_fit || 0), fitV(x) || 0]   // 구매 욕구 검증 — 분석한 영상만 (안 한 영상은 이 항목을 빼고 계산)
+    [w.topic, Math.min(1, topicHits(x, words).length / 2) * 100],
+    [w.ratio, ok ? Math.min(1, Math.log10(x.ratio + 1) / 3) * 100 : 0],
+    [w.comment, Math.min(1, Math.log10(cmtN(x) + 1) / 3) * 100],
+    [w.wave, hasWave(x) ? 100 : 0],
+    [w.fresh, Math.max(0, Math.min(1, (3 - age) / 2)) * 100],
+    [fitV(x) == null || !anaOpt().fit ? 0 : w.fit, fitV(x) || 0]   // 구매 욕구 검증 — 분석한 영상만 (안 한 영상은 이 항목을 빼고 계산)
   ]));
 }
 /* 영상 분석 — 많이 다시 본 구간의 대사 · 좋아요 많은 댓글 · 영상 주제 · 구매 욕구 검증 (2026-11-17 동욱: "파동 내용이 뭔지, 좋아요 많이 받은 댓글이 뭔지, 영상 주제가 뭔지,
@@ -235,7 +235,7 @@ function searchResultsHtml(){
     "<div class=\"chips\">" + SR_SORT.map(function(o){ return "<button class=\"chip" + (sort === o[0] ? " on" : "") + "\" data-ui=\"srSort=" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\">" + tog("srFit", "구매 욕구 같음·비슷만") + tog("srTopic", "주제 맞는 것만") + tog("srCmt", "댓글 있는 것만") + tog("srWave", "파동 있는 것만") + "</div>" +
     "<details style=\"margin-top:8px\"><summary>점수는 어떻게 매기나 · 주제로 보는 말 " + words.length + "개</summary><p class=\"lead\" style=\"margin-top:6px\">주제로 보는 말: " + (words.map(esc).join(" · ") || "없음 — 브랜드 탭에서 정체성 단어·콘텐츠 축·상품을 넣으세요") + "</p>" +
-      "<p class=\"lead\">비중 (" + esc(mixTpl().name) + "): 주제 " + (M().ref_topic || 0) + " · 댓글 " + (M().ref_comment || 0) + " · 파동 " + (M().ref_wave || 0) + " · 구독 대비 조회 " + (M().ref_ratio || 0) + " · 새 영상 " + (M().ref_fresh || 0) + " · 구매 욕구 " + (M().ref_fit || 0) + " (분석한 영상만)</p></details>" +
+      "<p class=\"lead\">비중: " + CRIT.map(function(k){ return esc(k.name) + " " + critWeights()[k.id] }).join(" · ") + " — 추천 칸 「추천 기준」의 우선순위를 따라요. <button class=\"btn sm\" data-go=\"rec\">바꾸기 →</button></p></details>" +
     anaBarHtml(words) + ideaBarHtml() + "</section>" +
     kws.map(function(k){
       var l = by[k].filter(keep).sort(cmp);

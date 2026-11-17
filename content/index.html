@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "d3972b185a"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=d3972b185a"></script>
+<script>window.BRAINY_VERSION = "566ad7f17a"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=566ad7f17a"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -750,14 +750,14 @@ function topicHits(x, words){ var t = String(x.title || "").replace(/\s+/g, "");
 function cmtN(x){ return koNum(x.comments) || 0 }
 function hasWave(x){ return Array.isArray(x.replayed) && x.replayed.length > 0 }
 function srScore(x, words){
-  var m = M(), age = x.date ? (Date.now() - Date.parse(x.date)) / (365 * 86400000) : 3, ok = x.ratio != null && x.ratio >= (m.th_ratio || 1);
+  var w = critWeights(), age = x.date ? (Date.now() - Date.parse(x.date)) / (365 * 86400000) : 3, ok = x.ratio != null && x.ratio >= recCrit().minRatio;   // 비중·최소 배수는 추천 칸 「추천 기준」
   return Math.round(wsum([
-    [m.ref_topic || 0, Math.min(1, topicHits(x, words).length / 2) * 100],
-    [m.ref_ratio || 0, ok ? Math.min(1, Math.log10(x.ratio + 1) / 3) * 100 : 0],
-    [m.ref_comment || 0, Math.min(1, Math.log10(cmtN(x) + 1) / 3) * 100],
-    [m.ref_wave || 0, hasWave(x) ? 100 : 0],
-    [m.ref_fresh || 0, Math.max(0, Math.min(1, (3 - age) / 2)) * 100],
-    [fitV(x) == null || !anaOpt().fit ? 0 : (m.ref_fit || 0), fitV(x) || 0]   // 구매 욕구 검증 — 분석한 영상만 (안 한 영상은 이 항목을 빼고 계산)
+    [w.topic, Math.min(1, topicHits(x, words).length / 2) * 100],
+    [w.ratio, ok ? Math.min(1, Math.log10(x.ratio + 1) / 3) * 100 : 0],
+    [w.comment, Math.min(1, Math.log10(cmtN(x) + 1) / 3) * 100],
+    [w.wave, hasWave(x) ? 100 : 0],
+    [w.fresh, Math.max(0, Math.min(1, (3 - age) / 2)) * 100],
+    [fitV(x) == null || !anaOpt().fit ? 0 : w.fit, fitV(x) || 0]   // 구매 욕구 검증 — 분석한 영상만 (안 한 영상은 이 항목을 빼고 계산)
   ]));
 }
 /* 영상 분석 — 많이 다시 본 구간의 대사 · 좋아요 많은 댓글 · 영상 주제 · 구매 욕구 검증 (2026-11-17 동욱: "파동 내용이 뭔지, 좋아요 많이 받은 댓글이 뭔지, 영상 주제가 뭔지,
@@ -836,7 +836,7 @@ function searchResultsHtml(){
     "<div class=\"chips\">" + SR_SORT.map(function(o){ return "<button class=\"chip" + (sort === o[0] ? " on" : "") + "\" data-ui=\"srSort=" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\">" + tog("srFit", "구매 욕구 같음·비슷만") + tog("srTopic", "주제 맞는 것만") + tog("srCmt", "댓글 있는 것만") + tog("srWave", "파동 있는 것만") + "</div>" +
     "<details style=\"margin-top:8px\"><summary>점수는 어떻게 매기나 · 주제로 보는 말 " + words.length + "개</summary><p class=\"lead\" style=\"margin-top:6px\">주제로 보는 말: " + (words.map(esc).join(" · ") || "없음 — 브랜드 탭에서 정체성 단어·콘텐츠 축·상품을 넣으세요") + "</p>" +
-      "<p class=\"lead\">비중 (" + esc(mixTpl().name) + "): 주제 " + (M().ref_topic || 0) + " · 댓글 " + (M().ref_comment || 0) + " · 파동 " + (M().ref_wave || 0) + " · 구독 대비 조회 " + (M().ref_ratio || 0) + " · 새 영상 " + (M().ref_fresh || 0) + " · 구매 욕구 " + (M().ref_fit || 0) + " (분석한 영상만)</p></details>" +
+      "<p class=\"lead\">비중: " + CRIT.map(function(k){ return esc(k.name) + " " + critWeights()[k.id] }).join(" · ") + " — 추천 칸 「추천 기준」의 우선순위를 따라요. <button class=\"btn sm\" data-go=\"rec\">바꾸기 →</button></p></details>" +
     anaBarHtml(words) + ideaBarHtml() + "</section>" +
     kws.map(function(k){
       var l = by[k].filter(keep).sort(cmp);
@@ -934,31 +934,10 @@ function recFrom(x){
   if(x.keyword) return { k: "seed", t: "씨앗 단어 「" + x.keyword + "」에서", ref: rt };
   return { k: "ref", t: "조사한 레퍼런스에서", ref: rt };
 }
-function recWhyHtml(rd){
-  var n = { fav: 0, pin: 0, seed: 0, ref: 0 }; rd.items.forEach(function(x){ n[recFrom(x).k]++ });
-  return "<section class=\"card\"><div class=\"card-h\"><h3>이 추천은 이렇게 골랐어요</h3></div><div class=\"list\">" +
-    [["1", "재료", "☆ 즐겨찾기 영상 " + n.fav + "개 · ★ 키워드로 찾은 영상 " + n.pin + "개" + (n.seed ? " · 씨앗 단어 " + n.seed + "개" : "") + (n.ref ? " · 조사한 레퍼런스 " + n.ref + "개" : "") + " — 콘텐츠 탭에 있는 남의 영상이에요"],
-     ["2", "잘된 영상만", "조회수가 아니라 「구독자 수보다 얼마나 더 봤나」로 봐요. 구독자가 적은데 많이 본 영상 = 채널 덕이 아니라 주제 덕에 터진 영상"],
-     ["3", "시청자의 말", "좋아요 많이 받은 댓글 속 고민·질문(예: 「썸 각을 못 봄」)과 많이 다시 본 구간 — 이게 우리 영상의 주제가 돼요"],
-     ["4", "우리 채널로 바꾸기", "두 종류로 나눠요 — <b>사람 모으는 영상</b>(풀링, 상품을 팔지 않음)과 <b>상품 파는 영상</b>(키, 내 상품으로 고민을 해결해 보여 줌)"]]
-    .map(function(r){ return "<div class=\"it\"><span class=\"num muted\">" + r[0] + "</span><div class=\"it-m\"><div class=\"it-h\"><b>" + r[1] + "</b></div><div class=\"it-d\">" + r[2] + "</div></div></div>" }).join("") + "</div></section>";
-}
 /* 순서 줄의 P1·K1 같은 번호를 추천 제목으로 */
 function orderText(rd){
   var t = esc(rd.order || ""), byId = {}; rd.items.forEach(function(x){ byId[x.id] = x.title });
   return t.replace(/\b([PK]\d+)\b/g, function(m){ return byId[m] ? "<b>" + m + "</b> 「" + esc(byId[m]) + "」" : m });
-}
-/* 추천 재료 — 「추천 받기」를 누를 때 맥으로 가는 ★ 키워드와 ☆ 즐겨찾기 콘텐츠. ☆는 누른 뒤 추천을 새로 받아야 들어간다 (2026-11-17 동욱: "즐겨찾기 누른 게 왜 추천에 안 보이지") */
-function recMaterialHtml(r){
-  var s = S(), pins = Object.keys(s.pin).filter(function(k){ return s.pin[k] && !s.ex[k] }), f = (SETS[cur] || {}).favc || {}, ids = Object.keys(f);
-  var last = r && r.updatedAt ? Date.parse(r.updatedAt) : 0, fresh = ids.filter(function(v){ return !last || Date.parse(f[v].at) > last });
-  return "<section class=\"card\"><div class=\"card-h\"><h3>추천 재료</h3><span class=\"n\">★ 키워드 " + pins.length + " · ☆ 콘텐츠 " + ids.length + "</span></div>" +
-    "<p class=\"lead\">「추천 받기」를 누르면 이 재료가 맥으로 가고, 맥의 Claude가 ☆ 콘텐츠를 성과·구성의 첫 근거로, ★ 키워드를 주제로 써요. ☆·★는 누른 뒤 추천을 <b>새로 받아야</b> 들어가요." +
-      (fresh.length && r ? " <b>마지막 추천 뒤에 ☆한 " + fresh.length + "개는 아직 안 들어갔어요.</b>" : "") + "</p>" +
-    (ids.length ? "<details><summary>☆ 즐겨찾기 콘텐츠 " + ids.length + "개</summary><div class=\"list\" style=\"margin-top:6px\">" + ids.map(function(v){ var x = f[v];
-        return "<div class=\"it\"><div class=\"it-m\"><a href=\"https://www.youtube.com/watch?v=" + esc(v) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title || v) + "</a><div class=\"it-d\">" + esc(x.channel || "") + (x.kw ? " · 키워드 " + esc(x.kw) : "") + (fresh.indexOf(v) >= 0 && r ? " · <b>아직 추천 전</b>" : "") + "</div></div></div>" }).join("") + "</div></details>"
-      : "<p class=\"lead\">아직 ☆한 콘텐츠가 없어요. <button class=\"btn sm\" data-go=\"ref|refView=search\">콘텐츠 탭에서 ☆ 누르기 →</button></p>") +
-    (pins.length ? "<details><summary>★ 키워드 " + pins.length + "개</summary><div class=\"chips\" style=\"margin-top:6px\">" + pins.map(function(k){ return "<span class=\"tag\">" + esc(k) + "</span>" }).join("") + "</div></details>" : "") + "</section>";
 }
 function topicCell(x, s){
   var sc = scriptOf(x.id);
@@ -987,20 +966,17 @@ function origRows(x, s){
 }
 function viewRec(){
   var b = B(), r = part("rec"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
-  var s = S(), h = "", nRole = roleNames().reduce(function(t, n){ return t + (s.roles[n] || 0) }, 0);
-  var nFav = Object.keys((SETS[cur] || {}).favc || {}).length, nPin = Object.keys(s.pin).filter(function(k){ return s.pin[k] }).length, hasMat = part("ref") || nFav || nPin;
-  h += recMaterialHtml(r);
-  if(!r || !r.rounds || !r.rounds.length)
-    return h + "<section class=\"card\"><p class=\"empty\">아직 추천이 없어요.</p><div class=\"acts\"><button class=\"btn primary\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole || !hasMat ? " disabled" : "") + ">" + (openCmd("recommend") ? "맥이 추천 만드는 중…" : "추천 받기") + "</button></div><p class=\"lead\" style=\"margin-top:8px\">" + (hasMat ? [part("ref") ? "조사한 레퍼런스" : "", nFav ? "☆ 콘텐츠 " + nFav + "개" : "", nPin ? "★ 키워드 " + nPin + "개" : ""].filter(Boolean).join(" · ") + "로 만들어요." : "재료가 없어요. 키워드 탭에서 ★를 누르거나 콘텐츠 탭에서 ☆를 누르세요.") + "</p></section>";
+  var s = S(), h = "";
+  if(!r || !r.rounds || !r.rounds.length) return recCritHtml(null) + "<section class=\"card\"><p class=\"empty\">아직 추천이 없어요. 위 기준을 고른 뒤 「추천 받기」를 누르세요.</p></section>";
   var rd0 = r.rounds[r.rounds.length - 1], rd = Object.assign({}, rd0, { items: rd0.items.filter(isLongRec) }), nShort = rd0.items.length - rd.items.length, picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
   var need = picked.filter(function(id){ return !scriptOf(id) });
-  h += "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
+  h += recCritHtml(rd) + "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
     "<p>" + esc(rd.summary) + "</p>" + (nShort ? "<p class=\"lead\" style=\"margin-top:8px\">미드폼·롱폼만 보여요 — 이 회차의 숏폼 추천 " + nShort + "개는 뺐어요.</p>" : "") + (rd.order ? "<details style=\"margin-top:8px\"><summary>찍는 순서 (" + rd.items.length + "편)</summary><p class=\"lead\" style=\"margin-top:6px\">" + orderText(rd) + "</p></details>" : "") +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!need.length || openCmd("script") ? " disabled" : "") + ">고른 " + need.length + "개 대본 초안 만들기</button>" +
     "<button class=\"btn\" data-act=\"source\"" + (!picked.length || openCmd("source") ? " disabled" : "") + ">고른 " + picked.length + "개 소재 찾기</button>" +
-    "<button class=\"btn\" data-act=\"recommend\"" + (openCmd("recommend") || !nRole ? " disabled" : "") + ">" + (openCmd("recommend") ? "맥이 추천 만드는 중…" : "추천 새로 받기 (☆·★ 반영)") + "</button></div>" +
-    "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋로 고른 뒤 「대본 초안 만들기」를 누르면, 맥의 Claude가 대본을 쓰면서 이 주제로 잘된 영상과 레퍼런스 채널에서 가져온 구성을 같이 붙여요. 새 추천은 역할마다 " + roleNames().map(function(n){ return esc(n) + " " + s.roles[n] + "편" }).join(" · ") + "씩 받아요.</p></section>";
-  h += recWhyHtml(rd) + planHtml(rd, s);
+"</div>" +
+    "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋로 고른 뒤 「대본 초안 만들기」를 누르면, 맥의 Claude가 대본을 쓰면서 이 주제로 잘된 영상과 레퍼런스 채널에서 가져온 구성을 같이 붙여요.</p></section>";
+  h += planHtml(rd, s);
   roleNames().forEach(function(role){
     var items = rd.items.filter(function(x){ return x.role === role });
     if(!items.length) return;
@@ -1043,6 +1019,88 @@ function viewScript(){
       "<div class=\"acts\">" + (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
   });
   return h;
+}
+
+/* ── 추천 기준 — 조절 · 우선 (추천 칸 맨 위) ──
+   2026-11-17 동욱: "추천을 고르는 기준 매우 적절해. 이 기준을 내가 자동적으로 조율할 수 있게 조절과 우선 칸을 만들면 좋겠어".
+   ① 재료(☆ · ★ · 씨앗 단어 · 조사) ② 잘된 영상만(구독자 대비 최소 배수) ③ 우선순위(위일수록 크게 본다) ④ 우리 채널로(역할마다 몇 편).
+   값은 ct.set recCrit(+ 역할 수는 ct.set roles) — 「추천 받기」 때 params.criteria 로 맥에 가고, 콘텐츠 칸 종합 점수(srScore)도 같은 우선순위를 쓴다.
+   아직 손대지 않은 브랜드는 믹서.json 브랜드 템플릿 비중을 기본 순서로 쓴다 (그래서 처음 열면 지금까지와 같은 점수). */
+var CRIT = [
+  { id: "ratio", name: "구독자보다 많이 본 영상", what: "채널 크기를 빼고 봐도 잘된 영상 — 주제 덕에 터진 것", mix: "ref_ratio" },
+  { id: "comment", name: "좋아요 많은 댓글", what: "시청자의 고민·질문이 많이 달린 영상", mix: "ref_comment" },
+  { id: "fit", name: "구매 욕구가 맞는 영상", what: "영상 분석에서 시청자 욕구가 내 상품 구매 욕구와 같음·비슷 (분석한 영상만)", mix: "ref_fit" },
+  { id: "wave", name: "많이 다시 본 구간", what: "사람들이 되돌려 본 장면이 있는 영상", mix: "ref_wave" },
+  { id: "topic", name: "우리 주제와 맞는 영상", what: "제목에 정체성 단어·콘텐츠 축·상품 이름이 든 영상", mix: "ref_topic" },
+  { id: "fresh", name: "최근 영상", what: "올라온 지 오래되지 않은 영상", mix: "ref_fresh" }
+];
+var REC_USE = [["fav", "☆ 즐겨찾기 영상"], ["pin", "★ 키워드로 찾은 영상"], ["seed", "씨앗 단어로 찾은 영상"], ["ref", "조사한 레퍼런스"]];
+var RANK_W = [6, 5, 4, 3, 2, 1];   // 우선순위 1위부터의 비중
+function recCrit(){
+  var c = (SETS[cur] || {}).recCrit || {}, m = M();
+  var order = c.order || CRIT.slice().sort(function(a, b){ return (m[b.mix] || 0) - (m[a.mix] || 0) }).map(function(x){ return x.id });
+  return { set: !!c.order, order: order, off: c.off || {}, use: Object.assign({ fav: true, pin: true, seed: true, ref: true }, c.use || {}),
+    favFirst: c.favFirst !== false, minRatio: c.minRatio != null ? c.minRatio : (m.th_ratio || 1) };
+}
+/* 기준마다 비중 — 손댄 브랜드는 우선순위 순서(6·5·4…, 끈 것 0), 아니면 믹서 템플릿 값 */
+function critWeights(){
+  var c = recCrit(), m = M(), w = {};
+  if(!c.set){ CRIT.forEach(function(x){ w[x.id] = c.off[x.id] ? 0 : (m[x.mix] || 0) }); return w }
+  var r = 0; c.order.forEach(function(id){ w[id] = c.off[id] ? 0 : RANK_W[r++] || 1 });
+  return w;
+}
+function recCritHtml(rd){
+  var c = recCrit(), s = S(), f = (SETS[cur] || {}).favc || {}, favIds = Object.keys(f), pins = Object.keys(s.pin).filter(function(k){ return s.pin[k] && !s.ex[k] });
+  var r = part("rec"), last = r && r.updatedAt ? Date.parse(r.updatedAt) : 0, fresh = favIds.filter(function(v){ return !last || Date.parse(f[v].at) > last });
+  var nRole = roleNames().reduce(function(t, n){ return t + (s.roles[n] || 0) }, 0), busy = openCmd("recommend");
+  var hasMat = (c.use.ref && part("ref")) || (c.use.fav && favIds.length) || (c.use.pin && pins.length) || (c.use.seed && seedsOf().length);
+  function chip(on, k, label){ return "<button class=\"chip" + (on ? " on" : "") + "\" data-act=\"rc\" data-k=\"" + k + "\">" + label + "</button>" }
+  function step(n, t, body){ return "<div class=\"it\"><span class=\"num muted\">" + n + "</span><div class=\"it-m\"><div class=\"it-h\"><b>" + t + "</b></div>" + body + "</div></div>" }
+  var cnt = null; if(rd){ cnt = { fav: 0, pin: 0, seed: 0, ref: 0 }; rd.items.forEach(function(x){ cnt[recFrom(x).k]++ }) }
+  var use = "<div class=\"chips\">" + REC_USE.map(function(u){ var n = u[0] === "fav" ? favIds.length : u[0] === "pin" ? pins.length : u[0] === "seed" ? seedsOf().length : (part("ref") ? part("ref").items.length : 0);
+      return chip(c.use[u[0]], "use:" + u[0], u[1] + " <span>" + n + "</span>") }).join("") + chip(c.favFirst, "favFirst", "☆ 영상을 맨 먼저") + "</div>" +
+    (cnt ? "<div class=\"it-d\">지난 추천은 ☆ " + cnt.fav + " · ★ " + cnt.pin + " · 씨앗 단어 " + cnt.seed + (cnt.ref ? " · 조사 " + cnt.ref : "") + "개에서 나왔어요." + (fresh.length ? " <b>그 뒤에 ☆한 " + fresh.length + "개는 아직 안 들어갔어요.</b>" : "") + "</div>" : "") +
+    (favIds.length ? "<details><summary>☆ 즐겨찾기 영상 " + favIds.length + "개</summary><div class=\"list\" style=\"margin-top:6px\">" + favIds.map(function(v){ var x = f[v];
+        return "<div class=\"it\"><div class=\"it-m\"><a href=\"https://www.youtube.com/watch?v=" + esc(v) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title || v) + "</a><div class=\"it-d\">" + esc(x.channel || "") + (x.kw ? " · 키워드 " + esc(x.kw) : "") + (fresh.indexOf(v) >= 0 && r ? " · <b>아직 추천 전</b>" : "") + "</div></div></div>" }).join("") + "</div></details>"
+      : "<div class=\"it-d\">아직 ☆한 영상이 없어요. <button class=\"btn sm\" data-go=\"ref|refView=search\">콘텐츠 칸에서 ☆ 누르기 →</button></div>") +
+    (pins.length ? "<details><summary>★ 키워드 " + pins.length + "개</summary><div class=\"chips\" style=\"margin-top:6px\">" + pins.map(function(k){ return "<span class=\"tag\">" + esc(k) + "</span>" }).join("") + "</div></details>" : "");
+  var ratio = "<div class=\"it-d\">조회수가 아니라 「구독자 수보다 몇 배 더 봤나」로 걸러요. 이보다 못한 영상은 근거로 쓰지 않아요.</div><div class=\"chips\">" +
+    [[0, "따지지 않음"], [1, "1배 이상"], [3, "3배 이상"], [10, "10배 이상"]].map(function(o){ return chip(c.minRatio === o[0], "minRatio:" + o[0], o[1]) }).join("") + "</div>";
+  var rank = 0, pri = "<div class=\"it-d\">위에 있을수록 크게 봐요. 끈 것은 안 봐요. 콘텐츠 칸의 종합 점수도 이 순서를 따라요." + (c.set ? "" : " (지금은 기본 순서예요.)") + "</div><div class=\"list\">" + c.order.map(function(id, i){
+      var x = CRIT.filter(function(k){ return k.id === id })[0], off = c.off[id]; if(!x) return "";
+      return "<div class=\"it\"><span class=\"num" + (off ? " muted" : "") + "\">" + (off ? "—" : ++rank) + "</span><div class=\"it-m\"" + (off ? " style=\"opacity:.5\"" : "") + "><div class=\"it-h\"><b>" + esc(x.name) + "</b></div><div class=\"it-d\">" + esc(x.what) + "</div></div>" +
+        "<span style=\"display:flex;gap:2px\"><button class=\"mk\" data-act=\"rc\" data-k=\"up:" + id + "\" aria-label=\"" + esc(x.name) + " 위로\" title=\"위로\"" + (i ? "" : " disabled") + ">↑</button>" +
+        "<button class=\"mk\" data-act=\"rc\" data-k=\"down:" + id + "\" aria-label=\"" + esc(x.name) + " 아래로\" title=\"아래로\"" + (i < c.order.length - 1 ? "" : " disabled") + ">↓</button>" +
+        "<button class=\"mk" + (off ? "" : " no") + "\" data-act=\"rc\" data-k=\"off:" + id + "\" aria-pressed=\"" + !off + "\" title=\"" + (off ? "다시 보기" : "안 보기") + "\">" + (off ? "○" : "✓") + "</button></span></div>" }).join("") + "</div>";
+  var roles = "<div class=\"list\">" + roleNames().map(function(n){ var what = ((B().roles || []).filter(function(x){ return x.name === n })[0] || {}).what || "";
+      return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(n) + "</b> <span class=\"num\">" + s.roles[n] + "편</span></div><div class=\"it-d\">" + esc(what) + "</div></div>" +
+        "<span style=\"display:flex;gap:2px\"><button class=\"mk\" data-act=\"rc\" data-k=\"role:" + esc(n) + ":-1\" aria-label=\"" + esc(n) + " 한 편 빼기\"" + (s.roles[n] > 0 ? "" : " disabled") + ">−</button>" +
+        "<button class=\"mk\" data-act=\"rc\" data-k=\"role:" + esc(n) + ":1\" aria-label=\"" + esc(n) + " 한 편 더\"" + (s.roles[n] < 8 ? "" : " disabled") + ">＋</button></span></div>" }).join("") + "</div>";
+  return "<section class=\"card\"><div class=\"card-h\"><h3>추천 기준 — 조절 · 우선</h3>" + (c.set || (SETS[cur] || {}).recCrit ? "<button class=\"btn sm\" data-act=\"rc\" data-k=\"reset\">기본값으로</button>" : "") + "</div>" +
+    "<p class=\"lead\">맥의 Claude는 이 네 단계로 추천을 골라요. 바꾸면 바로 저장되고, 다음 「추천 받기」부터 이 기준대로 골라요.</p><div class=\"list\">" +
+    step(1, "재료 — 어떤 영상에서 고를까", use) + step(2, "잘된 영상만", ratio) + step(3, "무엇을 먼저 볼까 (우선순위)", pri) +
+    step(4, "우리 채널로 — 몇 편씩", "<div class=\"it-d\">사람 모으는 영상(풀링)은 상품을 팔지 않고, 상품 파는 영상(키)은 내 상품으로 고민을 해결해 보여 줘요.</div>" + roles) + "</div>" +
+    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"recommend\"" + (busy || !nRole || !hasMat ? " disabled" : "") + ">" + (busy ? "맥이 추천 만드는 중…" : rd ? "이 기준으로 추천 새로 받기" : "이 기준으로 추천 받기") + "</button>" +
+    (!hasMat ? "<span class=\"lead\" style=\"margin:0\">켠 재료가 비어 있어요.</span>" : !nRole ? "<span class=\"lead\" style=\"margin:0\">편 수가 0이에요.</span>" : "") + "</div></section>";
+}
+function recCritAct(k){
+  var c = recCrit(), o = { order: c.set ? c.order.slice() : undefined, off: Object.assign({}, c.off), use: Object.assign({}, c.use), favFirst: c.favFirst, minRatio: c.minRatio };
+  if(k === "reset"){ setS({ recCrit: null }); return }
+  var p = k.split(":");
+  if(p[0] === "role"){ var rs = Object.assign({}, S().roles); rs[p[1]] = Math.max(0, Math.min(8, (rs[p[1]] || 0) + +p[2])); setS({ roles: rs }); return }
+  if(p[0] === "use") o.use[p[1]] = !o.use[p[1]];
+  if(p[0] === "favFirst") o.favFirst = !o.favFirst;
+  if(p[0] === "minRatio") o.minRatio = +p[1];
+  if(p[0] === "off") o.off[p[1]] = !o.off[p[1]];
+  if(p[0] === "up" || p[0] === "down"){ o.order = c.order.slice(); var i = o.order.indexOf(p[1]), j = p[0] === "up" ? i - 1 : i + 1; if(j >= 0 && j < o.order.length){ o.order[i] = o.order[j]; o.order[j] = p[1] } }
+  setS({ recCrit: o });
+}
+/* 맥에 보낼 기준 — 쉬운 말 이름까지 같이 보낸다 */
+function recCritParams(){
+  var c = recCrit(), r = 0;
+  return { use: c.use, favFirst: c.favFirst, minRatio: c.minRatio,
+    priority: c.order.filter(function(id){ return !c.off[id] }).map(function(id){ var x = CRIT.filter(function(k){ return k.id === id })[0]; return { id: id, name: x.name, rank: ++r } }),
+    off: CRIT.filter(function(x){ return c.off[x.id] }).map(function(x){ return x.name }) };
 }
 
 /* ── 구축 탭 — 동욱 원문 [구축 - 콘텐츠] 그대로, 편집기 앱처럼 한 화면에 ──
@@ -1567,6 +1625,7 @@ function act(name, el){
     ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[key] = ""; ui.seed = w;
     setS({ seeds: cur3.concat([nx]) }); return;
   }
+  if(name === "rc"){ recCritAct(el.dataset.k); return }   // 추천 기준 — 조절 · 우선
   if(name === "anaopt"){ var ao = anaOpt(), k3 = el.dataset.k, v3 = el.dataset.v;   // 영상 분석 조절
     if(k3 === "nCmt") ao.nCmt = +v3; else if(k3 === "topN"){ ao.topN = +v3; ao.target = "top" } else if(k3 === "target") ao.target = v3; else ao[k3] = !ao[k3];
     setS({ anaOpt: ao }); return }
@@ -1604,10 +1663,10 @@ function act(name, el){
   if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
-  if(name === "recommend"){ var pk = scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] });   // ★한 검증 키워드 위주로 추천받는다
-    send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + (pk.length ? " · ★ 검증 키워드 " + pk.length + "개 위주" : "") + ")",
-      { roles: s.roles, ratio: s.ratio, keywords: pk.map(function(x){ return { kw: x.kw, kind: x.kind, product: x.product, total: x.total } }), seeds: seedsOf(),
-        favContents: Object.keys((SETS[cur] || {}).favc || {}).map(function(v){ return Object.assign({ vid: v }, SETS[cur].favc[v]) }) }); return }
+  if(name === "recommend"){ var rc = recCritParams(), pk = rc.use.pin ? scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] }) : [];   // 추천 기준(재료·최소 배수·우선순위)대로
+    send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + " · 우선 " + rc.priority.slice(0, 2).map(function(x){ return x.name }).join(" > ") + ")",
+      { roles: s.roles, ratio: s.ratio, criteria: rc, keywords: pk.map(function(x){ return { kw: x.kw, kind: x.kind, product: x.product, total: x.total } }), seeds: rc.use.seed ? seedsOf() : [],
+        favContents: rc.use.fav ? Object.keys((SETS[cur] || {}).favc || {}).map(function(v){ return Object.assign({ vid: v }, SETS[cur].favc[v]) }) : [] }); return }
   if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
   if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : pickedIds(s); if(!sids.length) return;
