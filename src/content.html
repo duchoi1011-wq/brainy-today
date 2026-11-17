@@ -306,7 +306,12 @@ function saveSet(id){
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
-var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", wordrec: "판매 단어 추천", kwrec: "씨앗마다 키워드 추천", brief: "새 브랜드 프로필" };
+var KIND = { discover: "키워드·레퍼런스 조사", trends: "구글 트렌드 받기", refresh: "레퍼런스 최신화", recommend: "콘텐츠 추천", script: "대본 초안", source: "소재 찾기", chanfind: "참고 페이지 채우기", ideas: "아이디어 뽑기", analyze: "영상 분석", wordrec: "판매 단어 추천", autorec: "키워드 고르고 콘텐츠 추천", kwrec: "씨앗마다 키워드 추천", brief: "새 브랜드 프로필" };
+function recParams(){   // 콘텐츠 추천 cmd 파라미터 — 추천 버튼과 ⚡ 한 번에 가 같이 쓴다
+  var s = S(), rc = recCritParams(), pk = rc.use.pin ? scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] }) : [];
+  return { roles: s.roles, ratio: s.ratio, criteria: rc, keywords: pk.map(function(x){ return { kw: x.kw, kind: x.kind, product: x.product, total: x.total } }), seeds: rc.use.seed ? seedsOf() : [],
+    favContents: rc.use.fav ? Object.keys((SETS[cur] || {}).favc || {}).map(function(v){ return Object.assign({ vid: v }, SETS[cur].favc[v]) }) : [] };
+}
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
@@ -401,6 +406,7 @@ function renderSoft(){ if(typing()){ ui.later = true; return } render() }
 document.addEventListener("focusout", function(){ if(ui.later) setTimeout(function(){ if(ui.later && !typing()){ ui.later = false; render() } }, 0) });
 function render(){
   var b = B();
+  autoPinApply();   // ⚡ 한 번에 — 맥이 고른 최고 키워드를 처음 볼 때 한 번 ★
   applyKit();
   document.body.classList.toggle("wide", tab === "build");   // 구축 보드는 편집기 앱처럼 넓게 (왼쪽 퍼널 · 가운데 문서 · 오른쪽 다시 착안한 추천)
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
@@ -555,10 +561,9 @@ function act(name, el){
   if(name === "autoplan"){ setS({ plan: autoPlan(s) }); return }
   if(name === "clearplan"){ setS({ plan: {} }); return }
   if(name === "refresh"){ send("refresh", "레퍼런스 반응·채널 새 영상 최신화", {}); return }
-  if(name === "recommend"){ var rc = recCritParams(), pk = rc.use.pin ? scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] }) : [];   // 추천 기준(재료·최소 배수·우선순위)대로
-    send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + " · 우선 " + rc.priority.slice(0, 2).map(function(x){ return x.name }).join(" > ") + ")",
-      { roles: s.roles, ratio: s.ratio, criteria: rc, keywords: pk.map(function(x){ return { kw: x.kw, kind: x.kind, product: x.product, total: x.total } }), seeds: rc.use.seed ? seedsOf() : [],
-        favContents: rc.use.fav ? Object.keys((SETS[cur] || {}).favc || {}).map(function(v){ return Object.assign({ vid: v }, SETS[cur].favc[v]) }) : [] }); return }
+  if(name === "recommend"){ var rp = recParams();   // 추천 기준(재료·최소 배수·우선순위)대로
+    send("recommend", "콘텐츠 추천 (" + roleNames().map(function(n){ return n + " " + s.roles[n] }).join(" · ") + " · 우선 " + rp.criteria.priority.slice(0, 2).map(function(x){ return x.name }).join(" > ") + ")", rp); return }
+  if(name === "autorec"){ autoRecSend(); return }   // ⚡ 씨앗마다 최고 키워드 ★ → 콘텐츠 추천
   if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
   if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : pickedIds(s); if(!sids.length) return;
