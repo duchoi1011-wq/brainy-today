@@ -45,7 +45,7 @@ function cmtsOf(vid){
   if(c && (c.comments || []).length) return { list: c.comments.slice(0, CMT_TOP), at: c.at };
   var an = vid ? anaOf(vid) : null;
   if(an && (an.comments || []).length) return { list: an.comments.slice().sort(function(a, b){ return (b.likes || 0) - (a.likes || 0) }).slice(0, CMT_TOP), at: an.at };
-  return c && c.error ? { list: [], error: c.error } : null;
+  return c ? { list: [], error: c.error || "댓글 없음" } : null;
 }
 function cmtCell(r){
   var c = cmtsOf(r.vid);
