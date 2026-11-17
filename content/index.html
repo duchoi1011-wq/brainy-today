@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "81c7c59508"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
-<script src="../shim.js?v=81c7c59508"></script>
+<script>window.BRAINY_VERSION = "479d83499f"; window.BRAINY_APP = {key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd"]};</script>
+<script src="../shim.js?v=479d83499f"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="콘텐츠 기획">
@@ -336,8 +336,18 @@ function setS(patch){
   var s = Object.assign({}, SETS[cur] || {}, patch, { updatedAt: new Date().toISOString() });
   SETS[cur] = s;
   s.cand = candidates(S()).map(function(k){ return { kw: k.kw, score: k.score } });   // 그때 조사 후보 — 맥이 설정.json 으로 받아 기록 PDF 에 쓴다
-  if(DB) DB.doc("ct.set/" + cur).set(s).catch(function(){});
+  saveSet(cur);
   render();
+}
+/* 설정 저장은 브랜드마다 한 줄로 — 연달아 누르면 저장 요청이 겹쳐 먼저 보낸 옛 값이 나중에 도착해 덮던 문제 (2026-11-17).
+   보내는 중에 또 바뀌면 끝난 뒤 그때의 최신 값을 한 번 더 보낸다 */
+var SAVING = {};
+function saveSet(id){
+  if(!DB) return;
+  var st = SAVING[id] = SAVING[id] || {};
+  if(st.busy){ st.again = true; return }
+  st.busy = true;
+  DB.doc("ct.set/" + id).set(SETS[id]).catch(function(){}).then(function(){ st.busy = false; if(st.again){ st.again = false; saveSet(id) } });
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
@@ -1591,7 +1601,9 @@ function act(name, el){
       if(cur && new URLSearchParams(location.search).get("b") !== cur){ try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){} }   // 주소가 늘 지금 브랜드를 가리키게 (없는 브랜드로 열었을 때도)
       renderSoft();
     }, function(){});
-    DB.collection("ct.set").onSnapshot(function(q){ q.docs.forEach(function(x){ SETS[x.id] = x.data() }); renderSoft() }, function(){});
+    DB.collection("ct.set").onSnapshot(function(q){ q.docs.forEach(function(x){ var d = x.data(), l = SETS[x.id];
+      if((SAVING[x.id] || {}).busy || (l && l.updatedAt && d.updatedAt && d.updatedAt < l.updatedAt)) return;   // 내가 저장 중이거나 더 옛 값이면 화면 값을 지킨다
+      SETS[x.id] = d }); renderSoft() }, function(){});
     DB.collection("cmd").onSnapshot(function(q){
       CMDS = q.docs.map(function(x){ return Object.assign({ id: x.id }, x.data()) }).filter(function(c){ return c.from === "content" })
         .sort(function(a, b){ return String(b.createdAt).localeCompare(String(a.createdAt)) });
