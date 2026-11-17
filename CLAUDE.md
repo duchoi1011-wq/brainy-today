@@ -15,9 +15,9 @@
   - 콘텐츠 기획(`src/content.html` + `content-kw.js` 점수·후보 · `content-ref.js` 레퍼런스·채널 · `content-plan.js` 추천·대본·📚 소재와 출처(`소재.json` → `.source`, 「소재 찾기」 = cmd kind source → content-source 스킬) · `content-brandrefs.js` 브랜드 레퍼런스 채널(브랜드 탭 아래 — 2026-11-16 참고 탭은 없앰, 잘된 영상·가져온 구성은 대본에 붙는다) · `content-mixer.js` 판정 믹서 — 조절값 정의·템플릿은 볼트 `믹서.json` → `ct.data/mixer.def`, 점수 비중을 코드에 적지 않는다): 볼트 `4_Outputs/콘텐츠 기획 앱/<브랜드>/*.json` → `ct.data/<브랜드>[.kw·.trend·.ref·.live·.chan·.rec·.script]`. 앱이 쓰는 것은 `ct.set/<브랜드>`(비율·고정·고른 추천)와 `cmd`(`from: "content"` — 맥의 Claude가 콘텐츠 스킬 셋을 돌림)뿐. 점수 식을 바꾸면 `content-kw.js` 머리말과 화면의 「점수 계산」 글을 같이 고친다.
 - 표시·진도·기록은 Supabase `docs` 표 (로그인한 주인만, RLS). 표 구조·RLS·`supabase/`·`.github/` 는 부탁 없이 바꾸지 않는다.
 
-## 콘텐츠 기획 검증
+## 검증
 
-- 콘텐츠 기획을 고치면 완성이라고 말하기 전에 검증 에이전트 `content-app-verifier`(~/.claude/agents)를 부른다. 판정 기준은 볼트 `4_Outputs/콘텐츠 기획 앱/검증 지침.md` 하나 — 동욱이 새로 말한 요구는 거기에 먼저 적고 나서 고친다.
+- 앱을 고치면 완성이라고 말하기 전에 검증 에이전트 `app-verifier`(~/.claude/agents)를 부른다. 판정 기준은 볼트 `4_Outputs/앱 검증 지침.md`(모든 앱 공통) + 앱별 지침(콘텐츠 기획 = `4_Outputs/콘텐츠 기획 앱/검증 지침.md`). 동욱이 새로 말한 요구는 거기에 먼저 적고 나서 고친다.
 
 ## 순서
 
