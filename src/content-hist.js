@@ -12,6 +12,7 @@ var HIST_TAB = { kw: "kwall", trend: "kw", wordcand: "brand", kwrec: "kw", searc
 var IMP_GO = { kw: "kwall", rec: "rec", script: "script" };   // 지금 자료에서 모은 것 — 그 탭으로
 var IMP_KINDS = [["run", "돌린 기록"], ["kw", "키워드"], ["vid", "영상"], ["rec", "추천"], ["script", "대본"]];
 var HIST_VIEW = { search: "refView=search", analysis: "refView=search", ref: "refView=videos" };   // 같은 탭 안 그 결과가 있는 칸까지 (2026-11-18 검증: 콘텐츠 검색을 열면 빈 「레퍼런스 영상」 칸이 떴다)
+var HIST_SPOT = { cmts: ".o-cmt", wordcand: "#word-find" };   // 탭 안에서 그 결과가 있는 자리로 내려 준다 (2026-11-18 검증: 댓글·단어 후보는 두 화면 아래)
 var PAST = null;   // {brand, id, part, label, at, data} — 과거 기록을 보는 중
 var HCACHE = {};
 
@@ -38,7 +39,9 @@ function impToggle(el){
 function histOpen(id){
   var x = histItems().filter(function(y){ return y.id === id })[0];
   if(!x){ toast("그 기록이 목록에 없어요"); return }
-  function show(data){ PAST = { brand: cur, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab); if(HIST_VIEW[x.part]){ var kv = HIST_VIEW[x.part].split("="); ui[kv[0]] = kv[1] } window.scrollTo(0, 0); render() }
+  function show(data){ PAST = { brand: cur, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab); if(HIST_VIEW[x.part]){ var kv = HIST_VIEW[x.part].split("="); ui[kv[0]] = kv[1] }
+    window.scrollTo(0, 0); render();
+    var spot = HIST_SPOT[x.part], el = spot && document.querySelector(spot); if(el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 90) }
   if(HCACHE[cur + "." + id]) return show(HCACHE[cur + "." + id]);
   if(!x.cloud && !impOf("run", id)){ toast("오래된 기록이라 볼트에만 있어요 — 🔖 하면 맥이 30초 안에 다시 올려요"); return }
   if(!window.BRAINY || !BRAINY.fetch){ toast("이 화면에서는 기록을 받을 수 없어요"); return }
@@ -50,11 +53,12 @@ function histOpen(id){
   }, function(){ ui.histLoading = null; toast("기록을 못 받았어요 — 인터넷을 확인하세요"); render() });
 }
 function histClose(){ var back = PAST ? "hist" : tab; PAST = null; tab = back; save("ct.tab", tab); window.scrollTo(0, 0); render() }
-/* 과거 기록을 보는 동안 모든 탭 맨 위에 붙는 띠 */
+/* 과거 기록을 보는 동안 모든 탭 맨 위에 붙는 띠 + 내려도 보이는 왼쪽 아래 작은 표 (2026-11-18 검증: 띠만으론 내리면 지금 자료로 착각) */
 function pastBarHtml(){
   if(!PAST || PAST.brand !== cur) return "";
   return "<div class=\"pastbar\" role=\"status\"><span>🕘 <b>" + esc(hAt(PAST.at)) + " 「" + esc(PAST.label) + "」</b> 기록을 보는 중 — 이 단계만 그때 결과예요</span>" +
-    "<span class=\"acts\" style=\"margin:0\">" + impBtn("run", PAST.id, PAST.label, hAt(PAST.at)) + "<button class=\"btn sm primary\" data-act=\"histclose\">지금 자료로 돌아가기</button></span></div>";
+    "<span class=\"acts\" style=\"margin:0\">" + impBtn("run", PAST.id, PAST.label, hAt(PAST.at)) + "<button class=\"btn sm primary\" data-act=\"histclose\">지금 자료로 돌아가기</button></span></div>" +
+    "<button class=\"pastpill\" data-act=\"histclose\" title=\"지금 자료로 돌아가기\">🕘 " + esc(hAt(PAST.at)) + " 기록 보는 중 · 돌아가기</button>";
 }
 
 function viewHist(){

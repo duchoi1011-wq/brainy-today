@@ -53,6 +53,7 @@ function autoPinApply(){
 /* 추천 「먼저」 키워드를 ★하고 바로 콘텐츠 검색 — 콘텐츠 탭 「키워드로 찾은 콘텐츠」로 넘어간다 */
 function kwRecGo(){
   if(searchState().busy) return;
+  if(pastOn()){ toast("옛 기록을 보는 중이라 맥에 일을 보내지 않아요 — 맨 위 「지금 자료로 돌아가기」 뒤에 눌러 주세요"); return }   // 탭을 옮기기 전에 막는다
   var kws = kwRecPicks().map(function(x){ return x.kw }).slice(0, 10); if(!kws.length) return;
   var pin = Object.assign({}, S().pin), ex = Object.assign({}, S().ex);
   kws.forEach(function(k){ pin[k] = 1; delete ex[k] });

@@ -46,7 +46,8 @@ nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;c
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:calc(100vw - 32px);transition:.2s;z-index:50}#toast.on{opacity:1;transform:translate(-50%,0)}
 html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 폭이 15px 바뀌던 것 */
 details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:600}
-.pastbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF4D6;color:#5a4300;border:1px solid #F0D27A;font-size:14px}.pastbar .mk{width:34px;height:34px}
+.pastbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF4D6;color:#5a4300;border:1px solid #F0D27A;font-size:14px}.pastbar .mk{width:44px;height:44px}
+.pastpill{position:fixed;z-index:30;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 200px);min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #F0D27A;background:#FFF4D6;color:#5a4300;font:inherit;font-size:13px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.15);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hday{margin:12px 0 2px;font-size:13px;font-weight:700;color:var(--muted)}.list .it.on{outline:2px solid var(--accent);outline-offset:-2px}
 .mk.imp[aria-pressed=true]{background:#6B4FD8;border-color:#6B4FD8;color:#fff}
 .runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
@@ -572,6 +573,7 @@ function act(name, el){
   if(claudeAct(name, el)) return;   // ⚙ Claude 모드 (content-claude.js)
   if(designAct(name, el)) return;   // 설계 · 템플릿 (content-design.js)
   if(histAct(name, el)) return;   // 🕘 돌린 기록 · 🔖 중요 (content-hist.js)
+  if(pastOn() && { ideas: 1, idearesearch: 1, ideascript: 1 }[name]){ toast("옛 기록을 보는 중이라 맥에 일을 보내지 않아요 — 맨 위 「지금 자료로 돌아가기」 뒤에 눌러 주세요"); return }   // 보내기 전에 고른 것을 지우거나 칸을 옮기지 않게
   if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)
   if(baseAct(name, el)) return;   // 기준 키워드 · 영상 주제 · 지우기/되돌리기 · 찾는 나라 (content-basekw.js)
   var s = S();
