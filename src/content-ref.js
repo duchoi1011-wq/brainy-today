@@ -180,7 +180,7 @@ function anaTargets(words){
 function anaOptHtml(){
   var o = anaOpt();
   function tg(k, label){ return "<button class=\"chip" + (o[k] ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"" + k + "\">" + label + "</button>" }
-  return "<p class=\"it-d\">맥의 Claude가 영상을 열어 읽어요. 켠 것만 읽고, 카드 「자세히」에도 켠 것만 보여요.</p>" +
+  return "<p class=\"it-d\">맥의 Claude가 영상을 열어 읽어요. 켠 것만 읽고, 카드 「자세히」에도 켠 것만 보여요. 댓글 수를 늘리면 다음에 분석하는 영상부터 그만큼 읽어요 — 이미 분석한 영상은 그때 받은 만큼만 보여요.</p>" +
     "<div class=\"chips\">" + ANA_PARTS.map(function(p){ return tg(p[0], p[1]) }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">댓글</span>" + [5, 10, 20].map(function(n){ return "<button class=\"chip" + (o.nCmt === n ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"nCmt\" data-v=\"" + n + "\">" + n + "개</button>" }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">분석할 영상</span>" + [1, 3, 5].map(function(n){ return "<button class=\"chip" + (o.target === "top" && o.topN === n ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"topN\" data-v=\"" + n + "\">키워드마다 점수 상위 " + n + "개</button>" }).join("") +

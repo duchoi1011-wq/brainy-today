@@ -84,9 +84,8 @@ function wordRecHtml(name, n){
 /* 키워드 탭 맨 위 — 씨앗을 고르면 그 씨앗의 연관 검색어. 단어 고치기는 브랜드 탭 한 곳에서 */
 function seedsHtml(){
   var sd = seedsOf(), s = S(), src = SEED_SRC.filter(function(o){ return o[0] === seedSrc() })[0];
-  var h = "<section class=\"card\"><div class=\"card-h\"><h3>씨앗 단어</h3><button class=\"chip\" data-go=\"brand\">단어 고치기 →</button></div>" +
-    "<details class=\"help\"><summary>씨앗 단어가 뭔가요?</summary><p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 " + esc(src ? src[1] : "") + (seedSrc() === "both" ? "(네이버 + 구글)" : "") + "에서 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요.</p></details>" +
-    (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + dsLine("word") + "</section>" + kwRecBarHtml();   // 찾는 나라 (content-basekw.js)
+  var help = "<details class=\"help\"><summary>씨앗 단어 · 기준</summary><p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요. 씨앗 단어는 브랜드 탭에서 고쳐요.</p>" + dsLine("word") + dsLine("kw") + "</details>";
+  var h = sd.length ? "" : "<section class=\"card\"><p class=\"note\">아직 씨앗 단어가 없어요. <button class=\"btn sm\" data-go=\"brand\">브랜드 탭에서 넣기 →</button></p></section>";
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
   if(pickW){
     var all0 = seedItems(pickW), tab0 = ui.sTab || "naver", more = ui.seedMore || 15;
@@ -94,15 +93,14 @@ function seedsHtml(){
     var near = inT.filter(function(x){ return kc.far === "mix" || !isFar(x, pickW) }), far = kc.far === "fold" ? inT.filter(function(x){ return isFar(x, pickW) }) : [];
     h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">" + all0.length + "개</span></div><div class=\"chips\">" +
       sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word).filter(function(y){ return kwShown(y, x.word) }).length + "</span></button>" }).join("") + "</div>" +
-      srcTabsHtml("sTab", all0.filter(function(y){ return kwShown(y, pickW) }), pickW) +
-      "<div style=\"margin-top:6px\">" + dsLine("kw") + "</div>" + kwRecSeedHtml(pickW) +
-      (tab0 !== "naver" && seedSrc() === "naver" ? "<p class=\"note\" style=\"margin-top:8px\">지금은 네이버에서만 받아요. 구글 트렌드도 보려면 브랜드 탭 「연관 검색어 받는 곳」을 「둘 다」로 바꾸세요.</p>" : "") +
+      seedPendingHtml() + srcTabsHtml("sTab", all0.filter(function(y){ return kwShown(y, pickW) }), pickW) + help + kwRecSeedHtml(pickW) +
+      (tab0 !== "naver" && seedSrc() === "naver" ? "<p class=\"note\" style=\"margin-top:8px\">지금은 네이버에서만 받아요. 구글 트렌드도 보려면 설계 탭 「1 단어」에서 「둘 다」로 바꾸세요.</p>" : "") +
       "<div class=\"list\" style=\"margin-top:6px\">" + (near.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">" + (tab0 === "both" ? "네이버와 구글 둘 다에서 나온 말이 아직 없어요." : "이 칸에 나온 연관 검색어가 없어요.") + "</p>") + "</div>" +
       (near.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"seedMore=" + (more + 25) + "\">더 보기 (" + (near.length - more) + "개 남음)</button></div>" : "") +
       (far.length ? "<details style=\"margin-top:12px\"><summary>「" + esc(pickW) + "」 글자가 안 든 말 " + far.length + "개 — 네이버·구글이 같이 찾은 관련 검색어</summary><div class=\"list\" style=\"margin-top:6px\">" +
         far.map(function(x){ return kwRow(x, s, true) }).join("") + "</div></details>" : "") + "</section>";
   }
-  return h;
+  return h + kwRecBarHtml();
 }
 /* 네이버 · 구글 트렌드 · 둘 다(겹침) 칸 (2026-11-17 동욱: "구글 트렌드와 네이버 둘 다 검색하는 게 따로 보이고, 중복해서 트렌드인 걸 3탭으로").
    via = 그 말을 낸 곳 — 맥이 씨앗마다(키워드.json via{씨앗: [...]}) · 단어 후보마다(단어 후보.json via [...]) 적는다. 예전 자료는 src · gTop 으로 짐작한다 */
