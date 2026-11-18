@@ -50,7 +50,7 @@ function viewTpl(){
   if(!B()) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var list = tplList(), c = SETS[cur] || {};
   return "<section class=\"card\"><div class=\"card-h\"><h3>템플릿</h3><span class=\"n\">" + list.length + "개</span></div>" +
-    "<p class=\"lead\">지금 브랜드(" + esc(B().name) + ")의 단계별 기준 — 단어 받는 곳 · 키워드 순위 · 영상 분석 · 추천 기준과 편 수 · 참고 페이지 범위 — 를 한 벌로 저장해요. 다른 브랜드를 열고 「적용」하면 그 브랜드의 설계가 이 한 벌로 바뀌어요.</p>" +
+    "<p class=\"lead\">지금 브랜드(" + esc(B().name) + ")의 단계별 기준 — 단어 받는 곳 · 키워드 순위 · 영상 분석 · 추천 기준과 편 수 · 참고 페이지 범위 — 를 한 벌로 저장해요. 다른 브랜드를 열고 「적용」하면 그 브랜드의 단계별 기준이 이 한 벌로 바뀌어요.</p>" +
     "<div class=\"row2\"><input type=\"text\" id=\"tpl-name\" data-tplin=\"1\" maxlength=\"30\" placeholder=\"템플릿 이름 (예: B2B 문의형 · 개인 채널 성장형)\" value=\"" + esc(ui.tplDraft || "") + "\"><button class=\"btn primary\" data-act=\"tplsave\">지금 기준 저장</button></div></section>" +
     "<section class=\"card\"><div class=\"list\">" + (list.map(function(t){
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(t.name) + "</b> <span class=\"num muted\">" + esc(String(t.at || "").slice(0, 10)) + " · " + esc(t.from || "") + "에서</span></div>" +

@@ -483,7 +483,7 @@ function viewBrand(){
    2026-11-17 검증: Enter 뒤 커서가 칸에 남아 있으면 결과가 와도 「받는 중」에서 안 바뀌던 문제 */
 var lastInput = 0, composing = false;
 document.addEventListener("compositionstart", function(){ composing = true });
-document.addEventListener("compositionend", function(){ composing = false; lastInput = Date.now() });
+document.addEventListener("compositionend", function(e){ composing = false; lastInput = Date.now(); var id = e.target && e.target.id; if(id === "setq" || id === "impq"){ if(id === "setq") ui.setQ = e.target.value; else ui.impQ = e.target.value; render() } });   // 치는 대로 걸러 보는 칸 — 조합이 끝나면 그린다
 document.addEventListener("input", function(){ lastInput = Date.now() }, true);
 function typing(){ var a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && !/^(range|checkbox|file|date)$/.test(a.type) && (document.getElementById("view").contains(a) || (document.getElementById("setm") || document.body).contains(a) && !!ui.set) && (composing || Date.now() - lastInput < 2000)) }
 function renderSoft(){ if(typing()){ if(!ui.later){ ui.later = true; (function wait(){ setTimeout(function(){ if(!ui.later) return; if(typing()) return wait(); ui.later = false; render() }, 800) })() } return } render() }
@@ -544,8 +544,8 @@ document.addEventListener("input", function(e){
   if(e.target.dataset.wordin != null) ui.wDraft = e.target.value;
   if(e.target.dataset.dsask != null) ui.dsDraft = e.target.value;   // 설계 「말로 바꾸기」 · 템플릿 이름 — 다시 그려도 쓰던 글을 지킨다
   if(e.target.dataset.tplin != null) ui.tplDraft = e.target.value;
-  if(e.target.id === "setq"){ ui.setQ = e.target.value; render() }   // ⚙ 설정 칸 찾기
-  if(e.target.id === "impq"){ ui.impQ = e.target.value; render() }   // 🔖 중요 찾기 — 치는 대로 걸러 보기
+  if(e.target.id === "setq"){ ui.setQ = e.target.value; if(!e.isComposing) render() }   // ⚙ 설정 칸 찾기 — 한글 조합 중엔 그리지 않고 다 쓴 뒤(compositionend)에 (2026-11-18 검증: 「ㄱ기기ㄹ로록록」)
+  if(e.target.id === "impq"){ ui.impQ = e.target.value; if(!e.isComposing) render() }   // 🔖 중요 찾기 — 치는 대로 걸러 보기
   if(e.target.dataset.basekw != null) ui.baseDraft = e.target.value;   // 기준 키워드 넣기 칸
   if(e.target.id === "base-topic") ui.topicDraft = e.target.value;   // 영상 주제 한 줄 — 저장 전 쓰던 글
   if(e.target.dataset.prin != null){ ui.prDraft = Object.assign({}, ui.prDraft); ui.prDraft[e.target.dataset.prin] = e.target.value }   // ✍️ 내 말로 끼어들기 — 쓰던 글 지키기   // 단어 후보 찾기 칸 — 다시 그려도 쓰던 글을 지킨다
