@@ -1,4 +1,4 @@
-/* ── 키워드 순위 기준 — 키워드 탭 「순위 기준」 칸 ──
+/* ── 키워드 순위 기준 — 설계 탭 「키워드」 칸의 몸통 (content-design.js · 2026-11-18 키워드 탭에서 옮김) ──
    2026-11-17 동욱: "흑염소사육은 왜 하나만 받았어?" → 씨앗 글자가 든 말만 남기던 규칙을 바꾸고, "순위를 매기는 기준을 합리적으로 바꾸고 그걸 내가 조절할 수 있는 설정 탭".
    맥(content_app.py seeds)은 이제 씨앗 글자가 안 든 네이버 연관 검색어도 버리지 않고 far 로 표시해 넘긴다. 무엇을 위로 올리고 무엇을 숨길지는 여기 값(ct.set kwCrit)이 정한다:
      ① 우선순위 — 아래 다섯 기준의 순서(위일수록 크게) · 끄기
@@ -56,23 +56,21 @@ function kwCritHtml(){
   var minVol = "<div class=\"chips\">" + KW_MINVOL.map(function(o){ return chip(c.minVol === o[0], "minVol:" + o[0], o[1]) }).join("") + "</div>";
   var minRel = "<div class=\"it-d\">씨앗과 글자가 하나도 안 겹치는 말을 거를지 골라요.</div><div class=\"chips\">" +
     KW_MINREL.map(function(o){ return chip(c.minRel === o[0], "minRel:" + o[0], o[1]) }).join("") + "</div>";
-  return "<section class=\"card\"><div class=\"card-h\"><h3>키워드 순위 기준 — 조절 · 우선</h3>" + ((SETS[cur] || {}).kwCrit ? "<button class=\"btn sm\" data-act=\"kc\" data-k=\"reset\">기본값으로</button>" : "") + "</div>" +
-    "<p class=\"lead\">씨앗 단어의 연관 검색어와 전체 키워드를 이 기준으로 점수 매기고 줄 세워요. 바꾸면 바로 저장되고 키워드 칸에 바로 반영돼요." + (k ? " 지금 키워드 " + all.length + "개 중 " + seen + "개가 보여요 (★한 말은 늘 보여요)." : "") + "</p><div class=\"list\">" +
+  return "<p class=\"it-d\">씨앗 단어의 연관 검색어와 전체 키워드를 이 기준으로 점수 매기고 줄 세워요. 바꾸면 바로 저장되고 키워드 칸에 바로 반영돼요." + (k ? " 지금 키워드 " + all.length + "개 중 " + seen + "개가 보여요 (★한 말은 늘 보여요)." : "") + "</p><div class=\"list\">" +
     step(1, "무엇을 먼저 볼까 (우선순위)", pri) + step(2, "씨앗 글자가 안 든 말", far) + step(3, "최소 검색량", minVol) + step(4, "씨앗과 얼마나 가까워야 하나", minRel) + "</div>" +
-    "<div class=\"acts\"><button class=\"btn sm\" data-go=\"kw\">키워드 칸에서 보기 →</button></div></section>" + kwCritSampleHtml();
+    kwCritSampleHtml();
 }
 /* 지금 기준으로 1~5위 — 씨앗마다 바뀐 결과를 바로 본다 */
 function kwCritSampleHtml(){
   var sd = seedsOf(); if(!sd.length || !part("kw")) return "";
-  return "<section class=\"card\"><div class=\"card-h\"><h3>지금 기준으로 씨앗마다 1~5위</h3></div><div class=\"list\">" + sd.map(function(x){
+  return "<details class=\"wbox\"><summary><b>지금 기준으로 씨앗마다 1~5위</b></summary><div class=\"wbody\"><div class=\"list\">" + sd.map(function(x){
     var it = seedItems(x.word).filter(function(y){ return kwShown(y, x.word) }).slice(0, 5);
     return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\" style=\"display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--" + (x.kind === "상품" ? "prod" : "iden") + ")\"></i><b>" + esc(x.word) + "</b></div>" +
       "<div class=\"it-d\">" + (it.map(function(y){ return esc(y.kw) + " <span class=\"num\">" + y.score + "점</span>" }).join(" · ") || "보이는 말이 없어요") + "</div></div>" +
-      "<button class=\"btn sm\" data-go=\"kw|seed=" + esc(x.word) + "\">보기</button></div>" }).join("") + "</div></section>";
+      "<button class=\"btn sm\" data-go=\"kw|seed=" + esc(x.word) + "\">보기</button></div>" }).join("") + "</div></div></details>";
 }
 function kwCritAct(k){
   var c = kwCrit(), o = { order: c.set ? c.order.slice() : undefined, off: Object.assign({}, c.off), far: c.far, minVol: c.minVol, minRel: c.minRel };
-  if(k === "reset"){ setS({ kwCrit: null }); return }
   var p = k.split(":");
   if(p[0] === "off") o.off[p[1]] = !o.off[p[1]];
   if(p[0] === "far") o.far = p[1];

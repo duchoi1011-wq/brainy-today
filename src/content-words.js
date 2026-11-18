@@ -64,6 +64,6 @@ function kwPullHtml(){
   var more = ui.pullMore || 8;
   return "<details class=\"wbox\"" + (ui.pullOpen ? " open" : "") + " data-wbox=\"_pull\"><summary><b>키워드에서 세부 단어 가져오기</b><span class=\"wsum\">★ · Claude 추천 · 씨앗마다 상위 말 " + pool.length + "개</span></summary><div class=\"wbody\">" +
     "<p class=\"it-d\">키워드 탭에서 찾은 말 중 씨앗 단어로 삼을 만한 말이에요. 넣을 곳(정체성 축 · 상품)을 누르면 씨앗 단어가 되고, 맥이 그 말로 다시 연관 검색어를 받아요.</p><div class=\"list\">" +
-    pool.slice(0, more).map(function(o){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(o.x.kw) + "</b> <span class=\"tag\">" + esc(o.why) + "</span> <span class=\"num muted\">월 " + fmt(o.x.total) + "</span></div>" + seedPickHtml(o.x.kw) + "</div></div>" }).join("") + "</div>" +
+    pool.slice(0, more).map(function(o){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(o.x.kw) + "</b> <span class=\"tag\">" + esc(o.why) + "</span> <span class=\"num muted\">월 " + fmt(o.x.total) + "</span></div>" + (ui.kwSeed === o.x.kw ? seedPickHtml(o.x.kw) : "") + "</div><button class=\"btn sm\" data-act=\"kwseed\" data-kw=\"" + esc(o.x.kw) + "\" aria-expanded=\"" + (ui.kwSeed === o.x.kw) + "\">" + (ui.kwSeed === o.x.kw ? "닫기" : "＋ 넣기") + "</button></div>" }).join("") + "</div>" +
     (pool.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"pullMore=" + (more + 12) + "\">더 보기 (" + (pool.length - more) + "개)</button></div>" : "") + "</div></details>";
 }

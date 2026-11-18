@@ -39,12 +39,13 @@ function refBasisCell(x, r, key){
 }
 /* 댓글 — 좋아요 많은 순 5개 (2026-11-17 동욱 "댓글을 자세히 읽게 하는 칸 · 가져오는 모든 댓글은 좋아요 순 5개").
    볼트 <브랜드>/댓글.json(ct.data .cmts, content_app.py cmts — 공식 API 100개 중 좋아요 순) > 영상 분석 댓글 > 조사 시트 요약 글 */
-var CMT_TOP = 5;
+var CMT_TOP = 5;   // 좋아요 많은 댓글 기본 개수 — 설계 「콘텐츠」 칸에서 5·10·20 으로 바꾼다 (anaOpt().nCmt)
 function cmtsOf(vid){
   var c = vid && (((part("cmts") || {}).items) || {})[vid];
-  if(c && (c.comments || []).length) return { list: c.comments.slice(0, CMT_TOP), at: c.at };
+  if(c && (c.comments || []).length) return { list: c.comments.slice(0, anaOpt().nCmt), at: c.at };
   var an = vid ? anaOf(vid) : null;
-  if(an && (an.comments || []).length) return { list: an.comments.slice().sort(function(a, b){ return (b.likes || 0) - (a.likes || 0) }).slice(0, CMT_TOP), at: an.at };
+  if(an && (an.comments || []).length) return { list: an.comments.slice().sort(function(a, b){ return (b.likes || 0) - (a.likes || 0) })
+    .slice(0, anaOpt().nCmt), at: an.at };
   return c ? { list: [], error: c.error || "댓글 없음" } : null;
 }
 function cmtCell(r){

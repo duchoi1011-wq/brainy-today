@@ -4,8 +4,8 @@
    단계 칸 = 번호 · 이름 · 무엇을 정하나 · 「지금」 한 줄 · 접힌 「바꾸기」(그 단계의 조절 칸). 각 단계 탭에는 dsLine(한 줄 + 「설계에서 바꾸기 →」)만 둔다.
    값은 그대로 그 단계의 ct.set 칸(seedSrc · kwCrit · anaOpt · recCrit · roles · rpOpt) — 템플릿은 그 칸들을 한 벌로 ct.set/_tpl 에 저장한다. */
 var DS = [
-  { id: "word", name: "단어 — 연관 검색어 받는 곳", what: "씨앗 단어마다 어디서 연관 검색어를 받을지", keys: ["seedSrc"],
-    sum: function(){ return (SEED_SRC.filter(function(o){ return o[0] === seedSrc() })[0] || [])[1] || "" }, body: function(){ return seedSrcHtml() } },
+  { id: "word", name: "단어 — 연관 검색어 받는 곳 · 나라", what: "씨앗 단어마다 어디서 · 어느 나라 기준으로 연관 검색어를 받을지", keys: ["seedSrc", "kwCountry"],
+    sum: function(){ return "연관 검색어 " + ({ naver: "네이버", google: "구글 트렌드", both: "네이버 + 구글 트렌드" }[seedSrc()] || seedSrc()) + " · 나라 " + kwCountryName(kwCountry()) }, body: function(){ return seedSrcHtml() + kwCountryHtml() } },
   { id: "kw", name: "키워드 — 순위 기준", what: "연관 검색어를 무엇으로 줄 세우고 무엇을 숨길지", keys: ["kwCrit"],
     sum: function(){ var c = kwCrit(), r = 0; return c.order.filter(function(id){ return !c.off[id] }).slice(0, 3).map(function(id){ return (++r) + " " + KWCRIT.filter(function(q){ return q.id === id })[0].name }).join(" · ") + (c.minVol ? " · 월 " + c.minVol + " 이상" : "") },
     body: function(){ return kwCritHtml() } },
@@ -19,7 +19,7 @@ var DS = [
     sum: function(){ var o = rpOpt(); return rpWords().length + "개 단어 · " + RP_SIDES.filter(function(x){ return o.sides[x.id] }).map(function(x){ return x.name }).join(" · ") + " · " + RP_REGION.filter(function(r){ return r[0] === o.region })[0][1] },
     body: function(){ return rpScopeHtml() } }
 ];
-var DS_KEYS = ["seedSrc", "kwCrit", "anaOpt", "recCrit", "roles", "rpOpt"];
+var DS_KEYS = ["seedSrc", "kwCountry", "kwCrit", "anaOpt", "recCrit", "roles", "rpOpt"];
 function dsStage(id){ return DS.filter(function(x){ return x.id === id })[0] }
 function dsChanged(st){ var c = SETS[cur] || {}; return st.keys.some(function(k){ return c[k] != null }) }
 /* 각 단계 탭 맨 위의 한 줄 — 모든 단계가 같은 모양 */
@@ -64,8 +64,8 @@ function designAct(name, el){
   if(name === "dsreset"){ var st = dsStage(v), p = {}; st.keys.forEach(function(k){ p[k] = null }); if(confirm("「" + st.name + "」을 기본값으로 되돌릴까요?")) setS(p); return true }
   if(name === "dsresetall"){ var p2 = {}; DS_KEYS.forEach(function(k){ p2[k] = null }); if(confirm(B().name + "의 설계를 전부 기본값으로 되돌릴까요?")) setS(p2); return true }
   if(name === "dsask"){ var inp = document.getElementById("ds-ask"), q = ((inp && inp.value) || "").trim(); if(!q){ if(inp) inp.focus(); return true }
-    ui.dsDraft = ""; if(window.BRAINY_CHAT) window.BRAINY_CHAT.ask("[설계 바꾸기] " + q + " — 지금 브랜드 설계를 읽고 set_design 도구로 바꾼 뒤, 무엇을 어떻게 바꿨는지 한 줄씩 알려 줘."); else alert("Brainy 대화를 열 수 없어요 — 로그인을 확인해 주세요."); render(); return true }
-  if(name === "tplsave"){ var ni = document.getElementById("tpl-name"), nm = ((ni && ni.value) || "").trim(); if(!nm){ alert("템플릿 이름을 적어 주세요."); if(ni) ni.focus(); return true }
+    ui.dsDraft = ""; if(window.BRAINY_CHAT) window.BRAINY_CHAT.ask("[설계] " + q);   // 어떻게 바꿀지는 대화 규칙(content-brainy.js rules)에 — 동욱 말만 보이게 else alert("Brainy 대화를 열 수 없어요 — 로그인을 확인해 주세요."); render(); return true }
+  if(name === "tplsave"){ var ni = document.getElementById("tpl-name"), nm = ((ni && ni.value) || ui.tplDraft || "").trim();   // Enter(한글 조합 끝)로 눌러도 쓰던 이름으로 if(!nm){ alert("템플릿 이름을 적어 주세요."); if(ni) ni.focus(); return true }
     var c = SETS[cur] || {}, vals = {}; DS_KEYS.forEach(function(k){ if(c[k] != null) vals[k] = JSON.parse(JSON.stringify(c[k])) });
     var list = tplList().filter(function(t){ return t.name !== nm }); list.unshift({ id: "t" + Date.now().toString(36), name: nm, from: B().name, at: new Date().toISOString(), values: vals });
     ui.tplDraft = ""; tplSave(list); toast("「" + nm + "」 템플릿을 저장했어요"); return true }
@@ -79,6 +79,7 @@ function designAct(name, el){
 function designState(){ var c = SETS[cur] || {}, o = {}; DS_KEYS.forEach(function(k){ o[k] = c[k] != null ? c[k] : "(기본)" }); return o }
 var DS_SCHEMA = [
   "seedSrc: \"naver\" | \"google\" | \"both\" — 연관 검색어 받는 곳",
+  "kwCountry: \"KR\"|\"US\"|\"JP\"|\"GB\"|\"TW\"|\"VN\"|\"\"(전 세계) — 구글 트렌드·유튜브 검색 나라",
   "kwCrit: {order: [\"rel\",\"vol\",\"ctr\",\"rise\",\"comp\"] 순서(위일수록 크게), off: {id: true 끄기}, far: \"mix\"|\"fold\"|\"hide\"(씨앗 글자 안 든 말), minVol: 0|10|100|1000, minRel: 0|1|50}",
   "anaOpt: {topic, wave, comments, fit: true|false(영상 주제·파동 대사·좋아요 많은 댓글·구매 욕구 검증), nCmt: 5|10|20, target: \"top\"|\"picked\", topN: 1|3|5}",
   "recCrit: {order: [\"ratio\",\"comment\",\"fit\",\"wave\",\"topic\",\"fresh\"] 순서, off: {id: true}, use: {fav, pin, seed, ref: true|false 재료}, favFirst: true|false, minRatio: 0|1|3|10}",

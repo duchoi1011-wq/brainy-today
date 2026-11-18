@@ -164,7 +164,7 @@ function srScore(x, words){
    맥의 Claude가 ego lite 로 영상을 열어 읽는다 (cmd kind "analyze" → 볼트 <브랜드>/분석.json → ct.data .analysis, 영상 id 별).
    구매 욕구 검증 행은 구축 틀.json 의 「욕구 결 검증」과 같다(viewer · buyer · verdict · basis · fix). 무엇을 읽고 보여 줄지는 ct.set anaOpt */
 var ANA_PARTS = [["topic", "영상 주제"], ["wave", "파동 대사"], ["comments", "좋아요 많은 댓글"], ["fit", "구매 욕구 검증"]];
-function anaOpt(){ var o = (SETS[cur] || {}).anaOpt || {}; return { topic: o.topic !== false, wave: o.wave !== false, comments: o.comments !== false, fit: o.fit !== false, nCmt: CMT_TOP, target: o.target || "top", topN: o.topN || 3 } }
+function anaOpt(){ var o = (SETS[cur] || {}).anaOpt || {}; return { topic: o.topic !== false, wave: o.wave !== false, comments: o.comments !== false, fit: o.fit !== false, nCmt: [5, 10, 20].indexOf(o.nCmt) >= 0 ? o.nCmt : CMT_TOP, target: o.target || "top", topN: o.topN || 3 } }
 function anaOf(vid){ var a = part("analysis"); return a && a.items ? a.items[vid] : null }
 function fitV(x){ var a = anaOf(x.vid), v = a && a.fit && String(a.fit.verdict || "").split(" ")[0]; return { "같음": 100, "비슷": 60, "다름": 0 }[v] }
 function fitTag(x){ var a = anaOf(x.vid), v = a && a.fit && String(a.fit.verdict || "").split(" ")[0]; if(!v) return "";
