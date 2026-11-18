@@ -229,6 +229,7 @@ function kwRow(x, s, mark){
     "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">" + esc(x.intent) + "</span>" : esc(x.intent || "")) + "</div>" + (ui.kwSeed === x.kw ? seedPickHtml(x.kw) : "") + "</div>" +
     (mark ? "<button class=\"mk\" data-act=\"kwseed\" data-kw=\"" + esc(x.kw) + "\" aria-expanded=\"" + (ui.kwSeed === x.kw) + "\" title=\"씨앗 단어로 넣기 — 정체성 축이나 상품에\" aria-label=\"씨앗 단어로 넣기\">＋</button>" +
             "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"즐겨찾기 — 브랜드가 기억하고 콘텐츠 검색에 씀\" aria-label=\"즐겨찾기\">★</button>" +
+            impBtn("kw", x.kw, x.kw, "월 " + fmt(x.total)) +
             "<button class=\"mk no\" data-ex=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.ex[x.kw] + "\" title=\"후보에서 빼기\" aria-label=\"후보에서 빼기\">✕</button>" : "") + "</div>";
 }
 function viewKw(){

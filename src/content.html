@@ -46,6 +46,9 @@ nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;c
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:calc(100vw - 32px);transition:.2s;z-index:50}#toast.on{opacity:1;transform:translate(-50%,0)}
 html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 폭이 15px 바뀌던 것 */
 details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:600}
+.pastbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF4D6;color:#5a4300;border:1px solid #F0D27A;font-size:14px}.pastbar .mk{width:34px;height:34px}
+.hday{margin:12px 0 2px;font-size:13px;font-weight:700;color:var(--muted)}.list .it.on{outline:2px solid var(--accent);outline-offset:-2px}
+.mk.imp[aria-pressed=true]{background:#6B4FD8;border-color:#6B4FD8;color:#fff}
 .runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
 details>summary{text-align:left;overflow-wrap:anywhere;word-break:keep-all}
 @media (max-width:560px){input,textarea,select{font-size:16px!important}}   /* 아이폰에서 누르면 화면이 확대되던 것 (16px 미만) */
@@ -252,10 +255,11 @@ var TABS = [
   { name: "키워드", subs: [["kw", "씨앗별 검색어"], ["kwall", "전체 키워드"]] },
   { name: "콘텐츠", subs: [["ref", "콘텐츠"], ["rec", "추천"]] },
   { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] },
-  { name: "설계", subs: [["design", "단계별 기준"], ["tpl", "템플릿"], ["claude", "Claude 모드"]] }
+  { name: "설계", subs: [["design", "단계별 기준"], ["tpl", "템플릿"], ["claude", "Claude 모드"]] },
+  { name: "기록", subs: [["hist", "🕘 돌린 기록"], ["imp", "🔖 중요"]] }   // 지난 결과 다시 보기 · 기간 상관없이 중요한 것 (content-hist.js)
 ];
 function tabGroup(id){ return TABS.filter(function(g){ return g.subs.some(function(x){ return x[0] === id }) })[0] || TABS[0] }
-var PARTS = { cmts: ".cmts", kwrec: ".kwrec", wordrec: ".wordrec", auto: ".auto", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log" };
+var PARTS = { cmts: ".cmts", kwrec: ".kwrec", wordrec: ".wordrec", auto: ".auto", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log", hist: ".hist" };
 
 function load(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v }catch(e){ return d } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
@@ -282,7 +286,7 @@ function B(){   // 브랜드 정본(ct.data) + 앱에서 고친 브랜드 정보
   var r = RAW[cur] || null, pf = (SETS[cur] || {}).profile;
   return r && pf ? Object.assign({}, r, pf, { identity: Object.assign({}, r.identity || {}, pf.identity || {}) }) : r;
 }
-function part(name){ return RAW[cur + PARTS[name]] || null }
+function part(name){ return pastPart(name) || RAW[cur + PARTS[name]] || null }   // 🕘 과거 기록을 보는 중이면 그 단계만 그때 결과
 /* 쇼츠는 안 한다 (2026-11-16 동욱 "쇼츠는 하지 말고 다 미드폼 롱폼 기준으로" · 11-17 "쇼츠 우선 제외") —
    지난 회차의 숏폼 레퍼런스·추천은 시트·데이터 파일에 그대로 두고 앱에서만 뺀다 */
 function isLong(x){ return x.form !== "숏폼" }
@@ -408,6 +412,7 @@ function runHtml(kinds){
 /*@include content-claude.js*/
 /*@include content-words.js*/
 /*@include content-design.js*/
+/*@include content-hist.js*/
 /*@include content-prompt.js*/
 /*@include content-auto.js*/
 /*@include content-profile.js*/
@@ -480,14 +485,14 @@ function render(){
   document.getElementById("nav").innerHTML = TABS.map(function(g, i){ var to = last[g.name] && g.subs.some(function(x){ return x[0] === last[g.name] }) ? last[g.name] : g.subs[0][0];
     return "<button role=\"tab\" class=\"" + (g === grp ? "on" : "") + "\" data-tab=\"" + to + "\"><span>" + (i + 1) + "</span>" + g.name + "</button>" }).join("");
   var sub = grp.subs.length > 1 ? "<div class=\"subnav\" role=\"tablist\">" + grp.subs.map(function(x){ return "<button role=\"tab\" class=\"" + (tab === x[0] ? "on" : "") + "\" data-tab=\"" + x[0] + "\">" + x[1] + "</button>" }).join("") + "</div>" : "";
-  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, kwall: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, claude: viewClaude, script: viewScript, design: viewDesign, tpl: viewTpl }[tab] || viewSum;
+  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, kwall: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, claude: viewClaude, script: viewScript, design: viewDesign, tpl: viewTpl, hist: viewHist, imp: viewImp }[tab] || viewSum;
   ui.later = false;
   /* 초점 돌려주기는 앱 화면(#view) 안 칸만 — 구석 Brainy 대화창(#bc-text)에 쓰는 중에 맥 자료가 와서 다시 그리면, 그 칸의 커서를 다시 놓다가 한글 조합이 끊겨 글이 깨졌다 (2026-11-18 동욱: "대화창을 쓰면 글이 깨진다") */
   var act0 = document.activeElement; if(act0 && !document.getElementById("view").contains(act0)) act0 = null;
   var key = act0 && (act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
   var v = function(){ return ({ build: 1, refpage: 1, script: 1 }[tab] && B() ? baseBarHtml() : "") + v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") + undoToastHtml() };   // 대본 탭 세 칸 맨 위에 기준 키워드 · 영상 주제   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
   var selA = null, selB = null; try{ if(act0 && /^(INPUT|TEXTAREA)$/.test(act0.tagName)){ selA = act0.selectionStart; selB = act0.selectionEnd } }catch(e){}   // 커서 위치도 지킨다 (2026-11-18 검증: 다시 그리면 커서가 맨 앞으로 가서 이어 쓴 글이 앞에 붙음)
-  document.getElementById("view").innerHTML = sub + runHtml(Object.keys(KIND)) + promptBarHtml() + v();   // ✍️ 탭마다 내 말로 끼어들기
+  document.getElementById("view").innerHTML = sub + pastBarHtml() + runHtml(Object.keys(KIND)) + promptBarHtml() + v();   // ✍️ 탭마다 내 말로 끼어들기
   if(key){ var back = document.querySelector(key); if(back){ back.focus({ preventScroll: true }); try{ if(selA != null && back.setSelectionRange) back.setSelectionRange(selA, selB) }catch(e){} } }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
 }
 
@@ -520,6 +525,7 @@ document.addEventListener("input", function(e){
   if(e.target.dataset.wordin != null) ui.wDraft = e.target.value;
   if(e.target.dataset.dsask != null) ui.dsDraft = e.target.value;   // 설계 「말로 바꾸기」 · 템플릿 이름 — 다시 그려도 쓰던 글을 지킨다
   if(e.target.dataset.tplin != null) ui.tplDraft = e.target.value;
+  if(e.target.id === "impq"){ ui.impQ = e.target.value; render() }   // 🔖 중요 찾기 — 치는 대로 걸러 보기
   if(e.target.dataset.basekw != null) ui.baseDraft = e.target.value;   // 기준 키워드 넣기 칸
   if(e.target.id === "base-topic") ui.topicDraft = e.target.value;   // 영상 주제 한 줄 — 저장 전 쓰던 글
   if(e.target.dataset.prin != null){ ui.prDraft = Object.assign({}, ui.prDraft); ui.prDraft[e.target.dataset.prin] = e.target.value }   // ✍️ 내 말로 끼어들기 — 쓰던 글 지키기   // 단어 후보 찾기 칸 — 다시 그려도 쓰던 글을 지킨다
@@ -563,6 +569,7 @@ document.addEventListener("change", function(e){
 function act(name, el){
   if(claudeAct(name, el)) return;   // ⚙ Claude 모드 (content-claude.js)
   if(designAct(name, el)) return;   // 설계 · 템플릿 (content-design.js)
+  if(histAct(name, el)) return;   // 🕘 돌린 기록 · 🔖 중요 (content-hist.js)
   if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)
   if(baseAct(name, el)) return;   // 기준 키워드 · 영상 주제 · 지우기/되돌리기 · 찾는 나라 (content-basekw.js)
   var s = S();

@@ -82,7 +82,7 @@ function orderText(rd){
 }
 function topicCell(x, s){
   var sc = scriptOf(x.id);
-  return "<div class=\"o-top\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button>" + delBtn("rec", x.id, recNo(x.id) + " " + x.title) + "</div>" +
+  return "<div class=\"o-top\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button>" + delBtn("rec", x.id, recNo(x.id) + " " + x.title) + impBtn("rec", x.title, x.title, recNo(x.id) + (x.date ? " · " + x.date : "")) + "</div>" +
     (function(f){ return "<div class=\"small\" style=\"margin:2px 0 4px\"><span class=\"tag" + (f.k === "fav" ? " ok" : "") + "\">" + esc(f.t) + "</span>" + (f.ref ? " <span class=\"muted\">「" + esc(f.ref) + "」</span>" : "") + "</div>" })(recFrom(x)) +
     "<b>" + ([x.product, x.format].filter(Boolean).length ? "[" + [x.product, x.format].filter(Boolean).map(esc).join(" · ") + "] " : "") + txt(x.title) + "</b>" +
     (x.structure ? "<div class=\"apply\">" + txt(x.structure) + "</div>" : "") +
@@ -157,7 +157,7 @@ function viewScript(){
   if(!live.length) h += "<p class=\"empty\">대본을 모두 지웠어요. 아래 「지운 것」에서 되돌릴 수 있어요.</p>";
   sc.items.forEach(function(x, i){
     if(isGone("script", sid(x))) return;
-    h += "<section class=\"card\"><div class=\"card-h\"><h3>" + txt(x.title) + "</h3><span class=\"n\">" + esc(recNo(x.rec || "")) + " · " + esc(x.status || "") + "</span></div>" +
+    h += "<section class=\"card\"><div class=\"card-h\"><h3>" + txt(x.title) + "</h3><span class=\"n\">" + esc(recNo(x.rec || "")) + " · " + esc(x.status || "") + " " + impBtn("script", x.title, x.title, recNo(x.rec || "")) + "</span></div>" +
       (x.meta ? "<p class=\"lead\">" + md(x.meta) + "</p>" : "") +
       (x.summary ? "<h4>스크립트 요약</h4><div class=\"pre\">" + md(x.summary) + "</div>" : "") +
       (x.shoot ? "<details><summary>촬영 요약</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.shoot) + "</div></details>" : "") +

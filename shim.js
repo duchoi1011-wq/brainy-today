@@ -472,5 +472,7 @@
       return Promise.resolve(null);
     }
   };
-  window.BRAINY = { signOut: function () { return sb.auth.signOut(); }, oldApp: OLD_APP, reload: loadAll, delta: loadDelta, refresh: bsPress };
+  window.BRAINY = { signOut: function () { return sb.auth.signOut(); },
+    fetch: function (path) { return sb.from("docs").select("data").eq("path", path).maybeSingle().then(function (r) { if (r.error) throw r.error; return r.data ? r.data.data : null; }); },   // 앱이 늘 받지 않는 문서 하나만 (콘텐츠 기획 🕘 돌린 기록 본문)
+    oldApp: OLD_APP, reload: loadAll, delta: loadDelta, refresh: bsPress };
 })();

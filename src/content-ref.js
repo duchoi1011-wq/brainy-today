@@ -38,7 +38,7 @@ function refScore(x){
 function refCard(x){
   var bd = band(x.ratio), g = growth(x), proof = isProof(x), o = outlier(x), dv = daily(x);
   return "<div class=\"ref\">" + (x.vid ? "<a href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(x.vid) + "/mqdefault.jpg\"></a>" : "") +
-    "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\">" + txt(x.title) + "</a>" + (x.vid ? favBtn(x.vid) : "") + "</div>" +
+    "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\">" + txt(x.title) + "</a>" + (x.vid ? favBtn(x.vid) + impBtn("vid", x.vid, x.title, x.channel, x.url) : "") + "</div>" +
     "<div class=\"it-d\">" + esc(x.channel) + " · 구독 " + esc(x.subs || "—") + " · 조회 " + (g ? fmt(g.now) + (g.pct > 0 ? " <span class=\"up\">(+" + g.pct + "%)</span>" : "") : esc(x.views || "—")) + " · " + esc(x.len) + " · " + esc(x.published) + "</div>" +
     "<div><span class=\"tag fill\">" + esc(roleKo(x.role)) + "</span> " + stageTag(x) + " <span class=\"tag\" style=\"border-color:var(--accent);color:var(--accent)\">점수 " + refScore(x) + "</span> <span class=\"tag p\">" + esc(x.product) + "</span> <span class=\"tag\">" + esc(x.form) + "</span> " +
     "<span class=\"tag " + bd[1] + "\">" + (x.ratio != null ? "조회÷구독 " + x.ratio + "배 · " : "") + bd[0] + "</span> " +
@@ -208,7 +208,7 @@ function secs(t){ return String(t).split(":").reduce(function(a, v){ return a * 
 function searchCard(x, words){
   var url = "https://www.youtube.com/watch?v=" + x.vid, bd = band(x.ratio), hits = topicHits(x, words), n = cmtN(x);
   return "<div class=\"ref\"><a href=\"" + url + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(x.vid) + "/mqdefault.jpg\"></a>" +
-    "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"" + url + "\" target=\"_blank\" rel=\"noopener\">" + txt(x.title) + "</a>" + favBtn(x.vid) + "</div>" +
+    "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"" + url + "\" target=\"_blank\" rel=\"noopener\">" + txt(x.title) + "</a>" + favBtn(x.vid) + impBtn("vid", x.vid, x.title, x.channel, url) + "</div>" +
     "<div class=\"it-d\">" + esc(x.channel) + " · 조회 " + fmt(x.views) + " · " + esc(x.date) + "</div>" +
     (anaOpt().topic && anaOf(x.vid) && anaOf(x.vid).topic ? "<div class=\"small\"><b>주제</b> " + esc(anaOf(x.vid).topic) + "</div>" : "") +
     "<div><span class=\"tag\" style=\"border-color:var(--accent);color:var(--accent)\">점수 " + srScore(x, words) + "</span> " + (anaOpt().fit ? fitTag(x) : "") +
@@ -261,7 +261,7 @@ function favListHtml(){
   if(!ids.length) return "<section class=\"card\"><p class=\"empty\">아직 즐겨찾기 한 콘텐츠가 없어요. 콘텐츠 옆 ☆를 누르세요.</p></section>";
   return "<section class=\"card\"><div class=\"card-h\"><h3>☆ 즐겨찾기 콘텐츠</h3><span class=\"n\">" + ids.length + "개</span></div><div class=\"list\">" + ids.map(function(vid){ var x = f[vid];
     return "<div class=\"ref\"><a href=\"https://www.youtube.com/watch?v=" + esc(vid) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(vid) + "/mqdefault.jpg\"></a>" +
-      "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"https://www.youtube.com/watch?v=" + esc(vid) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title || vid) + "</a>" + favBtn(vid) + "</div>" +
+      "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"https://www.youtube.com/watch?v=" + esc(vid) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title || vid) + "</a>" + favBtn(vid) + impBtn("vid", vid, x.title || vid, x.channel, "https://www.youtube.com/watch?v=" + vid) + "</div>" +
       "<div class=\"it-d\">" + esc(x.channel || "") + (x.kw ? " · 키워드 " + esc(x.kw) : "") + " · " + esc(day(x.at)) + "</div></div></div>" }).join("") + "</div></section>";
 }
 
