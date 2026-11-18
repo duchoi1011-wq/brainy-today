@@ -65,9 +65,10 @@
   }
   function archive() { var c = clean(turns); if (!c.some(function (t) { return t.role === "user"; }) || past.some(function (p) { return sig(p.turns) === sig(c); })) return; past.unshift({ at: Date.now(), title: titleOf(c), turns: c }); past = past.slice(0, 20); }
   function others() {   // 다른 기기의 지금 대화 — 이 기기 것·지난 대화와 같은 건 뺀다
-    var r = remote || {}, mine = sig(turns), list = [];
-    Object.keys(r.devs || {}).forEach(function (k) { var d = r.devs[k]; if (k === DEV || k === "old" || !d || !clean(d.turns).some(function (t) { return t.role === "user"; }) || sig(d.turns) === mine || past.some(function (p) { return sig(p.turns) === sig(d.turns); })) return; list.push({ at: d.at, title: titleOf(d.turns), turns: clean(d.turns), other: true }); });
-    return list.sort(function (a, b) { return b.at - a.at; });
+    var r = remote || {}, mine = sig(turns), list = [], seen = {};
+    Object.keys(r.devs || {}).forEach(function (k) { var d = r.devs[k]; if (k === DEV || k === "old" || !d || !clean(d.turns).some(function (t) { return t.role === "user"; }) || sig(d.turns) === mine || past.some(function (p) { return sig(p.turns) === sig(d.turns); })) return; list.push({ at: d.at, title: titleOf(d.turns), turns: clean(d.turns), other: true, sg: sig(d.turns) }); });
+    /* 다른 기기끼리 같은 대화(새 기기가 처음 열 때 이어받은 것)는 가장 최근 하나만 (2026-11-18 검증: 같은 줄이 두 번) */
+    return list.sort(function (a, b) { return b.at - a.at; }).filter(function (x) { if (seen[x.sg]) return false; seen[x.sg] = 1; return true; });
   }
   /* 기다리는 동안 몇 초째인지 — 맥에서 답하면 볼트를 여러 개 열어 보느라 1~8분까지 걸린다 (2026-11-18 검증: 「몇십 초」라 했는데 7분 53초) */
   var t0 = 0;
