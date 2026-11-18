@@ -17,7 +17,7 @@ function autoState(){
 }
 function autoStart(){
   var a = autoState(), o = autoOpt(); if(a.running || !seedsOf().length) return;
-  if(pastOn()){ toast("옛 기록을 보는 중이라 맥에 일을 보내지 않아요 — 맨 위 「지금 자료로 돌아가기」 뒤에 눌러 주세요"); return }   // 확인창보다 먼저
+  if(pastOn()){ toast(PAST_BLOCK); return }   // 확인창보다 먼저
   var label = AUTO_UPTO.filter(function(x){ return x[0] === o.upto })[0][1];
   if(!confirm("🚀 자동 진행 — 씨앗마다 최고 키워드 ★ → 콘텐츠 추천" + (o.upto !== "rec" ? " → 구축 문서 " + o.n + "편 (" + autoSplitText(o.n) + ")" : "") + (o.upto === "script" ? " → 대본 " + o.n + "편" : "") + " → 보고. " + label + " 맥이 이어서 해요 (30분~1시간). 시작할까요?")) return;
   setS({ autoReq: { at: new Date().toISOString(), upto: o.upto, n: o.n, split: autoSplit(o.n), params: Object.assign({ kw: kwRecParams(), rec: recParams() }, baseParams()) } });
