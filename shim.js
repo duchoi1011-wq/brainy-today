@@ -238,14 +238,24 @@
       var imgs = (opts.images || []).slice(0, 5);
       return Promise.all(imgs.map(toJpeg)).then(function (list) {
         var id = "a" + Date.now().toString(36) + rid().slice(0, 6);
+        /* opts.where "mac" = 맥의 Claude Code 가 볼트 폴더에서 직접 답한다(볼트 지침·스킬·자료를 읽음). 12초 안에 맥이 안 집으면 클라우드로 넘긴다.
+           opts.model = haiku · sonnet · opus (콘텐츠 기획 「Claude 모드」) — 맥은 그 모델로, 클라우드는 같은 급(quick·default·complex)으로 */
+        var mac = opts.where === "mac", TIER_OF = { haiku: "quick", sonnet: "default", opus: "complex" };
         var req = {
-          status: "클라우드", input: input, json: !!json, tier: opts.modelTier || "default", createdAt: new Date().toISOString(),
+          status: mac ? "요청" : "클라우드", input: input, json: !!json, tier: opts.modelTier || TIER_OF[opts.model] || "default", createdAt: new Date().toISOString(),
           tools: (opts.tools || []).filter(function (t) { return !READ_TOOL.test(t.name); }).map(function (t) { return { name: t.name, description: t.description || "", inputSchema: t.inputSchema || {} }; }),
           images: list.filter(Boolean)
         };
+        if (opts.model) req.model = opts.model;
         return new Promise(function (resolve, reject) {
           var w = aiWait[id] = { opts: opts, json: !!json, text: "", at: "", resolve: resolve, reject: reject, timers: [], seen: false };
-          w.timers.push(setTimeout(function () { if (!w.seen) aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ Brainy가 답하지 않아요 — 인터넷을 확인하고 다시 보내 주세요."); }, 25000));
+          w.timers.push(setTimeout(function () { if (!w.seen) aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ Brainy가 답하지 않아요 — 인터넷을 확인하고 다시 보내 주세요."); }, mac ? 45000 : 25000));
+          if (mac) w.timers.push(setTimeout(function () {   // 맥이 꺼져 있으면 클라우드가 대신
+            if (w.seen) return;
+            sb.from("docs").update({ data: Object.assign({}, req, { status: "클라우드" }) }).eq("path", "ai/" + id).eq("data->>status", "요청").select("path").then(function (r) {
+              if (r.data && r.data.length) aiCloud(id, Object.assign({}, req, { status: "클라우드" }));
+            }, function () {});
+          }, 12000));
           w.timers.push(setTimeout(function () { aiFail(id, "unavailable", "너무 오래 걸려요", (w.text ? w.text + "\n\n" : "") + "⚠ 답이 너무 오래 걸려 멈췄어요. 다시 보내 주세요."); }, 9 * 60 * 1000));
           w.timers.push(setInterval(function () { aiPoll(id); }, 1500));   // 실시간 알림을 놓쳐도 받도록
           if (opts.signal) opts.signal.addEventListener("abort", function () {
@@ -254,7 +264,7 @@
           });
           sb.from("docs").upsert({ path: "ai/" + id, coll: "ai", id: id, data: req }).then(function (r) {
             if (r.error) aiFail(id, "unavailable", r.error.message, "⚠ 질문을 보내지 못했어요 — 인터넷을 확인해 주세요.");
-            else aiCloud(id, req);
+            else if (!mac) aiCloud(id, req);
           }, function () { aiFail(id, "unavailable", "보내지 못했어요", "⚠ 질문을 보내지 못했어요 — 인터넷을 확인해 주세요."); });
         });
       });

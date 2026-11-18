@@ -218,7 +218,7 @@ details.gone{margin-top:12px}details.gone .it{padding:8px 0}
   <header>
     <div class="brand">
       <h1>콘텐츠 기획</h1>
-      <small class="links muted"><a href="/brainy-today/home/">← Brainy 홈</a> · <button type="button" data-brainy="out">로그아웃</button></small>
+      <small class="links muted"><a href="/brainy-today/home/">← Brainy 홈</a> · <button type="button" class="linkbtn" data-go="claude">⚙ Claude 모드</button> · <button type="button" data-brainy="out">로그아웃</button></small>
     </div>
     <div id="brands" role="tablist" aria-label="브랜드"></div>
     <nav id="nav" role="tablist" aria-label="단계"></nav>
@@ -242,7 +242,7 @@ var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: 
 /* 탭은 넷 — 한 탭 안을 칸(subs)으로 나눈다 (2026-11-17 동욱: "한눈에·브랜드는 한 탭 안에 나누고, 키워드는 따로, 콘텐츠·추천 한 탭, 구축·대본 한 탭").
    tab 변수는 칸 id(sum·brand·kw·ref·rec·build·refpage·script) 그대로 — 위 탭을 누르면 그 탭에서 마지막으로 본 칸이 열린다 */
 var TABS = [
-  { name: "브랜드", subs: [["sum", "한눈에"], ["brand", "브랜드"]] },
+  { name: "브랜드", subs: [["sum", "한눈에"], ["brand", "브랜드"], ["claude", "Claude 모드"]] },
   { name: "키워드", subs: [["kw", "키워드"], ["kwset", "순위 기준"]] },
   { name: "콘텐츠", subs: [["ref", "콘텐츠"], ["rec", "추천"]] },
   { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] }
@@ -385,6 +385,7 @@ function runHtml(kinds){
 /*@include content-build.js*/
 /*@include content-brandrefs.js*/
 /*@include content-sum.js*/
+/*@include content-claude.js*/
 /*@include content-prompt.js*/
 /*@include content-auto.js*/
 /*@include content-profile.js*/
@@ -458,7 +459,7 @@ function render(){
   document.getElementById("nav").innerHTML = TABS.map(function(g, i){ var to = last[g.name] && g.subs.some(function(x){ return x[0] === last[g.name] }) ? last[g.name] : g.subs[0][0];
     return "<button role=\"tab\" class=\"" + (g === grp ? "on" : "") + "\" data-tab=\"" + to + "\"><span>" + (i + 1) + "</span>" + g.name + "</button>" }).join("");
   var sub = grp.subs.length > 1 ? "<div class=\"subnav\" role=\"tablist\">" + grp.subs.map(function(x){ return "<button role=\"tab\" class=\"" + (tab === x[0] ? "on" : "") + "\" data-tab=\"" + x[0] + "\">" + x[1] + "</button>" }).join("") + "</div>" : "";
-  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, script: viewScript, kwset: kwCritHtml }[tab] || viewSum;
+  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, claude: viewClaude, script: viewScript, kwset: kwCritHtml }[tab] || viewSum;
   ui.later = false;
   /* 초점 돌려주기는 앱 화면(#view) 안 칸만 — 구석 Brainy 대화창(#bc-text)에 쓰는 중에 맥 자료가 와서 다시 그리면, 그 칸의 커서를 다시 놓다가 한글 조합이 끊겨 글이 깨졌다 (2026-11-18 동욱: "대화창을 쓰면 글이 깨진다") */
   var act0 = document.activeElement; if(act0 && !document.getElementById("view").contains(act0)) act0 = null;
@@ -533,6 +534,7 @@ document.addEventListener("change", function(e){
   }
 });
 function act(name, el){
+  if(claudeAct(name, el)) return;   // ⚙ Claude 모드 (content-claude.js)
   if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)
   if(baseAct(name, el)) return;   // 기준 키워드 · 영상 주제 · 지우기/되돌리기 · 찾는 나라 (content-basekw.js)
   var s = S();
