@@ -108,6 +108,8 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .step{display:inline-flex;align-items:center;gap:6px}
 .step button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
 .step b{min-width:26px;text-align:center;font-family:var(--f-mono)}
+.step .nbox{width:58px;height:36px;text-align:center;font:inherit;font-family:var(--f-mono);font-weight:600;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0 4px;-moz-appearance:textfield}.step .nbox::-webkit-inner-spin-button,.step .nbox::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.step button:disabled{opacity:.4;cursor:default}
 .row2{display:flex;gap:8px;align-items:center}.row2>input,.row2>select{flex:1;min-width:0}
 /* 한눈에 — 여섯 단계 상자 */
 .pfield{margin-top:12px}.pfield .pl{display:block;font-size:13px;font-weight:650;color:var(--muted);margin-bottom:3px}.pfield textarea{min-height:0}
@@ -176,14 +178,24 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .bd-idea b{font-size:14px;line-height:1.4}
 @media (max-width:1100px){.bd{grid-template-columns:minmax(0,1fr)}.bd-left,.bd-right{position:static;max-height:none}.bd-left{order:0}.bd-main{order:1}.bd-right{order:2}}
 @media (max-width:560px){.bd-kv{grid-template-columns:minmax(0,1fr)}.bd-kv dt{border-bottom:0;padding-bottom:2px}}
+/* 화면 폭이 아니라 앱이 실제로 쓰는 폭으로도 접는다 — 넓은 화면에서 Brainy 대화창을 열면 앱이 왼쪽으로 432px 비켜서는데, 구축은 세 칸 그대로라 가운데 문서가 200px 남짓으로 줄어 글이 한두 글자씩 쪼개졌다 (2026-11-18 동욱: "대화창을 쓰면 글이 깨진다, 특히 대본 › 구축") */
+#view{container-type:inline-size}
+@container (max-width:1060px){.bd{grid-template-columns:minmax(0,1fr)}.bd-left,.bd-right{position:static;max-height:none}.bd-left{order:0}.bd-main{order:1}.bd-right{order:2}}
+@container (max-width:600px){.bd-kv{grid-template-columns:minmax(0,1fr)}.bd-kv dt{border-bottom:0;padding-bottom:2px}.flow{grid-template-columns:repeat(3,1fr)}}
 /* 구축 PDF — 인쇄할 때는 가운데 문서만 */
-@media print{body{background:#fff;padding:0}header,.bd-bar,.bd-left,.bd-right,.run,[data-brainy],#brainy-dock{display:none!important}.bd{display:block}.wrap{max-width:none}.card{box-shadow:none;break-inside:avoid}.orig{overflow:visible}.bd-kv dt.bd-group{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media print{body{background:#fff;padding:0}header,.bd-bar,.bd-left,.bd-right,.run,.base-bar,.undo-toast,[data-brainy],#brainy-dock{display:none!important}.bd{display:block}.wrap{max-width:none}.card{box-shadow:none;break-inside:avoid}.orig{overflow:visible}.bd-kv dt.bd-group{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 /* 원문 칸 표 — 조사 시트 [조사] 콘텐츠 열과 같은 순서. 폰에서는 표만 옆으로 밀린다 */
 .orig{overflow-x:auto;margin-top:12px;border:1px solid var(--line);border-radius:12px}
 .orig table{border-collapse:collapse;min-width:1100px;font-size:13px;line-height:1.5}
 .orig th{position:sticky;top:0;background:var(--ink);color:#fff;font-weight:600;padding:8px 10px;text-align:left;white-space:nowrap}
 .orig td{border-top:1px solid var(--line);padding:10px;vertical-align:top;max-width:220px}
 .auto-card .card-h h3{font-size:18px}#kwrec .auto-card{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.auto-steps{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-wrap:wrap;gap:6px 14px}.auto-steps li{font-size:14px}.auto-steps .s-대기{opacity:.5}.auto-steps .s-실패 b{color:var(--warn,#c0392b)}
+/* 기준 키워드 · 영상 주제 · 지우기/되돌리기 (content-basekw.js) */
+.base-bar{border:1.5px solid var(--accent)}.chip.base-kw{display:inline-flex;align-items:center;gap:2px;cursor:default}.chip.base-kw .x0{color:inherit;opacity:.7;padding:0 0 0 6px;min-width:24px;min-height:24px}.chip.base-kw .x0:hover{opacity:1}
+details.gone{margin-top:12px}details.gone .it{padding:8px 0}
+.orig .o-top .mk+.mk{margin-left:2px}
+.undo-toast{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);background:var(--ink);color:#fff;border-radius:14px;padding:8px 10px 8px 16px;font-size:14px;box-shadow:0 10px 28px rgba(0,0,0,.25)}@media (min-width:1000px){html.bc-push .undo-toast{left:calc(50% - 216px)}}   /* 대화창이 열려 앱이 비켜서면 앱 가운데로 */
+.undo-toast span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.undo-toast .btn{flex:none}.undo-toast .x0{color:#fff;opacity:.7;padding:4px 6px}
 .prbar{margin:0 0 14px;background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:10px 14px}.prbar>summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center;gap:6px}.prbox .btn,.bd-idea .btn{min-height:44px}.prbox{margin-top:8px}.prbox-h{font-weight:600;margin-bottom:6px}.prbox textarea{width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);resize:vertical}.bd-idea .acts{margin-top:6px}
 .orig td.o-cmt{max-width:320px;min-width:240px}.orig td.o-basis{min-width:200px}.orig ol.cmts{margin:6px 0 0;padding-left:18px}.orig ol.cmts li{margin-bottom:8px;white-space:pre-wrap}
 .orig td img{width:150px;height:84px;object-fit:cover;border-radius:8px;display:block}
@@ -269,7 +281,7 @@ function part(name){ return RAW[cur + PARTS[name]] || null }
 function isLong(x){ return x.form !== "숏폼" }
 function isLongRec(x){ return !/^숏폼/.test(x.format || "") }
 function pickedIds(s){ var r = part("rec"), rd = r && r.rounds && r.rounds[r.rounds.length - 1];   // 최신 회차에서 고른 미드폼·롱폼 추천만
-  return rd ? rd.items.filter(function(x){ return isLongRec(x) && s.pick[x.id] }).map(function(x){ return x.id }) : [] }
+  return rd ? rd.items.filter(function(x){ return isLongRec(x) && s.pick[x.id] && !isGone("rec", x.id) }).map(function(x){ return x.id }) : [] }
 function S(){
   var b = B(), d = (b && b.defaults) || {}, s = SETS[cur] || {};
   var share = {}; ((b && b.products) || []).forEach(function(p){ share[p.name] = (s.share && s.share[p.name] != null) ? s.share[p.name] : p.share });
@@ -336,6 +348,7 @@ function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind &
 function send(kind, text, params){
   if(!DB || openCmd(kind)) return;
   var id = "c" + Date.now().toString(36), at = new Date().toISOString(), b = B();
+  if(BASE_KINDS[kind] && b){ params = Object.assign(baseParams(), params || {}); text += baseText() }   // 구축·참고 페이지·대본 일에는 기준 키워드 · 영상 주제를 같이 (content-basekw.js)
   var data = { text: "🎬 콘텐츠 기획 — " + (b ? b.name : (params && params.name) || "") + " " + text, from: "content", app: "content", kind: kind,
     brand: cur || "", params: params || {}, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
   CMDS.unshift(Object.assign({ id: id }, data));
@@ -375,6 +388,7 @@ function runHtml(kinds){
 /*@include content-prompt.js*/
 /*@include content-auto.js*/
 /*@include content-profile.js*/
+/*@include content-basekw.js*/
 
 /* ── 브랜드 탭 ── */
 function viewBrand(){
@@ -446,8 +460,10 @@ function render(){
   var sub = grp.subs.length > 1 ? "<div class=\"subnav\" role=\"tablist\">" + grp.subs.map(function(x){ return "<button role=\"tab\" class=\"" + (tab === x[0] ? "on" : "") + "\" data-tab=\"" + x[0] + "\">" + x[1] + "</button>" }).join("") + "</div>" : "";
   var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, script: viewScript, kwset: kwCritHtml }[tab] || viewSum;
   ui.later = false;
-  var act0 = document.activeElement, key = act0 && (act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
-  var v = function(){ return v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") };   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
+  /* 초점 돌려주기는 앱 화면(#view) 안 칸만 — 구석 Brainy 대화창(#bc-text)에 쓰는 중에 맥 자료가 와서 다시 그리면, 그 칸의 커서를 다시 놓다가 한글 조합이 끊겨 글이 깨졌다 (2026-11-18 동욱: "대화창을 쓰면 글이 깨진다") */
+  var act0 = document.activeElement; if(act0 && !document.getElementById("view").contains(act0)) act0 = null;
+  var key = act0 && (act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
+  var v = function(){ return ({ build: 1, refpage: 1, script: 1 }[tab] && B() ? baseBarHtml() : "") + v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") + undoToastHtml() };   // 대본 탭 세 칸 맨 위에 기준 키워드 · 영상 주제   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
   var selA = null, selB = null; try{ if(act0 && /^(INPUT|TEXTAREA)$/.test(act0.tagName)){ selA = act0.selectionStart; selB = act0.selectionEnd } }catch(e){}   // 커서 위치도 지킨다 (2026-11-18 검증: 다시 그리면 커서가 맨 앞으로 가서 이어 쓴 글이 앞에 붙음)
   document.getElementById("view").innerHTML = sub + runHtml(Object.keys(KIND)) + promptBarHtml() + v();   // ✍️ 탭마다 내 말로 끼어들기
   if(key){ var back = document.querySelector(key); if(back){ back.focus({ preventScroll: true }); try{ if(selA != null && back.setSelectionRange) back.setSelectionRange(selA, selB) }catch(e){} } }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
@@ -478,9 +494,14 @@ document.addEventListener("input", function(e){
   if(e.target.dataset.pfin != null){ ui.pdraft = Object.assign({}, ui.pdraft); ui.pdraft[e.target.dataset.pfin] = e.target.value }
   if(e.target.dataset.addseed != null){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
   if(e.target.dataset.wordin != null) ui.wDraft = e.target.value;
+  if(e.target.dataset.basekw != null) ui.baseDraft = e.target.value;   // 기준 키워드 넣기 칸
+  if(e.target.id === "base-topic") ui.topicDraft = e.target.value;   // 영상 주제 한 줄 — 저장 전 쓰던 글
   if(e.target.dataset.prin != null){ ui.prDraft = Object.assign({}, ui.prDraft); ui.prDraft[e.target.dataset.prin] = e.target.value }   // ✍️ 내 말로 끼어들기 — 쓰던 글 지키기   // 단어 후보 찾기 칸 — 다시 그려도 쓰던 글을 지킨다
 });
 function enterAct(t){   // Enter 로 넣기·저장 — 칸마다 할 일
+  if(t.id === "auto-n"){ t.blur(); return true }   // 편 수 — 칸에서 나가며 저장(change)
+  if(t.dataset.basekw != null){ act("basekwadd", t); return true }   // 기준 키워드 넣기
+  if(t.id === "base-topic"){ act("topicsave", t); return true }   // 영상 주제 한 줄 저장
   if(t.dataset.addseed != null){ act("seedadd", t); return true }
   if(t.dataset.wordin != null){ ui.wDraft = t.value; act("wordfind", t); return true }
   if(t.dataset.pfin != null && t.tagName === "INPUT"){ var pk = t.dataset.pfin;
@@ -503,6 +524,7 @@ document.addEventListener("keyup", function(e){
   var t = enterWait; enterWait = null; enterAct(t);
 });
 document.addEventListener("change", function(e){
+  if(e.target.id === "auto-n"){ var ao6 = autoOpt(); ao6.n = autoN(e.target.value); e.target.value = ao6.n; setS({ autoOpt: ao6 }) }   // 🚀 자동으로 — 편 수 직접 넣기 (1편 아래로는 1편)
   if(e.target.dataset.plan){ var pl = Object.assign({}, S().plan); if(e.target.value) pl[e.target.dataset.plan] = e.target.value; else delete pl[e.target.dataset.plan]; setS({ plan: pl }) }
   if(e.target.id === "nb-file" && e.target.files[0]){
     var f = e.target.files[0], rd = new FileReader();
@@ -512,6 +534,7 @@ document.addEventListener("change", function(e){
 });
 function act(name, el){
   if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)
+  if(baseAct(name, el)) return;   // 기준 키워드 · 영상 주제 · 지우기/되돌리기 · 찾는 나라 (content-basekw.js)
   var s = S();
   if(name === "buildpdf"){ window.print(); return }   // 구축 문서 PDF — 인쇄 창에서 「PDF로 저장」 (인쇄할 땐 가운데 문서만 남는다)
   if(name === "newbrand"){ ui.newBrand = !ui.newBrand; render(); return }
@@ -524,7 +547,7 @@ function act(name, el){
     { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
   if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }
   if(name === "wordfind"){ var wi = document.getElementById("word-in"), ww = ((wi && wi.value) || "").trim().slice(0, 20); if(!ww){ alert("찾을 단어를 적어 주세요."); if(wi) wi.focus(); return }
-    ui.wDraft = ww; ui.wRun = ww; ui.wMore = 20; setS({ wordReq: { at: new Date().toISOString(), word: ww, src: ui.wSrc || "both" } }); return }   // 단어 후보 찾기 — 맥이 네이버·구글 연관 검색어를 받는다
+    ui.wDraft = ww; ui.wRun = ww; ui.wMore = 20; setS({ wordReq: { at: new Date().toISOString(), word: ww, src: ui.wSrc || "both", country: kwCountry() } }); return }   // 단어 후보 찾기 — 맥이 네이버·구글 연관 검색어를 받는다
   if(name === "wordadd"){ var wk = el.dataset.key, wv = el.dataset.w.replace(/\s+/g, "").slice(0, 20), cur4 = seedsOf();   // 단어 후보를 씨앗 단어로
     if(cur4.some(function(x){ return x.word === wv })) return;
     var same = cur4.filter(function(x){ return wk === "정체성" ? x.kind === "정체성" : x.kind === "상품" && x.product === wk.slice(3) }).length;
@@ -578,11 +601,11 @@ function act(name, el){
     var vs = vids.map(function(v){ var x = srI.filter(function(y){ return y.vid === v })[0] || videoOf(v); return { vid: v, title: x.title, channel: x.channel, kw: x.kw, replayed: x.replayed } });
     if(!vs.length) return; send("ideas", "댓글·파동에서 아이디어 뽑기 — 영상 " + vs.length + "개", { videos: vs }); setS({ ideaPick: {} }); ui.refView = "ideas"; render(); return }
   if(name === "idearesearch" || name === "ideascript"){ var idea = (((part("ideas") || {}).items) || []).filter(function(x){ return x.id === el.dataset.id })[0]; if(!idea) return;
-    if(name === "idearesearch"){ if(searchState().busy) return; setS({ searchReq: { at: new Date().toISOString(), kws: (idea.keywords || []).slice(0, 3) } }); ui.refView = "search"; render(); return }
+    if(name === "idearesearch"){ if(searchState().busy) return; setS({ searchReq: { at: new Date().toISOString(), kws: (idea.keywords || []).slice(0, 3), country: kwCountry() } }); ui.refView = "search"; render(); return }
     send("script", "아이디어로 바로 원고 — " + (idea.title || idea.idea), { ideas: [idea] }); return }
   if(name === "stoggle"){ ui.sOff = Object.assign({}, ui.sOff); if(ui.sOff[el.dataset.kw]) delete ui.sOff[el.dataset.kw]; else ui.sOff[el.dataset.kw] = 1; render(); return }
   if(name === "search"){ var off = ui.sOff || {}, kws = scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] && !off[x.kw] }).map(function(x){ return x.kw }).slice(0, 10);
-    if(!kws.length || searchState().busy) return; setS({ searchReq: { at: new Date().toISOString(), kws: kws } }); return }
+    if(!kws.length || searchState().busy) return; setS({ searchReq: { at: new Date().toISOString(), kws: kws, country: kwCountry() } }); return }
   if(name === "favc"){ var fv = Object.assign({}, (SETS[cur] || {}).favc || {}), vid = el.dataset.vid;
     if(fv[vid]) delete fv[vid]; else fv[vid] = Object.assign(videoOf(vid), { at: new Date().toISOString() });
     setS({ favc: fv }); return }
@@ -604,7 +627,7 @@ function act(name, el){
     send("script", "대본 초안 — 구축 문서 " + bd.id + " " + bd.title, { ids: [bd.id], build: bd.id }); return }
   if(name === "cmtreq"){ setS({ cmtReq: { at: new Date().toISOString() } }); return }   // 추천 근거 영상 댓글 — 좋아요 순 5개
   if(name === "autostart"){ autoStart(); return }   // 🚀 자동 진행 — 키워드 → 추천 → 구축 → 대본 → 보고
-  if(name === "autoopt"){ var ao5 = autoOpt(); ao5[el.dataset.k] = el.dataset.k === "n" ? +el.dataset.v : el.dataset.v; setS({ autoOpt: ao5 }); return }
+  if(name === "autoopt"){ var ao5 = autoOpt(); ao5[el.dataset.k] = el.dataset.k === "n" ? autoN(el.dataset.v) : el.dataset.v; setS({ autoOpt: ao5 }); return }
   if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
   if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : pickedIds(s); if(!sids.length) return;

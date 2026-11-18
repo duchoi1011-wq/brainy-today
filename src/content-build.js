@@ -38,7 +38,7 @@ function buildDocHtml(doc){
     "<h2>" + esc(doc.id) + " · " + txt(doc.title) + "</h2>" + (doc.from ? "<p class=\"lead\">" + esc(doc.from) + "</p>" : "") +
     (tpl ? "<p class=\"lead\"><b>틀: " + esc(doc.role) + "</b> — " + esc(tpl) + "</p>" : "") +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"buildscript\" data-id=\"" + esc(doc.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">" + (openCmd("script") ? "맥이 대본 쓰는 중…" : sc ? "📝 이 문서로 대본 다시 만들기" : "📝 이 문서로 대본 만들기") + "</button>" +
-    (sc ? "<button class=\"btn\" data-tab=\"script\">대본 보기 →</button>" : "") + "</div>" +
+    (sc ? "<button class=\"btn\" data-tab=\"script\">대본 보기 →</button>" : "") + delBtn("build", doc.id, doc.id + " " + doc.title, "btn sm") + "</div>" +
     "<details class=\"prbar\"" + (prDraft("build:" + doc.id) ? " open" : "") + "><summary>✍️ 이 문서 고치기 · 다른 버전 만들기</summary>" + promptBoxHtml("build:" + doc.id, "무엇을 고칠까요?", "예: 도입부를 시청자가 겪는 장면으로 시작하게 다시 쓰고, 썸네일 문구 후보 3개 더 줘") + "</details></div>";
   if(ui.bdView === "sheet"){
     return head + "<div class=\"orig bd-sheet\"><table><thead><tr><th>구분</th><th>칸</th><th>내용</th></tr></thead><tbody>" +
@@ -69,24 +69,24 @@ function buildListHtml(docs, sel){
   }).join("") || "<p class=\"empty\">아직 구축 문서가 없어요.</p>";
 }
 function buildIdeasHtml(){
-  var b = part("build"), ideas = (b && b.ideas) || [];
+  var b = part("build"), all = (b && b.ideas) || [], ideas = all.filter(function(x){ return !isGone("idea", x.id) });
   return "<h3>다시 착안한 추천</h3><p class=\"lead\">" + esc((b && b.ideasNote) || "레퍼런스 댓글·파동에서 다시 뽑은 주제예요.") + "</p>" +
     (ideas.map(function(x){
       return "<div class=\"bd-idea\"><div><span class=\"tag fill\">" + esc(roleKo(x.role)) + "</span> " + stageTag(x) + (x.product ? " <span class=\"tag p\">" + esc(x.product) + "</span>" : "") + " <span class=\"tag\">" + esc(x.from || "") + "</span></div>" +
         "<b>" + txt(x.title) + "</b><div class=\"it-d\">" + esc(x.basis || "") + "</div>" +
         ((x.refs || []).length ? "<details><summary>근거 레퍼런스 " + x.refs.length + "개</summary>" + x.refs.map(buildRefCell).join("") + "</details>" : "") +
         "<div class=\"acts\"><button class=\"btn sm primary\" data-act=\"buildidea\" data-id=\"" + esc(x.id) + "\"" + (openCmd("build") ? " disabled" : "") + ">" + (openCmd("build") ? "맥이 만드는 중…" : "이걸로 구축 문서 만들기") + "</button>" +
-        "<button class=\"btn sm\" data-act=\"ideascript\" data-id=\"" + esc(x.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">바로 대본</button></div></div>";
-    }).join("") || "<p class=\"empty\">아직 없어요.</p>");
+        "<button class=\"btn sm\" data-act=\"ideascript\" data-id=\"" + esc(x.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">바로 대본</button>" + delBtn("idea", x.id, x.title, "btn sm") + "</div></div>";
+    }).join("") || "<p class=\"empty\">아직 없어요.</p>") + goneListHtml("idea", all, function(x){ return x.id }, function(x){ return x.title });
 }
 function viewBuild(){
   var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
-  var docs = buildDocs(), sel = docs.filter(function(d){ return d.id === ui.bdDoc })[0] || docs[0];
+  var all = buildDocs(), docs = all.filter(function(d){ return !isGone("build", d.id) }), sel = docs.filter(function(d){ return d.id === ui.bdDoc })[0] || docs[0];   // 🗑 로 지운 문서는 빼고 — 왼쪽 목록 끝 「지운 것」에서 되돌리기
   var bar = "<div class=\"bd-bar\"><div class=\"chips\"><button class=\"chip" + (ui.bdView !== "sheet" ? " on" : "") + "\" data-ui=\"bdView=cards\">세로</button>" +
     "<button class=\"chip" + (ui.bdView === "sheet" ? " on" : "") + "\" data-ui=\"bdView=sheet\">시트</button></div>" +
     "<button class=\"btn sm\" data-act=\"buildpdf\"" + (sel ? "" : " disabled") + ">PDF로 보기</button>" +
     "<span class=\"lead\" style=\"margin:0\">원문 [구축 - 콘텐츠] 칸 그대로예요. 문서는 맥의 Claude(추천 스킬)가 채워요.</span></div>";
-  return bar + "<div class=\"bd\"><aside class=\"bd-left\"><h3>영상이 이어지는 순서</h3><p class=\"lead\">" + esc((buildDef().funnel || []).join(" → ")) + "</p>" + buildListHtml(docs, sel && sel.id) + "</aside>" +
+  return bar + "<div class=\"bd\"><aside class=\"bd-left\"><h3>영상이 이어지는 순서</h3><p class=\"lead\">" + esc((buildDef().funnel || []).join(" → ")) + "</p>" + buildListHtml(docs, sel && sel.id) + goneListHtml("build", all, function(d){ return d.id }, function(d){ return d.id + " · " + d.title }) + "</aside>" +
     "<div class=\"bd-main\" id=\"bd-print\">" + (sel ? buildDocHtml(sel) : "<p class=\"empty\">왼쪽에서 문서를 고르세요.</p>") + "</div>" +
     "<aside class=\"bd-right\">" + buildIdeasHtml() + "</aside></div>";
 }

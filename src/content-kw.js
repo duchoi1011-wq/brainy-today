@@ -92,7 +92,7 @@ function seedsHtml(){
   var sd = seedsOf(), s = S(), src = SEED_SRC.filter(function(o){ return o[0] === seedSrc() })[0];
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>씨앗 단어</h3><button class=\"chip\" data-go=\"brand\">단어 고치기 →</button></div>" +
     "<details class=\"help\"><summary>씨앗 단어가 뭔가요?</summary><p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 " + esc(src ? src[1] : "") + (seedSrc() === "both" ? "(네이버 + 구글)" : "") + "에서 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요.</p></details>" +
-    (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + "</section>" + kwRecBarHtml();
+    (sd.length ? "" : "<p class=\"note\">아직 씨앗 단어가 없어요. 브랜드 탭에서 넣으세요.</p>") + seedPendingHtml() + kwCountryHtml() + "</section>" + kwRecBarHtml();   // 찾는 나라 (content-basekw.js)
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
   if(pickW){
     var all0 = seedItems(pickW), tab0 = ui.sTab || "naver", more = ui.seedMore || 15;
