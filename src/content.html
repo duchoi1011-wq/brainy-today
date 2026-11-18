@@ -46,7 +46,7 @@ nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;c
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:calc(100vw - 32px);transition:.2s;z-index:50}#toast.on{opacity:1;transform:translate(-50%,0)}
 html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 폭이 15px 바뀌던 것 */
 details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:600}
-.pastbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF4D6;color:#5a4300;border:1px solid #F0D27A;font-size:14px}.pastbar .mk{width:34px;height:34px}
+.pastbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF4D6;color:#5a4300;border:1px solid #F0D27A;font-size:14px}.pastbar .mk{width:34px;height:34px}
 .hday{margin:12px 0 2px;font-size:13px;font-weight:700;color:var(--muted)}.list .it.on{outline:2px solid var(--accent);outline-offset:-2px}
 .mk.imp[aria-pressed=true]{background:#6B4FD8;border-color:#6B4FD8;color:#fff}
 .runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
@@ -86,7 +86,7 @@ input[type=date]{font:inherit;font-size:13px;color:var(--ink);background:var(--s
 .btn.sm{padding:6px 11px;font-size:13px}
 .btn:disabled{opacity:.5;cursor:default}
 .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
-input[type=text],textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+input[type=text],input[type=search],textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
 textarea{min-height:150px;resize:vertical;line-height:1.5}
 /* 표시 딱지 — 종류(상품·정체성)·역할(풀링·키)·단계·판정 */
 .tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;vertical-align:1px}
@@ -327,9 +327,10 @@ function ladderHtml(items, cell){
   }).join("") + (items.some(function(x){ return !x.stage }) ? "<p class=\"lead\">단계가 안 붙은 " + items.filter(function(x){ return !x.stage }).length + "개는 사다리에서 빠졌어요.</p>" : "") + "</div>";
 }
 function setS(patch){
+  if(pastOn() && Object.keys(patch).some(function(k){ return /Req$/.test(k) })){ toast("옛 기록을 보는 중이라 맥에 일을 보내지 않아요 — 맨 위 「지금 자료로 돌아가기」 뒤에 눌러 주세요"); return }   // 🕘 그때 결과로 일을 돌리면 지금 자료와 섞인다
   var s = Object.assign({}, SETS[cur] || {}, patch, { updatedAt: new Date().toISOString() });
   SETS[cur] = s;
-  s.cand = candidates(S()).map(function(k){ return { kw: k.kw, score: k.score } });   // 그때 조사 후보 — 맥이 설정.json 으로 받아 기록 PDF 에 쓴다
+  if(!pastOn()) s.cand = candidates(S()).map(function(k){ return { kw: k.kw, score: k.score } });   // 그때 조사 후보 — 맥이 설정.json 으로 받아 기록 PDF 에 쓴다 (옛 기록을 보는 중엔 옛 자료로 다시 세지 않고 그대로 — 2026-11-18 검증)
   if(SETS_LIVE) saveSet(cur); else SET_Q[cur] = Object.assign(SET_Q[cur] || {}, patch);   // 서버 값을 받기 전(이 기기에 남은 옛 사본)이면 바꾼 칸만 모아 뒀다가 받은 뒤에 얹는다
   render();
 }
@@ -358,6 +359,7 @@ function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status |
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
 function send(kind, text, params){
   if(!DB || openCmd(kind)) return;
+  if(pastOn()){ toast("옛 기록을 보는 중이라 맥에 일을 보내지 않아요 — 맨 위 「지금 자료로 돌아가기」 뒤에 눌러 주세요"); return }
   var id = "c" + Date.now().toString(36), at = new Date().toISOString(), b = B();
   if(BASE_KINDS[kind] && b){ params = Object.assign(baseParams(), params || {}); text += baseText() }   // 구축·참고 페이지·대본 일에는 기준 키워드 · 영상 주제를 같이 (content-basekw.js)
   var data = { text: "🎬 콘텐츠 기획 — " + (b ? b.name : (params && params.name) || "") + " " + text, from: "content", app: "content", kind: kind,

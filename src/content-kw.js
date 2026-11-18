@@ -24,6 +24,7 @@ function seedItems(word, far){
 }
 function seedRun(word){ var k = part("kw"); return ((k && k.seeds) || []).filter(function(x){ return x.word === word })[0] || null }
 function seedsPending(){   // 맥이 아직 안 받은 씨앗이 있거나 받는 곳이 바뀌었을 때만 — 씨앗을 빼기만 한 것은 다시 받지 않는다 (2026-11-18 검증: 뺀 뒤 「받는 중」이 안 사라지던 것)
+  if(pastPart("kw")) return false;   // 🕘 옛 키워드 기록을 보는 중 — 지금 씨앗과 견주지 않는다
   var k = part("kw"), have = ((k && k.seeds) || []).map(function(x){ return x.word });
   return seedsOf().some(function(x){ return have.indexOf(x.word) < 0 }) || (!!k && (k.seedSrc || "naver") !== seedSrc());
 }

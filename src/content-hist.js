@@ -9,12 +9,15 @@
 var HIST_GROUPS = [["all", "전체"], ["kw", "키워드", ["kw", "trend", "wordcand", "kwrec"]], ["ct", "콘텐츠", ["search", "analysis", "cmts", "ref", "chancand"]],
   ["rec", "추천", ["rec"]], ["sc", "대본", ["build", "source", "script"]], ["imp", "🔖 한 것"]];
 var HIST_TAB = { kw: "kwall", trend: "kw", wordcand: "brand", kwrec: "kw", search: "ref", analysis: "ref", cmts: "rec", ref: "ref", chancand: "refpage", rec: "rec", build: "build", source: "script", script: "script" };   // 그 기록을 어느 탭에서 보나
+var IMP_GO = { kw: "kwall", rec: "rec", script: "script" };   // 지금 자료에서 모은 것 — 그 탭으로
 var IMP_KINDS = [["run", "돌린 기록"], ["kw", "키워드"], ["vid", "영상"], ["rec", "추천"], ["script", "대본"]];
+var HIST_VIEW = { search: "refView=search", analysis: "refView=search", ref: "refView=videos" };   // 같은 탭 안 그 결과가 있는 칸까지 (2026-11-18 검증: 콘텐츠 검색을 열면 빈 「레퍼런스 영상」 칸이 떴다)
 var PAST = null;   // {brand, id, part, label, at, data} — 과거 기록을 보는 중
 var HCACHE = {};
 
 function hAt(at){ var d = new Date(at); return isNaN(d) ? String(at || "") : (d.getMonth() + 1) + "/" + d.getDate() + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) }
 function histItems(){ var h = part("hist"); return (h && h.items) || [] }
+function pastOn(){ return !!(PAST && PAST.brand === cur) }
 function pastPart(name){ return PAST && PAST.brand === cur && PAST.part === name ? PAST.data : null }
 function impList(){ return (SETS[cur] || {}).imp || [] }
 function impOf(kind, key){ return impList().filter(function(x){ return x.kind === kind && x.key === key })[0] }
@@ -35,7 +38,7 @@ function impToggle(el){
 function histOpen(id){
   var x = histItems().filter(function(y){ return y.id === id })[0];
   if(!x){ toast("그 기록이 목록에 없어요"); return }
-  function show(data){ PAST = { brand: cur, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab); window.scrollTo(0, 0); render() }
+  function show(data){ PAST = { brand: cur, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab); if(HIST_VIEW[x.part]){ var kv = HIST_VIEW[x.part].split("="); ui[kv[0]] = kv[1] } window.scrollTo(0, 0); render() }
   if(HCACHE[cur + "." + id]) return show(HCACHE[cur + "." + id]);
   if(!x.cloud && !impOf("run", id)){ toast("오래된 기록이라 볼트에만 있어요 — 🔖 하면 맥이 30초 안에 다시 올려요"); return }
   if(!window.BRAINY || !BRAINY.fetch){ toast("이 화면에서는 기록을 받을 수 없어요"); return }
@@ -92,7 +95,8 @@ function viewImp(){
     h += "<h4>" + esc(k[1]) + " <span class=\"num muted\">" + items.length + "</span></h4><div class=\"list\">" + items.map(function(x){
       var open = x.kind === "run" ? "<button class=\"btn sm\" data-act=\"histopen\" data-id=\"" + esc(x.key) + "\">열어 보기</button>"
         : x.from ? "<button class=\"btn sm\" data-act=\"histopen\" data-id=\"" + esc(x.from.id) + "\" title=\"이 항목을 모은 그때 기록\">그때 기록</button>"
-        : x.url ? "<a class=\"btn sm\" href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\">열기</a>" : "";
+        : x.url ? "<a class=\"btn sm\" href=\"" + esc(x.url) + "\" target=\"_blank\" rel=\"noopener\">열기</a>"
+        : IMP_GO[x.kind] ? "<button class=\"btn sm\" data-go=\"" + IMP_GO[x.kind] + "\">그 탭으로</button>" : "";
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.label) + "</b>" + (x.sub ? " <span class=\"muted\">" + esc(x.sub) + "</span>" : "") + "</div>" +
         "<div class=\"it-d\">🔖 " + esc(hAt(x.at)) + (x.from ? " · " + esc(hAt(x.from.at)) + " 「" + esc(x.from.label) + "」 기록에서" : "") + "</div>" +
         (x.memo ? "<div class=\"it-d\">✎ " + esc(x.memo) + "</div>" : "") + "</div>" +
