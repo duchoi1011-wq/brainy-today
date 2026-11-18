@@ -64,8 +64,9 @@ function designAct(name, el){
   if(name === "dsreset"){ var st = dsStage(v), p = {}; st.keys.forEach(function(k){ p[k] = null }); if(confirm("「" + st.name + "」을 기본값으로 되돌릴까요?")) setS(p); return true }
   if(name === "dsresetall"){ var p2 = {}; DS_KEYS.forEach(function(k){ p2[k] = null }); if(confirm(B().name + "의 설계를 전부 기본값으로 되돌릴까요?")) setS(p2); return true }
   if(name === "dsask"){ var inp = document.getElementById("ds-ask"), q = ((inp && inp.value) || "").trim(); if(!q){ if(inp) inp.focus(); return true }
-    ui.dsDraft = ""; if(window.BRAINY_CHAT) window.BRAINY_CHAT.ask("[설계] " + q);   // 어떻게 바꿀지는 대화 규칙(content-brainy.js rules)에 — 동욱 말만 보이게 else alert("Brainy 대화를 열 수 없어요 — 로그인을 확인해 주세요."); render(); return true }
-  if(name === "tplsave"){ var ni = document.getElementById("tpl-name"), nm = ((ni && ni.value) || ui.tplDraft || "").trim();   // Enter(한글 조합 끝)로 눌러도 쓰던 이름으로 if(!nm){ alert("템플릿 이름을 적어 주세요."); if(ni) ni.focus(); return true }
+    ui.dsDraft = ""; if(window.BRAINY_CHAT) window.BRAINY_CHAT.ask("[설계] " + q); else alert("Brainy 대화를 열 수 없어요 — 로그인을 확인해 주세요."); render(); return true }   // 「[설계] …」를 어떻게 바꿀지는 대화 규칙(content-brainy.js rules)에 — 대화창엔 동욱 말만 보이게
+  /* 템플릿 저장 — Enter(한글 조합 끝)로 눌러도 쓰던 이름(ui.tplDraft)으로 */
+  if(name === "tplsave"){ var ni = document.getElementById("tpl-name"), nm = ((ni && ni.value) || ui.tplDraft || "").trim(); if(!nm){ alert("템플릿 이름을 적어 주세요."); if(ni) ni.focus(); return true }
     var c = SETS[cur] || {}, vals = {}; DS_KEYS.forEach(function(k){ if(c[k] != null) vals[k] = JSON.parse(JSON.stringify(c[k])) });
     var list = tplList().filter(function(t){ return t.name !== nm }); list.unshift({ id: "t" + Date.now().toString(36), name: nm, from: B().name, at: new Date().toISOString(), values: vals });
     ui.tplDraft = ""; tplSave(list); toast("「" + nm + "」 템플릿을 저장했어요"); return true }
