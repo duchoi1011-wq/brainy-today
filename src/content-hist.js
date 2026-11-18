@@ -11,6 +11,16 @@ var HIST_GROUPS = [["all", "전체"], ["kw", "키워드", ["kw", "trend", "wordc
 var HIST_TAB = { kw: "kwall", trend: "kw", wordcand: "brand", kwrec: "kw", search: "ref", analysis: "ref", cmts: "rec", ref: "ref", chancand: "refpage", rec: "rec", build: "build", source: "script", script: "script" };   // 그 기록을 어느 탭에서 보나
 var IMP_GO = { kw: "kwall", rec: "rec", script: "script" };   // 지금 자료에서 모은 것 — 그 탭으로
 var IMP_KINDS = [["run", "돌린 기록"], ["kw", "키워드"], ["vid", "영상"], ["rec", "추천"], ["script", "대본"]];
+/* 단계 탭마다 칸 줄 오른쪽 🕘 고르기 — 그 탭의 결과 기록만, 고르면 그 자리에서 그때 결과로 (2026-11-18 동욱: 맥 단축키 강의 고르기처럼 "각 키워드 콘텐츠에서 기록을 체크하면 그 기록대로 볼 수 있는 거라고") */
+var TAB_HIST = { brand: ["wordcand"], kw: ["kw", "trend", "kwrec"], kwall: ["kw", "trend", "kwrec"], ref: ["search", "analysis", "ref"], rec: ["rec", "cmts"], build: ["build"], refpage: ["chancand"], script: ["script", "source"] };
+function histPickHtml(){
+  var parts = TAB_HIST[tab]; if(!parts || !B()) return "";
+  var list = histItems().filter(function(x){ return parts.indexOf(x.part) >= 0 }); if(!list.length) return "";
+  var sel = PAST && PAST.brand === cur ? PAST.id : "";
+  return "<select class=\"hsel" + (sel ? " on" : "") + "\" id=\"hsel\" aria-label=\"이 탭 결과 기록 고르기\" title=\"지난번에 돌린 결과로 보기\"><option value=\"\">🕘 지금 자료</option>" +
+    list.map(function(x){ var off = !x.cloud && !impOf("run", x.id);
+      return "<option value=\"" + esc(x.id) + "\"" + (x.id === sel ? " selected" : "") + (off ? " disabled" : "") + ">" + (x.id === sel ? "✓ " : "") + (impOf("run", x.id) ? "🔖 " : "") + esc(hAt(x.at) + " · " + x.label + (x.sum ? " · " + x.sum : "")) + (off ? " (볼트에만)" : "") + "</option>" }).join("") + "</select>";
+}
 var HIST_VIEW = { search: "refView=search", analysis: "refView=search", ref: "refView=videos" };   // 같은 탭 안 그 결과가 있는 칸까지 (2026-11-18 검증: 콘텐츠 검색을 열면 빈 「레퍼런스 영상」 칸이 떴다)
 var HIST_SPOT = { cmts: ".o-cmt", wordcand: "#word-find" };   // 탭 안에서 그 결과가 있는 자리로 내려 준다 (2026-11-18 검증: 댓글·단어 후보는 두 화면 아래)
 var PAST = null;
@@ -26,21 +36,21 @@ function impOf(kind, key){ return impList().filter(function(x){ return x.kind ==
 /* 🔖 버튼 — 어느 목록에 붙여도 같은 모양 */
 function impBtn(kind, key, label, sub, url){
   var on = !!impOf(kind, key);
-  return "<button class=\"mk imp\" data-act=\"imp\" data-kind=\"" + kind + "\" data-key=\"" + esc(key) + "\" data-label=\"" + esc(label || key) + "\" data-sub=\"" + esc(sub || "") + "\" data-url=\"" + esc(url || "") + "\" aria-pressed=\"" + on + "\" title=\"" + (on ? "🔖 중요에서 빼기" : "🔖 중요에 모아 두기 — 기록 탭에서 언제든 다시 봄") + "\" aria-label=\"중요\">🔖</button>";
+  return "<button class=\"mk imp\" data-act=\"imp\" data-kind=\"" + kind + "\" data-key=\"" + esc(key) + "\" data-label=\"" + esc(label || key) + "\" data-sub=\"" + esc(sub || "") + "\" data-url=\"" + esc(url || "") + "\" aria-pressed=\"" + on + "\" title=\"" + (on ? "🔖 중요에서 빼기" : "🔖 중요에 모아 두기 — 설계 › 🔖 중요에서 언제든 다시 봄") + "\" aria-label=\"중요\">🔖</button>";
 }
 function impToggle(el){
   var d = el.dataset, list = impList().slice(), i = -1;
   list.forEach(function(x, j){ if(x.kind === d.kind && x.key === d.key) i = j });
   if(i >= 0){ list.splice(i, 1); toast("🔖 중요에서 뺐어요") }
   else { list.unshift({ kind: d.kind, key: d.key, label: d.label, sub: d.sub || "", url: d.url || "", at: new Date().toISOString(),
-    from: PAST && PAST.brand === cur ? { id: PAST.id, at: PAST.at, label: PAST.label } : null }); toast("🔖 중요에 모았어요 — 「기록 › 🔖 중요」에서 봐요") }
+    from: PAST && PAST.brand === cur ? { id: PAST.id, at: PAST.at, label: PAST.label } : null }); toast("🔖 중요에 모았어요 — 「설계 › 🔖 중요」에서 봐요") }
   setS({ imp: list });
 }
 /* 과거 기록 열기 — 본문을 받아 그 단계 탭을 그때 결과로 */
-function histOpen(id){
+function histOpen(id, stay){
   var x = histItems().filter(function(y){ return y.id === id })[0];
   if(!x){ toast("그 기록이 목록에 없어요"); return }
-  function show(data){ PAST = { brand: cur, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab); if(HIST_VIEW[x.part]){ var kv = HIST_VIEW[x.part].split("="); ui[kv[0]] = kv[1] }
+  function show(data){ PAST = { brand: cur, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; if(!stay){ tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab) } if(HIST_VIEW[x.part]){ var kv = HIST_VIEW[x.part].split("="); ui[kv[0]] = kv[1] }
     window.scrollTo(0, 0); render();
     var spot = HIST_SPOT[x.part], el = spot && document.querySelector(spot); if(!el) return;
     var hd = document.querySelector("header"), top = (hd ? hd.getBoundingClientRect().bottom : 0) + 12;   // 위에 붙는 머리 칸만큼 비켜서
@@ -56,7 +66,7 @@ function histOpen(id){
     HCACHE[cur + "." + id] = data; show(data);
   }, function(){ ui.histLoading = null; toast("기록을 못 받았어요 — 인터넷을 확인하세요"); render() });
 }
-function histClose(){ var back = PAST ? "hist" : tab; PAST = null; tab = back; save("ct.tab", tab); window.scrollTo(0, 0); render() }
+function histClose(){ PAST = null; window.scrollTo(0, 0); render() }   // 보던 탭 그대로 지금 자료로 (2026-11-18 검증: 기록 탭으로 튀었다)
 /* 과거 기록을 보는 동안 모든 탭 맨 위에 붙는 띠 + 내려도 보이는 왼쪽 아래 작은 표 (2026-11-18 검증: 띠만으론 내리면 지금 자료로 착각) */
 function pastBarHtml(){
   if(!PAST || PAST.brand !== cur) return "";
@@ -72,7 +82,7 @@ function viewHist(){
   var latest = {}; all.forEach(function(x){ if(!latest[x.part] || x.at > latest[x.part]) latest[x.part] = x.at });
   var more = ui.histMore || 30;
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>🕘 돌린 기록</h3><span class=\"n\">" + all.length + "개</span></div>" +
-    "<p class=\"lead\">키워드 받기 · 콘텐츠 검색 · 영상 분석 · 추천 · 대본을 돌릴 때마다 맥이 그 결과를 하나씩 남겨요. 「열어 보기」를 누르면 그 단계 탭이 그때 결과로 보이고, 맨 위 띠의 「지금 자료로 돌아가기」로 돌아와요. 🔖 하면 「🔖 중요」에 모여요.</p>" +
+    "<p class=\"lead\">키워드 받기 · 콘텐츠 검색 · 영상 분석 · 추천 · 대본을 돌릴 때마다 맥이 그 결과를 하나씩 남겨요. 키워드 · 콘텐츠 · 추천 · 대본 탭에서는 칸 이름 줄 오른쪽 「🕘 지금 자료」를 눌러 그 탭 기록을 바로 고를 수 있고, 여기서는 모든 단계 기록을 한꺼번에 봐요. 「열어 보기」를 누르면 그 단계 탭이 그때 결과로 보이고, 「지금 자료로 돌아가기」로 돌아와요. 🔖 하면 「🔖 중요」에 모여요.</p>" +
     "<div class=\"chips\">" + HIST_GROUPS.map(function(x){ var n = x[0] === "all" ? all.length : x[0] === "imp" ? all.filter(function(y){ return impOf("run", y.id) }).length : all.filter(function(y){ return x[2].indexOf(y.part) >= 0 }).length;
       return "<button class=\"chip" + (x[0] === g ? " on" : "") + "\" data-ui=\"histG=" + x[0] + "\">" + x[1] + " <span>" + n + "</span></button>" }).join("") + "</div>";
   if(!all.length) return h + "<p class=\"empty\">아직 기록이 없어요. 맥 동기화가 켜져 있으면 처음 한 번 지난 하루 사본으로 채우고, 그다음부터는 돌릴 때마다 남아요.</p></section>";

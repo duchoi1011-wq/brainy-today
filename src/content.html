@@ -48,6 +48,7 @@ html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 �
 details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:600}
 .pastbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF4D6;color:#5a4300;border:1px solid #F0D27A;font-size:14px}.pastbar .mk{width:44px;height:44px}
 .pastpill{position:fixed;z-index:30;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 140px);min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #F0D27A;background:#FFF4D6;color:#5a4300;font:inherit;font-size:13px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.15);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsel{margin-left:auto;flex:none;width:auto;max-width:240px;padding:7px 10px;border-radius:999px;font-size:14px;font-weight:600}.hsel.on{background:#FFF4D6;border-color:#F0D27A;color:#5a4300}@media (max-width:560px){.hsel{max-width:132px;font-size:16px}}
 .hday{margin:12px 0 2px;font-size:13px;font-weight:700;color:var(--muted)}.list .it.on{outline:2px solid var(--accent);outline-offset:-2px}
 .mk.imp[aria-pressed=true]{background:#6B4FD8;border-color:#6B4FD8;color:#fff}
 .runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
@@ -256,8 +257,7 @@ var TABS = [
   { name: "키워드", subs: [["kw", "씨앗별 검색어"], ["kwall", "전체 키워드"]] },
   { name: "콘텐츠", subs: [["ref", "콘텐츠"], ["rec", "추천"]] },
   { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] },
-  { name: "설계", subs: [["design", "단계별 기준"], ["tpl", "템플릿"], ["claude", "Claude 모드"]] },
-  { name: "기록", subs: [["hist", "🕘 돌린 기록"], ["imp", "🔖 중요"]] }   // 지난 결과 다시 보기 · 기간 상관없이 중요한 것 (content-hist.js)
+  { name: "설계", subs: [["design", "단계별 기준"], ["tpl", "템플릿"], ["claude", "Claude 모드"], ["hist", "🕘 돌린 기록"], ["imp", "🔖 중요"]] }   // 기록 모아 보기 · 🔖 중요도 설정 쪽에 (2026-11-18 동욱 "앱의 설정 같은 데서") — 단계 탭에서는 칸 줄 오른쪽 🕘 고르기로 바로 (content-hist.js)
 ];
 function tabGroup(id){ return TABS.filter(function(g){ return g.subs.some(function(x){ return x[0] === id }) })[0] || TABS[0] }
 var PARTS = { cmts: ".cmts", kwrec: ".kwrec", wordrec: ".wordrec", auto: ".auto", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log", hist: ".hist" };
@@ -487,7 +487,7 @@ function render(){
   var grp = tabGroup(tab), last = load("ct.sub", {}); last[grp.name] = tab; save("ct.sub", last);
   document.getElementById("nav").innerHTML = TABS.map(function(g, i){ var to = last[g.name] && g.subs.some(function(x){ return x[0] === last[g.name] }) ? last[g.name] : g.subs[0][0];
     return "<button role=\"tab\" class=\"" + (g === grp ? "on" : "") + "\" data-tab=\"" + to + "\"><span>" + (i + 1) + "</span>" + g.name + "</button>" }).join("");
-  var sub = grp.subs.length > 1 ? "<div class=\"subnav\" role=\"tablist\">" + grp.subs.map(function(x){ return "<button role=\"tab\" class=\"" + (tab === x[0] ? "on" : "") + "\" data-tab=\"" + x[0] + "\">" + x[1] + "</button>" }).join("") + "</div>" : "";
+  var sub = grp.subs.length > 1 ? "<div class=\"subnav\" role=\"tablist\">" + grp.subs.map(function(x){ return "<button role=\"tab\" class=\"" + (tab === x[0] ? "on" : "") + "\" data-tab=\"" + x[0] + "\">" + x[1] + "</button>" }).join("") + histPickHtml() + "</div>" : histPickHtml() ? "<div class=\"subnav\">" + histPickHtml() + "</div>" : "";
   var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, kwall: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, claude: viewClaude, script: viewScript, design: viewDesign, tpl: viewTpl, hist: viewHist, imp: viewImp }[tab] || viewSum;
   ui.later = false;
   /* 초점 돌려주기는 앱 화면(#view) 안 칸만 — 구석 Brainy 대화창(#bc-text)에 쓰는 중에 맥 자료가 와서 다시 그리면, 그 칸의 커서를 다시 놓다가 한글 조합이 끊겨 글이 깨졌다 (2026-11-18 동욱: "대화창을 쓰면 글이 깨진다") */
@@ -561,6 +561,7 @@ document.addEventListener("keyup", function(e){
   var t = enterWait; enterWait = null; enterAct(t);
 });
 document.addEventListener("change", function(e){
+  if(e.target.id === "hsel"){ if(e.target.value) histOpen(e.target.value, true); else histClose(); return }   // 🕘 이 탭 결과 기록 고르기
   if(e.target.id === "auto-n"){ var ao6 = autoOpt(); ao6.n = autoN(e.target.value); e.target.value = ao6.n; setS({ autoOpt: ao6 }) }   // 🚀 자동으로 — 편 수 직접 넣기 (1편 아래로는 1편)
   if(e.target.dataset.plan){ var pl = Object.assign({}, S().plan); if(e.target.value) pl[e.target.dataset.plan] = e.target.value; else delete pl[e.target.dataset.plan]; setS({ plan: pl }) }
   if(e.target.id === "nb-file" && e.target.files[0]){
