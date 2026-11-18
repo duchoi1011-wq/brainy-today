@@ -81,7 +81,7 @@ function orderText(rd){
 }
 function topicCell(x, s){
   var sc = scriptOf(x.id);
-  return "<div class=\"o-top\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button></div>" +
+  return "<div class=\"o-top\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button>" + delBtn("rec", x.id, recNo(x.id) + " " + x.title) + "</div>" +
     (function(f){ return "<div class=\"small\" style=\"margin:2px 0 4px\"><span class=\"tag" + (f.k === "fav" ? " ok" : "") + "\">" + esc(f.t) + "</span>" + (f.ref ? " <span class=\"muted\">「" + esc(f.ref) + "」</span>" : "") + "</div>" })(recFrom(x)) +
     "<b>" + ([x.product, x.format].filter(Boolean).length ? "[" + [x.product, x.format].filter(Boolean).map(esc).join(" · ") + "] " : "") + txt(x.title) + "</b>" +
     (x.structure ? "<div class=\"apply\">" + txt(x.structure) + "</div>" : "") +
@@ -108,7 +108,7 @@ function viewRec(){
   var b = B(), r = part("rec"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var s = S(), h = "";
   if(!r || !r.rounds || !r.rounds.length) return recCritHtml(null) + "<section class=\"card\"><p class=\"empty\">아직 추천이 없어요. 위 기준을 고른 뒤 「추천 받기」를 누르세요.</p></section>";
-  var rd0 = r.rounds[r.rounds.length - 1], rd = Object.assign({}, rd0, { items: rd0.items.filter(isLongRec) }), nShort = rd0.items.length - rd.items.length, picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
+  var rd0 = r.rounds[r.rounds.length - 1], rdAll = rd0.items.filter(isLongRec), rd = Object.assign({}, rd0, { items: rdAll.filter(function(x){ return !isGone("rec", x.id) }) }), nShort = rd0.items.length - rdAll.length, picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
   var need = picked.filter(function(id){ return !scriptOf(id) });
   h += recCritHtml(rd) + "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
     "<p>" + txt(rd.summary) + "</p>" + (nShort ? "<p class=\"lead\" style=\"margin-top:8px\">미드폼·롱폼만 보여요 — 이 회차의 숏폼 추천 " + nShort + "개는 뺐어요.</p>" : "") + (rd.order ? "<details style=\"margin-top:8px\"><summary>찍는 순서 (" + rd.items.length + "편)</summary><p class=\"lead\" style=\"margin-top:6px\">" + orderText(rd) + "</p></details>" : "") +
@@ -128,6 +128,8 @@ function viewRec(){
       ladderHtml(items, function(x){ return "<span class=\"chipx\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span> <span class=\"clip\">" + txt(x.title) + "</span></span>" }) + "<div class=\"orig\"><table><thead><tr>" + ORIG_COLS.map(function(c){ return "<th>" + c + "</th>" }).join("") + "</tr></thead><tbody>" +
       items.map(function(x){ return origRows(x, s) }).join("") + "</tbody></table></div></section>";
   });
+  var goneRec = goneListHtml("rec", rdAll, function(x){ return x.id }, function(x){ return recNo(x.id) + " " + x.title });   // 🗑 로 지운 추천 — 되돌리기
+  if(goneRec) h += "<section class=\"card\">" + goneRec + "</section>";
   return h;
 }
 /* 📚 소재와 출처 — content-source 가 기획 카드의 소재 채널(정체성 · 판매 상품)을 돌며 찾은 사실과 출처 (볼트 <브랜드>/소재.json → ct.data .source) */
@@ -149,7 +151,11 @@ function viewScript(){
   var h = "";
   if(!sc || !sc.items || !sc.items.length) return "<p class=\"empty\">아직 대본 초안이 없어요. 콘텐츠 탭 「추천」 칸에서 ＋로 고른 뒤 「대본 초안 만들기」를 누르세요.</p>";
   h += "<p class=\"lead\">여기까지가 편집 믹서 바로 앞 단계예요. 대본을 「대본 복사」로 복사해 편집 믹서의 대본 칸에 붙여 넣으세요.</p>";
+  function sid(x){ return x.rec || x.title }   // 지우기 열쇠 — 추천 번호(없으면 제목)
+  var live = sc.items.filter(function(x){ return !isGone("script", sid(x)) });
+  if(!live.length) h += "<p class=\"empty\">대본을 모두 지웠어요. 아래 「지운 것」에서 되돌릴 수 있어요.</p>";
   sc.items.forEach(function(x, i){
+    if(isGone("script", sid(x))) return;
     h += "<section class=\"card\"><div class=\"card-h\"><h3>" + txt(x.title) + "</h3><span class=\"n\">" + esc(x.rec || "") + " · " + esc(x.status || "") + "</span></div>" +
       (x.meta ? "<p class=\"lead\">" + md(x.meta) + "</p>" : "") +
       (x.summary ? "<h4>스크립트 요약</h4><div class=\"pre\">" + md(x.summary) + "</div>" : "") +
@@ -158,8 +164,10 @@ function viewScript(){
       sourceHtml(x.rec) +
       "<details class=\"prbar\"" + (prDraft("script:" + x.rec) ? " open" : "") + "><summary>✍️ 이 대본 고치기 · 첨삭</summary>" + promptBoxHtml("script:" + x.rec, "무엇을 고칠까요?", "예: 도입 3초를 시청자에게 던지는 질문으로 바꾸고, 두 번째 소주제를 실제 사례로 바꿔 줘", "scriptedit") + "</details>" +
       (x.todo ? "<details><summary>아직 정해야 할 것</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.todo) + "</div></details>" : "") +
-      "<div class=\"acts\">" + (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
+      "<div class=\"acts\">" + (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + delBtn("script", sid(x), x.title, "btn sm") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
   });
+  var goneSc = goneListHtml("script", sc.items, sid, function(x){ return x.title });   // 🗑 로 지운 대본 — 되돌리기
+  if(goneSc) h += "<section class=\"card\">" + goneSc + "</section>";
   return h;
 }
 /* 추천 근거 영상 댓글 다시 받기 — ct.set cmtReq {at} → 맥 동기화가 content_app.py cmts (Claude 없이, 1분 안팎). 추천을 새로 받으면 맥이 알아서 받는다 */

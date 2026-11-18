@@ -75,6 +75,13 @@ function rpRow(c, cand){
     (cand ? "<div class=\"acts\"><button class=\"btn sm" + (on ? "" : " primary") + "\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"" + (on ? "" : "add") + "\">" + (on ? "넣는 중 — 취소" : "참고 페이지에 넣기") + "</button>" +
       "<button class=\"btn sm\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"skip\">빼기</button></div>" : "") + "</div></div>";
 }
+/* 「빼기」한 후보 — 되돌리기 (2026-11-18 동욱: 목록마다 삭제와 되돌리기) */
+function rpSkippedHtml(cd, pick){
+  var sk = ((cd && cd.items) || []).filter(function(x){ return !x.added && pick[x.id] === "skip" });
+  if(!sk.length) return "";
+  return "<details class=\"gone\"><summary>뺀 후보 " + sk.length + "곳 — 되돌리기</summary><div class=\"list\">" + sk.map(function(c){
+    return "<div class=\"it off\"><div class=\"it-m\"><div>" + esc(c.name) + (c.seed ? " <span class=\"num muted\">" + esc(c.seed) + "</span>" : "") + "</div></div><button class=\"btn sm\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"\">↺ 되돌리기</button></div>" }).join("") + "</div></details>";
+}
 function viewRefPage(){
   var b = B(); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var o = rpOpt(), sd = seedsOf(), cd = part("chancand"), pick = (SETS[cur] || {}).chanpick || {}, busy = openCmd("chanfind");
@@ -89,7 +96,7 @@ function viewRefPage(){
     "</details>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"chanfind\"" + (busy || !rpWords().length || !RP_SIDES.some(function(x){ return o.sides[x.id] }) ? " disabled" : "") + ">" + (busy ? "맥이 찾는 중…" : "고른 단어로 참고 페이지 채우기") + "</button>" +
     (cd && cd.updatedAt ? "<span class=\"lead\" style=\"margin:0\">마지막 " + esc(day(cd.updatedAt)) + "</span>" : "") + "</div>" +
-    (cands.some(rpRec) ? "<div class=\"note\" style=\"margin-top:10px\">하나하나 보지 않아도 돼요 — 「Claude 추천」 표시가 붙은 곳만 한 번에 넣을 수 있어요. 넣은 곳은 기획 레퍼런스 카드에 들어가고, 나중에 카드에서 빼면 여기서도 빠져요.</div><div class=\"acts\">" + rpRecBtn(cands, "Claude 추천 전부 —") + "</div>" : "") + "</section>";
+    (cands.some(rpRec) ? "<div class=\"note\" style=\"margin-top:10px\">하나하나 보지 않아도 돼요 — 「Claude 추천」 표시가 붙은 곳만 한 번에 넣을 수 있어요. 넣은 곳은 기획 레퍼런스 카드에 들어가고, 나중에 카드에서 빼면 여기서도 빠져요.</div><div class=\"acts\">" + rpRecBtn(cands, "Claude 추천 전부 —") + "</div>" : "") + rpSkippedHtml(cd, pick) + "</section>";
   /* 단어마다 소재가 충분한가 — 후보·넣은 곳을 단어별로 센다 */
   var all = (cd && cd.items) || [];
   if(all.length) h += "<section class=\"card\"><div class=\"card-h\"><h3>단어마다 소재가 충분한가</h3></div><div class=\"list\">" + sd.map(function(x){

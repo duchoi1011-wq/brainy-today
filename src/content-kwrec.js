@@ -37,7 +37,7 @@ function kwRecParams(){
   });
   return { seeds: seeds,
     criteria: c.order.filter(function(id){ return !c.off[id] }).map(function(id){ return KWCRIT.filter(function(q){ return q.id === id })[0].name }),
-    pins: Object.keys(s.pin).filter(function(k){ return s.pin[k] && !s.ex[k] }), perSeed: 5 };
+    pins: Object.keys(s.pin).filter(function(k){ return s.pin[k] && !s.ex[k] }), perSeed: 5, country: kwCountry() };   // 찾는 나라 (content-basekw.js)
 }
 function kwRecSend(){ var p = kwRecParams(); send("kwrec", "씨앗마다 키워드 추천 — " + p.seeds.map(function(x){ return x.word }).join(" · "), p) }
 /* 🚀 자동 진행(content-auto.js)의 ① 키워드 단계가 키워드 추천.json 에 auto {at, best:[...]} 를 쓰면,
@@ -56,5 +56,5 @@ function kwRecGo(){
   var pin = Object.assign({}, S().pin), ex = Object.assign({}, S().ex);
   kws.forEach(function(k){ pin[k] = 1; delete ex[k] });
   ui.refView = "search"; tab = "ref"; save("ct.tab", tab); window.scrollTo(0, 0);
-  setS({ pin: pin, ex: ex, searchReq: { at: new Date().toISOString(), kws: kws } });
+  setS({ pin: pin, ex: ex, searchReq: { at: new Date().toISOString(), kws: kws, country: kwCountry() } });
 }
