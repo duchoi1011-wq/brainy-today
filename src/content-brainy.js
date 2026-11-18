@@ -30,13 +30,23 @@
       var recent = (CMDS || []).slice(0, 5).map(function (c) { return (KIND[c.kind] || c.kind || "명령") + " · " + (c.status || "") + (c.result ? " — " + String(c.result).split("\n")[0].slice(0, 80) : ""); });
       if (recent.length) L.push("- 최근에 맥에 보낸 일: " + recent.join(" / "));
       L.push("- 화면 글(지금 탭, 앞부분): " + ((document.getElementById("view") || document.body).innerText || "").replace(/\s+/g, " ").slice(0, 2500));
+      L.push("- 지금 브랜드 설계(단계별 자동 추천 기준, ct.set): " + JSON.stringify(designState()).slice(0, 2500));
+      L.push("- 설계 칸과 값 모양 (set_design 으로 바꿈):\n" + DS_SCHEMA);
       L.push("- 데이터 정본은 볼트 4_Outputs/콘텐츠 기획 앱/<브랜드>/*.json (앱 저장소 ct.data · ct.set · cmd). 실행은 맥의 Claude(콘텐츠 스킬 셋).");
       return L.join("\n");
     },
     tools: [
-      { name: "open_tab", description: "콘텐츠 기획 앱의 탭을 연다: sum(한눈에) · brand(브랜드) · kw(키워드) · kwset(순위 기준) · ref(콘텐츠) · rec(추천) · build(구축) · refpage(참고 페이지) · script(대본).",
-        inputSchema: { type: "object", properties: { tab: { type: "string", enum: ["sum", "brand", "kw", "kwset", "ref", "rec", "build", "refpage", "script"] } }, required: ["tab"] },
-        execute: function (i) { tab = i.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return subName(i.tab); } }
+      { name: "open_tab", description: "콘텐츠 기획 앱의 탭을 연다: sum(한눈에) · brand(브랜드) · kw(키워드) · ref(콘텐츠) · rec(추천) · build(구축) · refpage(참고 페이지) · script(대본) · design(설계 — 단계별 기준) · tpl(템플릿) · claude(Claude 모드).",
+        inputSchema: { type: "object", properties: { tab: { type: "string", enum: ["sum", "brand", "kw", "ref", "rec", "build", "refpage", "script", "design", "tpl", "claude"] } }, required: ["tab"] },
+        execute: function (i) { tab = i.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return subName(i.tab); } },
+      { name: "set_design", description: "지금 브랜드의 설계(단계별 자동 추천 기준)를 바꾼다. 동욱이 설정을 바꿔 달라고 분명히 말했을 때만. name 은 seedSrc · kwCrit · anaOpt · recCrit · roles · rpOpt 중 하나, value 는 [지금 앱 상태]의 「설계 칸과 값 모양」대로 그 칸 전체 값(바꾸지 않는 부분도 지금 값 그대로 넣는다). null 이면 기본값으로. 바꾼 뒤 무엇이 어떻게 바뀌었는지 한 줄씩 말한다.",
+        inputSchema: { type: "object", properties: { name: { type: "string", enum: DS_KEYS }, value: {} }, required: ["name", "value"] },
+        execute: function (i) {
+          if (DS_KEYS.indexOf(i.name) < 0) return "바꿀 수 없는 칸이에요: " + i.name;
+          var v = i.value; if (typeof v === "string" && i.name !== "seedSrc") { try { v = JSON.parse(v); } catch (e) {} }
+          var p = {}; p[i.name] = v == null ? null : v; setS(p); tab = "design"; ui.dsOpen = (DS.filter(function (st) { return st.keys.indexOf(i.name) >= 0; })[0] || {}).id || ""; save("ct.tab", tab); render();
+          return i.name + " 을 바꿨어요 → " + JSON.stringify(v).slice(0, 300);
+        } }
     ]
   };
 })();

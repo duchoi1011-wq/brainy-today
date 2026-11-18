@@ -115,7 +115,7 @@ function viewRec(){
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!need.length || openCmd("script") ? " disabled" : "") + ">고른 " + need.length + "개 대본 초안 만들기</button>" +
     "<button class=\"btn\" data-act=\"source\"" + (!picked.length || openCmd("source") ? " disabled" : "") + ">고른 " + picked.length + "개 소재 찾기</button>" +
     cmtBtnHtml() +
-"</div>" +
+"</div>" + nextBar("추천에서 바로 대본으로", [1, 2, 3].map(function(n){ return n <= rd.items.filter(function(x){ return !scriptOf(x.id) }).length ? ["추천 순서대로 " + n + "편 대본 초안", "data-act=\"recgo\" data-n=\"" + n + "\"", !!openCmd("script")] : null })) +
     "<p class=\"lead\" style=\"margin-top:10px\">추천마다 ＋로 고른 뒤 「대본 초안 만들기」를 누르면, 맥의 Claude가 대본을 쓰면서 이 주제로 잘된 영상과 레퍼런스 채널에서 가져온 구성을 같이 붙여요.</p></section>";
   h += planHtml(rd, s);
   roleNames().forEach(function(role){

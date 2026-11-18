@@ -176,16 +176,20 @@ function anaTargets(words){
   var by = {}; its.filter(function(x){ return relOf(x) > 0 }).forEach(function(x){ (by[x.kw] = by[x.kw] || []).push(x) });
   return Object.keys(by).reduce(function(a, k){ return a.concat(by[k].sort(function(p, q){ return srScore(q, words) - srScore(p, words) }).slice(0, o.topN)) }, []);
 }
-function anaBarHtml(words){
-  var o = anaOpt(), t = anaTargets(words), todo = t.filter(function(x){ return !anaOf(x.vid) }), busy = openCmd("analyze"), nDone = Object.keys(((part("analysis") || {}).items) || {}).length;
+/* 영상 분석 — 무엇을 읽을지·어떤 영상을 읽을지는 설계 탭 「콘텐츠」 칸(anaOptHtml), 여기는 한 줄과 분석하기 버튼 */
+function anaOptHtml(){
+  var o = anaOpt();
   function tg(k, label){ return "<button class=\"chip" + (o[k] ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"" + k + "\">" + label + "</button>" }
-  return "<details style=\"margin-top:8px\"><summary>🔍 영상 분석 조절 <span class=\"num muted\">" + ANA_PARTS.filter(function(p){ return o[p[0]] }).map(function(p){ return p[1] }).join(" · ") + " · 댓글 " + o.nCmt + "개 · " + (o.target === "picked" ? "💡 담은 영상" : "키워드마다 상위 " + o.topN + "개") + " · 분석한 영상 " + nDone + "개 — 펴서 바꾸기</span></summary>" +
-    "<p class=\"lead\" style=\"margin-top:6px\">맥의 Claude가 영상을 열어 읽어요. 켠 것만 읽고, 카드 「자세히」에도 켠 것만 보여요.</p>" +
+  return "<p class=\"it-d\">맥의 Claude가 영상을 열어 읽어요. 켠 것만 읽고, 카드 「자세히」에도 켠 것만 보여요.</p>" +
     "<div class=\"chips\">" + ANA_PARTS.map(function(p){ return tg(p[0], p[1]) }).join("") + "</div>" +
+    "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">댓글</span>" + [5, 10, 20].map(function(n){ return "<button class=\"chip" + (o.nCmt === n ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"nCmt\" data-v=\"" + n + "\">" + n + "개</button>" }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">분석할 영상</span>" + [1, 3, 5].map(function(n){ return "<button class=\"chip" + (o.target === "top" && o.topN === n ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"topN\" data-v=\"" + n + "\">키워드마다 점수 상위 " + n + "개</button>" }).join("") +
-      "<button class=\"chip" + (o.target === "picked" ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"target\" data-v=\"picked\">💡 담은 영상</button></div>" +
-    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"analyze\"" + (busy || !todo.length || !ANA_PARTS.some(function(p){ return o[p[0]] }) ? " disabled" : "") + ">" + (busy ? "맥이 영상 읽는 중…" : todo.length ? "새 영상 " + todo.length + "개 분석하기" : "고른 영상은 다 분석했어요") + "</button>" +
-      (t.length - todo.length ? "<span class=\"lead\" style=\"margin:0\">이미 분석 " + (t.length - todo.length) + "개</span>" : "") + "</div></details>";
+      "<button class=\"chip" + (o.target === "picked" ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"target\" data-v=\"picked\">💡 담은 영상</button></div>";
+}
+function anaBarHtml(words){
+  var o = anaOpt(), t = anaTargets(words), todo = t.filter(function(x){ return !anaOf(x.vid) }), busy = openCmd("analyze");
+  return "<div style=\"margin-top:8px\">" + dsLine("content") + "<div class=\"acts\" style=\"margin-top:6px\"><button class=\"btn primary\" data-act=\"analyze\"" + (busy || !todo.length || !ANA_PARTS.some(function(p){ return o[p[0]] }) ? " disabled" : "") + ">" + (busy ? "맥이 영상 읽는 중…" : todo.length ? "🔍 새 영상 " + todo.length + "개 분석하기" : "고른 영상은 다 분석했어요") + "</button>" +
+    (t.length - todo.length ? "<span class=\"lead\" style=\"margin:0\">이미 분석 " + (t.length - todo.length) + "개</span>" : "") + "</div></div>";
 }
 /* 카드 「자세히」 안의 분석 칸 — 조절에서 켠 것만 */
 function anaHtml(x){
@@ -243,7 +247,14 @@ function searchResultsHtml(){
       return "<section class=\"card\"><details open><summary style=\"font-size:16px;color:var(--ink)\">" + esc(k) + " <span class=\"num muted\">맞는 영상 " + near.length + "개" + (by[k].length > l.length ? " · 거른 것 " + (by[k].length - l.length) + "개" : "") + "</span></summary>" +
         (near.map(function(x){ return searchCard(x, words) }).join("") || "<p class=\"lead\">조건에 맞는 영상이 없어요. 거르기를 풀거나 💡 아이디어·다른 키워드로 다시 검색해 보세요.</p>") +
         (far.length ? "<details style=\"margin-top:8px\"><summary>키워드와 먼 영상 " + far.length + "개 — 유튜브가 함께 보여 준 것</summary>" + far.map(function(x){ return searchCard(x, words) }).join("") + "</details>" : "") + "</details></section>";
-    }).join("");
+    }).join("") + (function(){   // 다음 단계 — 찾은 영상을 분석하고 · 아이디어를 뽑고 · 추천으로
+      var todo = anaTargets(words).filter(function(x){ return !anaOf(x.vid) }).length, nPick = Object.keys(ideaPicks()).length;
+      return "<section class=\"card\">" + nextBar("찾은 영상으로", [
+        todo ? ["새 영상 " + todo + "개 분석하기", "data-act=\"analyze\"", !!openCmd("analyze")] : null,
+        nPick ? ["담은 " + nPick + "개에서 💡 아이디어 뽑기", "data-act=\"ideas\"", !!openCmd("ideas")] : null,
+        ["이 영상들로 추천 받기", "data-go=\"rec\""]
+      ]) + "</section>";
+    })();
 }
 function favListHtml(){
   var f = (SETS[cur] || {}).favc || {}, ids = Object.keys(f).sort(function(a, c){ return String(f[c].at).localeCompare(String(f[a].at)) });
