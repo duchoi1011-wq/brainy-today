@@ -34,15 +34,16 @@
      저장소 문서 {at, devs: {기기: {at, turns}} 기기마다 지금 대화, past: [{at, title, turns}] 지난 대화 20개, gone: [지운 지난 대화 이름표]}.
      · 지금 대화는 기기마다 따로 — 다른 기기가 쓴다고 이 기기의 지금 대화가 바뀌지 않는다(처음 여는 기기만 가장 최근 대화를 이어받는다).
      · 지난 대화 · 지운 표시는 모든 기기가 합친다. 「새 대화」는 지금 대화를 지난 대화로 옮기고, 「이어가기」는 꺼낸 것을 지난 대화에서 지운다(되살아나지 않게). */
-  var past = [], gone = [], stamp = 0, DBC = null, PATH = "bchat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0, remote = null, DEV = "";
+  var past = [], gone = [], stamp = 0, DBC = null, PATH = "bchat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0, remote = null, DEV = "", firstOpen = false;
   try { turns = JSON.parse(localStorage.getItem(KEY) || "[]"); past = JSON.parse(localStorage.getItem(KEY + ".past") || "[]"); stamp = +(localStorage.getItem(KEY + ".at") || 0); gone = JSON.parse(localStorage.getItem(KEY + ".gone") || "[]");
+    firstOpen = !localStorage.getItem(KEY + ".at") && !clean(turns).length;   // 이 기기에서 대화를 한 번도 안 한 경우만 — ↺ 로 비운 것은 아니다 (2026-11-18 검증)
     DEV = localStorage.getItem(KEY + ".dev") || ""; if (!DEV) { DEV = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); localStorage.setItem(KEY + ".dev", DEV); } } catch (e) { DEV = DEV || "d0"; }
   function pkey(p) { return p.at + "|" + p.title; }   // 지난 대화 하나의 이름표
   function clean(list) { return (list || []).filter(function (t) { return t.content && !t.err; }).slice(-40).map(function (t) { var c = { role: t.role, content: t.content }; if (t.imgs) c.imgs = t.imgs; return c; }); }
   function sig(list) { return JSON.stringify(clean(list)); }
   function titleOf(list) { var u = clean(list).filter(function (t) { return t.role === "user"; })[0]; return u ? String(u.content).slice(0, 40) : ""; }
   function mergePast(list) {   // 지난 대화를 합친다 — 이름표가 같거나 지운 것은 하나도 안 남김, 최근 순 20개
-    var seen = {}; past = list.filter(function (p) { var k = pkey(p); if (seen[k] || gone.indexOf(k) >= 0) return false; seen[k] = 1; return true; }).sort(function (a, b) { return b.at - a.at; }).slice(0, 20);
+    var seen = {}, same = {}; past = list.sort(function (a, b) { return b.at - a.at; }).filter(function (p) { var k = pkey(p), c = sig(p.turns); if (seen[k] || same[c] || gone.indexOf(k) >= 0) return false; seen[k] = 1; same[c] = 1; return true; }).slice(0, 20);   // 이름표나 내용이 같으면 하나만
   }
   function local() { try { localStorage.setItem(KEY, JSON.stringify(clean(turns))); localStorage.setItem(KEY + ".past", JSON.stringify(past)); localStorage.setItem(KEY + ".at", String(stamp)); localStorage.setItem(KEY + ".gone", JSON.stringify(gone)); } catch (e) {} }
   function keep() {
@@ -51,7 +52,8 @@
     saveT2 = setTimeout(function () {
       if (!DBC) return;
       var r = remote || {}, devs = Object.assign({}, r.devs || {});
-      if (r.cur && !devs.old) devs.old = { at: r.at || 0, turns: r.cur };   // 예전 모양(cur 하나)은 「예전 기기」로
+      delete devs.old;   // 예전 모양(cur 하나)은 기기로 두지 않고 지난 대화로 한 번 옮긴다 (2026-11-18 검증: 내 대화가 「다른 기기」로 한 번 더 보이던 것)
+      if (r.cur && clean(r.cur).some(function (t) { return t.role === "user"; }) && sig(r.cur) !== sig(turns)) past.push({ at: r.at || Date.now(), title: titleOf(r.cur), turns: clean(r.cur) });
       gone = gone.concat((r.gone || []).filter(function (k) { return gone.indexOf(k) < 0; }));
       mergePast((r.past || []).concat(past));
       devs[DEV] = { at: stamp, turns: clean(turns) };
@@ -61,10 +63,10 @@
       DBC.doc(PATH).set(doc).catch(function () {});
     }, 1200);
   }
-  function archive() { var c = clean(turns); if (!c.some(function (t) { return t.role === "user"; })) return; past.unshift({ at: Date.now(), title: titleOf(c), turns: c }); past = past.slice(0, 20); }
+  function archive() { var c = clean(turns); if (!c.some(function (t) { return t.role === "user"; }) || past.some(function (p) { return sig(p.turns) === sig(c); })) return; past.unshift({ at: Date.now(), title: titleOf(c), turns: c }); past = past.slice(0, 20); }
   function others() {   // 다른 기기의 지금 대화 — 이 기기 것·지난 대화와 같은 건 뺀다
     var r = remote || {}, mine = sig(turns), list = [];
-    Object.keys(r.devs || {}).forEach(function (k) { var d = r.devs[k]; if (k === DEV || !d || !clean(d.turns).some(function (t) { return t.role === "user"; }) || sig(d.turns) === mine || past.some(function (p) { return sig(p.turns) === sig(d.turns); })) return; list.push({ at: d.at, title: titleOf(d.turns), turns: clean(d.turns), other: true }); });
+    Object.keys(r.devs || {}).forEach(function (k) { var d = r.devs[k]; if (k === DEV || k === "old" || !d || !clean(d.turns).some(function (t) { return t.role === "user"; }) || sig(d.turns) === mine || past.some(function (p) { return sig(p.turns) === sig(d.turns); })) return; list.push({ at: d.at, title: titleOf(d.turns), turns: clean(d.turns), other: true }); });
     return list.sort(function (a, b) { return b.at - a.at; });
   }
   /* 기다리는 동안 몇 초째인지 — 맥에서 답하면 볼트를 여러 개 열어 보느라 1~8분까지 걸린다 (2026-11-18 검증: 「몇십 초」라 했는데 7분 53초) */
@@ -174,7 +176,7 @@
       } else {
         h += '<div class="bc-hello"><b>지난 대화 ' + past.length + '개</b><p>' + (past.length ? "누르면 그 대화를 보고, 이어갈 수 있어요." : "아직 없어요. ↺ 새 대화를 누르면 지금 대화가 여기로 와요.") + '</p><div class="bc-chips"><button type="button" class="bc-chip" data-bc="hist">지금 대화로</button></div></div>';
         others().forEach(function (p, i) { h += '<button type="button" class="bc-more" data-bc-other="' + i + '">' + esc(day(p.at)) + " · 다른 기기에서 진행 중 · " + esc(p.title) + " (" + p.turns.length + ")</button>"; });
-        past.forEach(function (p, i) { h += '<button type="button" class="bc-more" data-bc-past="' + i + '">' + esc(day(p.at)) + " · " + esc(p.title) + " (" + p.turns.length + ")</button>"; });
+        past.forEach(function (p, i) { if (sig(p.turns) === sig(turns)) return; h += '<button type="button" class="bc-more" data-bc-past="' + i + '">' + esc(day(p.at)) + " · " + esc(p.title) + " (" + p.turns.length + ")</button>"; });
       }
       msgs.innerHTML = h; msgs.scrollTop = 0; paintFab(); return;
     }
@@ -300,11 +302,12 @@
         var before = JSON.stringify([past, gone]);
         gone = gone.concat((d.gone || []).filter(function (k) { return gone.indexOf(k) < 0; }));
         mergePast((d.past || []).concat(past));
-        if (!clean(turns).length && !busy) {   // 처음 여는 기기 — 가장 최근에 쓴 지금 대화를 이어받는다
-          var devs = d.devs || (d.cur ? { old: { at: d.at, turns: d.cur } } : {}), best = null;
+        if (firstOpen && !clean(turns).length && !busy) {   // 처음 여는 기기 — 가장 최근에 쓴 지금 대화를 이어받는다 (한 번만)
+          var devs = Object.assign({}, d.devs || {}, d.cur ? { legacy: { at: d.at, turns: d.cur } } : {}), best = null;
           Object.keys(devs).forEach(function (k) { var x = devs[k]; if (x && clean(x.turns).length && (!best || x.at > best.at)) best = x; });
           if (best && !past.some(function (p) { return sig(p.turns) === sig(best.turns); })) turns = clean(best.turns);
         }
+        firstOpen = false;
         local();
         if (JSON.stringify([past, gone]) !== before && !busy) keep();   // 이 기기에만 있던 지난 대화를 저장소에도
         if (!box.hidden && !busy) render();
