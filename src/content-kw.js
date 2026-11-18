@@ -91,7 +91,7 @@ function seedsHtml(){
     var all0 = seedItems(pickW), tab0 = ui.sTab || "naver", more = ui.seedMore || 15;
     var kc = kwCrit(), inT = all0.filter(function(x){ return inTab(viaOf(x, pickW), tab0) && kwShown(x, pickW) });   // 순위 기준(kwCrit) — 최소 검색량·가까움·씨앗 글자가 안 든 말 보기
     var near = inT.filter(function(x){ return kc.far === "mix" || !isFar(x, pickW) }), far = kc.far === "fold" ? inT.filter(function(x){ return isFar(x, pickW) }) : [];
-    h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">" + all0.length + "개</span></div><div class=\"chips\">" +
+    h += "<section class=\"card\" id=\"seed-list\"><div class=\"card-h\"><h3>「" + esc(pickW) + "」 연관 검색어</h3><span class=\"n\">" + all0.length + "개</span></div><div class=\"chips seedchips\">" +
       sd.map(function(x){ return "<button class=\"chip" + (x.word === pickW ? " on" : "") + "\" data-ui=\"seed=" + esc(x.word) + "\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\"></i>" + esc(x.word) + "<span>" + seedItems(x.word).filter(function(y){ return kwShown(y, x.word) }).length + "</span></button>" }).join("") + "</div>" +
       seedPendingHtml() + srcTabsHtml("sTab", all0.filter(function(y){ return kwShown(y, pickW) }), pickW) + help + kwRecSeedHtml(pickW) +
       (tab0 !== "naver" && seedSrc() === "naver" ? "<p class=\"note\" style=\"margin-top:8px\">지금은 네이버에서만 받아요. 구글 트렌드도 보려면 설계 탭 「1 단어」에서 「둘 다」로 바꾸세요.</p>" : "") +

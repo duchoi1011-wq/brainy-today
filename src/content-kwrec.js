@@ -25,9 +25,10 @@ function kwRecBarHtml(){
 /* 씨앗 연관 검색어 카드 안 — 그 씨앗의 추천과 이유 */
 function kwRecSeedHtml(word){
   var rs = kwRecs(word), s = S(); if(!rs.length) return "";
-  return "<div class=\"wrec\" style=\"margin-top:10px;background:var(--bg);border-radius:10px;padding:10px 12px\"><div class=\"it-d\"><span class=\"tag p\">Claude 추천</span> 「" + esc(word) + "」에서 고른 키워드 — 진한 칸이 먼저 찍자는 것</div><div class=\"list\">" +
+  var first = rs.filter(function(x){ return x.pick })[0];   // 접어 두고 한 줄만 — 폰에서 연관 검색어 목록이 첫 화면에 오게 (2026-11-18 검증)
+  return "<details class=\"wbox\"><summary><b><span class=\"tag p\">Claude 추천</span> " + rs.length + "개</b><span class=\"wsum\">" + (first ? "먼저 「" + esc(first.kw) + "」" : "") + "</span></summary><div class=\"wrec wbody\"><div class=\"it-d\"><span class=\"tag p\">Claude 추천</span> 「" + esc(word) + "」에서 고른 키워드 — 진한 칸이 먼저 찍자는 것</div><div class=\"list\">" +
     rs.map(function(x){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b>" + (x.pick ? " <span class=\"tag p\">먼저</span>" : "") + (x.role ? " <span class=\"tag\">" + esc(x.role) + "</span>" : "") + (x.volume ? " <span class=\"num muted\">월 " + fmt(x.volume) + "</span>" : "") + "</div><div class=\"it-d\">" + esc(x.why || "") + "</div></div>" +
-      "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"즐겨찾기 — 콘텐츠 검색에 씀\" aria-label=\"즐겨찾기\">★</button></div>" }).join("") + "</div></div>";
+      "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"즐겨찾기 — 콘텐츠 검색에 씀\" aria-label=\"즐겨찾기\">★</button></div>" }).join("") + "</div></div></details>";
 }
 function kwRecParams(){
   var s = S(), c = kwCrit();
