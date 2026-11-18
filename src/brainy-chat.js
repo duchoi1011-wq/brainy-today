@@ -262,7 +262,16 @@
       db.doc(PATH).onSnapshot(function (snap) {
         if (!snap.exists) { if (turns.length || past.length) keep(); return; }
         var d = snap.data() || {};
-        if ((d.at || 0) > stamp && !busy) { turns = d.cur || []; past = d.past || []; stamp = d.at; try { localStorage.setItem(KEY, JSON.stringify(turns)); localStorage.setItem(KEY + ".past", JSON.stringify(past)); localStorage.setItem(KEY + ".at", String(stamp)); } catch (e) {} if (!box.hidden) render(); }
+        if ((d.at || 0) > stamp && !busy) {   // 다른 기기가 더 새로 썼다 — 덮지 않고 합친다: 지난 대화는 모두 모으고, 이 기기의 지금 대화가 다르면 지난 대화로 옮긴다
+          var sig = function (list) { return JSON.stringify(clean(list || [])); };
+          var mine = clean(turns), theirs = d.cur || [];
+          var all = (d.past || []).concat(past), seen = {}; past = all.filter(function (p) { var k = p.at + "|" + p.title; if (seen[k]) return false; seen[k] = 1; return true; }).sort(function (a, b) { return b.at - a.at; });
+          if (mine.some(function (t) { return t.role === "user"; }) && sig(mine) !== sig(theirs) && !past.some(function (p) { return sig(p.turns) === sig(mine); })) { var f = mine.filter(function (t) { return t.role === "user"; })[0].content; past.unshift({ at: stamp || Date.now(), title: String(f).slice(0, 40), turns: mine }); }
+          past = past.slice(0, 20); turns = theirs; stamp = d.at;
+          try { localStorage.setItem(KEY, JSON.stringify(turns)); localStorage.setItem(KEY + ".past", JSON.stringify(past)); localStorage.setItem(KEY + ".at", String(stamp)); } catch (e) {}
+          if (JSON.stringify(past) !== JSON.stringify(d.past || [])) keep();   // 합친 지난 대화를 저장소에도
+          if (!box.hidden) render();
+        }
       });
     }, function () {});
   }
