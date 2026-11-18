@@ -367,7 +367,7 @@ function recParams(){   // 콘텐츠 추천 cmd 파라미터 — 추천 버튼�
     favContents: rc.use.fav ? Object.keys((SETS[cur] || {}).favc || {}).map(function(v){ return Object.assign({ vid: v }, SETS[cur].favc[v]) }) : [] };
 }
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
-function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && c.brand === cur && isOpen(c) })[0] }
+function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && (c.brand === cur || kind === "brief") && isOpen(c) })[0] }   // 새 브랜드 만들기(brief)는 어느 브랜드에서 보냈든 하나 — 브랜드를 바꿔 두 번 보내지 않게
 function send(kind, text, params){
   if(!DB || openCmd(kind)) return;
   if(pastOn()){ toast(PAST_BLOCK); return }
