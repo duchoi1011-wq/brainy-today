@@ -59,6 +59,7 @@ details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:60
 #setm .setm-c{overflow:auto;padding:18px 22px 40px}#setm .setm-c h2{margin:0 0 4px;font-size:20px}
 html.setm-open,html.setm-open body{overflow:hidden}
 @media (max-width:760px){#setm .setm{left:0;top:0;transform:none;width:100vw;height:100vh;height:100dvh;border-radius:0}#setm .setm-b{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}#setm .setm-nav{border-right:0;border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:8px 12px;align-items:center}#setm .setm-nav input,#setm .sg{display:none}#setm .si{width:auto;flex:none;white-space:nowrap;border:1px solid var(--line);border-radius:999px;min-height:44px;padding:6px 14px}#setm .setm-nav::after{content:"";flex:none;width:8px}#setm .setm-c{padding:14px 16px 40px}}
+.nbq{display:block;margin:0 0 12px}.nbq>span{display:block;margin:0 0 4px;font-weight:600;font-size:14px}
 .hday{margin:12px 0 2px;font-size:13px;font-weight:700;color:var(--muted)}.list .it.on{outline:2px solid var(--accent);outline-offset:-2px}
 .mk.imp[aria-pressed=true]{background:#6B4FD8;border-color:#6B4FD8;color:#fff}
 .runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
@@ -263,7 +264,7 @@ var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: 
 /* 탭은 넷 — 한 탭 안을 칸(subs)으로 나눈다 (2026-11-17 동욱: "한눈에·브랜드는 한 탭 안에 나누고, 키워드는 따로, 콘텐츠·추천 한 탭, 구축·대본 한 탭").
    tab 변수는 칸 id(sum·brand·kw·ref·rec·build·refpage·script) 그대로 — 위 탭을 누르면 그 탭에서 마지막으로 본 칸이 열린다 */
 var TABS = [
-  { name: "브랜드", subs: [["sum", "한눈에"], ["brand", "브랜드"]] },
+  { name: "브랜드", subs: [["sum", "한눈에"], ["brand", "브랜드"], ["newbrand", "＋ 새 브랜드"]] },   // 새 브랜드 질문지 (content-newbrand.js)
   { name: "키워드", subs: [["kw", "씨앗별 검색어"], ["kwall", "전체 키워드"]] },
   { name: "콘텐츠", subs: [["ref", "콘텐츠"], ["rec", "추천"]] },
   { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] }
@@ -426,6 +427,7 @@ function runHtml(kinds){
 /*@include content-design.js*/
 /*@include content-hist.js*/
 /*@include content-settings.js*/
+/*@include content-newbrand.js*/
 /*@include content-prompt.js*/
 /*@include content-auto.js*/
 /*@include content-profile.js*/
@@ -436,14 +438,7 @@ function viewBrand(){
   var b = B(), h = "";
   h += "<section class=\"card\"><div class=\"card-h\"><h3>브랜드</h3><span class=\"n\">" + brands().length + "개</span></div>" +
     "<p class=\"lead\">맨 위에서 브랜드를 고르면 그 브랜드의 자료·색으로 열려요. 주소 끝에 <span class=\"mono\">?b=" + esc(cur) + "</span> 가 붙어 있어서, 이 주소를 즐겨찾기나 바로가기로 두면 이 브랜드로 바로 열려요.</p>" +
-    "<div class=\"chips\"><button class=\"chip dash\" data-act=\"newbrand\">＋ 기획서로 새 브랜드</button></div>";
-  if(ui.newBrand){
-    h += "<h4>브랜드 기획서 올리기</h4><p class=\"lead\">기획서 글을 붙여 넣거나 파일(.md · .txt)을 고르면, 맥의 Claude가 판매 상품·타깃·채널 정체성·키워드 힌트를 뽑아 프로필 초안을 만들어요. 초안은 여기 브랜드 목록에 「확인 전」으로 뜹니다.</p>" +
-      "<input type=\"text\" id=\"nb-name\" placeholder=\"브랜드 이름 (예: 키우고 고르는 생활)\" style=\"margin-bottom:8px\">" +
-      "<textarea id=\"nb-doc\" placeholder=\"기획서 내용을 여기에 붙여 넣으세요\"></textarea>" +
-      "<div class=\"acts\"><input type=\"file\" id=\"nb-file\" accept=\".md,.txt,text/plain,text/markdown\" style=\"font-size:13px;max-width:60%\">" +
-      "<button class=\"btn primary\" data-act=\"sendbrief\"" + (openCmd("brief") ? " disabled" : "") + ">프로필 초안 만들기</button></div>";
-  }
+    "<div class=\"chips\"><button class=\"chip dash\" data-go=\"newbrand\">＋ 새 브랜드 — 질문에 답하며 만들기</button></div>";
   h += "</section>";
   if(!b) return h + "<p class=\"empty\">아직 브랜드 데이터가 없어요. 맥 동기화가 볼트의 「콘텐츠 기획 앱」 폴더를 올리면 여기에 떠요.</p>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(b.name) + (b.draft ? " <span class=\"tag p\">확인 전</span>" : "") + "</h3><span class=\"n\">" + esc(b.handle || "") + "</span></div>" +
@@ -498,7 +493,7 @@ function render(){
   document.getElementById("nav").innerHTML = TABS.map(function(g, i){ var to = last[g.name] && g.subs.some(function(x){ return x[0] === last[g.name] }) ? last[g.name] : g.subs[0][0];
     return "<button role=\"tab\" class=\"" + (g === grp ? "on" : "") + "\" data-tab=\"" + to + "\"><span>" + (i + 1) + "</span>" + g.name + "</button>" }).join("");
   var sub = grp.subs.length > 1 ? "<div class=\"subnav\" role=\"tablist\">" + grp.subs.map(function(x){ return "<button role=\"tab\" class=\"" + (tab === x[0] ? "on" : "") + "\" data-tab=\"" + x[0] + "\">" + x[1] + "</button>" }).join("") + histPickHtml() + "</div>" : histPickHtml() ? "<div class=\"subnav\">" + histPickHtml() + "</div>" : "";
-  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, kwall: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, script: viewScript }[tab] || viewSum;
+  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, kwall: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, script: viewScript, newbrand: viewNewBrand }[tab] || viewSum;
   ui.later = false;
   /* 초점 돌려주기는 앱 화면(#view) 안 칸만 — 구석 Brainy 대화창(#bc-text)에 쓰는 중에 맥 자료가 와서 다시 그리면, 그 칸의 커서를 다시 놓다가 한글 조합이 끊겨 글이 깨졌다 (2026-11-18 동욱: "대화창을 쓰면 글이 깨진다") */
   var act0 = document.activeElement, sm0 = document.getElementById("setm"); if(act0 && !document.getElementById("view").contains(act0) && !(sm0 && sm0.contains(act0))) act0 = null;   // ⚙ 설정 창 안 입력칸도
@@ -544,6 +539,7 @@ document.addEventListener("input", function(e){
   if(e.target.dataset.wordin != null) ui.wDraft = e.target.value;
   if(e.target.dataset.dsask != null) ui.dsDraft = e.target.value;   // 설계 「말로 바꾸기」 · 템플릿 이름 — 다시 그려도 쓰던 글을 지킨다
   if(e.target.dataset.tplin != null) ui.tplDraft = e.target.value;
+  if(e.target.dataset.nbq != null) nbInput(e.target);   // ＋ 새 브랜드 — 쓰던 답 지키기
   if(e.target.id === "setq"){ ui.setQ = e.target.value; if(!e.isComposing) render() }   // ⚙ 설정 칸 찾기 — 한글 조합 중엔 그리지 않고 다 쓴 뒤(compositionend)에 (2026-11-18 검증: 「ㄱ기기ㄹ로록록」)
   if(e.target.id === "impq"){ ui.impQ = e.target.value; if(!e.isComposing) render() }   // 🔖 중요 찾기 — 치는 대로 걸러 보기
   if(e.target.dataset.basekw != null) ui.baseDraft = e.target.value;   // 기준 키워드 넣기 칸
@@ -579,30 +575,27 @@ document.addEventListener("keyup", function(e){
 });
 document.addEventListener("keydown", function(e){ if(e.key === "Escape" && ui.set){ setClose() } });   // ⚙ 설정 창 — Esc 로 닫기
 document.addEventListener("change", function(e){
+  if(e.target.dataset.nbq != null){ nbChange(e.target); return }   // 칸을 떠나면 저장
+  if(e.target.id === "nb-doc"){ nbSave({ doc: e.target.value.slice(0, 60000) }); return }
   if(e.target.id === "hsel"){ if(e.target.value) histOpen(e.target.value, true); else histClose(); return }   // 🕘 이 탭 결과 기록 고르기
   if(e.target.id === "auto-n"){ var ao6 = autoOpt(); ao6.n = autoN(e.target.value); e.target.value = ao6.n; setS({ autoOpt: ao6 }) }   // 🚀 자동으로 — 편 수 직접 넣기 (1편 아래로는 1편)
   if(e.target.dataset.plan){ var pl = Object.assign({}, S().plan); if(e.target.value) pl[e.target.dataset.plan] = e.target.value; else delete pl[e.target.dataset.plan]; setS({ plan: pl }) }
   if(e.target.id === "nb-file" && e.target.files[0]){
     var f = e.target.files[0], rd = new FileReader();
-    rd.onload = function(){ var ta = document.getElementById("nb-doc"); if(ta) ta.value = String(rd.result).slice(0, 60000); var nm = document.getElementById("nb-name"); if(nm && !nm.value) nm.value = f.name.replace(/\.[^.]+$/, "") };
+    rd.onload = function(){ nbSave({ doc: String(rd.result).slice(0, 60000) }); ui.wOpen = Object.assign({}, ui.wOpen, { "nb:doc": true }); render(); toast("「" + f.name + "」을 붙였어요") };   // ＋ 새 브랜드 — 기획서 파일
     rd.readAsText(f);
   }
 });
 function act(name, el){
   if(claudeAct(name, el)) return;   // ⚙ Claude 모드 (content-claude.js)
   if(designAct(name, el)) return;   // 설계 · 템플릿 (content-design.js)
+  if(nbAct(name)) return;   // ＋ 새 브랜드 질문지 (content-newbrand.js)
   if(histAct(name, el)) return;   // 🕘 돌린 기록 · 🔖 중요 (content-hist.js)
   if(pastOn() && { ideas: 1, idearesearch: 1, ideascript: 1 }[name]){ toast(PAST_BLOCK); return }   // 보내기 전에 고른 것을 지우거나 칸을 옮기지 않게
   if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)
   if(baseAct(name, el)) return;   // 기준 키워드 · 영상 주제 · 지우기/되돌리기 · 찾는 나라 (content-basekw.js)
   var s = S();
   if(name === "buildpdf"){ window.print(); return }   // 구축 문서 PDF — 인쇄 창에서 「PDF로 저장」 (인쇄할 땐 가운데 문서만 남는다)
-  if(name === "newbrand"){ ui.newBrand = !ui.newBrand; render(); return }
-  if(name === "sendbrief"){
-    var nm = (document.getElementById("nb-name").value || "").trim(), doc = (document.getElementById("nb-doc").value || "").trim();
-    if(!nm || doc.length < 50){ alert("브랜드 이름과 기획서 내용(50자 이상)을 넣어 주세요."); return }
-    send("brief", "새 브랜드 「" + nm + "」 기획서로 프로필 초안 만들기", { name: nm, doc: doc.slice(0, 60000) }); ui.newBrand = false; render(); return;
-  }
   if(name === "discover"){ var c = candidates(s); send("discover", "키워드·레퍼런스 조사 (상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " · " + c.length + "개)",
     { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
   if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }

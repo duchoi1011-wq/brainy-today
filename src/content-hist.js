@@ -104,7 +104,7 @@ function viewImp(){
   var list = impList(), q = String(ui.impQ || "").trim();
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>🔖 중요</h3><span class=\"n\">" + list.length + "개</span></div>" +
     "<p class=\"lead\">기간에 상관없이 내게 중요한 것을 모아 두는 곳이에요. 돌린 기록 · 키워드 · 영상 · 추천 · 대본 어디서든 🔖 를 누르면 여기 와요. ★·☆ 즐겨찾기는 다음 단계(콘텐츠 검색 · 추천)에 쓰이는 표시이고, 🔖 는 다음 단계에 쓰이지 않고 모아 두기만 해요.</p>" +
-    (list.length > 6 ? "<input type=\"search\" id=\"impq\" placeholder=\"이름 · 메모로 찾기\" value=\"" + esc(q) + "\" style=\"margin-bottom:8px\">" : "");
+    (list.length > 6 ? "<input type=\"search\" id=\"impq\" placeholder=\"이름 · 메모로 찾기\" value=\"" + esc(ui.impQ || "") + "\" style=\"margin-bottom:8px\">" : "");
   if(!list.length) return h + "<p class=\"empty\">아직 없어요. 「🕘 돌린 기록」이나 키워드 · 영상 · 추천 · 대본 줄의 🔖 를 눌러 보세요.</p></section>";
   var hit = list.filter(function(x){ return !q || (x.label + " " + (x.sub || "") + " " + (x.memo || "")).indexOf(q) >= 0 });
   IMP_KINDS.forEach(function(k){

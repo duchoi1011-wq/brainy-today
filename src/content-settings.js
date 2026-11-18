@@ -15,7 +15,7 @@ function setOpen(id){ ui.set = isSet(id) ? id : "design"; save("ct.set.last", ui
 function setClose(){ ui.set = null; render() }
 function settingsHtml(){
   if(!ui.set) return "";
-  var q = String(ui.setQ || "").trim(), cur0 = ui.set;
+  var q = String(ui.setQ || "").trim(), raw = String(ui.setQ || ""), cur0 = ui.set;   // 칸에는 친 그대로(빈칸 포함) — 다듬은 값을 넣으면 띄어쓰기가 사라졌다 (2026-11-18 검증)
   var nav = SETTINGS.map(function(g){
     var its = g.items.filter(function(x){ return !q || (g.name + " " + x[1] + " " + x[3]).indexOf(q) >= 0 });
     if(!its.length) return "";
@@ -24,6 +24,6 @@ function settingsHtml(){
   var it = []; SETTINGS.forEach(function(g){ g.items.forEach(function(x){ if(x[0] === cur0) it = x }) });
   return "<div class=\"setm-bg\" data-setclose=\"1\"></div><div class=\"setm\" role=\"dialog\" aria-modal=\"true\" aria-label=\"설정\">" +
     "<div class=\"setm-h\"><b>설정</b><span class=\"muted\">" + esc((B() || {}).name || "") + "</span><button class=\"setm-x\" data-setclose=\"1\" aria-label=\"설정 닫기\">✕</button></div>" +
-    "<div class=\"setm-b\"><div class=\"setm-nav\" role=\"navigation\" aria-label=\"설정 칸\"><input type=\"search\" id=\"setq\" placeholder=\"검색\" value=\"" + esc(q) + "\" aria-label=\"설정 칸 찾기\">" + nav + "</div>" +
+    "<div class=\"setm-b\"><div class=\"setm-nav\" role=\"navigation\" aria-label=\"설정 칸\"><input type=\"search\" id=\"setq\" placeholder=\"검색\" value=\"" + esc(raw) + "\" aria-label=\"설정 칸 찾기\">" + nav + "</div>" +
     "<div class=\"setm-c\" id=\"setm-c\"><h2>" + (it[2] || "") + " " + esc(it[1] || "") + "</h2><p class=\"lead\">" + esc(it[3] || "") + "</p>" + SET_VIEW[cur0]() + "</div></div></div>";
 }
