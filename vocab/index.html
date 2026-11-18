@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "c47e49335f"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=c47e49335f"></script>
+<script>window.BRAINY_VERSION = "47668ef772"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=47668ef772"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -1301,8 +1301,15 @@ init();
   function others() {   // 다른 기기의 지금 대화 — 이 기기 것·지난 대화와 같은 건 뺀다
     var r = remote || {}, mine = sig(turns), list = [], seen = {};
     Object.keys(r.devs || {}).forEach(function (k) { var d = r.devs[k]; if (k === DEV || k === "old" || !d || !clean(d.turns).some(function (t) { return t.role === "user"; }) || sig(d.turns) === mine || past.some(function (p) { return sig(p.turns) === sig(d.turns); })) return; list.push({ at: d.at, title: titleOf(d.turns), turns: clean(d.turns), other: true, sg: sig(d.turns) }); });
-    /* 다른 기기끼리 같은 대화(새 기기가 처음 열 때 이어받은 것)는 가장 최근 하나만 (2026-11-18 검증: 같은 줄이 두 번) */
-    return list.sort(function (a, b) { return b.at - a.at; }).filter(function (x) { if (seen[x.sg]) return false; seen[x.sg] = 1; return true; });
+    /* 다른 기기끼리 같은 대화(새 기기가 처음 열 때 이어받은 것 · 이어받아 더 쓴 것)는 가장 긴 하나만 — 한쪽이 다른 쪽의 앞부분이면 같은 대화
+       (2026-11-18 검증: 같은 줄이 두 번 · 이어받은 기기가 한 마디 더 하면 (2)·(4) 두 줄) */
+    function head(long, short) { return long.length >= short.length && JSON.stringify(long.slice(0, short.length)) === JSON.stringify(short); }
+    var mt = clean(turns);
+    return list.sort(function (a, b) { return b.turns.length - a.turns.length || b.at - a.at; }).filter(function (x) {
+      if (seen[x.sg] || head(mt, x.turns) || past.some(function (p) { return head(clean(p.turns), x.turns); })) return false;
+      if (list.some(function (y) { return y !== x && y.turns.length > x.turns.length && head(y.turns, x.turns); })) return false;
+      seen[x.sg] = 1; return true;
+    }).sort(function (a, b) { return b.at - a.at; });
   }
   /* 기다리는 동안 몇 초째인지 — 맥에서 답하면 볼트를 여러 개 열어 보느라 1~8분까지 걸린다 (2026-11-18 검증: 「몇십 초」라 했는데 7분 53초) */
   var t0 = 0;
