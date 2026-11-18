@@ -17,7 +17,7 @@ function histPickHtml(){
   var parts = TAB_HIST[tab]; if(!parts || !B()) return "";
   var list = histItems().filter(function(x){ return parts.indexOf(x.part) >= 0 }); if(!list.length) return "";
   var sel = PAST && PAST.brand === cur && parts.indexOf(PAST.part) >= 0 ? PAST.id : "";   // 다른 탭 기록을 보는 중이면 이 탭은 「지금 자료」 그대로
-  return "<select class=\"hsel" + (sel ? " on" : "") + "\" id=\"hsel\" aria-label=\"이 탭 결과 기록 고르기\" title=\"지난번에 돌린 결과로 보기\"><option value=\"\">🕘 지금 자료</option>" +
+  return "<select class=\"hsel" + (sel ? " on" : "") + "\" id=\"hsel\" aria-label=\"이 탭 결과 기록 고르기\" title=\"지난번에 돌린 결과로 보기\"><option value=\"\">🕘 기록</option>" +
     list.map(function(x){ var off = !x.cloud && !impOf("run", x.id);
       return "<option value=\"" + esc(x.id) + "\"" + (x.id === sel ? " selected" : "") + (off ? " disabled" : "") + ">" + (x.id === sel ? "✓ " : "") + (impOf("run", x.id) ? "🔖 " : "") + esc(hAt(x.at) + " · " + x.label + (x.sum ? " · " + x.sum : "")) + (off ? " (볼트에만)" : "") + "</option>" }).join("") + "</select>";
 }
@@ -82,7 +82,7 @@ function viewHist(){
   var latest = {}; all.forEach(function(x){ if(!latest[x.part] || x.at > latest[x.part]) latest[x.part] = x.at });
   var more = ui.histMore || 30;
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>🕘 돌린 기록</h3><span class=\"n\">" + all.length + "개</span></div>" +
-    "<p class=\"lead\">키워드 받기 · 콘텐츠 검색 · 영상 분석 · 추천 · 대본을 돌릴 때마다 맥이 그 결과를 하나씩 남겨요. 브랜드 · 키워드 · 콘텐츠 · 추천 · 대본 탭에서는 칸 이름 줄 오른쪽 「🕘 지금 자료」를 눌러 그 탭 기록을 바로 고를 수 있고, 여기서는 모든 단계 기록을 한꺼번에 봐요. 「열어 보기」를 누르면 그 단계 탭이 그때 결과로 보이고, 「지금 자료로 돌아가기」로 돌아와요. 🔖 하면 「🔖 중요」에 모여요.</p>" +
+    "<p class=\"lead\">키워드 받기 · 콘텐츠 검색 · 영상 분석 · 추천 · 대본을 돌릴 때마다 맥이 그 결과를 하나씩 남겨요. 브랜드 · 키워드 · 콘텐츠 · 추천 · 대본 탭에서는 칸 이름 줄 오른쪽 「🕘 기록」을 눌러 그 탭 기록을 바로 고를 수 있고, 여기서는 모든 단계 기록을 한꺼번에 봐요. 「열어 보기」를 누르면 그 단계 탭이 그때 결과로 보이고, 「지금 자료로 돌아가기」로 돌아와요. 🔖 하면 「🔖 중요」에 모여요.</p>" +
     "<div class=\"chips\">" + HIST_GROUPS.map(function(x){ var n = x[0] === "all" ? all.length : x[0] === "imp" ? all.filter(function(y){ return impOf("run", y.id) }).length : all.filter(function(y){ return x[2].indexOf(y.part) >= 0 }).length;
       return "<button class=\"chip" + (x[0] === g ? " on" : "") + "\" data-ui=\"histG=" + x[0] + "\">" + x[1] + " <span>" + n + "</span></button>" }).join("") + "</div>";
   if(!all.length) return h + "<p class=\"empty\">아직 기록이 없어요. 맥 동기화가 켜져 있으면 처음 한 번 지난 하루 사본으로 채우고, 그다음부터는 돌릴 때마다 남아요.</p></section>";

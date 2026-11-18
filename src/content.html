@@ -48,7 +48,7 @@ html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 �
 details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:600}
 .pastbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF4D6;color:#5a4300;border:1px solid #F0D27A;font-size:14px}.pastbar .mk{width:44px;height:44px}
 .pastpill{position:fixed;z-index:30;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 140px);min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #F0D27A;background:#FFF4D6;color:#5a4300;font:inherit;font-size:13px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.15);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hsel{margin-left:auto;flex:none;width:auto;max-width:240px;padding:7px 10px;border-radius:999px;font-size:14px;font-weight:600}.hsel.on{background:#FFF4D6;border-color:#F0D27A;color:#5a4300}@media (max-width:560px){.hsel{max-width:132px;font-size:16px}}
+.hsel{margin-left:auto;flex:none;width:auto;max-width:240px;padding:7px 10px;border-radius:999px;font-size:14px;font-weight:600}.hsel.on{background:#FFF4D6;border-color:#F0D27A;color:#5a4300}@media (max-width:560px){.hsel{max-width:96px;font-size:16px;padding:7px 8px}}
 #setm .setm-bg{position:fixed;inset:0;z-index:50;background:rgba(20,22,28,.38)}
 #setm .setm{position:fixed;z-index:51;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1100px,calc(100vw - 48px));height:min(820px,calc(100vh - 48px));height:min(820px,calc(100dvh - 48px));display:grid;grid-template-rows:auto minmax(0,1fr);background:var(--bg);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.3);overflow:hidden}
 #setm .setm-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}#setm .setm-h b{font-size:18px}#setm .setm-x{margin-left:auto;width:44px;height:44px;border:0;background:none;font-size:20px;cursor:pointer;color:var(--ink)}
@@ -539,7 +539,8 @@ document.addEventListener("input", function(e){
   if(e.target.dataset.wordin != null) ui.wDraft = e.target.value;
   if(e.target.dataset.dsask != null) ui.dsDraft = e.target.value;   // 설계 「말로 바꾸기」 · 템플릿 이름 — 다시 그려도 쓰던 글을 지킨다
   if(e.target.dataset.tplin != null) ui.tplDraft = e.target.value;
-  if(e.target.dataset.nbq != null) nbInput(e.target);   // ＋ 새 브랜드 — 쓰던 답 지키기
+  if(e.target.dataset.nbq != null) nbInput(e.target);
+  if(e.target.id === "nb-doc") ui.nbDocDraft = e.target.value;   // 붙이던 기획서 — 다시 그려도 지킨다   // ＋ 새 브랜드 — 쓰던 답 지키기
   if(e.target.id === "setq"){ ui.setQ = e.target.value; if(!e.isComposing) render() }   // ⚙ 설정 칸 찾기 — 한글 조합 중엔 그리지 않고 다 쓴 뒤(compositionend)에 (2026-11-18 검증: 「ㄱ기기ㄹ로록록」)
   if(e.target.id === "impq"){ ui.impQ = e.target.value; if(!e.isComposing) render() }   // 🔖 중요 찾기 — 치는 대로 걸러 보기
   if(e.target.dataset.basekw != null) ui.baseDraft = e.target.value;   // 기준 키워드 넣기 칸
@@ -576,13 +577,13 @@ document.addEventListener("keyup", function(e){
 document.addEventListener("keydown", function(e){ if(e.key === "Escape" && ui.set){ setClose() } });   // ⚙ 설정 창 — Esc 로 닫기
 document.addEventListener("change", function(e){
   if(e.target.dataset.nbq != null){ nbChange(e.target); return }   // 칸을 떠나면 저장
-  if(e.target.id === "nb-doc"){ nbSave({ doc: e.target.value.slice(0, 60000) }); return }
+  if(e.target.id === "nb-doc"){ var dv = e.target.value.slice(0, 60000); setTimeout(function(){ nbSave({ doc: dv }); ui.nbDocDraft = null; render() }, 0); return }
   if(e.target.id === "hsel"){ if(e.target.value) histOpen(e.target.value, true); else histClose(); return }   // 🕘 이 탭 결과 기록 고르기
   if(e.target.id === "auto-n"){ var ao6 = autoOpt(); ao6.n = autoN(e.target.value); e.target.value = ao6.n; setS({ autoOpt: ao6 }) }   // 🚀 자동으로 — 편 수 직접 넣기 (1편 아래로는 1편)
   if(e.target.dataset.plan){ var pl = Object.assign({}, S().plan); if(e.target.value) pl[e.target.dataset.plan] = e.target.value; else delete pl[e.target.dataset.plan]; setS({ plan: pl }) }
   if(e.target.id === "nb-file" && e.target.files[0]){
     var f = e.target.files[0], rd = new FileReader();
-    rd.onload = function(){ nbSave({ doc: String(rd.result).slice(0, 60000) }); ui.wOpen = Object.assign({}, ui.wOpen, { "nb:doc": true }); render(); toast("「" + f.name + "」을 붙였어요") };   // ＋ 새 브랜드 — 기획서 파일
+    rd.onload = function(){ ui.nbDocDraft = null; nbSave({ doc: String(rd.result).slice(0, 60000) }); ui.wOpen = Object.assign({}, ui.wOpen, { "nb:doc": true }); render(); toast("「" + f.name + "」을 붙였어요") };   // ＋ 새 브랜드 — 기획서 파일
     rd.readAsText(f);
   }
 });

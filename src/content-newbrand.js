@@ -39,7 +39,7 @@ function viewNewBrand(){
   });
   h += "<section class=\"card\"><details class=\"wbox\" data-wbox=\"nb:doc\"" + ((ui.wOpen || {})["nb:doc"] ? " open" : "") + "><summary><b>기획서가 있으면 붙이기</b><span class=\"wsum\">" + (String(s.doc || "").trim() ? fmt(String(s.doc).length) + "자 붙임" : "선택") + "</span></summary><div class=\"wbody\">" +
     "<p class=\"lead\">회사 소개서 · 채널 기획서 글을 붙이거나 파일(.md · .txt)을 고르면, 정리와 함께 Claude가 읽어요.</p>" +
-    "<textarea id=\"nb-doc\" rows=\"6\" placeholder=\"기획서 내용을 여기에 붙여 넣으세요\">" + esc(s.doc || "") + "</textarea>" +
+    "<textarea id=\"nb-doc\" rows=\"6\" placeholder=\"기획서 내용을 여기에 붙여 넣으세요\">" + esc(ui.nbDocDraft != null ? ui.nbDocDraft : (s.doc || "")) + "</textarea>" +
     "<div class=\"acts\"><input type=\"file\" id=\"nb-file\" accept=\".md,.txt,text/plain,text/markdown\" style=\"font-size:13px;max-width:70%\"></div></div></details></section>";
   /* 정리 — 단계마다 답을 한눈에 */
   h += "<section class=\"card\"><div class=\"card-h\"><h3>정리</h3><span class=\"n\">" + esc(nbAns("name") || "이름 아직") + "</span></div><dl class=\"kv\">" +
@@ -58,9 +58,9 @@ function nbAct(name){
     toast("맥에 보냈어요 — 초안이 되면 브랜드 목록에 「확인 전」으로 떠요"); return true;
   }
   if(name === "nbcopy"){ var t = nbSummaryText(); try{ navigator.clipboard.writeText(t).then(function(){ toast("정리 글을 복사했어요") }, function(){ alert(t) }) }catch(e){ alert(t) } return true }   // 복사가 안 되면 글을 띄운다
-  if(name === "nbclear"){ if(confirm("답한 것과 붙인 기획서를 모두 지우고 새로 시작할까요?")){ ui.nbDraft = {}; SETS._newbrand = { answers: {}, updatedAt: new Date().toISOString() }; saveSet("_newbrand"); render() } return true }
+  if(name === "nbclear"){ if(confirm("답한 것과 붙인 기획서를 모두 지우고 새로 시작할까요?")){ ui.nbDraft = {}; ui.nbDocDraft = null; SETS._newbrand = { answers: {}, updatedAt: new Date().toISOString() }; saveSet("_newbrand"); render() } return true }
   return false;
 }
 /* 쓰는 중엔 화면 값(ui.nbDraft)만, 칸을 떠날 때(change) 저장 — 다시 그려도 쓰던 글이 남는다 */
 function nbInput(el){ ui.nbDraft = Object.assign({}, ui.nbDraft); ui.nbDraft[el.dataset.nbq] = el.value }
-function nbChange(el){ var a = Object.assign({}, nbState().answers); var v = el.value.trim(); if(v) a[el.dataset.nbq] = el.value; else delete a[el.dataset.nbq]; nbSave({ answers: a }); setTimeout(render, 0) }   // 다음 칸으로 커서가 옮겨 간 뒤 그린다 — 칸마다 id(nbq-…)가 있어 render 가 그 칸에 커서를 돌려준다 (2026-11-18 검증: Tab 뒤 친 글이 사라짐)
+function nbChange(el){ var a = Object.assign({}, nbState().answers); var v = el.value.trim(); if(v) a[el.dataset.nbq] = el.value; else delete a[el.dataset.nbq]; setTimeout(function(){ nbSave({ answers: a }); render() }, 0) }   // 저장도 그리기도 다음 칸으로 커서가 옮겨 간 뒤 — 저장 알림이 바로 다시 그려 Tab 이 갈 칸을 잃었다(2026-11-18 검증) — 칸마다 id(nbq-…)가 있어 render 가 그 칸에 커서를 돌려준다 (2026-11-18 검증: Tab 뒤 친 글이 사라짐)
