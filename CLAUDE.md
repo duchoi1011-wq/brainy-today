@@ -22,6 +22,6 @@
 ## 순서
 
 1. 시작: `git pull` — 앱 안 「앱 고치기」가 GitHub Actions(`.github/workflows/brainy-edit.yml`)로 먼저 올렸을 수 있다.
-2. 끝: `python3 build.py` → `python3 .github/check_apps.py` → 실제 화면(데스크톱·폰 너비)에서 확인.
+2. 끝: `python3 build.py` → `python3 .github/check_apps.py` → 실제 화면(데스크톱·폰 너비)에서 확인. **check_apps.py 결과를 `| tail` 로 잘라 `&&` 로 커밋·푸시를 잇지 않는다** — 파이프는 실패를 삼켜 문법 오류 판이 올라간다(2026-11-18 2분간 콘텐츠 기획이 깨진 채 배포). `check_apps.py && git commit …` 처럼 그대로 잇는다.
 3. Brainy 대화는 Supabase Edge Function `supabase/functions/brainy-ai` 가 답하고, 못 하면 맥(볼트 `.claude/scripts/ai_runner.py`)으로 넘긴다. 함수를 고치면 Supabase 에 다시 배포한다.
 4. 비밀값: Supabase `ANTHROPIC_API_KEY`·`BRAINY_GITHUB_TOKEN`, GitHub Actions `ANTHROPIC_API_KEY`. 값은 어디에도 적지 않는다.
