@@ -26,7 +26,7 @@ function critWeights(){
   var r = 0; c.order.forEach(function(id){ w[id] = c.off[id] ? 0 : RANK_W[r++] || 1 });
   return w;
 }
-function recCritPanel(rd){   // 설계 탭 「추천」 칸 몸통 (content-design.js) — 추천 칸에는 recCritHtml 의 한 줄만
+function recCritPanel(rd){   // ⚙ 설정 › 단계별 기준 「추천」 칸 몸통 (content-design.js) — 추천 칸에는 recCritHtml 의 한 줄만
   var c = recCrit(), s = S(), f = (SETS[cur] || {}).favc || {}, favIds = Object.keys(f), pins = Object.keys(s.pin).filter(function(k){ return s.pin[k] && !s.ex[k] });
   var r = part("rec"), last = r && r.updatedAt ? Date.parse(r.updatedAt) : 0, fresh = favIds.filter(function(v){ return !last || Date.parse(f[v].at) > last });
   var nRole = roleNames().reduce(function(t, n){ return t + (s.roles[n] || 0) }, 0), busy = openCmd("recommend");
@@ -61,7 +61,7 @@ function recCritPanel(rd){   // 설계 탭 「추천」 칸 몸통 (content-desi
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"recommend\"" + (busy || !nRole || !hasMat ? " disabled" : "") + ">" + (busy ? "맥이 추천 만드는 중…" : rd ? "이 기준으로 추천 새로 받기" : "이 기준으로 추천 받기") + "</button>" +
     (!hasMat ? "<span class=\"lead\" style=\"margin:0\">켠 재료가 비어 있어요.</span>" : !nRole ? "<span class=\"lead\" style=\"margin:0\">편 수가 0이에요.</span>" : "") + "</div></div>";
 }
-/* 추천 칸 맨 위 — 기준은 한 줄과 「설계에서 바꾸기」, 그리고 추천 받기 (2026-11-18 동욱 "각 단계마다 통일된 UX — 설정은 한 곳에서") */
+/* 추천 칸 맨 위 — 기준은 한 줄과 「설정에서 바꾸기」, 그리고 추천 받기 (2026-11-18 동욱 "각 단계마다 통일된 UX — 설정은 한 곳에서") */
 function recCritHtml(rd){
   var c = recCrit(), s = S(), favIds = Object.keys((SETS[cur] || {}).favc || {}), pins = Object.keys(s.pin).filter(function(k){ return s.pin[k] && !s.ex[k] });
   var nRole = roleNames().reduce(function(t, n){ return t + (s.roles[n] || 0) }, 0), busy = openCmd("recommend");

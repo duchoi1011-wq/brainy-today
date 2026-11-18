@@ -1,4 +1,4 @@
-/* ── 설계 탭 — 단계마다 자동 추천 기준을 한 곳에서, 같은 모양으로 (2026-11-18 동욱) ──
+/* ── ⚙ 설정 › 단계별 기준 (옛 설계 탭) — 단계마다 자동 추천 기준을 한 곳에서, 같은 모양으로 (2026-11-18 동욱) ──
    "각 워크플로우마다 자동 추천한 기준을 설정에서 설계를 조율할 수 있게, 템플릿화할 수 있게. 지금은 흩어져 있는데 각 단계마다 통일된 UX/UI.
     설계에서도 대화창이 있어서 내가 요구하면 그에 맞게 세팅도 되고."
    단계 칸 = 번호 · 이름 · 무엇을 정하나 · 「지금」 한 줄 · 접힌 「바꾸기」(그 단계의 조절 칸). 각 단계 탭에는 dsLine(한 줄 + 「설정에서 바꾸기 →」)만 둔다.
@@ -34,10 +34,10 @@ function viewDesign(){
     "<div class=\"row2\"><input type=\"text\" id=\"ds-ask\" data-dsask=\"1\" placeholder=\"예: 추천은 좋아요 많은 댓글을 제일 먼저 보고, 구독자보다 3배 이상 본 영상만\" value=\"" + esc(ui.dsDraft || "") + "\"><button class=\"btn primary\" data-act=\"dsask\">바꿔 줘</button></div>" +
     "<p class=\"it-d\" style=\"margin-top:4px\">✦ Brainy 대화가 열려 지금 기준을 읽고 바꿔요. 무엇을 어떻게 바꿨는지 대화에 남아요.</p></section>";
   DS.forEach(function(st, i){
-    var open = ui.dsOpen === st.id;
+    var open = ui.dsOpen === st.id || (ui.wOpen || {})["ds:" + st.id];   // 손으로 편 「바꾸기」도 다시 그려도 펼친 채 (2026-11-18 검증: 누를 때마다 접힘)
     h += "<section class=\"card ds\" id=\"ds-" + st.id + "\"><div class=\"card-h\"><h3><span class=\"num muted\">" + (i + 1) + "</span> " + esc(st.name) + "</h3><span class=\"n\">" + (dsChanged(st) ? "바꿈" : "기본") + "</span></div>" +
       "<p class=\"lead\">" + esc(st.what) + "</p><p class=\"dsnow\"><b>지금</b> " + esc(st.sum()) + "</p>" +
-      "<details class=\"wbox\"" + (open ? " open" : "") + "><summary><b>바꾸기</b>" + (dsChanged(st) ? "<span class=\"wsum\">기본값으로 되돌리기는 맨 아래</span>" : "") + "</summary><div class=\"wbody\">" + st.body() +
+      "<details class=\"wbox\" data-wbox=\"ds:" + st.id + "\"" + (open ? " open" : "") + "><summary><b>바꾸기</b>" + (dsChanged(st) ? "<span class=\"wsum\">기본값으로 되돌리기는 맨 아래</span>" : "") + "</summary><div class=\"wbody\">" + st.body() +
       (dsChanged(st) ? "<div class=\"acts\"><button class=\"btn sm\" data-act=\"dsreset\" data-v=\"" + st.id + "\">이 단계 기본값으로</button></div>" : "") + "</div></details></section>";
   });
   h += "<section class=\"card\"><div class=\"card-h\"><h3>Claude 모드</h3></div><p class=\"dsnow\"><b>지금</b> " + esc(claudeSummary()) + "</p><div class=\"acts\"><button class=\"btn sm\" data-setgo=\"claude\">Claude 모드 칸으로 →</button></div></section>";
@@ -50,19 +50,19 @@ function viewTpl(){
   if(!B()) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var list = tplList(), c = SETS[cur] || {};
   return "<section class=\"card\"><div class=\"card-h\"><h3>템플릿</h3><span class=\"n\">" + list.length + "개</span></div>" +
-    "<p class=\"lead\">지금 브랜드(" + esc(B().name) + ")의 설계 — 단어 받는 곳 · 키워드 순위 · 영상 분석 · 추천 기준과 편 수 · 참고 페이지 범위 — 를 한 벌로 저장해요. 다른 브랜드를 열고 「적용」하면 그 브랜드의 설계가 이 한 벌로 바뀌어요.</p>" +
-    "<div class=\"row2\"><input type=\"text\" id=\"tpl-name\" data-tplin=\"1\" maxlength=\"30\" placeholder=\"템플릿 이름 (예: B2B 문의형 · 개인 채널 성장형)\" value=\"" + esc(ui.tplDraft || "") + "\"><button class=\"btn primary\" data-act=\"tplsave\">지금 설계 저장</button></div></section>" +
+    "<p class=\"lead\">지금 브랜드(" + esc(B().name) + ")의 단계별 기준 — 단어 받는 곳 · 키워드 순위 · 영상 분석 · 추천 기준과 편 수 · 참고 페이지 범위 — 를 한 벌로 저장해요. 다른 브랜드를 열고 「적용」하면 그 브랜드의 설계가 이 한 벌로 바뀌어요.</p>" +
+    "<div class=\"row2\"><input type=\"text\" id=\"tpl-name\" data-tplin=\"1\" maxlength=\"30\" placeholder=\"템플릿 이름 (예: B2B 문의형 · 개인 채널 성장형)\" value=\"" + esc(ui.tplDraft || "") + "\"><button class=\"btn primary\" data-act=\"tplsave\">지금 기준 저장</button></div></section>" +
     "<section class=\"card\"><div class=\"list\">" + (list.map(function(t){
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(t.name) + "</b> <span class=\"num muted\">" + esc(String(t.at || "").slice(0, 10)) + " · " + esc(t.from || "") + "에서</span></div>" +
         "<div class=\"it-d\">" + DS.filter(function(st){ return st.keys.some(function(k){ return t.values[k] != null }) }).map(function(st){ return st.name.split(" — ")[0] }).join(" · ") + " 바꾼 값 · 나머지는 기본</div></div>" +
         "<button class=\"btn sm primary\" data-act=\"tplapply\" data-v=\"" + esc(t.id) + "\">" + esc(B().name) + "에 적용</button><button class=\"mk no\" data-act=\"tpldel\" data-v=\"" + esc(t.id) + "\" aria-label=\"" + esc(t.name) + " 지우기\" title=\"지우기\">✕</button></div>" }).join("") ||
-      "<p class=\"empty\">아직 저장한 템플릿이 없어요. 설계를 맞춘 뒤 위에서 이름을 붙여 저장하세요.</p>") + "</div>" +
-    "<div class=\"acts\"><button class=\"btn sm\" data-act=\"dsresetall\"" + (DS_KEYS.some(function(k){ return c[k] != null }) ? "" : " disabled") + ">" + esc(B().name) + " 설계 전부 기본값으로</button></div></section>";
+      "<p class=\"empty\">아직 저장한 템플릿이 없어요. 단계별 기준을 맞춘 뒤 위에서 이름을 붙여 저장하세요.</p>") + "</div>" +
+    "<div class=\"acts\"><button class=\"btn sm\" data-act=\"dsresetall\"" + (DS_KEYS.some(function(k){ return c[k] != null }) ? "" : " disabled") + ">" + esc(B().name) + " 단계별 기준 전부 기본값으로</button></div></section>";
 }
 function designAct(name, el){
   var v = el.dataset.v;
   if(name === "dsreset"){ var st = dsStage(v), p = {}; st.keys.forEach(function(k){ p[k] = null }); if(confirm("「" + st.name + "」을 기본값으로 되돌릴까요?")) setS(p); return true }
-  if(name === "dsresetall"){ var p2 = {}; DS_KEYS.forEach(function(k){ p2[k] = null }); if(confirm(B().name + "의 설계를 전부 기본값으로 되돌릴까요?")) setS(p2); return true }
+  if(name === "dsresetall"){ var p2 = {}; DS_KEYS.forEach(function(k){ p2[k] = null }); if(confirm(B().name + "의 단계별 기준을 전부 기본값으로 되돌릴까요?")) setS(p2); return true }
   if(name === "dsask"){ var inp = document.getElementById("ds-ask"), q = ((inp && inp.value) || "").trim(); if(!q){ if(inp) inp.focus(); return true }
     ui.dsDraft = ""; if(window.BRAINY_CHAT) window.BRAINY_CHAT.ask("[설계] " + q); else alert("Brainy 대화를 열 수 없어요 — 로그인을 확인해 주세요."); render(); return true }   // 「[설계] …」를 어떻게 바꿀지는 대화 규칙(content-brainy.js rules)에 — 대화창엔 동욱 말만 보이게
   /* 템플릿 저장 — Enter(한글 조합 끝)로 눌러도 쓰던 이름(ui.tplDraft)으로 */
@@ -71,7 +71,7 @@ function designAct(name, el){
     var list = tplList().filter(function(t){ return t.name !== nm }); list.unshift({ id: "t" + Date.now().toString(36), name: nm, from: B().name, at: new Date().toISOString(), values: vals });
     ui.tplDraft = ""; tplSave(list); toast("「" + nm + "」 템플릿을 저장했어요"); return true }
   if(name === "tplapply"){ var t = tplList().filter(function(x){ return x.id === v })[0]; if(!t) return true;
-    if(!confirm("「" + t.name + "」을 " + B().name + "에 적용할까요? 지금 설계는 이 템플릿 값으로 바뀌어요.")) return true;
+    if(!confirm("「" + t.name + "」을 " + B().name + "에 적용할까요? 지금 단계별 기준은 이 템플릿 값으로 바뀌어요.")) return true;
     var p3 = {}; DS_KEYS.forEach(function(k){ p3[k] = t.values[k] != null ? JSON.parse(JSON.stringify(t.values[k])) : null }); setS(p3); toast("「" + t.name + "」을 적용했어요"); return true }
   if(name === "tpldel"){ var t2 = tplList().filter(function(x){ return x.id === v })[0]; if(t2 && confirm("「" + t2.name + "」 템플릿을 지울까요?")) tplSave(tplList().filter(function(x){ return x.id !== v })); return true }
   return false;

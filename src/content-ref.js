@@ -176,7 +176,7 @@ function anaTargets(words){
   var by = {}; its.filter(function(x){ return relOf(x) > 0 }).forEach(function(x){ (by[x.kw] = by[x.kw] || []).push(x) });
   return Object.keys(by).reduce(function(a, k){ return a.concat(by[k].sort(function(p, q){ return srScore(q, words) - srScore(p, words) }).slice(0, o.topN)) }, []);
 }
-/* 영상 분석 — 무엇을 읽을지·어떤 영상을 읽을지는 설계 탭 「콘텐츠」 칸(anaOptHtml), 여기는 한 줄과 분석하기 버튼 */
+/* 영상 분석 — 무엇을 읽을지·어떤 영상을 읽을지는 ⚙ 설정 › 단계별 기준 「콘텐츠」 칸(anaOptHtml), 여기는 한 줄과 분석하기 버튼 */
 function anaOptHtml(){
   var o = anaOpt();
   function tg(k, label){ return "<button class=\"chip" + (o[k] ? " on" : "") + "\" data-act=\"anaopt\" data-k=\"" + k + "\">" + label + "</button>" }

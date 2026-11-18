@@ -82,7 +82,7 @@ function rpSkippedHtml(cd, pick){
   return "<details class=\"gone\"><summary>뺀 후보 " + sk.length + "곳 — 되돌리기</summary><div class=\"list\">" + sk.map(function(c){
     return "<div class=\"it off\"><div class=\"it-m\"><div>" + esc(c.name) + (c.seed ? " <span class=\"num muted\">" + esc(c.seed) + "</span>" : "") + "</div></div><button class=\"btn sm\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"\">↺ 되돌리기</button></div>" }).join("") + "</div></details>";
 }
-/* 참고 페이지 찾는 범위 — 설계 탭 「참고 페이지」 칸 (content-design.js) */
+/* 참고 페이지 찾는 범위 — ⚙ 설정 › 단계별 기준 「참고 페이지」 칸 (content-design.js) */
 function rpScopeHtml(){
   var o = rpOpt(), sd = seedsOf();
   return "<h4>어떤 단어로 찾을까</h4><div class=\"chips\">" + (sd.map(function(x){ var off = o.words && o.words[x.word] === false;
