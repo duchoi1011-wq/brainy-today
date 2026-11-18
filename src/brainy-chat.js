@@ -32,14 +32,15 @@
   var turns = [], busy = false, ctl = null, sample = null, openOld = false, unread = false;
   /* 대화 기록 — 이 기기(localStorage)와 앱 저장소(bchat/<앱> — 홈 대화의 chat 과 따로)에 같이 둔다. 다른 기기·설치한 앱에서도 같은 기록, 「새 대화」는 지우지 않고 「지난 대화」로 옮긴다
      (2026-11-18 동욱 "대화 자체의 이전 기록이 없어"). 저장소 문서 {at, cur: 지금 대화, past: [{at, title, turns}] 20개까지} */
-  var past = [], stamp = 0, DBC = null, PATH = "bchat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0;
-  try { turns = JSON.parse(localStorage.getItem(KEY) || "[]"); past = JSON.parse(localStorage.getItem(KEY + ".past") || "[]"); stamp = +(localStorage.getItem(KEY + ".at") || 0); } catch (e) {}
+  var past = [], gone = [], stamp = 0, DBC = null, PATH = "bchat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0;
+  try { turns = JSON.parse(localStorage.getItem(KEY) || "[]"); past = JSON.parse(localStorage.getItem(KEY + ".past") || "[]"); stamp = +(localStorage.getItem(KEY + ".at") || 0); gone = JSON.parse(localStorage.getItem(KEY + ".gone") || "[]"); } catch (e) {}
+  function pkey(p) { return p.at + "|" + p.title; }   // 지난 대화 하나의 이름표 — 지운 것(gone)은 다른 기기 기록과 합칠 때도 되살리지 않는다
   function clean(list) { return list.filter(function (t) { return t.content && !t.err; }).slice(-40).map(function (t) { var c = { role: t.role, content: t.content }; if (t.imgs) c.imgs = t.imgs; return c; }); }
   function keep() {
     stamp = Date.now();
-    try { localStorage.setItem(KEY, JSON.stringify(clean(turns))); localStorage.setItem(KEY + ".past", JSON.stringify(past)); localStorage.setItem(KEY + ".at", String(stamp)); } catch (e) {}
+    try { localStorage.setItem(KEY, JSON.stringify(clean(turns))); localStorage.setItem(KEY + ".past", JSON.stringify(past)); localStorage.setItem(KEY + ".at", String(stamp)); localStorage.setItem(KEY + ".gone", JSON.stringify(gone)); } catch (e) {}
     clearTimeout(saveT2);
-    saveT2 = setTimeout(function () { if (DBC) DBC.doc(PATH).set({ at: stamp, cur: clean(turns), past: past.slice(0, 20) }).catch(function () {}); }, 1200);
+    saveT2 = setTimeout(function () { if (DBC) DBC.doc(PATH).set({ at: stamp, cur: clean(turns), past: past.slice(0, 20), gone: gone.slice(-100) }).catch(function () {}); }, 1200);
   }
   function archive() { var c = clean(turns); if (!c.some(function (t) { return t.role === "user"; })) return; var first = c.filter(function (t) { return t.role === "user"; })[0].content; past.unshift({ at: Date.now(), title: String(first).slice(0, 40), turns: c }); past = past.slice(0, 20); }
   function day(at) { var d = new Date(at); return (d.getMonth() + 1) + "/" + d.getDate() + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
@@ -140,7 +141,7 @@
     if (showHist) {   // 지난 대화 목록 · 한 대화 보기
       if (viewPast >= 0 && past[viewPast]) {
         var pv = past[viewPast];
-        h += '<div class="bc-hello"><b>' + esc(pv.title) + '</b><p>' + day(pv.at) + ' · 지난 대화</p><div class="bc-chips"><button type="button" class="bc-chip" data-bc="resume">이 대화 이어가기</button><button type="button" class="bc-chip" data-bc="hist">목록으로</button></div></div>';
+        h += '<div class="bc-hello"><b>' + esc(pv.title) + '</b><p>' + day(pv.at) + ' · 지난 대화</p><div class="bc-chips"><button type="button" class="bc-chip" data-bc="resume">이 대화 이어가기</button><button type="button" class="bc-chip" data-bc="hist">목록으로</button><button type="button" class="bc-chip" data-bc="delpast">이 대화 지우기</button></div></div>';
         pv.turns.forEach(function (t) { h += '<div class="bc-b ' + (t.role === "user" ? "bc-me" : "bc-ai") + '">' + (t.imgs ? '<span class="bc-shot-n">📷 사진 ' + t.imgs + "장</span>" : "") + esc(t.content) + "</div>"; });
       } else {
         h += '<div class="bc-hello"><b>지난 대화 ' + past.length + '개</b><p>' + (past.length ? "누르면 그 대화를 보고, 이어갈 수 있어요." : "아직 없어요. ↺ 새 대화를 누르면 지금 대화가 여기로 와요.") + '</p><div class="bc-chips"><button type="button" class="bc-chip" data-bc="hist">지금 대화로</button></div></div>';
@@ -229,6 +230,7 @@
     if (a === "close") return close();
     if (a === "new") { if (ctl) ctl.abort(); archive(); turns = []; showHist = false; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); return; }
     if (a === "hist") { showHist = !(showHist && viewPast < 0); viewPast = -1; render(); return; }
+    if (a === "delpast") { var dp = past[viewPast]; if (dp && confirm("이 지난 대화를 지울까요? 다른 기기에서도 지워져요.")) { gone.push(pkey(dp)); past.splice(viewPast, 1); viewPast = -1; keep(); render(); } return; }
     if (a === "resume") { var pr = past[viewPast]; if (pr && !busy) { past.splice(viewPast, 1); archive(); turns = pr.turns.slice(); showHist = false; viewPast = -1; keep(); render(); } return; }
     if (a === "old") { openOld = !openOld; render(); return; }
     var c = b.getAttribute("data-bc-chip");
@@ -265,11 +267,12 @@
         if ((d.at || 0) > stamp && !busy) {   // 다른 기기가 더 새로 썼다 — 덮지 않고 합친다: 지난 대화는 모두 모으고, 이 기기의 지금 대화가 다르면 지난 대화로 옮긴다
           var sig = function (list) { return JSON.stringify(clean(list || [])); };
           var mine = clean(turns), theirs = d.cur || [];
-          var all = (d.past || []).concat(past), seen = {}; past = all.filter(function (p) { var k = p.at + "|" + p.title; if (seen[k]) return false; seen[k] = 1; return true; }).sort(function (a, b) { return b.at - a.at; });
+          gone = gone.concat((d.gone || []).filter(function (k) { return gone.indexOf(k) < 0; }));
+          var all = (d.past || []).concat(past), seen = {}; past = all.filter(function (p) { var k = pkey(p); if (seen[k] || gone.indexOf(k) >= 0) return false; seen[k] = 1; return true; }).sort(function (a, b) { return b.at - a.at; });
           if (mine.some(function (t) { return t.role === "user"; }) && sig(mine) !== sig(theirs) && !past.some(function (p) { return sig(p.turns) === sig(mine); })) { var f = mine.filter(function (t) { return t.role === "user"; })[0].content; past.unshift({ at: stamp || Date.now(), title: String(f).slice(0, 40), turns: mine }); }
           past = past.slice(0, 20); turns = theirs; stamp = d.at;
           try { localStorage.setItem(KEY, JSON.stringify(turns)); localStorage.setItem(KEY + ".past", JSON.stringify(past)); localStorage.setItem(KEY + ".at", String(stamp)); } catch (e) {}
-          if (JSON.stringify(past) !== JSON.stringify(d.past || [])) keep();   // 합친 지난 대화를 저장소에도
+          if (JSON.stringify(past) !== JSON.stringify(d.past || []) || gone.length !== (d.gone || []).length) keep();   // 합친 지난 대화를 저장소에도
           if (!box.hidden) render();
         }
       });
