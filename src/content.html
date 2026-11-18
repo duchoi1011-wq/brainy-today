@@ -49,6 +49,16 @@ details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:60
 .pastbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF4D6;color:#5a4300;border:1px solid #F0D27A;font-size:14px}.pastbar .mk{width:44px;height:44px}
 .pastpill{position:fixed;z-index:30;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 140px);min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #F0D27A;background:#FFF4D6;color:#5a4300;font:inherit;font-size:13px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.15);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hsel{margin-left:auto;flex:none;width:auto;max-width:240px;padding:7px 10px;border-radius:999px;font-size:14px;font-weight:600}.hsel.on{background:#FFF4D6;border-color:#F0D27A;color:#5a4300}@media (max-width:560px){.hsel{max-width:132px;font-size:16px}}
+#setm .setm-bg{position:fixed;inset:0;z-index:50;background:rgba(20,22,28,.38)}
+#setm .setm{position:fixed;z-index:51;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1100px,calc(100vw - 48px));height:min(820px,calc(100vh - 48px));height:min(820px,calc(100dvh - 48px));display:grid;grid-template-rows:auto minmax(0,1fr);background:var(--bg);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.3);overflow:hidden}
+#setm .setm-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}#setm .setm-h b{font-size:18px}#setm .setm-x{margin-left:auto;width:44px;height:44px;border:0;background:none;font-size:20px;cursor:pointer;color:var(--ink)}
+#setm .setm-b{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:0}
+#setm .setm-nav{border-right:1px solid var(--line);padding:12px;overflow:auto}#setm .setm-nav input{margin-bottom:8px}
+#setm .sg{margin:14px 8px 4px;font-size:13px;color:var(--muted);font-weight:600}
+#setm .si{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 12px;border:0;border-radius:10px;background:none;font:inherit;font-size:15px;color:var(--ink);text-align:left;cursor:pointer}#setm .si:hover{background:var(--surface-2)}#setm .si.on{background:var(--surface-2);font-weight:700}#setm .sic{width:22px;text-align:center}
+#setm .setm-c{overflow:auto;padding:18px 22px 40px}#setm .setm-c h2{margin:0 0 4px;font-size:20px}
+html.setm-open,html.setm-open body{overflow:hidden}
+@media (max-width:760px){#setm .setm{left:0;top:0;transform:none;width:100vw;height:100vh;height:100dvh;border-radius:0}#setm .setm-b{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}#setm .setm-nav{border-right:0;border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:8px 12px;align-items:center}#setm .setm-nav input,#setm .sg{display:none}#setm .si{width:auto;flex:none;white-space:nowrap;border:1px solid var(--line);border-radius:999px;min-height:40px;padding:6px 14px}#setm .setm-c{padding:14px 16px 40px}}
 .hday{margin:12px 0 2px;font-size:13px;font-weight:700;color:var(--muted)}.list .it.on{outline:2px solid var(--accent);outline-offset:-2px}
 .mk.imp[aria-pressed=true]{background:#6B4FD8;border-color:#6B4FD8;color:#fff}
 .runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
@@ -229,7 +239,7 @@ details.gone{margin-top:12px}details.gone .it{padding:8px 0}
   <header>
     <div class="brand">
       <h1>콘텐츠 기획</h1>
-      <small class="links muted"><a href="/brainy-today/home/">← Brainy 홈</a> · <button type="button" class="linkbtn" data-go="design">⚙ 설계</button> · <button type="button" data-brainy="out">로그아웃</button></small>
+      <small class="links muted"><a href="/brainy-today/home/">← Brainy 홈</a> · <button type="button" class="linkbtn" data-go="design">⚙ 설정</button> · <button type="button" data-brainy="out">로그아웃</button></small>
     </div>
     <div id="brands" role="tablist" aria-label="브랜드"></div>
     <nav id="nav" role="tablist" aria-label="단계"></nav>
@@ -248,7 +258,7 @@ var SETS = {};                      // 브랜드 id → 설정
 var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부터)
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드
 var WANT = cur; if(new URLSearchParams(location.search).get("b")) save("ct.brand", cur);   // 열려고 한 브랜드 — 자료가 덜 들어온 순간 다른 브랜드로 바뀌어도, 들어오면 되돌린다 (2026-11-18 검증) — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
-var tab = load("ct.tab", "sum");
+var tab = load("ct.tab", "sum"); if(["design", "tpl", "claude", "hist", "imp"].indexOf(tab) >= 0) tab = "sum";   // 설계 · 기록 칸은 ⚙ 설정 창으로 옮김 (content-settings.js)
 var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
 /* 탭은 넷 — 한 탭 안을 칸(subs)으로 나눈다 (2026-11-17 동욱: "한눈에·브랜드는 한 탭 안에 나누고, 키워드는 따로, 콘텐츠·추천 한 탭, 구축·대본 한 탭").
    tab 변수는 칸 id(sum·brand·kw·ref·rec·build·refpage·script) 그대로 — 위 탭을 누르면 그 탭에서 마지막으로 본 칸이 열린다 */
@@ -256,8 +266,7 @@ var TABS = [
   { name: "브랜드", subs: [["sum", "한눈에"], ["brand", "브랜드"]] },
   { name: "키워드", subs: [["kw", "씨앗별 검색어"], ["kwall", "전체 키워드"]] },
   { name: "콘텐츠", subs: [["ref", "콘텐츠"], ["rec", "추천"]] },
-  { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] },
-  { name: "설계", subs: [["design", "단계별 기준"], ["tpl", "템플릿"], ["claude", "Claude 모드"], ["hist", "🕘 돌린 기록"], ["imp", "🔖 중요"]] }   // 기록 모아 보기 · 🔖 중요도 설정 쪽에 (2026-11-18 동욱 "앱의 설정 같은 데서") — 단계 탭에서는 칸 줄 오른쪽 🕘 고르기로 바로 (content-hist.js)
+  { name: "대본", subs: [["build", "구축"], ["refpage", "참고 페이지"], ["script", "대본"]] }
 ];
 function tabGroup(id){ return TABS.filter(function(g){ return g.subs.some(function(x){ return x[0] === id }) })[0] || TABS[0] }
 var PARTS = { cmts: ".cmts", kwrec: ".kwrec", wordrec: ".wordrec", auto: ".auto", wordcand: ".wordcand", analysis: ".analysis", ideas: ".ideas", search: ".search", chancand: ".chancand", kw: ".kw", trend: ".trend", ref: ".ref", live: ".live", chan: ".chan", rec: ".rec", build: ".build", script: ".script", source: ".source", log: ".log", hist: ".hist" };
@@ -416,6 +425,7 @@ function runHtml(kinds){
 /*@include content-words.js*/
 /*@include content-design.js*/
 /*@include content-hist.js*/
+/*@include content-settings.js*/
 /*@include content-prompt.js*/
 /*@include content-auto.js*/
 /*@include content-profile.js*/
@@ -488,23 +498,29 @@ function render(){
   document.getElementById("nav").innerHTML = TABS.map(function(g, i){ var to = last[g.name] && g.subs.some(function(x){ return x[0] === last[g.name] }) ? last[g.name] : g.subs[0][0];
     return "<button role=\"tab\" class=\"" + (g === grp ? "on" : "") + "\" data-tab=\"" + to + "\"><span>" + (i + 1) + "</span>" + g.name + "</button>" }).join("");
   var sub = grp.subs.length > 1 ? "<div class=\"subnav\" role=\"tablist\">" + grp.subs.map(function(x){ return "<button role=\"tab\" class=\"" + (tab === x[0] ? "on" : "") + "\" data-tab=\"" + x[0] + "\">" + x[1] + "</button>" }).join("") + histPickHtml() + "</div>" : histPickHtml() ? "<div class=\"subnav\">" + histPickHtml() + "</div>" : "";
-  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, kwall: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, claude: viewClaude, script: viewScript, design: viewDesign, tpl: viewTpl, hist: viewHist, imp: viewImp }[tab] || viewSum;
+  var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, kwall: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, script: viewScript }[tab] || viewSum;
   ui.later = false;
   /* 초점 돌려주기는 앱 화면(#view) 안 칸만 — 구석 Brainy 대화창(#bc-text)에 쓰는 중에 맥 자료가 와서 다시 그리면, 그 칸의 커서를 다시 놓다가 한글 조합이 끊겨 글이 깨졌다 (2026-11-18 동욱: "대화창을 쓰면 글이 깨진다") */
-  var act0 = document.activeElement; if(act0 && !document.getElementById("view").contains(act0)) act0 = null;
+  var act0 = document.activeElement, sm0 = document.getElementById("setm"); if(act0 && !document.getElementById("view").contains(act0) && !(sm0 && sm0.contains(act0))) act0 = null;   // ⚙ 설정 창 안 입력칸도
   var key = act0 && (act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
   var v = function(){ return ({ build: 1, refpage: 1, script: 1 }[tab] && B() ? baseBarHtml() : "") + v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") + undoToastHtml() };   // 대본 탭 세 칸 맨 위에 기준 키워드 · 영상 주제   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
   var selA = null, selB = null; try{ if(act0 && /^(INPUT|TEXTAREA)$/.test(act0.tagName)){ selA = act0.selectionStart; selB = act0.selectionEnd } }catch(e){}   // 커서 위치도 지킨다 (2026-11-18 검증: 다시 그리면 커서가 맨 앞으로 가서 이어 쓴 글이 앞에 붙음)
   document.getElementById("view").innerHTML = sub + pastBarHtml() + runHtml(Object.keys(KIND)) + promptBarHtml() + v();   // ✍️ 탭마다 내 말로 끼어들기
+  var sm = document.getElementById("setm"); if(!sm){ sm = document.createElement("div"); sm.id = "setm"; document.body.appendChild(sm) }
+  var keepTop = (document.getElementById("setm-c") || {}).scrollTop || 0; sm.innerHTML = settingsHtml(); var smc = document.getElementById("setm-c"); if(smc) smc.scrollTop = keepTop;   // ⚙ 설정 창 — 다시 그려도 보던 자리 그대로
+  document.documentElement.classList.toggle("setm-open", !!ui.set);
   if(key){ var back = document.querySelector(key); if(back){ back.focus({ preventScroll: true }); try{ if(selA != null && back.setSelectionRange) back.setSelectionRange(selA, selB) }catch(e){} } }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
 }
 
 document.addEventListener("click", function(e){
-  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-go]");
+  var t = e.target.closest("[data-tab],[data-brand],[data-act],[data-hide],[data-set],[data-ui],[data-pin],[data-ex],[data-pick],[data-copy],[data-go],[data-setgo],[data-setclose]");
   if(!t) return;
   var d = t.dataset;
-  if(d.go){ var gp = d.go.split("|"); if(gp[1]){ var gk = gp[1].split("="); ui[gk[0]] = gk[1] } tab = gp[0]; save("ct.tab", tab); window.scrollTo(0, 0); render();
-    if(tab === "design" && ui.dsOpen){ var dz = document.getElementById("ds-" + ui.dsOpen); if(dz) window.scrollTo(0, dz.getBoundingClientRect().top + window.scrollY - 120) }   // 「설계에서 바꾸기 →」는 그 단계 칸으로
+  if(d.setclose){ setClose(); return }   // ⚙ 설정 창 닫기 (✕ · 바깥)
+  if(d.setgo){ ui.set = d.setgo; save("ct.set.last", ui.set); render(); var sc0 = document.getElementById("setm-c"); if(sc0) sc0.scrollTop = 0; return }   // 설정 창 왼쪽 목록
+  if(d.go){ var gp = d.go.split("|"); if(gp[1]){ var gk = gp[1].split("="); ui[gk[0]] = gk[1] }
+    if(isSet(gp[0])){ setOpen(gp[0]); var sc = document.getElementById("setm-c"), dz = gp[0] === "design" && ui.dsOpen && document.getElementById("ds-" + ui.dsOpen); if(sc){ sc.scrollTop = dz ? dz.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 12 : 0 } return }   // 「설계에서 바꾸기 →」는 설정 창의 그 단계 칸으로
+    ui.set = null; tab = gp[0]; save("ct.tab", tab); window.scrollTo(0, 0); render();
     return }   // 한눈에 → 그 탭 (필요하면 그 탭의 보기도 맞춘다)
   if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
   if(d.brand){ pickBrand(d.brand); return }
@@ -528,6 +544,7 @@ document.addEventListener("input", function(e){
   if(e.target.dataset.wordin != null) ui.wDraft = e.target.value;
   if(e.target.dataset.dsask != null) ui.dsDraft = e.target.value;   // 설계 「말로 바꾸기」 · 템플릿 이름 — 다시 그려도 쓰던 글을 지킨다
   if(e.target.dataset.tplin != null) ui.tplDraft = e.target.value;
+  if(e.target.id === "setq"){ ui.setQ = e.target.value; render() }   // ⚙ 설정 칸 찾기
   if(e.target.id === "impq"){ ui.impQ = e.target.value; render() }   // 🔖 중요 찾기 — 치는 대로 걸러 보기
   if(e.target.dataset.basekw != null) ui.baseDraft = e.target.value;   // 기준 키워드 넣기 칸
   if(e.target.id === "base-topic") ui.topicDraft = e.target.value;   // 영상 주제 한 줄 — 저장 전 쓰던 글
@@ -560,6 +577,7 @@ document.addEventListener("keyup", function(e){
   if(e.key !== "Enter" || !enterWait || enterWait !== e.target) return;
   var t = enterWait; enterWait = null; enterAct(t);
 });
+document.addEventListener("keydown", function(e){ if(e.key === "Escape" && ui.set){ setClose() } });   // ⚙ 설정 창 — Esc 로 닫기
 document.addEventListener("change", function(e){
   if(e.target.id === "hsel"){ if(e.target.value) histOpen(e.target.value, true); else histClose(); return }   // 🕘 이 탭 결과 기록 고르기
   if(e.target.id === "auto-n"){ var ao6 = autoOpt(); ao6.n = autoN(e.target.value); e.target.value = ao6.n; setS({ autoOpt: ao6 }) }   // 🚀 자동으로 — 편 수 직접 넣기 (1편 아래로는 1편)

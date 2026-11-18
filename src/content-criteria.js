@@ -67,7 +67,7 @@ function recCritHtml(rd){
   var nRole = roleNames().reduce(function(t, n){ return t + (s.roles[n] || 0) }, 0), busy = openCmd("recommend");
   var hasMat = (c.use.ref && part("ref")) || (c.use.fav && favIds.length) || (c.use.pin && pins.length) || (c.use.seed && seedsOf().length);
   return "<section class=\"card\">" + dsLine("rec") + "<div class=\"acts\"><button class=\"btn primary\" data-act=\"recommend\"" + (busy || !nRole || !hasMat ? " disabled" : "") + ">" + (busy ? "맥이 추천 만드는 중…" : rd ? "이 기준으로 추천 새로 받기" : "이 기준으로 추천 받기") + "</button>" +
-    (!hasMat ? "<span class=\"lead\" style=\"margin:0\">켠 재료가 비어 있어요 — 설계에서 재료를 켜세요.</span>" : !nRole ? "<span class=\"lead\" style=\"margin:0\">편 수가 0이에요.</span>" : "") + "</div></section>";
+    (!hasMat ? "<span class=\"lead\" style=\"margin:0\">켠 재료가 비어 있어요 — ⚙ 설정 › 단계별 기준에서 재료를 켜세요.</span>" : !nRole ? "<span class=\"lead\" style=\"margin:0\">편 수가 0이에요.</span>" : "") + "</div></section>";
 }
 function recCritAct(k){
   var c = recCrit(), o = { order: c.set ? c.order.slice() : undefined, off: Object.assign({}, c.off), use: Object.assign({}, c.use), favFirst: c.favFirst, minRatio: c.minRatio };

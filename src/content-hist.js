@@ -36,21 +36,21 @@ function impOf(kind, key){ return impList().filter(function(x){ return x.kind ==
 /* 🔖 버튼 — 어느 목록에 붙여도 같은 모양 */
 function impBtn(kind, key, label, sub, url){
   var on = !!impOf(kind, key);
-  return "<button class=\"mk imp\" data-act=\"imp\" data-kind=\"" + kind + "\" data-key=\"" + esc(key) + "\" data-label=\"" + esc(label || key) + "\" data-sub=\"" + esc(sub || "") + "\" data-url=\"" + esc(url || "") + "\" aria-pressed=\"" + on + "\" title=\"" + (on ? "🔖 중요에서 빼기" : "🔖 중요에 모아 두기 — 설계 › 🔖 중요에서 언제든 다시 봄") + "\" aria-label=\"중요\">🔖</button>";
+  return "<button class=\"mk imp\" data-act=\"imp\" data-kind=\"" + kind + "\" data-key=\"" + esc(key) + "\" data-label=\"" + esc(label || key) + "\" data-sub=\"" + esc(sub || "") + "\" data-url=\"" + esc(url || "") + "\" aria-pressed=\"" + on + "\" title=\"" + (on ? "🔖 중요에서 빼기" : "🔖 중요에 모아 두기 — ⚙ 설정 › 🔖 중요에서 언제든 다시 봄") + "\" aria-label=\"중요\">🔖</button>";
 }
 function impToggle(el){
   var d = el.dataset, list = impList().slice(), i = -1;
   list.forEach(function(x, j){ if(x.kind === d.kind && x.key === d.key) i = j });
   if(i >= 0){ list.splice(i, 1); toast("🔖 중요에서 뺐어요") }
   else { list.unshift({ kind: d.kind, key: d.key, label: d.label, sub: d.sub || "", url: d.url || "", at: new Date().toISOString(),
-    from: PAST && PAST.brand === cur ? { id: PAST.id, at: PAST.at, label: PAST.label } : null }); toast("🔖 중요에 모았어요 — 「설계 › 🔖 중요」에서 봐요") }
+    from: PAST && PAST.brand === cur ? { id: PAST.id, at: PAST.at, label: PAST.label } : null }); toast("🔖 중요에 모았어요 — 「⚙ 설정 › 🔖 중요」에서 봐요") }
   setS({ imp: list });
 }
 /* 과거 기록 열기 — 본문을 받아 그 단계 탭을 그때 결과로 */
 function histOpen(id, stay){
   var x = histItems().filter(function(y){ return y.id === id })[0];
   if(!x){ toast("그 기록이 목록에 없어요"); return }
-  function show(data){ PAST = { brand: cur, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; if(!stay){ tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab) } if(HIST_VIEW[x.part]){ var kv = HIST_VIEW[x.part].split("="); ui[kv[0]] = kv[1] }
+  function show(data){ ui.set = null; PAST = { brand: cur, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; if(!stay){ tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab) } if(HIST_VIEW[x.part]){ var kv = HIST_VIEW[x.part].split("="); ui[kv[0]] = kv[1] }
     window.scrollTo(0, 0); render();
     var spot = HIST_SPOT[x.part], el = spot && document.querySelector(spot); if(!el) return;
     var hd = document.querySelector("header"), top = (hd ? hd.getBoundingClientRect().bottom : 0) + 12;   // 위에 붙는 머리 칸만큼 비켜서

@@ -1,7 +1,7 @@
 /* ── 설계 탭 — 단계마다 자동 추천 기준을 한 곳에서, 같은 모양으로 (2026-11-18 동욱) ──
    "각 워크플로우마다 자동 추천한 기준을 설정에서 설계를 조율할 수 있게, 템플릿화할 수 있게. 지금은 흩어져 있는데 각 단계마다 통일된 UX/UI.
     설계에서도 대화창이 있어서 내가 요구하면 그에 맞게 세팅도 되고."
-   단계 칸 = 번호 · 이름 · 무엇을 정하나 · 「지금」 한 줄 · 접힌 「바꾸기」(그 단계의 조절 칸). 각 단계 탭에는 dsLine(한 줄 + 「설계에서 바꾸기 →」)만 둔다.
+   단계 칸 = 번호 · 이름 · 무엇을 정하나 · 「지금」 한 줄 · 접힌 「바꾸기」(그 단계의 조절 칸). 각 단계 탭에는 dsLine(한 줄 + 「설정에서 바꾸기 →」)만 둔다.
    값은 그대로 그 단계의 ct.set 칸(seedSrc · kwCrit · anaOpt · recCrit · roles · rpOpt) — 템플릿은 그 칸들을 한 벌로 ct.set/_tpl 에 저장한다. */
 var DS = [
   { id: "word", name: "단어 — 연관 검색어 받는 곳 · 나라", what: "씨앗 단어마다 어디서 · 어느 나라 기준으로 연관 검색어를 받을지", keys: ["seedSrc", "kwCountry"],
@@ -25,13 +25,13 @@ function dsChanged(st){ var c = SETS[cur] || {}; return st.keys.some(function(k)
 /* 각 단계 탭 맨 위의 한 줄 — 모든 단계가 같은 모양 */
 function dsLine(id){
   var st = dsStage(id); if(!st) return "";
-  return "<div class=\"dsline\"><span><b>기준</b> " + esc(st.sum()) + (dsChanged(st) ? "" : " <span class=\"muted\">(기본)</span>") + "</span><button class=\"chip\" data-go=\"design|dsOpen=" + id + "\">설계에서 바꾸기 →</button></div>";
+  return "<div class=\"dsline\"><span><b>기준</b> " + esc(st.sum()) + (dsChanged(st) ? "" : " <span class=\"muted\">(기본)</span>") + "</span><button class=\"chip\" data-go=\"design|dsOpen=" + id + "\">설정에서 바꾸기 →</button></div>";
 }
 function viewDesign(){
   if(!B()) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
-  var h = "<section class=\"card\"><div class=\"card-h\"><h3>설계</h3><span class=\"n\">" + esc(B().name) + "</span></div>" +
+  var h = "<section class=\"card\"><div class=\"card-h\"><h3>말로 바꾸기</h3><span class=\"n\">" + esc(B().name) + "</span></div>" +
     "<p class=\"lead\">맥이 단계마다 무엇을 기준으로 자동 추천할지 여기서 정해요. 바꾸면 바로 저장되고, 다음에 맥이 일할 때부터 그대로 써요. 잘 맞는 한 벌은 「템플릿」에 저장해 다른 브랜드에도 써요.</p>" +
-    "<h4>말로 바꾸기</h4><div class=\"row2\"><input type=\"text\" id=\"ds-ask\" data-dsask=\"1\" placeholder=\"예: 추천은 좋아요 많은 댓글을 제일 먼저 보고, 구독자보다 3배 이상 본 영상만\" value=\"" + esc(ui.dsDraft || "") + "\"><button class=\"btn primary\" data-act=\"dsask\">바꿔 줘</button></div>" +
+    "<div class=\"row2\"><input type=\"text\" id=\"ds-ask\" data-dsask=\"1\" placeholder=\"예: 추천은 좋아요 많은 댓글을 제일 먼저 보고, 구독자보다 3배 이상 본 영상만\" value=\"" + esc(ui.dsDraft || "") + "\"><button class=\"btn primary\" data-act=\"dsask\">바꿔 줘</button></div>" +
     "<p class=\"it-d\" style=\"margin-top:4px\">✦ Brainy 대화가 열려 지금 기준을 읽고 바꿔요. 무엇을 어떻게 바꿨는지 대화에 남아요.</p></section>";
   DS.forEach(function(st, i){
     var open = ui.dsOpen === st.id;
@@ -40,7 +40,7 @@ function viewDesign(){
       "<details class=\"wbox\"" + (open ? " open" : "") + "><summary><b>바꾸기</b>" + (dsChanged(st) ? "<span class=\"wsum\">기본값으로 되돌리기는 맨 아래</span>" : "") + "</summary><div class=\"wbody\">" + st.body() +
       (dsChanged(st) ? "<div class=\"acts\"><button class=\"btn sm\" data-act=\"dsreset\" data-v=\"" + st.id + "\">이 단계 기본값으로</button></div>" : "") + "</div></details></section>";
   });
-  h += "<section class=\"card\"><div class=\"card-h\"><h3>Claude 모드</h3></div><p class=\"dsnow\"><b>지금</b> " + esc(claudeSummary()) + "</p><div class=\"acts\"><button class=\"btn sm\" data-tab=\"claude\">Claude 모드 칸으로 →</button></div></section>";
+  h += "<section class=\"card\"><div class=\"card-h\"><h3>Claude 모드</h3></div><p class=\"dsnow\"><b>지금</b> " + esc(claudeSummary()) + "</p><div class=\"acts\"><button class=\"btn sm\" data-setgo=\"claude\">Claude 모드 칸으로 →</button></div></section>";
   return h;
 }
 /* 템플릿 — 설계 한 벌(단계 칸 값 전부)을 이름 붙여 저장하고 다른 브랜드에 적용. 앱 전체에 한 목록 ct.set/_tpl {list:[{id, name, from, at, values}]} */

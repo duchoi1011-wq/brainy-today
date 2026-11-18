@@ -37,15 +37,15 @@
       return L.join("\n");
     },
     tools: [
-      { name: "open_tab", description: "콘텐츠 기획 앱의 탭을 연다: sum(한눈에) · brand(브랜드) · kw(키워드 › 씨앗별 검색어) · kwall(키워드 › 전체 키워드) · ref(콘텐츠) · rec(추천) · build(구축) · refpage(참고 페이지) · script(대본) · design(설계 — 단계별 기준) · tpl(템플릿) · claude(Claude 모드) · hist(설계 › 🕘 돌린 기록) · imp(설계 › 🔖 중요).",
+      { name: "open_tab", description: "콘텐츠 기획 앱의 탭을 연다: sum(한눈에) · brand(브랜드) · kw(키워드 › 씨앗별 검색어) · kwall(키워드 › 전체 키워드) · ref(콘텐츠) · rec(추천) · build(구축) · refpage(참고 페이지) · script(대본) · 그리고 ⚙ 설정 창의 칸: design(단계별 기준) · tpl(템플릿) · claude(Claude 모드) · hist(🕘 돌린 기록) · imp(🔖 중요).",
         inputSchema: { type: "object", properties: { tab: { type: "string", enum: ["sum", "brand", "kw", "kwall", "ref", "rec", "build", "refpage", "script", "design", "tpl", "claude", "hist", "imp"] } }, required: ["tab"] },
-        execute: function (i) { tab = i.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return subName(i.tab); } },
+        execute: function (i) { if (isSet(i.tab)) { setOpen(i.tab); return "⚙ 설정 창 › " + i.tab; } ui.set = null; tab = i.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return subName(i.tab); } },   // 설계 · 기록 칸은 ⚙ 설정 창
       { name: "set_design", description: "지금 브랜드의 설계(단계별 자동 추천 기준)를 바꾼다. 동욱이 설정을 바꿔 달라고 분명히 말했을 때만. name 은 seedSrc · kwCrit · anaOpt · recCrit · roles · rpOpt 중 하나, value 는 [지금 앱 상태]의 「설계 칸과 값 모양」대로 그 칸 전체 값(바꾸지 않는 부분도 지금 값 그대로 넣는다). null 이면 기본값으로. 바꾼 뒤 무엇이 어떻게 바뀌었는지 한 줄씩 말한다.",
         inputSchema: { type: "object", properties: { name: { type: "string", enum: DS_KEYS }, value: {} }, required: ["name", "value"] },
         execute: function (i) {
           if (DS_KEYS.indexOf(i.name) < 0) return "바꿀 수 없는 칸이에요: " + i.name;
           var v = i.value; if (typeof v === "string" && i.name !== "seedSrc") { try { v = JSON.parse(v); } catch (e) {} }
-          var p = {}; p[i.name] = v == null ? null : v; setS(p); tab = "design"; ui.dsOpen = (DS.filter(function (st) { return st.keys.indexOf(i.name) >= 0; })[0] || {}).id || ""; save("ct.tab", tab); render();
+          var p = {}; p[i.name] = v == null ? null : v; setS(p); ui.set = "design"; ui.dsOpen = (DS.filter(function (st) { return st.keys.indexOf(i.name) >= 0; })[0] || {}).id || ""; render();
           return i.name + " 을 바꿨어요 → " + JSON.stringify(v).slice(0, 300);
         } }
     ]
