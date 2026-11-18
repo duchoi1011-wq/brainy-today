@@ -159,7 +159,7 @@ SC_CSS = ""
 emit("shortcuts", "맥 단축키 핸드북", "맥 단축키", ("#f8f9fa", "#181a1f"),
      "--g-bg:var(--bg);--g-fg:var(--fg);--g-mut:var(--dim);--g-card:var(--surface);--g-line:var(--rule);--g-acc:var(--accent);--g-acc-ink:var(--bg);--g-warn:var(--accent);--g-ok:var(--ok)",
      '<link rel="apple-touch-icon" href="sc-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="sc-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="sc-icon-64.png">',
-     '{key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "chat"]}',
+     '{key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "bchat"]}',
      '{"id":"/brainy-today/shortcuts/","name":"맥 단축키 핸드북","short_name":"맥 단축키","start_url":"./","scope":"./","display":"standalone","background_color":"#121317","theme_color":"#181a1f","icons":[{"src":"sc-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"sc-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', SC_CSS, SC_BRAINY + BRAINY_CHAT)
 
 # ═════════════════════════ 체화 단어장 ═════════════════════════
@@ -168,7 +168,7 @@ include()
 emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--l4)",
      '<link rel="apple-touch-icon" href="vo-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="vo-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="vo-icon-64.png">',
-     '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "chat"]}',
+     '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]}',
      '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vo-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vo-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', "", VO_BRAINY + BRAINY_CHAT)
 
 # ═════════════════════════ 콘텐츠 기획 ═════════════════════════
@@ -183,7 +183,7 @@ if (CP / ".git").exists():
     emit(CP, "콘텐츠 기획", "콘텐츠 기획", ("#F7F6F2", "#F7F6F2"),
          "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--ok)",
          '<link rel="apple-touch-icon" href="ct-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="ct-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="ct-icon-64.png">',
-         '{key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd", "chat"]}',
+         '{key: "content", name: "콘텐츠 기획", icon: "ct-icon-192.png", sub: "키워드와 트렌드로 주제를 고르고 대본 초안까지", colls: ["ct.data", "ct.set", "cmd", "bchat"]}',
          '{"id":"/content-plan/","name":"콘텐츠 기획","short_name":"콘텐츠 기획","start_url":"./","scope":"./","display":"standalone","background_color":"#F7F6F2","theme_color":"#F7F6F2","icons":[{"src":"ct-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ct-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
          tail=CT_BRAINY + BRAINY_CHAT, up="")
     import shutil

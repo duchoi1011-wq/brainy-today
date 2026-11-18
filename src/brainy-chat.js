@@ -30,9 +30,9 @@
     });
   }
   var turns = [], busy = false, ctl = null, sample = null, openOld = false, unread = false;
-  /* 대화 기록 — 이 기기(localStorage)와 앱 저장소(chat/<앱>)에 같이 둔다. 다른 기기·설치한 앱에서도 같은 기록, 「새 대화」는 지우지 않고 「지난 대화」로 옮긴다
+  /* 대화 기록 — 이 기기(localStorage)와 앱 저장소(bchat/<앱> — 홈 대화의 chat 과 따로)에 같이 둔다. 다른 기기·설치한 앱에서도 같은 기록, 「새 대화」는 지우지 않고 「지난 대화」로 옮긴다
      (2026-11-18 동욱 "대화 자체의 이전 기록이 없어"). 저장소 문서 {at, cur: 지금 대화, past: [{at, title, turns}] 20개까지} */
-  var past = [], stamp = 0, DBC = null, PATH = "chat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0;
+  var past = [], stamp = 0, DBC = null, PATH = "bchat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0;
   try { turns = JSON.parse(localStorage.getItem(KEY) || "[]"); past = JSON.parse(localStorage.getItem(KEY + ".past") || "[]"); stamp = +(localStorage.getItem(KEY + ".at") || 0); } catch (e) {}
   function clean(list) { return list.filter(function (t) { return t.content && !t.err; }).slice(-40).map(function (t) { var c = { role: t.role, content: t.content }; if (t.imgs) c.imgs = t.imgs; return c; }); }
   function keep() {

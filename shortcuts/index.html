@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "7f3a6bd062"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "chat"]};</script>
-<script src="../shim.js?v=7f3a6bd062"></script>
+<script>window.BRAINY_VERSION = "0d0b4a22c8"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "bchat"]};</script>
+<script src="../shim.js?v=0d0b4a22c8"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="맥 단축키">
@@ -970,9 +970,9 @@ render();
     });
   }
   var turns = [], busy = false, ctl = null, sample = null, openOld = false, unread = false;
-  /* 대화 기록 — 이 기기(localStorage)와 앱 저장소(chat/<앱>)에 같이 둔다. 다른 기기·설치한 앱에서도 같은 기록, 「새 대화」는 지우지 않고 「지난 대화」로 옮긴다
+  /* 대화 기록 — 이 기기(localStorage)와 앱 저장소(bchat/<앱> — 홈 대화의 chat 과 따로)에 같이 둔다. 다른 기기·설치한 앱에서도 같은 기록, 「새 대화」는 지우지 않고 「지난 대화」로 옮긴다
      (2026-11-18 동욱 "대화 자체의 이전 기록이 없어"). 저장소 문서 {at, cur: 지금 대화, past: [{at, title, turns}] 20개까지} */
-  var past = [], stamp = 0, DBC = null, PATH = "chat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0;
+  var past = [], stamp = 0, DBC = null, PATH = "bchat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0;
   try { turns = JSON.parse(localStorage.getItem(KEY) || "[]"); past = JSON.parse(localStorage.getItem(KEY + ".past") || "[]"); stamp = +(localStorage.getItem(KEY + ".at") || 0); } catch (e) {}
   function clean(list) { return list.filter(function (t) { return t.content && !t.err; }).slice(-40).map(function (t) { var c = { role: t.role, content: t.content }; if (t.imgs) c.imgs = t.imgs; return c; }); }
   function keep() {
