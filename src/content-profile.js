@@ -22,10 +22,10 @@ function pset(o, path, v){ var ks = path.split("."), t = o; ks.slice(0, -1).forE
 function itemText(def, x){ return def.pair ? x[def.pair[0]] + (x[def.pair[1]] ? " — " + x[def.pair[1]] : "") : x }
 function itemParse(def, t){ t = t.trim(); if(!def.pair) return t; var i = t.indexOf("—"), o = {}; o[def.pair[0]] = (i < 0 ? t : t.slice(0, i)).trim(); o[def.pair[1]] = i < 0 ? "" : t.slice(i + 1).trim(); return o }
 /* 고친 값 저장 — 상품 이름이 바뀌면 그 상품의 판매 단어(seeds)·비중(share)도 따라가고, 뺀 상품의 판매 단어는 같이 뺀다 */
-function profSave(p, ren){
+function profSave(p, ren, axRen){
   var patch = { profile: p }, names = (p.products || []).map(function(x){ return x.name });
-  ren = ren || {};
-  var sd = seedsOf().map(function(x){ return x.kind === "상품" && ren[x.product] ? Object.assign({}, x, { product: ren[x.product] }) : x })
+  ren = ren || {}; axRen = axRen || {};   // 상품 이름 · 콘텐츠 축 이름이 바뀌면 그 씨앗 단어도 따라간다 (지운 축의 단어는 「축 없이」로)
+  var sd = seedsOf().map(function(x){ return x.kind === "상품" && ren[x.product] ? Object.assign({}, x, { product: ren[x.product] }) : x.kind === "정체성" && x.axis && axRen[x.axis] ? Object.assign({}, x, { axis: axRen[x.axis] }) : x })
     .filter(function(x){ return x.kind !== "상품" || names.indexOf(x.product) >= 0 });
   if(JSON.stringify(sd) !== JSON.stringify(seedsOf())) patch.seeds = sd;
   var sh = (SETS[cur] || {}).share; if(sh){ var ns = {}; Object.keys(sh).forEach(function(k){ var nk = ren[k] || k; if(names.indexOf(nk) >= 0) ns[nk] = sh[k] }); patch.share = ns }
@@ -83,8 +83,10 @@ function profAct(name, el){
       p.products[i] = Object.assign({}, p.products[i], { name: nm, what: pval(k + ":what") }); profSave(p, ren); return true;
     }
     if(k.indexOf(":") > 0){ var path = k.split(":")[0], j = +k.split(":")[1], t = pval(k), arr = pget(p, path) || [];
+      var oldItem = arr[j], axRen = {};
       if(!t){ arr.splice(j, 1) } else arr[j] = itemParse(PLIST[path], t);
-      pset(p, path, arr); profSave(p); return true }
+      if(path === "identity.axes" && t && oldItem && oldItem !== arr[j]) axRen[oldItem] = arr[j];
+      pset(p, path, arr); profSave(p, null, axRen); return true }
     p[k] = pval(k); profSave(p); return true;
   }
   if(name === "pdel"){ var pp = k.split(":")[0], jj = +k.split(":")[1], a2 = pget(p, pp) || [];

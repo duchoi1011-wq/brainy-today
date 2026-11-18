@@ -38,6 +38,9 @@ h1::before{content:"";width:22px;height:22px;border-radius:7px;background:linear
 nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto;scrollbar-width:none;background:var(--surface);border-radius:14px;padding:4px;box-shadow:var(--shadow)}
 nav::-webkit-scrollbar{display:none}
 nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;color:var(--muted);background:none;border:0;font:inherit;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer}
+.wbox{border:1px solid var(--line);border-radius:14px;margin-top:10px;background:var(--surface)}.wbox>summary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:12px 14px;font-size:14px;color:var(--ink)}.wbox[open]>summary{border-bottom:1px solid var(--line)}.wsum{font-weight:500;color:var(--muted);font-size:13px}.wbody{padding:6px 14px 14px}
+.spick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;padding:8px;border-radius:10px;background:var(--surface-2)}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:calc(100vw - 32px);transition:.2s;z-index:50}#toast.on{opacity:1;transform:translate(-50%,0)}
 html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 폭이 15px 바뀌던 것 */
 details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:600}
 .runs{margin:0 0 14px}.runs>summary{padding:8px 4px}
@@ -354,7 +357,14 @@ function send(kind, text, params){
   CMDS.unshift(Object.assign({ id: id }, data));
   DB.doc("cmd/" + id).set(data).catch(function(){ CMDS[0].status = "못 보냄"; CMDS[0].result = "못 보냈어요 — 인터넷을 확인하고 다시 눌러 주세요"; render() });
   render();
-  window.scrollTo({ top: 0, behavior: "smooth" });   // 상태 줄은 맨 위에 뜬다 — 버튼이 아래에 있어도 보이게
+  toast("맥에 보냈어요 — " + (KIND[kind] || kind) + " · 진행은 화면 맨 위 줄에 떠요");   // 화면을 맨 위로 끌어올리지 않는다 (2026-11-18 동욱 "버튼 누르면 위로 올라가는 잘못된 것")
+}
+/* 단어 상자·접는 칸을 펴고 접은 것을 기억 — 다시 그려도 그대로 */
+document.addEventListener("toggle", function(e){ var d = e.target; if(!d.dataset || !d.dataset.wbox) return; if(d.dataset.wbox === "_pull"){ ui.pullOpen = d.open; return } ui.wOpen = Object.assign({}, ui.wOpen); ui.wOpen[d.dataset.wbox] = d.open }, true);
+/* 잠깐 뜨는 알림 — 화면 아래 가운데, 3.5초 */
+function toast(msg){
+  var t = document.getElementById("toast"); if(!t){ t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t) }
+  t.textContent = msg; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(function(){ t.classList.remove("on") }, 3500);
 }
 function runHtml(kinds){
   var out = "", done = [];
@@ -386,6 +396,7 @@ function runHtml(kinds){
 /*@include content-brandrefs.js*/
 /*@include content-sum.js*/
 /*@include content-claude.js*/
+/*@include content-words.js*/
 /*@include content-prompt.js*/
 /*@include content-auto.js*/
 /*@include content-profile.js*/
@@ -413,13 +424,13 @@ function viewBrand(){
     (b.kit ? "<dt>브랜드 색</dt><dd><span class=\"sw\" style=\"background:" + esc(b.kit.accent) + "\"></span><span class=\"sw\" style=\"background:" + esc(b.kit.accent2 || b.kit.accent) + "\"></span>" + esc(b.kit.note || "") + "</dd>" : "") +
     (b.cadence ? "<dt>발행</dt><dd>" + esc(b.cadence.note || "") + "</dd>" : "") + "</dl>" +
     (b.todo ? "<p class=\"note\" style=\"margin-top:12px\">" + esc(b.todo) + "</p>" : "") + "</section>";
-  h += wordFindHtml();   // 단어 후보 찾기 — 정체성·판매 단어를 고르는 곳이라 브랜드 탭에 (2026-11-17 동욱 "이건 브랜드에 넣어서 진행해야지")
+  h += wordFindHtml() + (part("kw") ? "<section class=\"card\">" + kwPullHtml() + "</section>" : "");   // 단어 후보 찾기 · 키워드에서 가져오기 — 정체성·판매 단어를 고르는 곳이라 브랜드 탭에 (2026-11-17 동욱 "이건 브랜드에 넣어서 진행해야지")
   h += "<section class=\"card\"><div class=\"card-h\"><h3>연관 검색어 받는 곳</h3><span class=\"n\">단어 " + seedsOf().length + "개</span></div>" + seedSrcHtml() + seedPendingHtml() + "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag p\">상품</span> 판매 상품과 판매 단어</h3><span class=\"n\">" + (b.products || []).length + "개</span></div>" +
     "<p class=\"lead\">상품 자체도 ✎로 고치고 ✕로 빼고 아래에서 더해요. 상품마다 사려는 사람이 찾을 판매 단어를 넣고 빼세요 (상품마다 " + SEED_MAX + "개까지) — 이 단어가 들어간 연관 검색어가 상품 파는 영상의 재료가 돼요.</p>" +
     wordRecBarHtml() + productsHtml() + "</section>";
   var id = b.identity || {};
-  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityWordsHtml() + plistHtml("identity.axes") + plistHtml("identity.pillars") + plistHtml("identity.needs") + ptextHtml("hook", "훅 규칙", true) +
+  h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityBoxesHtml() + plistHtml("identity.axes") + plistHtml("identity.pillars") + plistHtml("identity.needs") + ptextHtml("hook", "훅 규칙", true) +
     ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
       b.topicBank.map(function(t){ return "<div class=\"it\"><span class=\"num muted\">" + esc(t.n) + "</span><div class=\"it-m\"><div>" + esc(t.topic) + "</div><div class=\"it-d\">필러 " + esc(t.pillar) + " · " + esc(t.product) + "</div></div></div>" }).join("") + "</div></details>" : "") +
     "</section>";
@@ -550,19 +561,14 @@ function act(name, el){
   if(name === "trends"){ send("trends", "구글 트렌드 다시 받기", {}); return }
   if(name === "wordfind"){ var wi = document.getElementById("word-in"), ww = ((wi && wi.value) || "").trim().slice(0, 20); if(!ww){ alert("찾을 단어를 적어 주세요."); if(wi) wi.focus(); return }
     ui.wDraft = ww; ui.wRun = ww; ui.wMore = 20; setS({ wordReq: { at: new Date().toISOString(), word: ww, src: ui.wSrc || "both", country: kwCountry() } }); return }   // 단어 후보 찾기 — 맥이 네이버·구글 연관 검색어를 받는다
-  if(name === "wordadd"){ var wk = el.dataset.key, wv = el.dataset.w.replace(/\s+/g, "").slice(0, 20), cur4 = seedsOf();   // 단어 후보를 씨앗 단어로
-    if(cur4.some(function(x){ return x.word === wv })) return;
-    var same = cur4.filter(function(x){ return wk === "정체성" ? x.kind === "정체성" : x.kind === "상품" && x.product === wk.slice(3) }).length;
-    if(same >= SEED_MAX){ alert("한 쪽에 " + SEED_MAX + "개까지예요. 브랜드 탭에서 하나 빼고 넣으세요."); return }
-    setS({ seeds: cur4.concat([wk.indexOf("상품:") === 0 ? { kind: "상품", word: wv, product: wk.slice(3) } : { kind: "정체성", word: wv }]) }); return }
+  if(name === "wordadd" || name === "seedto"){ if(addSeed(el.dataset.key, el.dataset.w)) ui.kwSeed = ""; return }   // 단어 후보 · 키워드 줄 · 판매 단어 추천을 씨앗 단어로 (content-words.js)
+  if(name === "kwseed"){ ui.kwSeed = ui.kwSeed === el.dataset.kw ? "" : el.dataset.kw; render(); return }   // 키워드 줄 「＋ 씨앗」 — 넣을 곳 고르기 열고 닫기
   if(name === "seedadd"){   // 씨앗 단어 넣기 — key 「정체성」 또는 「상품:<상품>」. 띄어쓰기는 빼고(네이버가 붙여 쓴 말로 받는다), 같은 단어는 한 번만
     var key = el.dataset.key || el.dataset.addseed, inp = [].filter.call(document.querySelectorAll("[data-addseed]"), function(x){ return x.dataset.addseed === key })[0];
-    var w = ((inp && inp.value) || "").replace(/\s+/g, "").slice(0, 20), cur3 = seedsOf();
+    var w = ((inp && inp.value) || "").replace(/\s+/g, "").slice(0, 20);
     if(!w){ alert("넣을 단어를 적어 주세요."); if(inp) inp.focus(); return }
-    if(cur3.some(function(x){ return x.word === w })){ alert("「" + w + "」은 이미 씨앗 단어예요."); return }
-    var nx = key.indexOf("상품:") === 0 ? { kind: "상품", word: w, product: key.slice(3) } : { kind: "정체성", word: w };
     ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[key] = ""; ui.seed = w;
-    setS({ seeds: cur3.concat([nx]) }); return;
+    addSeed(key, w); return;
   }
   if(name === "rc"){ recCritAct(el.dataset.k); return }   // 추천 기준 — 조절 · 우선
   if(name === "kc"){ kwCritAct(el.dataset.k); return }

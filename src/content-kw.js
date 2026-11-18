@@ -42,19 +42,10 @@ function seedSrcHtml(){
     "<p class=\"lead\" style=\"margin-top:6px\">네이버 = 한국 검색량·광고 클릭률(살 사람이 찾는 말) · 구글 트렌드 = 관련 검색어의 인기와 상승세(요즘 뜨는 말) · 둘 다 = 구글에서 나온 말에도 네이버 검색량을 붙여요. 바꾸면 맥이 다시 받아요.</p>";
 }
 function seedPendingHtml(){ return seedsPending() ? "<p class=\"note\" style=\"margin-top:10px\">씨앗 단어나 받는 곳이 바뀌었어요 — 맥이 연관 검색어를 받는 중이에요 (1분 안팎, 맥이 켜져 있어야 해요).</p>" : "" }
-/* 브랜드 탭 — 정체성 카드 안 「브랜드 정체성 단어」 */
-function identityWordsHtml(){
-  var s = S(), list = seedsOf().filter(function(x){ return x.kind === "정체성" });
-  return "<h4><span class=\"tag i\">정체성</span> 브랜드 정체성 단어 <span class=\"num muted\">" + list.length + "</span></h4>" +
-    "<p class=\"lead\">채널 성격을 말하는 단어예요. 이 단어가 들어간 연관 검색어가 풀링(처음 보는 사람 끌어오기) 재료가 돼요.</p>" +
-    "<div class=\"list\">" + list.map(function(x){ return seedRowHtml(x, s) }).join("") + "</div>" + seedAddHtml("정체성", list.length, "정체성 단어 넣기") +
-    "<p class=\"lead\" style=\"margin-top:6px\">어떤 단어가 좋을지 모르겠으면 이 탭 위쪽 「단어 후보 찾기」에서 고르세요.</p>";
-}
 /* 브랜드 탭 — 판매 상품 카드 안, 상품마다 「판매 단어」 */
-function productWordsHtml(name){
-  var s = S(), list = seedsOf().filter(function(x){ return x.kind === "상품" && x.product === name });
-  return "<div class=\"pw-h\"><i class=\"dot p\"></i>판매 단어 <span class=\"num\">" + list.length + "/" + SEED_MAX + "</span></div>" +
-    "<div class=\"list pwords\">" + (list.map(function(x){ return seedRowHtml(x, s) }).join("") || "<p class=\"empty\">아직 판매 단어가 없어요 — 아래에서 넣거나 Claude 추천에서 ＋ 하세요.</p>") + "</div>" + wordRecHtml(name, list.length) + seedAddHtml("상품:" + name, list.length, "「" + name + "」 판매 단어 넣기");
+function productWordsHtml(name){   // 접힌 상자 — 펴면 판매 단어 줄 · Claude 추천 · 넣기 (content-words.js)
+  var key = "상품:" + name, n = seedsAt(key).length;
+  return wordBoxHtml(key, "<span class=\"pw-h\" style=\"margin:0\"><i class=\"dot p\"></i>판매 단어</span> ", wordListHtml(key, "「" + name + "」 판매 단어 넣기").replace(/<div class="row2"/, wordRecHtml(name, n) + "<div class=\"row2\""));
 }
 /* 판매 단어 Claude 추천 (2026-11-17 동욱 "판매 단어도 너가 추천해 주고 넣을 수 있게 — 검색어 기반도 좋고")
    「판매 단어 추천받기」 → cmd wordrec → 맥 Claude 가 상품마다 네이버 검색량·연관 검색어를 보고 고른 단어를
@@ -127,7 +118,7 @@ function srcTabsHtml(key, items, word){
    요청은 ct.set wordReq {at, word, src} — 맥 동기화가 content_app.py words 로 받아 단어 후보.json(ct.data .wordcand)에 쓴다 (Claude 없이, 1분 안팎) */
 function wordState(){ var r = (SETS[cur] || {}).wordReq, d = part("wordcand"); return { req: r, data: d, busy: !!(r && (!d || d.reqAt !== r.at || d.busy)) } }
 function wordFindHtml(){
-  var st = wordState(), d = st.data, runs = (d && d.runs) || [], src = ui.wSrc || "both", sd = seedsOf(), prods = ((B() || {}).products || []).map(function(p){ return p.name });
+  var st = wordState(), d = st.data, runs = (d && d.runs) || [], src = ui.wSrc || "both", sd = seedsOf();
   var run = runs.filter(function(r){ return r.word === ui.wRun })[0] || runs[0];
   var h = "<section class=\"card\" id=\"word-find\"><div class=\"card-h\"><h3>단어 후보 찾기</h3><span class=\"n\">정체성 · 상품 단어 고르기</span></div>" +
     "<p class=\"lead\">이 브랜드와 닿는 넓은 단어를 넣으면 맥이 네이버와 구글 트렌드에서 연관 검색어를 받아 와요. 마음에 드는 말을 <b>정체성 단어</b>나 <b>상품 판매 단어</b>로 넣으면 아래 칸에 들어가고, 맥이 그 단어로 다시 연관 검색어를 받아 키워드 탭에 쌓여요.</p>" +
@@ -136,9 +127,9 @@ function wordFindHtml(){
   if(st.busy) h += "<p class=\"note\" style=\"margin-top:10px\">맥이 「" + esc((st.req || {}).word || "") + "」 연관 검색어를 받는 중이에요 — 1~2분 걸려요 (맥이 켜져 있어야 해요). 다 받으면 여기에 저절로 떠요.</p>";
   if(!run || st.busy) return h + "</section>";
   var t = ui.wTab || "naver", hitOnly = ui.wHit === true, items = run.items.filter(function(x){ return !hitOnly || x.hit }).slice().sort(function(a, c){ return (c.hit ? 1 : 0) - (a.hit ? 1 : 0) });   // 기본은 다 보이고, 찾은 단어가 든 말이 위로 (2026-11-17 「행사부스」처럼 그대로 든 말이 없으면 다 숨던 문제)
-  var list = items.filter(function(x){ return inTab(x.via || [], t) }), more = ui.wMore || 20;
+  var list = items.filter(function(x){ return inTab(x.via || [], t) }), more = ui.wMore || 8;   // 처음엔 8개만 — 더 보기로 늘린다 (2026-11-18 「너무 난잡하게 여러 개」)
   h += (runs.length > 1 ? "<div class=\"chips\" style=\"margin-top:10px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">찾은 단어</span>" + runs.map(function(r){ return "<button class=\"chip" + (r === run ? " on" : "") + "\" data-ui=\"wRun=" + esc(r.word) + "\">" + esc(r.word) + "</button>" }).join("") + "</div>" : "") +
-    "<h4>「" + esc(run.word) + "」 후보 <span class=\"num muted\">" + esc(day(run.at)) + (run.error ? " · " + esc(run.error) : "") + "</span></h4>" +
+    "<details class=\"wbox\" data-wbox=\"_wfind\"" + ((ui.wOpen || {})._wfind === false ? "" : " open") + "><summary><b>「" + esc(run.word) + "」 후보</b><span class=\"wsum\">" + run.items.length + "개 · " + esc(day(run.at)) + (run.error ? " · " + esc(run.error) : "") + " — 접기·펴기</span></summary><div class=\"wbody\">" +
     "<div class=\"chips\"><button class=\"chip" + (hitOnly ? " on" : "") + "\" data-ui=\"wHit=" + !hitOnly + "\">「" + esc(run.word) + "」가 든 말만 (" + run.items.filter(function(x){ return x.hit && inTab(x.via || [], t) }).length + ")</button></div>" +
     srcTabsHtml("wTab", items) +
     "<div class=\"list\" style=\"margin-top:6px\">" + (list.slice(0, more).map(function(x){
@@ -146,10 +137,10 @@ function wordFindHtml(){
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b>" + (have ? " <span class=\"tag ok\">" + (have.kind === "상품" ? "🛒 " + esc(have.product) : "정체성") + " 단어</span>" : "") + "</div>" +
         "<div class=\"it-d\">" + (x.total != null ? "<span class=\"num\">월 " + fmt(x.total) + "</span>" : "검색량 모름") + (x.ctr ? " · 클릭률 " + x.ctr + "%" : "") +
           (x.gRise ? " · <span class=\"up\">구글 ▲" + esc(x.gRise) + "</span>" : x.gTop != null ? " · 구글 인기 " + x.gTop : "") + "</div>" +
-        (have ? "" : "<div class=\"acts\" style=\"margin-top:4px\"><button class=\"btn sm\" data-act=\"wordadd\" data-w=\"" + esc(x.kw) + "\" data-key=\"정체성\">＋ 정체성 단어</button>" +
-          prods.map(function(p){ return "<button class=\"btn sm\" data-act=\"wordadd\" data-w=\"" + esc(x.kw) + "\" data-key=\"상품:" + esc(p) + "\">＋ 🛒 " + esc(p) + " 판매 단어</button>" }).join("") + "</div>") + "</div></div>";
+        (ui.kwSeed === x.kw ? seedPickHtml(x.kw) : "") + "</div>" +
+        (have ? "" : "<button class=\"btn sm\" data-act=\"kwseed\" data-kw=\"" + esc(x.kw) + "\" aria-expanded=\"" + (ui.kwSeed === x.kw) + "\">" + (ui.kwSeed === x.kw ? "닫기" : "＋ 넣기") + "</button>") + "</div>";
     }).join("") || "<p class=\"empty\">" + (t === "both" ? "네이버와 구글 둘 다에서 나온 말이 없어요." : "이 칸에 나온 말이 없어요.") + (hitOnly ? " 「" + esc(run.word) + "가 든 말만」을 끄면 더 보여요." : "") + "</p>") + "</div>" +
-    (list.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"wMore=" + (more + 30) + "\">더 보기 (" + (list.length - more) + "개 남음)</button></div>" : "");
+    (list.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"wMore=" + (more + 20) + "\">더 보기 (" + (list.length - more) + "개 남음)</button>" + (more > 8 ? "<button class=\"btn sm\" data-ui=\"wMore=8\">8개만 보기</button>" : "") + "</div>" : "") + "</div></details>";
   return h + "</section>";
 }
 /* 선별한 키워드로 콘텐츠 검색 — ★(즐겨찾기)한 키워드 중 고른 것으로 맥이 유튜브를 검색해 미드폼·롱폼 영상을 읽어 온다 (Claude 없이, content_app.py search).
@@ -234,8 +225,9 @@ function kwRow(x, s, mark){
   return "<div class=\"it" + (s.ex[x.kw] ? " off" : "") + "\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b> <span class=\"tag " + (x.kind === "상품" ? "p" : "i") + "\">" +
     esc(x.kind === "상품" ? (x.product || "상품") : "정체성") + "</span>" + (x.surveyed ? " <span class=\"tag\">조사함</span>" : "") + (x.gap ? " <span class=\"tag ok\" title=\"사려는 사람이 찾는 말인데 아직 아무도(우리 조사·추천도) 안 다룬 말\">빈 곳 — 아직 아무도 안 다룸</span>" : "") + (kwRecOf(x.kw) ? " <span class=\"tag p\">Claude 추천</span>" : "") + "</div>" +
     "<div class=\"it-d\"><span class=\"num\">월 " + fmt(x.total) + "</span> · 클릭률 " + (x.ctr == null ? "—" : x.ctr + "%") + " · 경쟁 " + x.diff + " · " + riseHtml(x) + (x.gRise ? " · <span class=\"up\">구글 ▲" + esc(x.gRise) + "</span>" : x.gTop != null ? " · 구글 인기 " + x.gTop : "") + " · <b class=\"num\">" + x.score + "점</b></div>" +
-    "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">" + esc(x.intent) + "</span>" : esc(x.intent || "")) + "</div></div>" +
-    (mark ? "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"즐겨찾기 — 브랜드가 기억하고 콘텐츠 검색에 씀\" aria-label=\"즐겨찾기\">★</button>" +
+    "<div class=\"it-d\">" + (x.buy ? "<span class=\"tag ok\">" + esc(x.intent) + "</span>" : esc(x.intent || "")) + "</div>" + (ui.kwSeed === x.kw ? seedPickHtml(x.kw) : "") + "</div>" +
+    (mark ? "<button class=\"mk\" data-act=\"kwseed\" data-kw=\"" + esc(x.kw) + "\" aria-expanded=\"" + (ui.kwSeed === x.kw) + "\" title=\"씨앗 단어로 넣기 — 정체성 축이나 상품에\" aria-label=\"씨앗 단어로 넣기\">＋</button>" +
+            "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"즐겨찾기 — 브랜드가 기억하고 콘텐츠 검색에 씀\" aria-label=\"즐겨찾기\">★</button>" +
             "<button class=\"mk no\" data-ex=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.ex[x.kw] + "\" title=\"후보에서 빼기\" aria-label=\"후보에서 빼기\">✕</button>" : "") + "</div>";
 }
 function viewKw(){
