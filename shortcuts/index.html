@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "8b3b9789c9"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq"]};</script>
-<script src="../shim.js?v=8b3b9789c9"></script>
+<script>window.BRAINY_VERSION = "7f3a6bd062"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "chat"]};</script>
+<script src="../shim.js?v=7f3a6bd062"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="맥 단축키">
@@ -970,8 +970,19 @@ render();
     });
   }
   var turns = [], busy = false, ctl = null, sample = null, openOld = false, unread = false;
-  try { turns = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) {}
-  function keep() { try { localStorage.setItem(KEY, JSON.stringify(turns.filter(function (t) { return t.content; }).slice(-30).map(function (t) { if (!t.shots) return t; var c = Object.assign({}, t); delete c.shots; return c; }))); } catch (e) {} }
+  /* 대화 기록 — 이 기기(localStorage)와 앱 저장소(chat/<앱>)에 같이 둔다. 다른 기기·설치한 앱에서도 같은 기록, 「새 대화」는 지우지 않고 「지난 대화」로 옮긴다
+     (2026-11-18 동욱 "대화 자체의 이전 기록이 없어"). 저장소 문서 {at, cur: 지금 대화, past: [{at, title, turns}] 20개까지} */
+  var past = [], stamp = 0, DBC = null, PATH = "chat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0;
+  try { turns = JSON.parse(localStorage.getItem(KEY) || "[]"); past = JSON.parse(localStorage.getItem(KEY + ".past") || "[]"); stamp = +(localStorage.getItem(KEY + ".at") || 0); } catch (e) {}
+  function clean(list) { return list.filter(function (t) { return t.content && !t.err; }).slice(-40).map(function (t) { var c = { role: t.role, content: t.content }; if (t.imgs) c.imgs = t.imgs; return c; }); }
+  function keep() {
+    stamp = Date.now();
+    try { localStorage.setItem(KEY, JSON.stringify(clean(turns))); localStorage.setItem(KEY + ".past", JSON.stringify(past)); localStorage.setItem(KEY + ".at", String(stamp)); } catch (e) {}
+    clearTimeout(saveT2);
+    saveT2 = setTimeout(function () { if (DBC) DBC.doc(PATH).set({ at: stamp, cur: clean(turns), past: past.slice(0, 20) }).catch(function () {}); }, 1200);
+  }
+  function archive() { var c = clean(turns); if (!c.some(function (t) { return t.role === "user"; })) return; var first = c.filter(function (t) { return t.role === "user"; })[0].content; past.unshift({ at: Date.now(), title: String(first).slice(0, 40), turns: c }); past = past.slice(0, 20); }
+  function day(at) { var d = new Date(at); return (d.getMonth() + 1) + "/" + d.getDate() + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
 
   /* 색은 앱의 --g-* 를 따른다 (없으면 기본값) */
@@ -1035,7 +1046,8 @@ render();
   var box = document.createElement("section");
   box.id = "bc"; box.hidden = true; box.setAttribute("aria-label", "Brainy 대화");
   box.innerHTML = '<div class="bc-bar"><span class="bc-av" aria-hidden="true">✦</span><div class="bc-who"><b>Brainy</b><small id="bc-sub"></small></div>' +
-    '<button type="button" class="bc-ic" data-bc="new" title="새 대화" aria-label="새 대화">↺</button>' +
+    '<button type="button" class="bc-ic" data-bc="hist" title="지난 대화" aria-label="지난 대화">🕘</button>' +
+    '<button type="button" class="bc-ic" data-bc="new" title="새 대화 (지금 대화는 지난 대화로)" aria-label="새 대화">↺</button>' +
     '<button type="button" class="bc-ic" data-bc="close" title="작게 (Esc)" aria-label="작게">⌄</button></div>' +
     '<div class="bc-msgs" id="bc-msgs" aria-live="polite"></div>' +
     '<div class="bc-pics" id="bc-pics" hidden></div>' +
@@ -1065,6 +1077,17 @@ render();
   var CHIPS = (HOOK.chips || ["이 앱에서 ○○ 고쳐 줘"]).concat(LOCAL ? [] : ["맡긴 앱 고치기 어떻게 됐어?"]);
   function render() {
     var h = "";
+    if (showHist) {   // 지난 대화 목록 · 한 대화 보기
+      if (viewPast >= 0 && past[viewPast]) {
+        var pv = past[viewPast];
+        h += '<div class="bc-hello"><b>' + esc(pv.title) + '</b><p>' + day(pv.at) + ' · 지난 대화</p><div class="bc-chips"><button type="button" class="bc-chip" data-bc="resume">이 대화 이어가기</button><button type="button" class="bc-chip" data-bc="hist">목록으로</button></div></div>';
+        pv.turns.forEach(function (t) { h += '<div class="bc-b ' + (t.role === "user" ? "bc-me" : "bc-ai") + '">' + (t.imgs ? '<span class="bc-shot-n">📷 사진 ' + t.imgs + "장</span>" : "") + esc(t.content) + "</div>"; });
+      } else {
+        h += '<div class="bc-hello"><b>지난 대화 ' + past.length + '개</b><p>' + (past.length ? "누르면 그 대화를 보고, 이어갈 수 있어요." : "아직 없어요. ↺ 새 대화를 누르면 지금 대화가 여기로 와요.") + '</p><div class="bc-chips"><button type="button" class="bc-chip" data-bc="hist">지금 대화로</button></div></div>';
+        past.forEach(function (p, i) { h += '<button type="button" class="bc-more" data-bc-past="' + i + '">' + esc(day(p.at)) + " · " + esc(p.title) + " (" + p.turns.length + ")</button>"; });
+      }
+      msgs.innerHTML = h; msgs.scrollTop = 0; paintFab(); return;
+    }
     if (!turns.length) {
       h += '<div class="bc-hello"><b>동욱 님, 무엇을 도와드릴까요?</b><p>' + esc(NAME) + "에 대해 묻거나 바꾸고 싶은 걸 말해 주세요. " +
         (HOOK.editNote || (LOCAL ? "이 맥의 Claude가 앱 원본을 바로 고쳐요. 고친 뒤 새로고침하면 보여요." : "고친 판은 5~15분 뒤 준비되고, 「적용해 줘」라고 해야 실제 앱에 들어가요.")) +
@@ -1140,10 +1163,13 @@ render();
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");
     if (up) { var k = +up.getAttribute("data-bc-unpic"), gone = pics.splice(k, 1)[0]; if (gone) URL.revokeObjectURL(gone.url); paintPics(); return; }
+    var pp = e.target.closest("[data-bc-past]"); if (pp) { viewPast = +pp.getAttribute("data-bc-past"); render(); return; }
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");
     if (a === "close") return close();
-    if (a === "new") { if (ctl) ctl.abort(); turns = []; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); return; }
+    if (a === "new") { if (ctl) ctl.abort(); archive(); turns = []; showHist = false; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); return; }
+    if (a === "hist") { showHist = !(showHist && viewPast < 0); viewPast = -1; render(); return; }
+    if (a === "resume") { var pr = past[viewPast]; if (pr && !busy) { past.splice(viewPast, 1); archive(); turns = pr.turns.slice(); showHist = false; viewPast = -1; keep(); render(); } return; }
     if (a === "old") { openOld = !openOld; render(); return; }
     var c = b.getAttribute("data-bc-chip");
     if (c) { if (c.indexOf("○○") >= 0) { text.value = c.split("○○")[0]; text.focus(); } else go(c); }
@@ -1169,7 +1195,17 @@ render();
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) close(); });
   function ready() { var was = false; try { was = localStorage.getItem(KEY + ".open") === "1"; } catch (e) {} lift(); if (was) open(); else fab.hidden = false; }
   if (LOCAL) ready();
-  else if (window.claude && claude.use) claude.use("sample").then(function (s) { sample = s; if (s) ready(); }, function () {});   // 로그인돼 Brainy를 부를 수 있을 때만
+  else if (window.claude && claude.use) {
+    claude.use("sample").then(function (s) { sample = s; if (s) ready(); }, function () {});   // 로그인돼 Brainy를 부를 수 있을 때만
+    claude.use("db").then(function (db) {   // 다른 기기에서 이어 쓴 기록을 받는다 — 더 새것만
+      if (!db) return; DBC = db;
+      db.doc(PATH).onSnapshot(function (snap) {
+        if (!snap.exists) { if (turns.length || past.length) keep(); return; }
+        var d = snap.data() || {};
+        if ((d.at || 0) > stamp && !busy) { turns = d.cur || []; past = d.past || []; stamp = d.at; try { localStorage.setItem(KEY, JSON.stringify(turns)); localStorage.setItem(KEY + ".past", JSON.stringify(past)); localStorage.setItem(KEY + ".at", String(stamp)); } catch (e) {} if (!box.hidden) render(); }
+      });
+    }, function () {});
+  }
 })();
 </script>
 
