@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "58c8eed8bd"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=58c8eed8bd"></script>
+<script>window.BRAINY_VERSION = "fa355e2d62"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=fa355e2d62"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -1457,7 +1457,7 @@ init();
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");
-    if (up) { var k = +up.getAttribute("data-bc-unpic"), gone = pics.splice(k, 1)[0]; if (gone) URL.revokeObjectURL(gone.url); paintPics(); return; }
+    if (up) { var k = +up.getAttribute("data-bc-unpic"), drop = pics.splice(k, 1)[0]; if (drop) URL.revokeObjectURL(drop.url); paintPics(); return; }
     var pp = e.target.closest("[data-bc-past]"); if (pp) { viewPast = +pp.getAttribute("data-bc-past"); render(); return; }
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");

@@ -223,7 +223,7 @@
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");
-    if (up) { var k = +up.getAttribute("data-bc-unpic"), gone = pics.splice(k, 1)[0]; if (gone) URL.revokeObjectURL(gone.url); paintPics(); return; }
+    if (up) { var k = +up.getAttribute("data-bc-unpic"), drop = pics.splice(k, 1)[0]; if (drop) URL.revokeObjectURL(drop.url); paintPics(); return; }
     var pp = e.target.closest("[data-bc-past]"); if (pp) { viewPast = +pp.getAttribute("data-bc-past"); render(); return; }
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");
