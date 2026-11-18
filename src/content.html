@@ -497,7 +497,7 @@ function render(){
   ui.later = false;
   /* 초점 돌려주기는 앱 화면(#view) 안 칸만 — 구석 Brainy 대화창(#bc-text)에 쓰는 중에 맥 자료가 와서 다시 그리면, 그 칸의 커서를 다시 놓다가 한글 조합이 끊겨 글이 깨졌다 (2026-11-18 동욱: "대화창을 쓰면 글이 깨진다") */
   var act0 = document.activeElement, sm0 = document.getElementById("setm"); if(act0 && !document.getElementById("view").contains(act0) && !(sm0 && sm0.contains(act0))) act0 = null;   // ⚙ 설정 창 안 입력칸도
-  var key = act0 && (act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
+  var key = act0 && (act0.tagName === "SUMMARY" && act0.parentNode.dataset && act0.parentNode.dataset.wbox ? "[data-wbox=\"" + CSS.escape(act0.parentNode.dataset.wbox) + "\"]>summary" : act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
   var v = function(){ return ({ build: 1, refpage: 1, script: 1 }[tab] && B() ? baseBarHtml() : "") + v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") + undoToastHtml() };   // 대본 탭 세 칸 맨 위에 기준 키워드 · 영상 주제   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
   var selA = null, selB = null; try{ if(act0 && /^(INPUT|TEXTAREA)$/.test(act0.tagName)){ selA = act0.selectionStart; selB = act0.selectionEnd } }catch(e){}   // 커서 위치도 지킨다 (2026-11-18 검증: 다시 그리면 커서가 맨 앞으로 가서 이어 쓴 글이 앞에 붙음)
   document.getElementById("view").innerHTML = sub + pastBarHtml() + runHtml(Object.keys(KIND)) + promptBarHtml() + v();   // ✍️ 탭마다 내 말로 끼어들기
