@@ -3,8 +3,8 @@
    여기서 db 를 Supabase `docs` 표(실시간)로 바꿔 준다. 로그인 = Supabase Auth, 데이터는 주인 계정만(RLS). */
 (function () {
   "use strict";
-  var SB_URL = "https://ttvslsnnkwzfpvswxowe.supabase.co";
-  var SB_KEY = "sb_publishable_MQ2J5s-lyDG9ftsZpWMZuQ_jPuCC31q"; // 공개용 키
+  var SB_URL = "https://fwmkpwisgkvontzpasym.supabase.co";
+  var SB_KEY = "sb_publishable_uuyp3LdaEeKr002cSVrfhw_hWy1Q8i3"; // 공개용 키
   // 같은 주소 아래 앱 셋(Brainy 홈 · 맥 단축키 · 체화 단어장)이 이 받침을 같이 쓴다. 앱마다 자기 컬렉션만 읽는다.
   var APP = window.BRAINY_APP || { key: "home", name: "Brainy 홈", icon: "icon.svg" };
   var OTHER = ["ai", "ai_out", "sc.data", "sc.marks", "additions", "requests", "vo.data", "vo.ids", "progress", "ctx", "mac", "ct.data", "ct.set", "bchat"]; // 홈이 안 읽는 것 (mac = 맥 동기화 신호, 새로고침 버튼이 따로 본다)
