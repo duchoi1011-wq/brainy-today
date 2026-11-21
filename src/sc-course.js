@@ -25,7 +25,11 @@ function csSave(){
   save("sc.course", CPROG);
   if(DB && DB.doc) DB.doc("sc.marks/course").set(Object.assign({}, CPROG, { updatedAt: new Date().toISOString() })).catch(function(){});
 }
-function renderCourse(){ if(current === "course") render(); else renderNav(); }
+// 「＋ 강의」 이름을 쓰는 중에 자료가 와도 칸을 다시 그리지 않는다 (글·한글 조합이 지워지던 것) — 칸에서 나오면 그린다
+var csPend = false;
+function csTyping(){ var a = document.activeElement; return !!(a && a.id === "cs-addin"); }
+function renderCourse(){ if(current === "course" && csTyping()){ csPend = true; renderNav(); } else if(current === "course") render(); else renderNav(); }
+document.addEventListener("focusout", function(){ setTimeout(function(){ if(csPend && !csTyping()){ csPend = false; if(current === "course") render(); } }, 200); });
 function csList(){
   return (COURSE.courses || []).filter(function(c){ return (c.cheat || []).length || c.chapters.some(function(ch){ return csSteps(ch).length; }); });
 }
@@ -142,7 +146,7 @@ function csRequest(doc){
   if(!DB){ alert("저장소에 연결되지 않았어요 — 새로고침해 주세요."); return; }
   doc.status = "대기"; doc.createdAt = new Date().toISOString();
   var tmp = Object.assign({ id: "tmp" + Date.now() }, doc); CREQ = [tmp].concat(CREQ); renderCourse();
-  DB.collection("sc.creq").doc().set(doc).catch(function(){ tmp.status = "오류"; tmp.msg = "저장하지 못했어요 — 다시 해 주세요"; renderCourse(); });
+  DB.collection("sc.creq").doc().set(doc).catch(function(){ alert("강의 요청을 저장하지 못했어요 — 다시 해 주세요."); });
 }
 function csSetReqs(list){
   CREQ = list.sort(function(a, b){ return (b.createdAt || "") < (a.createdAt || "") ? -1 : 1; });
@@ -213,7 +217,7 @@ document.addEventListener("submit", function(e){
   if(!e.target.closest("[data-csform]")) return;
   e.preventDefault();
   var v = (document.getElementById("cs-addin").value || "").trim();
-  if(v){ csAdd = false; csRequest({ text: v.slice(0, 120) }); }
+  if(v){ csAdd = false; document.getElementById("cs-addin").blur(); csRequest({ text: v.slice(0, 120) }); }
 });
 document.addEventListener("click", function(e){
   var b = e.target.closest("[data-csmk],[data-cspick],[data-csfilt],[data-cslpick],[data-cshere],[data-csjump],[data-cscopy],[data-csadd],[data-csreq],[data-csrm],[data-csx],[data-csopen]");

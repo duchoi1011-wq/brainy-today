@@ -205,4 +205,3 @@ document.addEventListener("click", e => {
   if (m[k]) delete m[k]; else m[k] = 1;
   lmSave(); render();
 });
-window.addEventListener("hashchange", () => { LSTUDY = null; LDET = null; });

@@ -46,10 +46,11 @@ function rvPreview(t){
 function rvGrade(r){
   const id = RV.queue[RV.i], t = BYID[id]; if (!t) return;
   const now = nowIso(), today = kday();
+  const wasNew = !srsOf(id);   // 볼트에서 온 복습 일정이 있는 단어는 「오늘 새 단어」로 세지 않는다
   const s0 = srsOf(id) || { box: -1 };
   const s = { box: s0.box ?? -1, n: 0, lapses: 0, log: [], pending: [], ...(prog[id]?.srs || {}) };
   if (s.box < 0) s.box = 0;
-  if (!s.first) s.first = today;
+  if (wasNew && !s.first) s.first = today;
   if (r === "ok") { s.box = Math.min(5, (s0.box ?? -1) + 1); s.due = kday(rvNext(s.box)); RV.stats.ok++; }
   else if (r === "mid") { s.box = Math.max(0, s0.box ?? 0); s.due = kday(Math.max(1, Math.floor(rvNext(s.box) / 2))); RV.stats.mid++; }
   else { s.box = 0; s.due = kday(1); s.lapses = (s.lapses || 0) + 1; RV.stats.bad++; if (!RV.again.has(id)) { RV.again.add(id); RV.queue.splice(Math.min(RV.queue.length, RV.i + 4), 0, id); } }
@@ -97,12 +98,12 @@ async function rvCheck(){
   try {
     const r = await sample.json(rvCmdPrompt(t, txt), { modelTier: "quick", cache: false });
     RV.res = { id, pass: !!r?.pass, good: String(r?.good || ""), fix: String(r?.fix || ""), example: String(r?.example || "") };
-    RV.flipped = true;
+    if (RV.queue?.[RV.i] === id) RV.flipped = true;   // 기다리는 사이 다른 카드로 넘어갔으면 그 카드를 뒤집지 않는다
   } catch (e) {
     if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)) { sample = null; sampleChecked = true; RV.res = { id, self: true }; RV.flipped = true; }
     else RV.err = e?.code === "rate_limited" ? "요청이 많아요. 잠시 뒤 다시 눌러 주세요." : "확인하지 못했어요. 다시 눌러 주세요.";
   }
-  RV.busy = false; render();
+  RV.busy = false; document.activeElement?.blur?.(); render();
 }
 function rvFront(t, dir, step){
   const c = CTX[t.id], fg = t.dom === "외국어 단어장";
@@ -217,7 +218,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("input", e => { if (e.target.id === "rvTxt") RV.drafts[e.target.dataset.id] = e.target.value; });
 document.addEventListener("keydown", e => {
-  if (view() !== "review" || e.isComposing || /input|textarea|select/i.test(document.activeElement?.tagName || "")) return;
+  if (view() !== "review" || e.isComposing || e.metaKey || e.ctrlKey || e.altKey || /input|textarea|select/i.test(document.activeElement?.tagName || "")) return;
   const step3 = rvStep(RV.queue?.[RV.i]) >= 3, r = RV.res;
   if (e.key === " " || e.key === "Enter") { if (!RV.flipped && !step3) { e.preventDefault(); RV.flipped = true; render(); } return; }
   if (RV.flipped && ["1", "2", "3"].includes(e.key) && !(e.key === "3" && step3 && r && !r.self && !r.pass)) rvGrade(e.key === "1" ? "bad" : e.key === "2" ? "mid" : "ok");
@@ -326,7 +327,7 @@ async function batchCheck(){
     if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)) { sample = null; sampleChecked = true; B.self = true; }
     else B.err = e?.code === "rate_limited" ? "요청이 많아요. 잠시 뒤 다시 눌러 주세요." : "채점하지 못했어요. 다시 눌러 주세요.";
   }
-  B.busy = false; render();
+  B.busy = false; document.activeElement?.blur?.(); render();
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-pickup],[data-up],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;

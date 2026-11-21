@@ -90,7 +90,7 @@
   css.textContent =
     "#bc-fab,#bc{" + V + "font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard',sans-serif}" +
     "#bc-fab{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(var(--bc-lift,0px) + 16px + env(safe-area-inset-bottom,0px));display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 18px 0 14px;border:0;border-radius:26px;background:var(--bc-acc);color:var(--bc-acc-ink);font-size:15px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;transition:transform .15s}" +
-    "@media (min-width:1000px){html.bc-push body{margin-right:432px!important}html.bc-push #bc{top:16px;bottom:calc(var(--bc-lift,0px) + 16px);height:auto}}" +   /* 넓은 화면: 앱을 왼쪽으로 비켜 세우고 창은 오른쪽 옆 칸(위아래 꽉)으로 */
+    "@media (min-width:1000px){html.bc-push #bsync,html.bc-push #bsync-tip{right:448px}html.bc-push body{margin-right:432px!important}html.bc-push #bc{top:16px;bottom:calc(var(--bc-lift,0px) + 16px);height:auto}}" +   /* 넓은 화면: 앱을 왼쪽으로 비켜 세우고 창은 오른쪽 옆 칸(위아래 꽉)으로 */
     "#bc-fab:hover{transform:translateY(-2px)}#bc-fab[hidden]{display:none}" +
     "#bc-fab .bc-star{font-size:19px;line-height:1}" +
     "#bc-fab .bc-dot{position:absolute;top:6px;right:8px;width:10px;height:10px;border-radius:50%;background:#ff5a4f;border:2px solid var(--bc-acc)}" +
@@ -228,7 +228,7 @@
     if (!LOCAL && !sample) { turns.push({ role: "user", content: q }, { role: "assistant", content: "⚠ 지금은 Brainy를 부를 수 없어요. 로그인을 확인해 주세요." }); keep(); render(); return; }
     var hist = turns.filter(function (t) { return t.content && !t.err; }).slice(-10).map(function (t) { return { role: t.role, content: t.imgs ? "(사진 " + t.imgs + "장을 같이 보냄) " + t.content : t.content }; });
     var me = { role: "user", content: q }; if (shot.length) { me.imgs = shot.length; me.shots = shot.map(function (p) { return p.url; }); }
-    turns.push(me); var ai = { role: "assistant", content: "", steps: [] }; turns.push(ai);
+    turns.push(me); var ai = { role: "assistant", content: "", steps: [] }; turns.push(ai); keep();   // 답을 기다리다 화면이 새로 열려도 질문은 남게
     busy = true; t0 = Date.now(); openOld = false; ctl = new AbortController(); text.value = ""; text.style.height = ""; render();
     function live(u) {
       ai.content = u; var el = document.getElementById("bc-last");

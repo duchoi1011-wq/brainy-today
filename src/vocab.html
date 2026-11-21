@@ -121,6 +121,9 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .pick input{width:22px;height:22px;accent-color:var(--accent);flex:none;cursor:pointer}.pick .t{all:unset;flex:1;min-width:0;cursor:pointer}.pick .t b{display:block;font-weight:600}.pick .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom, 0px));z-index:7;width:min(620px, calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.15)}
 #pickbar>span:first-child{flex:1;min-width:0}
+/* 고른 단어 막대가 떠 있으면 Brainy 버튼은 그 위로 (「▶ 시험」을 덮던 것) */
+body:has(#pickbar) #bc-fab{bottom:calc(var(--bc-lift,0px) + 84px + env(safe-area-inset-bottom,0px))}
+@media (min-width:1000px){html.bc-push #pickbar{left:calc((100% - 432px)/2)}}   /* 대화창이 옆 칸으로 열리면 막대도 앱 쪽 가운데로 */
 .upbtn{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--l4);font-size:13px;cursor:pointer}.upbtn:active{background:var(--l4);color:#fff}
 .fseg{display:flex;gap:6px;margin:0 0 10px}
 .stagegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -310,7 +313,7 @@ const pill = L => `<span class="pill p${L}">${L} ${LV[L]}</span>`;
 function renderHome(){
   const all = counts(TERMS.map(t => t.id)), d = kday();
   const due = TERMS.filter(t => { const x = srsOf(t.id); return x && x.due <= d; }).length;
-  const fresh = ALL.filter(t => isFresh(t) && lv(t.id) < 4).length;
+  const fresh = TERMS.filter(t => isFresh(t) && lv(t.id) < 4).length;   // 「새 개념」 탭과 같은 단어장 기준
   return `
   ${statusNote()}
   ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때).</p>` : ""}
@@ -480,7 +483,7 @@ function detailHtml(t){
     ${!ctxOk(t.id) && sample ? `<button class="btn ghost" data-act="regen" data-id="${t.id}" ${genBusy.has(t.id)?"disabled":""}>${genBusy.has(t.id) ? "장면 만드는 중…" : "장면·맥락 만들기"}</button>` : ""}
     ${p.cmd?.text ? `<p class="small"><span class="muted">내가 쓴 명령</span><br>${esc(p.cmd.text)}</p>` : ""}
     ${p.action?.note ? `<p class="small"><span class="muted">써 본 기록</span><br>${esc(p.action.note)}</p>` : ""}
-    ${p.history?.length ? `<div class="hist">${p.history.map(h => `<span class="mono">${esc(h.at.slice(0,10))} · ${h.level} ${LV[h.level]} · ${esc(h.how)}</span>`).join("")}</div>` : ""}
+    ${p.history?.length ? `<div class="hist">${p.history.map(h => `<span class="mono">${esc(new Date(new Date(h.at).getTime() + 9 * 3600e3).toISOString().slice(0, 10))} · ${h.level} ${LV[h.level]} · ${esc(h.how)}</span>`).join("")}</div>` : ""}
     ${lv(t.id) < 4 ? `<div class="btns"><button class="btn primary" data-onetest="${t.id}">▶ 이 단어 시험 — ${ro(LV[lv(t.id) + 1])}</button></div>` : ""}
     <button class="btn ghost" data-act="core" data-id="${t.id}">${isCore(t.id) ? "소통용으로 바꾸기 (소화까지만)" : "체화할 단어로 바꾸기 (실행까지)"}</button>
   </section>`;
@@ -537,7 +540,14 @@ document.addEventListener("input", e => {
   if (e.target.id === "listQ") { S.listQ = e.target.value; document.getElementById("listOut").innerHTML = listRows(); }
 });
 /* 입력 중 미뤄 둔 화면 갱신은 다음 버튼 동작 때 함께 반영한다 (focusout에서 다시 그리면 누르려던 버튼이 바뀌어 클릭이 사라짐) */
-window.addEventListener("hashchange", () => { if (view() !== "list") S.detail = S.detail; render(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => {
+  LSTUDY = null; LDET = null;   // 강의 「바로 익히기」·용어 풀이는 탭을 옮기면 닫는다 (그리기 전에 — 닫힌 카드의 버튼이 남지 않게)
+  render();
+  const det = view() === "list" && S.detail ? document.getElementById("detail") : null;   // 다른 탭에서 단어를 눌러 왔으면 그 풀이 자리로
+  if (det) det.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0);
+});
+// 답 칸을 쓰는 동안 미뤄 둔 그리기는 칸에서 나오면 한다 (채점 결과가 안 뜨던 것)
+document.addEventListener("focusout", () => setTimeout(() => { if (pendingRender) render(); }, 200));
 
 /* ---------- start ---------- */
 async function init(){

@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "e61ca22717"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "bchat"]};</script>
-<script src="../shim.js?v=e61ca22717"></script>
+<script>window.BRAINY_VERSION = "eb1a760f7b"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "bchat"]};</script>
+<script src="../shim.js?v=eb1a760f7b"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="맥 단축키">
@@ -341,8 +341,9 @@ function render(){
 // 입력칸이 있는 탭(지금·전체)은 칸은 두고 아래만 다시 그린다 — 치는 중에 커서가 안 튄다
 function refresh(){
   renderNav();
-  if(current === "now" && document.getElementById("now-out")) fillNow();
+  if(current === "now" && document.getElementById("now-out")){ fillNow(); var nb = document.getElementById("now-board"); if(nb) nb.innerHTML = boardHtml(); }
   else if(current === "all" && document.getElementById("all-out")) fillAll();
+  else if(current === "course" && csTyping()) csPend = true;   // 「＋ 강의」 이름을 쓰는 중이면 다 쓴 뒤에 그린다
   else render();
 }
 function repaint(){ reindex(); refresh() }
@@ -354,7 +355,7 @@ function matchMode(text){
   if(!t.trim()) return null;
   var best = null, bestN = 0;
   MODES.forEach(function(M){
-    var n = 0; M.keys.forEach(function(w){ if(t.indexOf(w) > -1) n++ });
+    var n = 0; (M.keys || []).forEach(function(w){ if(t.indexOf(String(w).toLowerCase()) > -1) n++ });
     if(n > bestN){ bestN = n; best = M }
   });
   return best;
@@ -368,7 +369,7 @@ function viewNow(){
       "<div class=\"row2\"><input id=\"ask\" type=\"text\" placeholder=\"예: 슬랙 / 피그마 / 줌 미팅 / 카카오톡 PC\" autocomplete=\"off\"><button class=\"btn primary\" id=\"ask-go\" type=\"button\">찾아서 넣기</button></div>" +
       "<p class=\"status\" id=\"ask-status\" hidden></p>",
       { lead: "쓰려는 앱이나 하는 일을 적으면 찾아서 「분야」에 넣어요. 모든 기기에서 보여요." }) +
-    "<details class=\"card\"><summary>프로젝트별로 쓸 것</summary>" + boardHtml() + "</details>";
+    "<details class=\"card\"><summary>프로젝트별로 쓸 것</summary><div id=\"now-board\">" + boardHtml() + "</div></details>";
 }
 function fillNow(){
   var auto = matchMode(ctxText);
@@ -380,7 +381,7 @@ function fillNow(){
   var out = document.getElementById("now-out"); if(!out) return;
   if(!M){
     var open = STARTER.filter(function(s){ return !gone(marks[s.id]) });
-    var pick = open.length ? open[Math.floor(Date.now() / 86400000) % open.length] : null;
+    var pick = open.length ? open[Math.floor((Date.now() + 9 * 3600000) / 86400000) % open.length] : null;
     out.innerHTML = listCard("먼저 이것만 " + STARTER.length + "개", open, {
       n: open.length + "/" + STARTER.length,
       lead: "하루 열 번 하는 동작부터" + (pick ? " — 오늘은 <b>" + pick.t + "</b>" : "") + ". 위에서 하는 일을 고르면 그 일에 쓰는 것만 나와요.",
@@ -407,7 +408,7 @@ function boardHtml(){
 var ST = [["todo","아직"], ["fav","★ 즐겨찾기"], ["pass","✓ 외웠어"], ["no","✕ 필요없어"], ["all","전체"]];
 function stOk(s, k){ var m = marks[s.id] || ""; return k === "all" || (k === "todo" ? !gone(m) : m === k) }
 function viewField(){
-  var names = areaList(); if(names.indexOf(area) < 0) area = names[0];
+  var names = areaList(); if(names.length && names.indexOf(area) < 0) area = names[0];
   var h = catList().map(function(c){
     return "<div><p class=\"lbl\">" + esc(c) + "</p><div class=\"chips\">" + names.filter(function(g){ return catOf(g) === c }).map(function(g){
       var left = ITEMS.filter(function(s){ return areaOf(s) === g && !gone(marks[s.id]) }).length;
@@ -503,7 +504,11 @@ function csSave(){
   save("sc.course", CPROG);
   if(DB && DB.doc) DB.doc("sc.marks/course").set(Object.assign({}, CPROG, { updatedAt: new Date().toISOString() })).catch(function(){});
 }
-function renderCourse(){ if(current === "course") render(); else renderNav(); }
+// 「＋ 강의」 이름을 쓰는 중에 자료가 와도 칸을 다시 그리지 않는다 (글·한글 조합이 지워지던 것) — 칸에서 나오면 그린다
+var csPend = false;
+function csTyping(){ var a = document.activeElement; return !!(a && a.id === "cs-addin"); }
+function renderCourse(){ if(current === "course" && csTyping()){ csPend = true; renderNav(); } else if(current === "course") render(); else renderNav(); }
+document.addEventListener("focusout", function(){ setTimeout(function(){ if(csPend && !csTyping()){ csPend = false; if(current === "course") render(); } }, 200); });
 function csList(){
   return (COURSE.courses || []).filter(function(c){ return (c.cheat || []).length || c.chapters.some(function(ch){ return csSteps(ch).length; }); });
 }
@@ -620,7 +625,7 @@ function csRequest(doc){
   if(!DB){ alert("저장소에 연결되지 않았어요 — 새로고침해 주세요."); return; }
   doc.status = "대기"; doc.createdAt = new Date().toISOString();
   var tmp = Object.assign({ id: "tmp" + Date.now() }, doc); CREQ = [tmp].concat(CREQ); renderCourse();
-  DB.collection("sc.creq").doc().set(doc).catch(function(){ tmp.status = "오류"; tmp.msg = "저장하지 못했어요 — 다시 해 주세요"; renderCourse(); });
+  DB.collection("sc.creq").doc().set(doc).catch(function(){ alert("강의 요청을 저장하지 못했어요 — 다시 해 주세요."); });
 }
 function csSetReqs(list){
   CREQ = list.sort(function(a, b){ return (b.createdAt || "") < (a.createdAt || "") ? -1 : 1; });
@@ -691,7 +696,7 @@ document.addEventListener("submit", function(e){
   if(!e.target.closest("[data-csform]")) return;
   e.preventDefault();
   var v = (document.getElementById("cs-addin").value || "").trim();
-  if(v){ csAdd = false; csRequest({ text: v.slice(0, 120) }); }
+  if(v){ csAdd = false; document.getElementById("cs-addin").blur(); csRequest({ text: v.slice(0, 120) }); }
 });
 document.addEventListener("click", function(e){
   var b = e.target.closest("[data-csmk],[data-cspick],[data-csfilt],[data-cslpick],[data-cshere],[data-csjump],[data-cscopy],[data-csadd],[data-csreq],[data-csrm],[data-csx],[data-csopen]");
@@ -763,7 +768,7 @@ function docToItems(id, v){
   var out = [];
   (v.items || []).forEach(function(it, i){
     if(!it || !Array.isArray(it.keys) || !it.keys.length) return;
-    var keys = it.keys.map(function(c){ return Array.isArray(c) ? c.map(String) : [String(c)] });
+    var keys = it.keys.map(function(c){ return (Array.isArray(c) ? c : [c]).map(function(x){ return esc(String(x)) }) });
     out.push({ id: "add-" + id + "-" + i, k: keys, t: esc(String(it.title || "").slice(0, 60)),
       d: esc(String(it.desc || "").slice(0, 90)), g: String(v.area || "추가됨").slice(0, 20),
       tag: it.confidence === "low" ? "확인 필요" : "앱 추가", unver: 1,
@@ -1038,7 +1043,7 @@ render();
   css.textContent =
     "#bc-fab,#bc{" + V + "font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard',sans-serif}" +
     "#bc-fab{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(var(--bc-lift,0px) + 16px + env(safe-area-inset-bottom,0px));display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 18px 0 14px;border:0;border-radius:26px;background:var(--bc-acc);color:var(--bc-acc-ink);font-size:15px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;transition:transform .15s}" +
-    "@media (min-width:1000px){html.bc-push body{margin-right:432px!important}html.bc-push #bc{top:16px;bottom:calc(var(--bc-lift,0px) + 16px);height:auto}}" +   /* 넓은 화면: 앱을 왼쪽으로 비켜 세우고 창은 오른쪽 옆 칸(위아래 꽉)으로 */
+    "@media (min-width:1000px){html.bc-push #bsync,html.bc-push #bsync-tip{right:448px}html.bc-push body{margin-right:432px!important}html.bc-push #bc{top:16px;bottom:calc(var(--bc-lift,0px) + 16px);height:auto}}" +   /* 넓은 화면: 앱을 왼쪽으로 비켜 세우고 창은 오른쪽 옆 칸(위아래 꽉)으로 */
     "#bc-fab:hover{transform:translateY(-2px)}#bc-fab[hidden]{display:none}" +
     "#bc-fab .bc-star{font-size:19px;line-height:1}" +
     "#bc-fab .bc-dot{position:absolute;top:6px;right:8px;width:10px;height:10px;border-radius:50%;background:#ff5a4f;border:2px solid var(--bc-acc)}" +
@@ -1176,7 +1181,7 @@ render();
     if (!LOCAL && !sample) { turns.push({ role: "user", content: q }, { role: "assistant", content: "⚠ 지금은 Brainy를 부를 수 없어요. 로그인을 확인해 주세요." }); keep(); render(); return; }
     var hist = turns.filter(function (t) { return t.content && !t.err; }).slice(-10).map(function (t) { return { role: t.role, content: t.imgs ? "(사진 " + t.imgs + "장을 같이 보냄) " + t.content : t.content }; });
     var me = { role: "user", content: q }; if (shot.length) { me.imgs = shot.length; me.shots = shot.map(function (p) { return p.url; }); }
-    turns.push(me); var ai = { role: "assistant", content: "", steps: [] }; turns.push(ai);
+    turns.push(me); var ai = { role: "assistant", content: "", steps: [] }; turns.push(ai); keep();   // 답을 기다리다 화면이 새로 열려도 질문은 남게
     busy = true; t0 = Date.now(); openOld = false; ctl = new AbortController(); text.value = ""; text.style.height = ""; render();
     function live(u) {
       ai.content = u; var el = document.getElementById("bc-last");

@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "33494a04d1"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=33494a04d1"></script>
+<script>window.BRAINY_VERSION = "69d05dcc4c"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=69d05dcc4c"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -175,6 +175,9 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .pick input{width:22px;height:22px;accent-color:var(--accent);flex:none;cursor:pointer}.pick .t{all:unset;flex:1;min-width:0;cursor:pointer}.pick .t b{display:block;font-weight:600}.pick .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom, 0px));z-index:7;width:min(620px, calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.15)}
 #pickbar>span:first-child{flex:1;min-width:0}
+/* 고른 단어 막대가 떠 있으면 Brainy 버튼은 그 위로 (「▶ 시험」을 덮던 것) */
+body:has(#pickbar) #bc-fab{bottom:calc(var(--bc-lift,0px) + 84px + env(safe-area-inset-bottom,0px))}
+@media (min-width:1000px){html.bc-push #pickbar{left:calc((100% - 432px)/2)}}   /* 대화창이 옆 칸으로 열리면 막대도 앱 쪽 가운데로 */
 .upbtn{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--l4);font-size:13px;cursor:pointer}.upbtn:active{background:var(--l4);color:#fff}
 .fseg{display:flex;gap:6px;margin:0 0 10px}
 .stagegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -364,7 +367,7 @@ const pill = L => `<span class="pill p${L}">${L} ${LV[L]}</span>`;
 function renderHome(){
   const all = counts(TERMS.map(t => t.id)), d = kday();
   const due = TERMS.filter(t => { const x = srsOf(t.id); return x && x.due <= d; }).length;
-  const fresh = ALL.filter(t => isFresh(t) && lv(t.id) < 4).length;
+  const fresh = TERMS.filter(t => isFresh(t) && lv(t.id) < 4).length;   // 「새 개념」 탭과 같은 단어장 기준
   return `
   ${statusNote()}
   ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때).</p>` : ""}
@@ -534,7 +537,7 @@ function detailHtml(t){
     ${!ctxOk(t.id) && sample ? `<button class="btn ghost" data-act="regen" data-id="${t.id}" ${genBusy.has(t.id)?"disabled":""}>${genBusy.has(t.id) ? "장면 만드는 중…" : "장면·맥락 만들기"}</button>` : ""}
     ${p.cmd?.text ? `<p class="small"><span class="muted">내가 쓴 명령</span><br>${esc(p.cmd.text)}</p>` : ""}
     ${p.action?.note ? `<p class="small"><span class="muted">써 본 기록</span><br>${esc(p.action.note)}</p>` : ""}
-    ${p.history?.length ? `<div class="hist">${p.history.map(h => `<span class="mono">${esc(h.at.slice(0,10))} · ${h.level} ${LV[h.level]} · ${esc(h.how)}</span>`).join("")}</div>` : ""}
+    ${p.history?.length ? `<div class="hist">${p.history.map(h => `<span class="mono">${esc(new Date(new Date(h.at).getTime() + 9 * 3600e3).toISOString().slice(0, 10))} · ${h.level} ${LV[h.level]} · ${esc(h.how)}</span>`).join("")}</div>` : ""}
     ${lv(t.id) < 4 ? `<div class="btns"><button class="btn primary" data-onetest="${t.id}">▶ 이 단어 시험 — ${ro(LV[lv(t.id) + 1])}</button></div>` : ""}
     <button class="btn ghost" data-act="core" data-id="${t.id}">${isCore(t.id) ? "소통용으로 바꾸기 (소화까지만)" : "체화할 단어로 바꾸기 (실행까지)"}</button>
   </section>`;
@@ -591,7 +594,14 @@ document.addEventListener("input", e => {
   if (e.target.id === "listQ") { S.listQ = e.target.value; document.getElementById("listOut").innerHTML = listRows(); }
 });
 /* 입력 중 미뤄 둔 화면 갱신은 다음 버튼 동작 때 함께 반영한다 (focusout에서 다시 그리면 누르려던 버튼이 바뀌어 클릭이 사라짐) */
-window.addEventListener("hashchange", () => { if (view() !== "list") S.detail = S.detail; render(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => {
+  LSTUDY = null; LDET = null;   // 강의 「바로 익히기」·용어 풀이는 탭을 옮기면 닫는다 (그리기 전에 — 닫힌 카드의 버튼이 남지 않게)
+  render();
+  const det = view() === "list" && S.detail ? document.getElementById("detail") : null;   // 다른 탭에서 단어를 눌러 왔으면 그 풀이 자리로
+  if (det) det.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0);
+});
+// 답 칸을 쓰는 동안 미뤄 둔 그리기는 칸에서 나오면 한다 (채점 결과가 안 뜨던 것)
+document.addEventListener("focusout", () => setTimeout(() => { if (pendingRender) render(); }, 200));
 
 /* ---------- start ---------- */
 async function init(){
@@ -679,10 +689,11 @@ function rvPreview(t){
 function rvGrade(r){
   const id = RV.queue[RV.i], t = BYID[id]; if (!t) return;
   const now = nowIso(), today = kday();
+  const wasNew = !srsOf(id);   // 볼트에서 온 복습 일정이 있는 단어는 「오늘 새 단어」로 세지 않는다
   const s0 = srsOf(id) || { box: -1 };
   const s = { box: s0.box ?? -1, n: 0, lapses: 0, log: [], pending: [], ...(prog[id]?.srs || {}) };
   if (s.box < 0) s.box = 0;
-  if (!s.first) s.first = today;
+  if (wasNew && !s.first) s.first = today;
   if (r === "ok") { s.box = Math.min(5, (s0.box ?? -1) + 1); s.due = kday(rvNext(s.box)); RV.stats.ok++; }
   else if (r === "mid") { s.box = Math.max(0, s0.box ?? 0); s.due = kday(Math.max(1, Math.floor(rvNext(s.box) / 2))); RV.stats.mid++; }
   else { s.box = 0; s.due = kday(1); s.lapses = (s.lapses || 0) + 1; RV.stats.bad++; if (!RV.again.has(id)) { RV.again.add(id); RV.queue.splice(Math.min(RV.queue.length, RV.i + 4), 0, id); } }
@@ -730,12 +741,12 @@ async function rvCheck(){
   try {
     const r = await sample.json(rvCmdPrompt(t, txt), { modelTier: "quick", cache: false });
     RV.res = { id, pass: !!r?.pass, good: String(r?.good || ""), fix: String(r?.fix || ""), example: String(r?.example || "") };
-    RV.flipped = true;
+    if (RV.queue?.[RV.i] === id) RV.flipped = true;   // 기다리는 사이 다른 카드로 넘어갔으면 그 카드를 뒤집지 않는다
   } catch (e) {
     if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)) { sample = null; sampleChecked = true; RV.res = { id, self: true }; RV.flipped = true; }
     else RV.err = e?.code === "rate_limited" ? "요청이 많아요. 잠시 뒤 다시 눌러 주세요." : "확인하지 못했어요. 다시 눌러 주세요.";
   }
-  RV.busy = false; render();
+  RV.busy = false; document.activeElement?.blur?.(); render();
 }
 function rvFront(t, dir, step){
   const c = CTX[t.id], fg = t.dom === "외국어 단어장";
@@ -850,7 +861,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("input", e => { if (e.target.id === "rvTxt") RV.drafts[e.target.dataset.id] = e.target.value; });
 document.addEventListener("keydown", e => {
-  if (view() !== "review" || e.isComposing || /input|textarea|select/i.test(document.activeElement?.tagName || "")) return;
+  if (view() !== "review" || e.isComposing || e.metaKey || e.ctrlKey || e.altKey || /input|textarea|select/i.test(document.activeElement?.tagName || "")) return;
   const step3 = rvStep(RV.queue?.[RV.i]) >= 3, r = RV.res;
   if (e.key === " " || e.key === "Enter") { if (!RV.flipped && !step3) { e.preventDefault(); RV.flipped = true; render(); } return; }
   if (RV.flipped && ["1", "2", "3"].includes(e.key) && !(e.key === "3" && step3 && r && !r.self && !r.pass)) rvGrade(e.key === "1" ? "bad" : e.key === "2" ? "mid" : "ok");
@@ -959,7 +970,7 @@ async function batchCheck(){
     if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)) { sample = null; sampleChecked = true; B.self = true; }
     else B.err = e?.code === "rate_limited" ? "요청이 많아요. 잠시 뒤 다시 눌러 주세요." : "채점하지 못했어요. 다시 눌러 주세요.";
   }
-  B.busy = false; render();
+  B.busy = false; document.activeElement?.blur?.(); render();
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-pickup],[data-up],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;
@@ -1186,7 +1197,6 @@ document.addEventListener("click", e => {
   if (m[k]) delete m[k]; else m[k] = 1;
   lmSave(); render();
 });
-window.addEventListener("hashchange", () => { LSTUDY = null; LDET = null; });
 
 init();
 </script>
@@ -1324,7 +1334,7 @@ init();
   css.textContent =
     "#bc-fab,#bc{" + V + "font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard',sans-serif}" +
     "#bc-fab{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(var(--bc-lift,0px) + 16px + env(safe-area-inset-bottom,0px));display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 18px 0 14px;border:0;border-radius:26px;background:var(--bc-acc);color:var(--bc-acc-ink);font-size:15px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;transition:transform .15s}" +
-    "@media (min-width:1000px){html.bc-push body{margin-right:432px!important}html.bc-push #bc{top:16px;bottom:calc(var(--bc-lift,0px) + 16px);height:auto}}" +   /* 넓은 화면: 앱을 왼쪽으로 비켜 세우고 창은 오른쪽 옆 칸(위아래 꽉)으로 */
+    "@media (min-width:1000px){html.bc-push #bsync,html.bc-push #bsync-tip{right:448px}html.bc-push body{margin-right:432px!important}html.bc-push #bc{top:16px;bottom:calc(var(--bc-lift,0px) + 16px);height:auto}}" +   /* 넓은 화면: 앱을 왼쪽으로 비켜 세우고 창은 오른쪽 옆 칸(위아래 꽉)으로 */
     "#bc-fab:hover{transform:translateY(-2px)}#bc-fab[hidden]{display:none}" +
     "#bc-fab .bc-star{font-size:19px;line-height:1}" +
     "#bc-fab .bc-dot{position:absolute;top:6px;right:8px;width:10px;height:10px;border-radius:50%;background:#ff5a4f;border:2px solid var(--bc-acc)}" +
@@ -1462,7 +1472,7 @@ init();
     if (!LOCAL && !sample) { turns.push({ role: "user", content: q }, { role: "assistant", content: "⚠ 지금은 Brainy를 부를 수 없어요. 로그인을 확인해 주세요." }); keep(); render(); return; }
     var hist = turns.filter(function (t) { return t.content && !t.err; }).slice(-10).map(function (t) { return { role: t.role, content: t.imgs ? "(사진 " + t.imgs + "장을 같이 보냄) " + t.content : t.content }; });
     var me = { role: "user", content: q }; if (shot.length) { me.imgs = shot.length; me.shots = shot.map(function (p) { return p.url; }); }
-    turns.push(me); var ai = { role: "assistant", content: "", steps: [] }; turns.push(ai);
+    turns.push(me); var ai = { role: "assistant", content: "", steps: [] }; turns.push(ai); keep();   // 답을 기다리다 화면이 새로 열려도 질문은 남게
     busy = true; t0 = Date.now(); openOld = false; ctl = new AbortController(); text.value = ""; text.style.height = ""; render();
     function live(u) {
       ai.content = u; var el = document.getElementById("bc-last");
