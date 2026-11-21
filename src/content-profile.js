@@ -87,6 +87,7 @@ function profAct(name, el){
       if(!t){ arr.splice(j, 1) } else arr[j] = itemParse(PLIST[path], t);
       if(path === "identity.axes" && t && oldItem && oldItem !== arr[j]) axRen[oldItem] = arr[j];
       pset(p, path, arr); profSave(p, null, axRen); return true }
+    if(k === "name" && !String(pval(k) || "").trim()){ alert("브랜드 이름을 적어 주세요."); return true }   // 빈 이름으로 저장하면 브랜드가 목록에서 사라진다
     p[k] = pval(k); profSave(p); return true;
   }
   if(name === "pdel"){ var pp = k.split(":")[0], jj = +k.split(":")[1], a2 = pget(p, pp) || [];

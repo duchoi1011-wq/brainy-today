@@ -15,8 +15,9 @@ var REC_USE = [["fav", "☆ 즐겨찾기 영상"], ["pin", "★ 키워드로 찾
 var RANK_W = [6, 5, 4, 3, 2, 1];   // 우선순위 1위부터의 비중
 function recCrit(){
   var c = (SETS[cur] || {}).recCrit || {}, m = M();
-  var order = c.order || CRIT.slice().sort(function(a, b){ return (m[b.mix] || 0) - (m[a.mix] || 0) }).map(function(x){ return x.id });
-  return { set: !!c.order, order: order, off: c.off || {}, use: Object.assign({ fav: true, pin: true, seed: true, ref: true }, c.use || {}),
+  var known = function(id){ return CRIT.some(function(k){ return k.id === id }) };
+  var order = (Array.isArray(c.order) && c.order.filter(known).length ? c.order.filter(known).concat(CRIT.map(function(x){ return x.id }).filter(function(id){ return c.order.indexOf(id) < 0 })) : null) || CRIT.slice().sort(function(a, b){ return (m[b.mix] || 0) - (m[a.mix] || 0) }).map(function(x){ return x.id });
+  return { set: Array.isArray(c.order), order: order, off: c.off || {}, use: Object.assign({ fav: true, pin: true, seed: true, ref: true }, c.use || {}),
     favFirst: c.favFirst !== false, minRatio: c.minRatio != null ? c.minRatio : (m.th_ratio || 1) };
 }
 /* 기준마다 비중 — 손댄 브랜드는 우선순위 순서(6·5·4…, 끈 것 0), 아니면 믹서 템플릿 값 */

@@ -44,6 +44,7 @@ function kwRecSend(){ var p = kwRecParams(); send("kwrec", "씨앗마다 키워�
 /* 🚀 자동 진행(content-auto.js)의 ① 키워드 단계가 키워드 추천.json 에 auto {at, best:[...]} 를 쓰면,
    앱이 처음 볼 때 한 번 ★ 를 켠다(autoPinAt) — 동욱이 나중에 끈 ★ 를 다시 켜지 않는다 */
 function autoPinApply(){
+  if(pastOn()) return;   // 🕘 옛 기록을 보는 중엔 그때의 ★ 를 지금 설정에 켜지 않는다
   var a = ((part("kwrec") || {}).auto) || null;
   if(!a || !a.at || !SETS_LIVE || (SETS[cur] || {}).autoPinAt === a.at) return;
   var pin = Object.assign({}, S().pin), ex = Object.assign({}, S().ex);

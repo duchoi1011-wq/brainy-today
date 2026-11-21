@@ -47,7 +47,7 @@ var RP_SIDES = [
   { id: "연출", name: "연출 참고", what: "내 채널 연출(말하는 방식·구성·화면·편집)에 참고할 채널 — 소재가 아니라 「어떻게 보여 주나」", card: "2 · 3", group: /^(말하는 방식|화면)/ }
 ];
 var RP_REGION = [["world", "전 세계"], ["ko", "한국"], ["en", "영어권"], ["ja", "일본"], ["zh", "중국어권"], ["eu", "유럽"]];
-function rpOpt(){ var o = (SETS[cur] || {}).rpOpt || {}; return { sides: o.sides || { "정체성": true, "상품": true, "연출": true }, region: o.region || "world", words: o.words || null } }
+function rpOpt(){ var o = (SETS[cur] || {}).rpOpt || {}; return { sides: o.sides || { "정체성": true, "상품": true, "연출": true }, region: RP_REGION.some(function(r){ return r[0] === o.region }) ? o.region : "world", words: o.words || null } }
 function rpWords(){ var o = rpOpt(); return seedsOf().filter(function(x){ return !o.words || o.words[x.word] !== false }) }
 /* Claude 추천 — 동욱이 하나하나 확인하지 않아도 「추천대로 넣기」로 넣는다 (2026-11-17 동욱: "내가 다 확인할 수 없으니 너의 추천대로 넣기도 눌러서 진행하게").
    후보에 recommend(true/false)·recommendWhy 가 있으면 그것(맥의 Claude 판단), 없던 옛 후보는 기준으로: 소재·상품은 등급 A 이면서 소재 보통 이상이거나 소재 많음, 연출은 등급 A */

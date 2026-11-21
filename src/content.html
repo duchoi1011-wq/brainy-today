@@ -34,6 +34,8 @@ header{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:co
 h1{font-size:22px;font-weight:800;margin:0;letter-spacing:-.03em;display:flex;align-items:center;gap:9px}
 h1::before{content:"";width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent2))}
 .brand .links{flex-basis:100%;font-family:var(--f-body);font-size:12px}
+/* 폰: 동기화 버튼 자리는 제목 줄만 비키고 링크 줄은 한 줄로 — 머리 줄이 화면의 3분의 1을 먹어 목록이 첫 화면 밖으로 밀리던 것 (2026-11-21) */
+@media (max-width:560px){header{padding-block:10px 6px}header>.brand{padding-right:0}header>.brand h1{padding-right:min(46vw,190px)}.brand .links{white-space:nowrap}.links a,.links button{padding:8px 4px}.prbar{padding:0 12px;margin-bottom:8px}}
 .links a,.links button{font:inherit;color:inherit;background:none;border:0;padding:13px 4px;display:inline-block;min-width:44px;text-align:center;text-decoration:underline;cursor:pointer}
 nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto;scrollbar-width:none;background:var(--surface);border-radius:14px;padding:4px;box-shadow:var(--shadow)}
 nav::-webkit-scrollbar{display:none}
@@ -43,7 +45,7 @@ nav button{flex:1 0 auto;text-align:center;padding:8px 11px;border-radius:10px;c
 @media (max-width:560px){.chips.seedchips{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}.seedchips .chip{flex:none}#seed-list .subnav+.lead{display:none}}   /* 폰: 씨앗 칩은 한 줄 가로 넘김(.chips 보다 세게 — 뒤의 .chips 가 줄바꿈을 다시 켜던 것), 칸 설명은 숨김 — 첫 키워드 줄이 첫 화면에 (2026-11-18 검증) */
 .wbox{border:1px solid var(--line);border-radius:14px;margin-top:10px;background:var(--surface)}.wbox>summary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:12px 14px;font-size:14px;color:var(--ink)}.wbox[open]>summary{border-bottom:1px solid var(--line)}.wsum{font-weight:500;color:var(--muted);font-size:13px}.wbody{padding:6px 14px 14px}
 .spick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;padding:8px;border-radius:10px;background:var(--surface-2)}
-#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:calc(100vw - 32px);transition:.2s;z-index:50}#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:calc(100vw - 32px);transition:.2s;z-index:60}#toast.on{opacity:1;transform:translate(-50%,0)}
 html{scrollbar-gutter:stable}   /* 짧은 탭에서 스크롤바가 사라져 폭이 15px 바뀌던 것 */
 details.help{margin:2px 0 6px}details.help>summary{font-size:13px;font-weight:600}
 .pastbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF4D6;color:#5a4300;border:1px solid #F0D27A;font-size:14px}.pastbar .mk{width:44px;height:44px}
@@ -176,7 +178,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 /* 구축 보드 — 편집기 앱처럼 세 칸 (왼쪽 퍼널 · 가운데 문서 · 오른쪽 다시 착안한 추천). 좁은 화면에선 위아래로 */
 .bd-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .bd{display:grid;grid-template-columns:240px minmax(0,1fr) 300px;gap:16px;align-items:start}
-.bd-left,.bd-right{position:sticky;top:150px;max-height:calc(100vh - 170px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.bd-left,.bd-right{position:sticky;top:calc(var(--hdr,216px) + 12px);max-height:calc(100vh - var(--hdr,216px) - 28px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
 .bd-left h3,.bd-right h3{font-size:15px;margin:0 0 2px}
 .bd-item{display:flex;flex-direction:column;gap:6px;margin-top:10px}.bd-item>b{font-size:13px;color:var(--muted)}
 .bd-doc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;font:inherit;font-size:13px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--ink)}
@@ -205,7 +207,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 @container (max-width:1060px){.bd{grid-template-columns:minmax(0,1fr)}.bd-left,.bd-right{position:static;max-height:none}.bd-left{order:0}.bd-main{order:1}.bd-right{order:2}}
 @container (max-width:600px){.bd-kv{grid-template-columns:minmax(0,1fr)}.bd-kv dt{border-bottom:0;padding-bottom:2px}.flow{grid-template-columns:repeat(3,1fr)}}
 /* 구축 PDF — 인쇄할 때는 가운데 문서만 */
-@media print{body{background:#fff;padding:0}header,.bd-bar,.bd-left,.bd-right,.run,.base-bar,.undo-toast,[data-brainy],#brainy-dock{display:none!important}.bd{display:block}.wrap{max-width:none}.card{box-shadow:none;break-inside:avoid}.orig{overflow:visible}.bd-kv dt.bd-group{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media print{body{background:#fff;padding:0}header,.bd-bar,.bd-left,.bd-right,.run,.base-bar,.undo-toast,[data-brainy],#bc,#bc-fab,#bsync,#bsync-tip,.subnav,.prbar,.runs,.pastbar,.pastpill,#toast,.bd-head .acts{display:none!important}html.bc-push body{margin-right:0!important}.bd{display:block}.wrap{max-width:none}.card{box-shadow:none;break-inside:avoid}.orig{overflow:visible}.bd-kv dt.bd-group{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 /* 원문 칸 표 — 조사 시트 [조사] 콘텐츠 열과 같은 순서. 폰에서는 표만 옆으로 밀린다 */
 .orig{overflow-x:auto;margin-top:12px;border:1px solid var(--line);border-radius:12px}
 .orig table{border-collapse:collapse;min-width:1100px;font-size:13px;line-height:1.5}
@@ -284,6 +286,8 @@ function day(iso){ return String(iso || "").slice(0, 10) }
 function brands(){ return Object.keys(RAW).filter(function(id){ return id.indexOf(".") < 0 && RAW[id].name }).map(function(id){ return RAW[id] }).sort(function(a, b){ return (a.order || 9) - (b.order || 9) }) }
 function pickBrand(id){
   cur = id; WANT = id; save("ct.brand", cur);
+  // 쓰던 글·되돌리기는 브랜드를 따라가지 않는다 (A 에서 쓰던 이름이 B 에 저장되던 것)
+  ui.pedit = ""; ui.pdraft = {}; ui.topicDraft = null; ui.baseDraft = ""; ui.seedDraft = {}; ui.prDraft = {}; ui.undo = null; ui.kwSeed = ""; ui.sOff = {}; ui.bdDoc = "";
   try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){}
   render();
 }
@@ -338,7 +342,7 @@ function ladderHtml(items, cell){
   }).join("") + (items.some(function(x){ return !x.stage }) ? "<p class=\"lead\">단계가 안 붙은 " + items.filter(function(x){ return !x.stage }).length + "개는 사다리에서 빠졌어요.</p>" : "") + "</div>";
 }
 function setS(patch){
-  if(pastOn() && Object.keys(patch).some(function(k){ return /Req$/.test(k) })){ toast(PAST_BLOCK); return }   // 🕘 그때 결과로 일을 돌리면 지금 자료와 섞인다
+  if(pastOn() && Object.keys(patch).some(function(k){ return k !== "imp" })){ toast(PAST_BLOCK); return }   // 옛 기록 화면에서 고른 것·지운 것이 지금 자료의 같은 번호에 적히던 것 — 🔖 중요만 받는다 (2026-11-21)   // 🕘 그때 결과로 일을 돌리면 지금 자료와 섞인다
   var s = Object.assign({}, SETS[cur] || {}, patch, { updatedAt: new Date().toISOString() });
   SETS[cur] = s;
   if(!pastOn()) s.cand = candidates(S()).map(function(k){ return { kw: k.kw, score: k.score } });   // 그때 조사 후보 — 맥이 설정.json 으로 받아 기록 PDF 에 쓴다 (옛 기록을 보는 중엔 옛 자료로 다시 세지 않고 그대로 — 2026-11-18 검증)
@@ -356,7 +360,7 @@ function saveSet(id){
   var st = SAVING[id] = SAVING[id] || {};
   if(st.busy){ st.again = true; return }
   st.busy = true;
-  DB.doc("ct.set/" + id).set(SETS[id]).catch(function(){}).then(function(){ st.busy = false; if(st.again){ st.again = false; saveSet(id) } });
+  DB.doc("ct.set/" + id).set(SETS[id]).catch(function(){ toast("저장하지 못했어요 — 인터넷을 확인해 주세요. 다시 열면 이 변경은 없어져요") }).then(function(){ st.busy = false; if(st.again){ st.again = false; saveSet(id) } });
 }
 
 /* ── 맥에 일 보내기 — cmd 문서 하나. 맥의 cmd_runner 가 집어 Claude(세 스킬)를 돌린다 ── */
@@ -369,16 +373,16 @@ function recParams(){   // 콘텐츠 추천 cmd 파라미터 — 추천 버튼�
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
 function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && (c.brand === cur || kind === "brief") && isOpen(c) })[0] }   // 새 브랜드 만들기(brief)는 어느 브랜드에서 보냈든 하나 — 브랜드를 바꿔 두 번 보내지 않게
 function send(kind, text, params){
-  if(!DB || openCmd(kind)) return;
-  if(pastOn()){ toast(PAST_BLOCK); return }
+  if(!DB || openCmd(kind)) return false;
+  if(pastOn()){ toast(PAST_BLOCK); return false }
   var id = "c" + Date.now().toString(36), at = new Date().toISOString(), b = B();
   if(BASE_KINDS[kind] && b){ params = Object.assign(baseParams(), params || {}); text += baseText() }   // 구축·참고 페이지·대본 일에는 기준 키워드 · 영상 주제를 같이 (content-basekw.js)
   var data = { text: "🎬 콘텐츠 기획 — " + (b ? b.name : (params && params.name) || "") + " " + text, from: "content", app: "content", kind: kind,
     brand: cur || "", params: params || {}, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
   CMDS.unshift(Object.assign({ id: id }, data));
-  DB.doc("cmd/" + id).set(data).catch(function(){ CMDS[0].status = "못 보냄"; CMDS[0].result = "못 보냈어요 — 인터넷을 확인하고 다시 눌러 주세요"; render() });
+  DB.doc("cmd/" + id).set(data).catch(function(){ var c = CMDS.filter(function(x){ return x.id === id })[0]; if(c){ c.status = "못 보냄"; c.result = "못 보냈어요 — 인터넷을 확인하고 다시 눌러 주세요" } toast("맥에 보내지 못했어요 — 인터넷을 확인하고 다시 눌러 주세요"); render() });
   render();
-  toast("맥에 보냈어요 — " + (KIND[kind] || kind) + " · 진행은 화면 맨 위 줄에 떠요");   // 화면을 맨 위로 끌어올리지 않는다 (2026-11-18 동욱 "버튼 누르면 위로 올라가는 잘못된 것")
+  toast("맥에 보냈어요 — " + (KIND[kind] || kind) + " · 진행은 화면 맨 위 줄에 떠요"); return true;   // 화면을 맨 위로 끌어올리지 않는다 (2026-11-18 동욱 "버튼 누르면 위로 올라가는 잘못된 것")
 }
 /* 단어 상자·접는 칸을 펴고 접은 것을 기억 — 다시 그려도 그대로 */
 document.addEventListener("toggle", function(e){ var d = e.target; if(!d.dataset || !d.dataset.wbox) return; if(d.dataset.wbox === "_pull"){ ui.pullOpen = d.open; return } ui.wOpen = Object.assign({}, ui.wOpen); ui.wOpen[d.dataset.wbox] = d.open }, true);
@@ -500,7 +504,9 @@ function render(){
   var key = act0 && (act0.tagName === "SUMMARY" && act0.parentNode.dataset && act0.parentNode.dataset.wbox ? "[data-wbox=\"" + CSS.escape(act0.parentNode.dataset.wbox) + "\"]>summary" : act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
   var v = function(){ return ({ build: 1, refpage: 1, script: 1 }[tab] && B() ? baseBarHtml() : "") + v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") + undoToastHtml() };   // 대본 탭 세 칸 맨 위에 기준 키워드 · 영상 주제   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
   var selA = null, selB = null; try{ if(act0 && /^(INPUT|TEXTAREA)$/.test(act0.tagName)){ selA = act0.selectionStart; selB = act0.selectionEnd } }catch(e){}   // 커서 위치도 지킨다 (2026-11-18 검증: 다시 그리면 커서가 맨 앞으로 가서 이어 쓴 글이 앞에 붙음)
-  document.getElementById("view").innerHTML = sub + pastBarHtml() + runHtml(Object.keys(KIND)) + promptBarHtml() + v();   // ✍️ 탭마다 내 말로 끼어들기
+  var html = sub + pastBarHtml() + runHtml(Object.keys(KIND)) + promptBarHtml() + v(), vw = document.getElementById("view");
+  if(html !== render.last || !vw.firstChild){ vw.innerHTML = html; render.last = html }   // 바뀐 게 없으면 그대로 둔다 — 자료가 올 때마다 펴 둔 접기가 닫히고 옆 스크롤이 처음으로 가던 것 (2026-11-21)
+  var hd = document.querySelector("header"); if(hd) document.documentElement.style.setProperty("--hdr", Math.round(hd.getBoundingClientRect().height) + "px");   // 구축 옆 칸이 머리 줄 밑으로 들어가지 않게   // ✍️ 탭마다 내 말로 끼어들기
   var sm = document.getElementById("setm"); if(!sm){ sm = document.createElement("div"); sm.id = "setm"; document.body.appendChild(sm) }
   var keepTop = (document.getElementById("setm-c") || {}).scrollTop || 0; sm.innerHTML = settingsHtml(); var smc = document.getElementById("setm-c"); if(smc) smc.scrollTop = keepTop;   // ⚙ 설정 창 — 다시 그려도 보던 자리 그대로
   document.documentElement.classList.toggle("setm-open", !!ui.set);
@@ -592,7 +598,7 @@ function act(name, el){
   if(designAct(name, el)) return;   // 설계 · 템플릿 (content-design.js)
   if(nbAct(name)) return;   // ＋ 새 브랜드 질문지 (content-newbrand.js)
   if(histAct(name, el)) return;   // 🕘 돌린 기록 · 🔖 중요 (content-hist.js)
-  if(pastOn() && { ideas: 1, idearesearch: 1, ideascript: 1 }[name]){ toast(PAST_BLOCK); return }   // 보내기 전에 고른 것을 지우거나 칸을 옮기지 않게
+  if(pastOn() && { ideas: 1, idearesearch: 1, ideascript: 1, buildideascript: 1, recgo: 1, autoplan: 1, clearplan: 1, gone: 1, chanrec: 1, chanpick: 1 }[name]){ toast(PAST_BLOCK); return }   // 보내기 전에 고른 것을 지우거나 칸을 옮기지 않게
   if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)
   if(baseAct(name, el)) return;   // 기준 키워드 · 영상 주제 · 지우기/되돌리기 · 찾는 나라 (content-basekw.js)
   var s = S();
@@ -676,7 +682,7 @@ function act(name, el){
   if(name === "scriptedit"){ promptSend(el.dataset.key, "scriptedit"); return }   // 대본 고치기
   if(name === "buildidea"){ var bi = ((part("build") || {}).ideas || []).filter(function(x){ return x.id === el.dataset.id })[0]; if(!bi) return;   // 다시 착안한 추천 → 구축 문서 (역할별 틀)
     send("build", "구축 문서 만들기 — " + bi.id + " " + bi.title, { ideas: [bi] }); return }
-  if(name === "ideascript"){ var bj = ((part("build") || {}).ideas || []).filter(function(x){ return x.id === el.dataset.id })[0]; if(!bj) return;   // 다시 착안한 추천 → 바로 대본
+  if(name === "buildideascript"){ var bj = ((part("build") || {}).ideas || []).filter(function(x){ return x.id === el.dataset.id })[0]; if(!bj) return;   // 다시 착안한 추천 → 바로 대본
     send("script", "대본 초안 — " + bj.id + " " + bj.title, { ideas: [{ id: bj.id, title: bj.title, quote: bj.basis, refs: bj.refs, role: bj.role, stage: bj.stage, product: bj.product }] }); return }
   if(name === "buildscript"){ var bd = buildDocs().filter(function(x){ return x.id === el.dataset.id })[0]; if(!bd) return;   // 구축 문서 → 대본 (최종)
     send("script", "대본 초안 — 구축 문서 " + bd.id + " " + bd.title, { ids: [bd.id], build: bd.id }); return }

@@ -61,7 +61,7 @@ var VT_GRADE = /^(Great|Good|Normal|Bad|Worst)$/;
 function refByRow(n){
   if(typeof n === "number"){ var r = part("ref"); return r && r.items ? r.items.filter(function(x){ return x.row === n })[0] : null }
   var x = (((part("search") || {}).items) || []).filter(function(y){ return y.vid === n })[0], f = favOf(n);
-  if(!x && !f) return null; x = x || {};
+  if(!x && !f) return null; x = x || {}; f = f || {};
   return { vid: n, url: "https://www.youtube.com/watch?v=" + n, title: x.title || f.title, channel: x.channel || f.channel, subs: x.subs != null ? fmt(x.subs) : "", views: x.views != null ? fmt(x.views) : "",
     ratio: x.ratio, published: x.date, len: x.len, wave: Array.isArray(x.replayed) ? "많이 다시 본 구간 " + x.replayed.join(" · ") : "", comments: x.comments != null ? "댓글 " + x.comments + "개" : "" };
 }

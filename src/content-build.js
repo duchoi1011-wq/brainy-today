@@ -76,7 +76,7 @@ function buildIdeasHtml(){
         "<b>" + txt(x.title) + "</b><div class=\"it-d\">" + esc(x.basis || "") + "</div>" +
         ((x.refs || []).length ? "<details><summary>근거 레퍼런스 " + x.refs.length + "개</summary>" + x.refs.map(buildRefCell).join("") + "</details>" : "") +
         "<div class=\"acts\"><button class=\"btn sm primary\" data-act=\"buildidea\" data-id=\"" + esc(x.id) + "\"" + (openCmd("build") ? " disabled" : "") + ">" + (openCmd("build") ? "맥이 만드는 중…" : "이걸로 구축 문서 만들기") + "</button>" +
-        "<button class=\"btn sm\" data-act=\"ideascript\" data-id=\"" + esc(x.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">바로 대본</button>" + delBtn("idea", x.id, x.title, "btn sm") + "</div></div>";
+        "<button class=\"btn sm\" data-act=\"buildideascript\" data-id=\"" + esc(x.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">바로 대본</button>" + delBtn("idea", x.id, x.title, "btn sm") + "</div></div>";
     }).join("") || "<p class=\"empty\">아직 없어요.</p>") + goneListHtml("idea", all, function(x){ return x.id }, function(x){ return x.title });
 }
 function viewBuild(){

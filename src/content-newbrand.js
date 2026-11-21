@@ -54,8 +54,9 @@ function viewNewBrand(){
 function nbAct(name){
   if(name === "nbmake"){
     var nm = nbAns("name"); if(!nm) return true;
-    send("brief", "새 브랜드 「" + nm + "」 질문지 정리로 프로필 초안 만들기", { name: nm, doc: nbSummaryText(), answers: nbState().answers || {} });
-    toast("맥에 보냈어요 — 초안이 되면 브랜드 목록에 「확인 전」으로 떠요"); return true;
+    if(send("brief", "새 브랜드 「" + nm + "」 질문지 정리로 프로필 초안 만들기", { name: nm, doc: nbSummaryText(), answers: nbState().answers || {} }))
+      toast("맥에 보냈어요 — 초안이 되면 브랜드 목록에 「확인 전」으로 떠요");
+    return true;
   }
   if(name === "nbcopy"){ var t = nbSummaryText(); try{ navigator.clipboard.writeText(t).then(function(){ toast("정리 글을 복사했어요") }, function(){ alert(t) }) }catch(e){ alert(t) } return true }   // 복사가 안 되면 글을 띄운다
   if(name === "nbclear"){ if(confirm("답한 것과 붙인 기획서를 모두 지우고 새로 시작할까요?")){ ui.nbDraft = {}; ui.nbDocDraft = null; SETS._newbrand = { answers: {}, updatedAt: new Date().toISOString() }; saveSet("_newbrand"); render() } return true }

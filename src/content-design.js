@@ -7,16 +7,16 @@ var DS = [
   { id: "word", name: "단어 — 연관 검색어 받는 곳 · 나라", what: "씨앗 단어마다 어디서 · 어느 나라 기준으로 연관 검색어를 받을지", keys: ["seedSrc", "kwCountry"],
     sum: function(){ return "연관 검색어 " + ({ naver: "네이버", google: "구글 트렌드", both: "네이버 + 구글 트렌드" }[seedSrc()] || seedSrc()) + " · 나라 " + kwCountryName(kwCountry()) }, body: function(){ return seedSrcHtml() + kwCountryHtml() } },
   { id: "kw", name: "키워드 — 순위 기준", what: "연관 검색어를 무엇으로 줄 세우고 무엇을 숨길지", keys: ["kwCrit"],
-    sum: function(){ var c = kwCrit(), r = 0; return c.order.filter(function(id){ return !c.off[id] }).slice(0, 3).map(function(id){ return (++r) + " " + KWCRIT.filter(function(q){ return q.id === id })[0].name }).join(" · ") + (c.minVol ? " · 월 " + c.minVol + " 이상" : "") },
+    sum: function(){ var c = kwCrit(), r = 0; return c.order.filter(function(id){ return !c.off[id] }).slice(0, 3).map(function(id){ return (++r) + " " + (KWCRIT.filter(function(q){ return q.id === id })[0] || { name: id }).name }).join(" · ") + (c.minVol ? " · 월 " + c.minVol + " 이상" : "") },
     body: function(){ return kwCritHtml() } },
   { id: "content", name: "콘텐츠 — 영상 분석", what: "찾은 영상에서 무엇을 읽고 어떤 영상을 분석할지", keys: ["anaOpt"],
     sum: function(){ var o = anaOpt(); return ANA_PARTS.filter(function(p){ return o[p[0]] }).map(function(p){ return p[1] }).join(" · ") + " · 댓글 " + o.nCmt + "개 · " + (o.target === "picked" ? "💡 담은 영상" : "키워드마다 상위 " + o.topN + "개") },
     body: function(){ return anaOptHtml() } },
   { id: "rec", name: "추천 — 고르는 기준", what: "어떤 영상을 재료로, 무엇을 먼저 보고, 몇 편씩 추천할지", keys: ["recCrit", "roles"],
-    sum: function(){ var c = recCrit(), s = S(), r = 0; return c.order.filter(function(id){ return !c.off[id] }).slice(0, 3).map(function(id){ return (++r) + " " + CRIT.filter(function(k){ return k.id === id })[0].name }).join(" · ") + (c.minRatio ? " · 구독자보다 " + c.minRatio + "배 이상" : "") + " · " + roleNames().map(function(n){ return roleKo(n) + " " + s.roles[n] + "편" }).join(" · ") },
+    sum: function(){ var c = recCrit(), s = S(), r = 0; return c.order.filter(function(id){ return !c.off[id] }).slice(0, 3).map(function(id){ return (++r) + " " + (CRIT.filter(function(k){ return k.id === id })[0] || { name: id }).name }).join(" · ") + (c.minRatio ? " · 구독자보다 " + c.minRatio + "배 이상" : "") + " · " + roleNames().map(function(n){ return roleKo(n) + " " + s.roles[n] + "편" }).join(" · ") },
     body: function(){ var r = part("rec"); return recCritPanel(r && r.rounds && r.rounds[r.rounds.length - 1]) } },
   { id: "ref", name: "참고 페이지 — 찾는 범위", what: "어떤 단어로 · 무엇을(소재 · 연출) · 어디서 찾을지", keys: ["rpOpt"],
-    sum: function(){ var o = rpOpt(); return rpWords().length + "개 단어 · " + RP_SIDES.filter(function(x){ return o.sides[x.id] }).map(function(x){ return x.name }).join(" · ") + " · " + RP_REGION.filter(function(r){ return r[0] === o.region })[0][1] },
+    sum: function(){ var o = rpOpt(); return rpWords().length + "개 단어 · " + RP_SIDES.filter(function(x){ return o.sides[x.id] }).map(function(x){ return x.name }).join(" · ") + " · " + (RP_REGION.filter(function(r){ return r[0] === o.region })[0] || RP_REGION[0])[1] },
     body: function(){ return rpScopeHtml() } }
 ];
 var DS_KEYS = ["seedSrc", "kwCountry", "kwCrit", "anaOpt", "recCrit", "roles", "rpOpt"];
@@ -64,7 +64,7 @@ function designAct(name, el){
   if(name === "dsreset"){ var st = dsStage(v), p = {}; st.keys.forEach(function(k){ p[k] = null }); if(confirm("「" + st.name + "」을 기본값으로 되돌릴까요?")) setS(p); return true }
   if(name === "dsresetall"){ var p2 = {}; DS_KEYS.forEach(function(k){ p2[k] = null }); if(confirm(B().name + "의 단계별 기준을 전부 기본값으로 되돌릴까요?")) setS(p2); return true }
   if(name === "dsask"){ var inp = document.getElementById("ds-ask"), q = ((inp && inp.value) || "").trim(); if(!q){ if(inp) inp.focus(); return true }
-    ui.dsDraft = ""; if(window.BRAINY_CHAT) window.BRAINY_CHAT.ask("[설계] " + q); else alert("Brainy 대화를 열 수 없어요 — 로그인을 확인해 주세요."); render(); return true }   // 「[설계] …」를 어떻게 바꿀지는 대화 규칙(content-brainy.js rules)에 — 대화창엔 동욱 말만 보이게
+    ui.dsDraft = ""; if(window.BRAINY_CHAT){ ui.set = null; window.BRAINY_CHAT.ask("[설계] " + q) } else alert("Brainy 대화를 열 수 없어요 — 로그인을 확인해 주세요."); render(); return true }   // 「[설계] …」를 어떻게 바꿀지는 대화 규칙(content-brainy.js rules)에 — 대화창엔 동욱 말만 보이게
   /* 템플릿 저장 — Enter(한글 조합 끝)로 눌러도 쓰던 이름(ui.tplDraft)으로 */
   if(name === "tplsave"){ var ni = document.getElementById("tpl-name"), nm = ((ni && ni.value) || ui.tplDraft || "").trim(); if(!nm){ alert("템플릿 이름을 적어 주세요."); if(ni) ni.focus(); return true }
     var c = SETS[cur] || {}, vals = {}; DS_KEYS.forEach(function(k){ if(c[k] != null) vals[k] = JSON.parse(JSON.stringify(c[k])) });
