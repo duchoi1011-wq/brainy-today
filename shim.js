@@ -11,11 +11,13 @@
   function mine(coll) { return APP.colls ? APP.colls.indexOf(coll) >= 0 : OTHER.indexOf(coll) < 0; }
   function inList(a) { return "(" + a.map(function (x) { return '"' + x + '"'; }).join(",") + ")"; }
   var CACHE_KEY = "brainy-docs-v1" + (APP.key === "home" ? "" : ":" + APP.key);
+  var STAMP_KEY = CACHE_KEY + ":at";
   var OLD_APP = "https://claude.ai/artifact/KNwrPxJ79E83vgSTL3447n";
   var sb = window.supabase && window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
 
   /* ---------- 문서 저장소 ---------- */
   var docs = {};            // path -> data
+  var stamps = {};          // path -> 서버 updated_at — 다시 읽을 때 바뀐 문서만 받으려고 (2026-11-21 전송량 줄이기)
   var subs = [];            // {kind, path|coll, cb, order, dir, lim}
   var state = { cached: false, live: false };
   var pending = {};         // path -> 진행 중인 쓰기 수
@@ -57,16 +59,17 @@
   function saveCache() {
     clearTimeout(saveT);
     saveT = setTimeout(function () {
-      try { localStorage.setItem(CACHE_KEY, JSON.stringify(docs)); }
-      catch (e) { try { localStorage.removeItem(CACHE_KEY); } catch (e2) {} }
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(docs)); localStorage.setItem(STAMP_KEY, JSON.stringify(stamps)); }
+      catch (e) { try { localStorage.removeItem(CACHE_KEY); localStorage.removeItem(STAMP_KEY); } catch (e2) {} }
     }, 1500);
   }
   function err(code, msg) { var e = new Error(msg || code); e.code = code; return e; }
   function write(path, data) {
     pending[path] = (pending[path] || 0) + 1;
-    docs[path] = clone(data); notify(path); saveCache();
-    return sb.from("docs").upsert({ path: path, coll: collOf(path), id: idOf(path), data: data }).then(function (r) {
+    docs[path] = clone(data); delete stamps[path]; notify(path); saveCache();
+    return sb.from("docs").upsert({ path: path, coll: collOf(path), id: idOf(path), data: data }).select("updated_at").then(function (r) {
       pending[path]--;
+      if (!r.error && !pending[path] && r.data && r.data[0] && docs[path] !== undefined) { stamps[path] = r.data[0].updated_at; saveCache(); }
       if (r.error) throw err(/row-level security|permission|JWT/i.test(r.error.message) ? "permission_denied" : "unavailable", r.error.message);
     }, function (e) { pending[path]--; throw err("unavailable", e && e.message); });
   }
@@ -78,7 +81,7 @@
       update: function (patch) { var cur = clone(docs[path]) || {}; Object.keys(patch).forEach(function (k) { cur[k] = patch[k]; }); return write(path, cur); },
       delete: function () {
         pending[path] = (pending[path] || 0) + 1;
-        delete docs[path]; notify(path); saveCache();
+        delete docs[path]; delete stamps[path]; notify(path); saveCache();
         return sb.from("docs").delete().eq("path", path).then(function (r) { pending[path]--; if (r.error) throw err("unavailable", r.error.message); }, function (e) { pending[path]--; throw err("unavailable", e && e.message); });
       },
       onSnapshot: function (cb) { return listen({ kind: "doc", path: path, cb: cb }); }
@@ -95,17 +98,62 @@
   }
   var db = { doc: ref, collection: function (c) { return query(c); } };
 
-  // 통째로 받기는 처음과 10분에 한 번(지워진 문서까지 맞추려고). 그 사이 다시 볼 때는 바뀐 것만 받는다.
-  var lastAt = "", lastFull = 0, FULL_EVERY = 10 * 60 * 1000;
+  // 다시 맞추기는 처음과 10분에 한 번(지워진 문서까지 맞추려고) — 목록(path·시각)만 받아 견주고, 본문은 바뀐 문서만 받는다.
+  // 예전엔 그때마다 본문을 통째로 받아서 (홈 2.6MB · 콘텐츠 기획 1.6MB) 옛 Supabase 프로젝트가 전송량 초과로 막혔다 (2026-11-19).
+  // 그 사이 다시 볼 때는 바뀐 것만 받는다 (loadDelta).
+  var lastAt = "", lastFull = 0, FULL_EVERY = 10 * 60 * 1000, PAGE = 1000;
   function bump(at) { if (at && at > lastAt) lastAt = at; }
   function scoped(q) { return APP.colls ? q.filter("coll", "in", inList(APP.colls)) : q.not("coll", "in", inList(OTHER)); }
+  // 한 번에 1000줄까지만 오므로(PostgREST 기본) 끝까지 이어 받는다 — 단어장 ctx 처럼 문서가 늘어나는 컬렉션이 잘리지 않게
+  function pages(make) {
+    var out = [];
+    function next(from) {
+      return make().order("path").range(from, from + PAGE - 1).then(function (r) {
+        if (r.error) throw r.error;
+        out = out.concat(r.data || []);
+        return (r.data || []).length === PAGE ? next(from + PAGE) : out;
+      });
+    }
+    return next(0);
+  }
+  function fetchDocs(paths) {   // 주소 길이를 넘지 않게 나눠 받는다
+    var groups = [], g = [], len = 0;
+    paths.forEach(function (p) {
+      var n = encodeURIComponent(p).length + 6;
+      if (g.length && (len + n > 1500 || g.length >= 40)) { groups.push(g); g = []; len = 0; }
+      g.push(p); len += n;
+    });
+    if (g.length) groups.push(g);
+    return Promise.all(groups.map(function (grp) {
+      return sb.from("docs").select("path,data,updated_at").in("path", grp).then(function (r) { if (r.error) throw r.error; return r.data || []; });
+    })).then(function (parts) { return [].concat.apply([], parts); });
+  }
+  function adopt(rows, listed) {   // rows = 본문까지 받은 것, listed = 서버에 지금 있는 문서 목록(없으면 rows 가 전부)
+    var next = {}, nextAt = {}, got = {};
+    rows.forEach(function (x) { got[x.path] = x; });
+    (listed || rows).forEach(function (l) {
+      var x = got[l.path];
+      if (x) { next[x.path] = x.data; nextAt[x.path] = x.updated_at; bump(x.updated_at); }
+      else if (docs[l.path] !== undefined) { next[l.path] = docs[l.path]; nextAt[l.path] = l.updated_at; bump(l.updated_at); }
+    });
+    Object.keys(pending).forEach(function (p) { if (pending[p] > 0 && docs[p] !== undefined) { next[p] = docs[p]; delete nextAt[p]; } });
+    var changed = [], seen = {};
+    Object.keys(next).concat(Object.keys(docs)).forEach(function (p) {
+      if (seen[p]) return; seen[p] = 1;
+      if (next[p] === undefined || docs[p] === undefined || (got[p] && JSON.stringify(next[p]) !== JSON.stringify(docs[p]))) changed.push(p);
+    });
+    var first = !state.live;
+    docs = next; stamps = nextAt; state.live = true; lastFull = Date.now(); saveCache();
+    // 처음엔 모두에게 알리고(캐시 화면 → 진짜 자료), 그 뒤로는 바뀐 문서를 보는 화면만 다시 그린다
+    if (first) notifyAll(false);
+    else changed.forEach(notify);
+  }
   function loadAll() {
-    return scoped(sb.from("docs").select("path,data,updated_at")).then(function (r) {
-      if (r.error) throw r.error;
-      var next = {};
-      (r.data || []).forEach(function (x) { next[x.path] = x.data; bump(x.updated_at); });
-      Object.keys(pending).forEach(function (p) { if (pending[p] > 0 && docs[p] !== undefined) next[p] = docs[p]; });
-      docs = next; state.live = true; lastFull = Date.now(); saveCache(); notifyAll(false);
+    var have = Object.keys(stamps).length;
+    if (!have) return pages(function () { return scoped(sb.from("docs").select("path,data,updated_at")); }).then(function (rows) { adopt(rows); });
+    return pages(function () { return scoped(sb.from("docs").select("path,updated_at")); }).then(function (list) {
+      var need = list.filter(function (l) { return docs[l.path] === undefined || stamps[l.path] !== l.updated_at; }).map(function (l) { return l.path; });
+      return (need.length ? fetchDocs(need) : Promise.resolve([])).then(function (rows) { adopt(rows, list); });
     });
   }
   function loadDelta() {
@@ -115,30 +163,51 @@
       var changed = [];
       (r.data || []).forEach(function (x) {
         bump(x.updated_at);
-        if (pending[x.path] > 0 || JSON.stringify(docs[x.path]) === JSON.stringify(x.data)) return;
+        if (pending[x.path] > 0) return;
+        stamps[x.path] = x.updated_at;
+        if (JSON.stringify(docs[x.path]) === JSON.stringify(x.data)) return;
         docs[x.path] = x.data; changed.push(x.path);
       });
-      if (changed.length) { saveCache(); changed.forEach(notify); }
+      if (r.data && r.data.length) saveCache();
+      changed.forEach(notify);
     });
   }
-  var chan = null;
+  var chan = null, rtPlain = false;
+  // 실시간 알림은 이 앱이 보는 컬렉션 것만 받는다 (+ 맥 신호·명령·대화 답) — 예전엔 표 전체를 받아 다른 앱의 큰 문서(콘텐츠 기획 200KB)까지 모든 화면에 흘러왔다.
+  // 지움 알림은 거를 수 없어 따로 받는다(본문 없이 작다). 거르기가 서버에서 안 받아들여지면 예전처럼 전체를 받는다.
   function subscribe() {
     if (chan) sb.removeChannel(chan);
-    var first = true;
-    chan = sb.channel("brainy-docs").on("postgres_changes", { event: "*", schema: "public", table: "docs" }, function (p) {
+    var first = true, me, T = { schema: "public", table: "docs" };
+    function onChange(p) {
       var path = (p.new && p.new.path) || (p.old && p.old.path); if (!path) return;
       if (path === MAC_PATH || path.indexOf("cmd/") === 0) bsEvent(path, p);
       if (path.indexOf("ai_out/") === 0) { if (p.new && p.new.data) aiOut(path.slice(7), p.new.data); else aiPoll(path.slice(7)); return; }
       if (!mine(collOf(path))) return;            // 다른 앱 것·내가 보낸 질문 — 이 화면 데이터가 아니다
       if (pending[path] > 0) return;             // 내가 방금 쓴 것의 메아리 — 화면 값이 더 새롭다
-      if (p.eventType === "DELETE") { if (docs[path] === undefined) return; delete docs[path]; }
+      if (p.eventType === "DELETE") { if (docs[path] === undefined) return; delete docs[path]; delete stamps[path]; }
       else if (p.new.data === undefined || (p.errors && p.errors.length)) {   // 문서가 커서 실시간 알림에 본문이 빠짐 — 따로 읽는다
-        sb.from("docs").select("data").eq("path", path).maybeSingle().then(function (r) { if (r.data && !(pending[path] > 0)) { docs[path] = r.data.data; saveCache(); notify(path); } });
+        sb.from("docs").select("data,updated_at").eq("path", path).maybeSingle().then(function (r) { if (r.data && !(pending[path] > 0)) { docs[path] = r.data.data; stamps[path] = r.data.updated_at; saveCache(); notify(path); } });
         return;
       }
-      else { bump(p.new.updated_at); if (JSON.stringify(docs[path]) === JSON.stringify(p.new.data)) return; docs[path] = p.new.data; }
+      else {
+        bump(p.new.updated_at); stamps[path] = p.new.updated_at;
+        if (JSON.stringify(docs[path]) === JSON.stringify(p.new.data)) return;
+        docs[path] = p.new.data;
+      }
       saveCache(); notify(path);
-    }).subscribe(function (st) {
+    }
+    var c = sb.channel("brainy-docs");
+    if (APP.colls && !rtPlain) {
+      var f = "coll=in.(" + APP.colls.concat(["mac", "cmd", "ai_out"]).filter(function (x, i, a) { return a.indexOf(x) === i; }).join(",") + ")";
+      c = c.on("postgres_changes", { event: "INSERT", schema: T.schema, table: T.table, filter: f }, onChange)
+        .on("postgres_changes", { event: "UPDATE", schema: T.schema, table: T.table, filter: f }, onChange)
+        .on("postgres_changes", { event: "DELETE", schema: T.schema, table: T.table }, onChange)
+        .on("system", {}, function (m) { if (me === chan && m && m.status === "error" && !rtPlain) { rtPlain = true; subscribe(); } });
+    } else c = c.on("postgres_changes", { event: "*", schema: T.schema, table: T.table }, onChange);
+    me = chan = c;
+    c.subscribe(function (st) {
+      if (me !== chan) return;
+      if (st === "CHANNEL_ERROR" && first && APP.colls && !rtPlain) { rtPlain = true; subscribe(); return; }
       setDot(st === "SUBSCRIBED" ? "on" : (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") ? "off" : "");
       if (st === "SUBSCRIBED") { if (!first) loadDelta().catch(function () {}); first = false; }
     });
@@ -418,16 +487,23 @@
     var id = ses ? ses.user.id : null;
     if (id === uid) return; uid = id;
     if (!ses) {
-      state.live = false; docs = {}; try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+      state.live = false; docs = {}; stamps = {}; lastAt = ""; try { localStorage.removeItem(CACHE_KEY); localStorage.removeItem(STAMP_KEY); } catch (e) {}
       if (chan) { sb.removeChannel(chan); chan = null; }
       bsShow(false); showGate("login"); return;
     }
     // 지난번 화면을 먼저 보여 주고(바로 뜸) 최신으로 바꾼다
-    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); if (c && typeof c === "object") { docs = c; state.cached = true; notifyAll(true); hideGate(); } } catch (e) {}
+    try {
+      var c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (c && typeof c === "object") {
+        docs = c; state.cached = true;
+        try { var at = JSON.parse(localStorage.getItem(STAMP_KEY) || "null"); if (at && typeof at === "object") stamps = at; } catch (e2) {}
+        notifyAll(true); hideGate();
+      }
+    } catch (e) {}
     if (!state.cached) showGate("wait");
     sb.from("owners").select("user_id").eq("user_id", id).maybeSingle().then(function (o) {
       if (o.error) throw o.error;
-      if (!o.data) { docs = {}; try { localStorage.removeItem(CACHE_KEY); } catch (e) {} showGate("owner"); return; }
+      if (!o.data) { docs = {}; stamps = {}; try { localStorage.removeItem(CACHE_KEY); localStorage.removeItem(STAMP_KEY); } catch (e) {} showGate("owner"); return; }
       return loadAll().then(function () { hideGate(); subscribe(); readyResolve(); bsShow(true); bsRead(); });
     }).catch(function () { if (!state.cached) showGate("wait", "연결이 안 돼요 — 인터넷을 확인하고 새로고침해 주세요."); else readyResolve(); });
   }

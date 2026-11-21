@@ -1,2 +1,4 @@
 _dev/
 .DS_Store
+test/out/
+test/seed.json

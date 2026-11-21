@@ -490,7 +490,7 @@ var capReady;   // sample·db 준비가 끝나면 resolve
     DB.doc("sc.data/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
       if(!v || !Array.isArray(v.courses) || !v.courses.length) return;
-      COURSE = v; save("sc.course.data", v); refresh();
+      COURSE = csNorm(v); save("sc.course.data", v); refresh();
     }, function(){});
     DB.collection("sc.creq").onSnapshot(function(q){ csSetReqs(q.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); })); }, function(){});
     DB.doc("sc.marks/course").onSnapshot(function(s){

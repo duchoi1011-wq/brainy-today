@@ -2,7 +2,15 @@
    데이터: 볼트 `4_Outputs/단축키 앱/강의 순서.json` → 맥 동기화(app_data.py) → sc.data/course
    진도·표시: sc.marks/course — 모든 기기에서 같다.  cp ✓외웠어 · cf ★즐겨찾기 · cn ✕필요없어 (하나만)
    2026-11-11 단어장처럼 정리: 과정 칩 → 강의 고르기 → 종류 칩 → 강의 카드. 「차례대로 따라 하기」·「종류별」 보기는 뺐다. */
-var COURSE = load("sc.course.data", { courses: [] });
+// 맥이 덜 채운 강의(챕터·단계가 빠진 것)가 와도 화면이 멈추지 않게 빈 목록으로 채운다
+function csNorm(v){
+  (v.courses || []).forEach(function(c){
+    if(!Array.isArray(c.chapters)) c.chapters = [];
+    c.chapters.forEach(function(ch){ if(!Array.isArray(ch.steps)) ch.steps = []; });
+  });
+  return v;
+}
+var COURSE = csNorm(load("sc.course.data", { courses: [] }) || { courses: [] });
 var CREQ = [], csAdd = false;   // ＋ 강의: 동욱이 고른 강의 요청 (sc.creq) — 맥의 Brainy가 교안에서 뽑아 넣는다
 var CPROG = load("sc.course", null) || { cur: "", at: {}, done: {}, sd: {}, all: false };
 CPROG.cp = CPROG.cp || {}; CPROG.cf = CPROG.cf || {}; CPROG.cn = CPROG.cn || {}; CPROG.pk = CPROG.pk || {};
