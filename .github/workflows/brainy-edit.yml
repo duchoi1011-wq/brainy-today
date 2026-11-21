@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+          persist-credentials: false   # 올리는 단계에서만 토큰을 쓴다 — 고치는 동안 저장소에 쓸 수 있는 토큰이 남아 있지 않게
 
       - uses: actions/setup-node@v4
         with:
@@ -48,7 +49,8 @@ jobs:
           npm install -g @anthropic-ai/claude-code@2.1.310
           # 앱에서 고른 모델이 있으면 그것으로 (Haiku 는 코드 고치기에 약해 Sonnet 으로 올린다)
           case "$REQ_MODEL" in
-            claude-sonnet-5-5|claude-opus-5-5|claude-fable-5-1) echo "MODEL=$REQ_MODEL" >> "$GITHUB_ENV" ;;
+            claude-sonnet-5-5|claude-opus-5-5|claude-fable-5-2) echo "MODEL=$REQ_MODEL" >> "$GITHUB_ENV" ;;
+            claude-fable-5-1) echo "MODEL=claude-fable-5-2" >> "$GITHUB_ENV" ;;
             claude-haiku-5-5) echo "MODEL=claude-sonnet-5-5" >> "$GITHUB_ENV" ;;
           esac
 
@@ -63,30 +65,35 @@ jobs:
             --model "$MODEL" \
             --append-system-prompt "$(cat .github/brainy-edit.md)" \
             --permission-mode acceptEdits \
-            --allowedTools "Read" "Edit" "Write" "Glob" "Grep" "Bash(python3 build.py)" "Bash(node --check:*)" \
+            --allowedTools "Read" "Edit" "Write" "Glob" "Grep" "Bash(python3 -I build.py)" "Bash(node --check:*)" \
+            --disallowedTools "Edit(build.py)" "Write(build.py)" "Edit(.github/**)" "Write(.github/**)" "Edit(supabase/**)" "Write(supabase/**)" "Edit(**/*.py)" "Write(**/*.py)" \
             --output-format text > "$RUNNER_TEMP/summary.txt" 2> "$RUNNER_TEMP/claude.err" \
             || { echo "Claude Code 가 끝까지 하지 못했어요"; tail -c 600 "$RUNNER_TEMP/claude.err" | grep -v -i "key" || true; exit 1; }
 
       - name: 허락된 곳만 남기고 빌드·검사
         run: |
-          # Claude 가 고쳐도 되는 곳: src/ shim.js build.py (빌드 결과물은 아래에서 다시 만든다)
+          # Claude 가 고쳐도 되는 곳: src/ shim.js (빌드 결과물은 아래에서 다시 만든다).
+          # 조립 스크립트(build.py)는 여기서 실행되므로 고칠 수 없다 — 바뀌었으면 되돌리고, 끼어든 .py 는 지운다 (-I: 저장소 안 파일을 모듈로 읽지 않는다)
+          git checkout -- build.py
+          git ls-files --others --exclude-standard -- '*.py' | while IFS= read -r f; do rm -f -- "$f"; done
           { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u > "$RUNNER_TEMP/changed"
-          grep -vE '^(src/|shim\.js$|build\.py$|home/|shortcuts/|vocab/|index\.html$|version\.txt$)' "$RUNNER_TEMP/changed" > "$RUNNER_TEMP/outside" || true
+          grep -vE '^(src/|shim\.js$|home/|shortcuts/|vocab/|index\.html$|version\.txt$)' "$RUNNER_TEMP/changed" > "$RUNNER_TEMP/outside" || true
           if [ -s "$RUNNER_TEMP/outside" ]; then
             echo "허락 밖 변경을 되돌려요:"; cat "$RUNNER_TEMP/outside"
             while IFS= read -r f; do
               if git ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then git checkout -- "$f"; else rm -f -- "$f"; fi
             done < "$RUNNER_TEMP/outside"
           fi
-          python3 build.py
-          python3 .github/check_apps.py
-          git add -A -- src shim.js build.py home shortcuts vocab index.html version.txt
+          python3 -I build.py
+          python3 -I .github/check_apps.py
+          git add -A -- src shim.js home shortcuts vocab content index.html version.txt
           git diff --cached --quiet && { echo "바뀐 게 없어요"; exit 1; } || true
 
       - name: 고친 판 올리기
         env:
           REQ_ID: ${{ github.event.client_payload.id }}
           REQ_TEXT: ${{ github.event.client_payload.text }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 - "$RUNNER_TEMP/summary.txt" "$RUNNER_TEMP/msg.txt" <<'PY'
           import os, sys
@@ -99,5 +106,5 @@ jobs:
           git config user.name "Brainy 앱 고치기"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -q -F "$RUNNER_TEMP/msg.txt"
-          git push -q origin "brainy-edit/$REQ_ID"
+          git push -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "brainy-edit/$REQ_ID"
           git diff --stat HEAD~1 HEAD | tail -1

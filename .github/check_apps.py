@@ -29,7 +29,15 @@ def check(label, code):
 ok = check("shim.js", (root / "shim.js").read_text(encoding="utf-8"))
 for app in ("home", "shortcuts", "vocab", "../content-plan"):   # 콘텐츠 기획은 옆 저장소 content-plan 에 조립된다 (없으면 건너뜀)
     if not (root / app / "index.html").exists():
-        print(f"- {app} 없음 — 건너뜀")
+        # 조립본이 없으면(GitHub Actions 에는 옆 저장소가 없다) 원본을 그 자리에서 끼워 맞춰 본다 — 콘텐츠 기획만 검사 없이 올라가지 않게
+        src = (root / "src" / "content.html").read_text(encoding="utf-8")
+        src = re.sub(r"/\*@include ([\w.-]+)\*/", lambda m: (root / "src" / m.group(1)).read_text(encoding="utf-8"), src)
+        for i, code in enumerate(SCRIPT.findall(src), 1):
+            ok = check(f"src/content.html (+content-*.js) 스크립트 {i}", code) and ok
+        for tail in ("content-brainy.js", "brainy-chat.js"):
+            for i, code in enumerate(SCRIPT.findall((root / "src" / tail).read_text(encoding="utf-8")), 1):
+                ok = check(f"src/{tail} 스크립트 {i}", code) and ok
+        print(f"- {app} 조립본 없음 — 원본으로 검사")
         continue
     html = (root / app / "index.html").read_text(encoding="utf-8")
     blocks = SCRIPT.findall(html)

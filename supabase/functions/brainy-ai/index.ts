@@ -29,11 +29,13 @@ const MODEL: Record<string, string> = { quick: "claude-haiku-5-5", default: "cla
 const EFFORT: Record<string, "low" | "medium" | "high"> = { quick: "low", default: "medium", complex: "high" };
 // 동욱이 고른 모델 (앱 대화창 위 상자 또는 set_model) — config/ai 의 model. quick(칼로리 추정 같은 짧은 일)은 늘 Haiku.
 const CHOOSABLE: Record<string, string> = {
-  haiku: "claude-haiku-5-5", sonnet: "claude-sonnet-5-5", opus: "claude-opus-5-5", fable: "claude-fable-5-1",
+  haiku: "claude-haiku-5-5", sonnet: "claude-sonnet-5-5", opus: "claude-opus-5-5", fable: "claude-fable-5-2",
 };
 const MODEL_IDS = new Set(Object.values(CHOOSABLE));
-const WITH_FALLBACK = new Set(["claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1"]);   // 거절되면 서버가 다른 모델로 다시
-const HARD_MS = 140_000;   // Edge Function 한 번 실행 한도(무료 150초) 안에서 끝낸다
+const OLD_ID: Record<string, string> = { "claude-fable-5-1": "claude-fable-5-2" };   // 예전에 골라 둔 값은 지금 모델로 읽는다
+const WITH_FALLBACK = new Set(["claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-2"]);   // 거절되면 서버가 다른 모델로 다시
+const HARD_MS = 120_000;   // Edge Function 한 번 실행 한도(무료 150초) 안에서 끝낸다 — 마무리 쓰기·정리할 시간을 남긴다
+const GH_MS = 10_000;      // GitHub 한 번 부르기 한도 — 멈춘 요청 하나가 실행 한도를 다 쓰지 않게
 const MAX_TURNS = 8;
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -124,6 +126,7 @@ async function gh(method: string, path: string, body?: Json): Promise<{ status: 
       ...(body ? { "Content-Type": "application/json" } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(GH_MS),
   });
   const text = await res.text();
   let data: Json = null;
@@ -131,6 +134,9 @@ async function gh(method: string, path: string, body?: Json): Promise<{ status: 
   if (res.status >= 400) console.error(`brainy-ai GitHub ${method} ${path.split("?")[0]} → ${res.status} ${String(data?.message ?? "").slice(0, 160)}`);
   return { status: res.status, data };
 }
+
+// 앱 고치기가 손댈 수 있는 곳: 화면 원본(src/)·받침(shim.js)과 그 빌드 결과뿐. 조립 스크립트·작업 파일·함수가 바뀐 판은 대화에서 적용하지 않는다.
+const offLimits = (files: string[]) => files.filter((f) => !/^(src\/|shim\.js$|home\/|shortcuts\/|vocab\/|content\/)/.test(f));
 
 const editId = (v: unknown) => /^e[a-z0-9]{6,30}$/.test(String(v ?? "")) ? String(v) : "";
 
@@ -173,7 +179,8 @@ async function runEditTool(sb: SupabaseClient, name: string, input: Json): Promi
         const s: Json = await editState(row.id);
         lines.push(`- ${row.id} · ${s.state} · 「${String(d.text).slice(0, 60)}」` +
           (s.summary ? `\n  바뀐 내용: ${s.summary}` : "") +
-          (s.files?.length ? `\n  고친 파일 ${s.files.length}개` : "") +
+          (s.files?.length ? `\n  고친 파일 ${s.files.length}개: ${s.files.slice(0, 12).join(", ")}${s.files.length > 12 ? " …" : ""}` : "") +
+          (s.files && offLimits(s.files).length ? `\n  ⚠ 앱 화면 밖 파일이 들어 있어 적용할 수 없어요: ${offLimits(s.files).join(", ")}` : "") +
           (s.behind ? `\n  (그 사이 앱이 ${s.behind}번 바뀌었어요 — 적용이 막히면 다시 맡겨야 해요)` : "") +
           (s.state === "실패" ? "\n  만들다 실패했어요. 부탁을 더 구체적으로 다시 맡겨 보세요." : ""));
         if (s.state === "실패" && d.status !== "실패") await put(sb, "appedit/" + row.id, { ...d, status: "실패" });
@@ -188,6 +195,8 @@ async function runEditTool(sb: SupabaseClient, name: string, input: Json): Promi
     if (name === "app_edit_apply") {
       const s: Json = await editState(id);
       if (s.state !== "준비됨" || !s.files) return { content: `아직 적용할 수 없어요 (지금: ${s.state})`, isError: true };
+      const bad = offLimits(s.files);
+      if (bad.length) return { content: `적용하지 않았어요 — 앱 화면 밖 파일(${bad.join(", ")})이 바뀌어 있어요. 이런 변경은 맥에서 직접 확인하고 넣어야 해요.`, isError: true };
       const req = String(row.data?.text ?? "");
       const pr = await gh("POST", "/pulls", { title: "앱 고치기: " + req.replace(/\s+/g, " ").slice(0, 60), head: branch, base: "main", body: s.summary || "" });
       const num = pr.status === 201 ? pr.data.number
@@ -245,7 +254,8 @@ Deno.serve(async (req) => {
   const { data: owner } = await sb.from("owners").select("user_id").eq("user_id", who.user.id).maybeSingle();
   if (!owner) return reply({ error: "not owner" }, 403);
 
-  const { data: row } = await sb.from("docs").select("data").eq("path", "ai/" + id).maybeSingle();
+  const { data: row, error: rowErr } = await sb.from("docs").select("data").eq("path", "ai/" + id).maybeSingle();
+  if (rowErr) return reply({ error: "read failed" }, 500);   // 409(이미 집음)로 답하면 앱이 맥으로 넘기지 않고 기다리기만 한다
   const r = row?.data;
   if (!r || r.status !== "클라우드") return reply({ ok: false, reason: "not waiting" }, 409);
   // 한 번만 집는다 (두 번 불려도 하나만 답한다)
@@ -315,7 +325,7 @@ function snippet(body: string, q: string) {
 
 async function chosenModel(sb: SupabaseClient): Promise<string> {
   const { data } = await sb.from("docs").select("data").eq("path", "config/ai").maybeSingle();
-  const m = String(data?.data?.model ?? "");
+  const m0 = String(data?.data?.model ?? ""), m = OLD_ID[m0] ?? m0;
   return MODEL_IDS.has(m) ? m : "";
 }
 
@@ -373,13 +383,22 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
   const tier = MODEL[r.tier] ? r.tier : "default";
   let text = "", actions: Json[] = [], doing = "";
   let started = false;            // 동욱에게 글이나 도구가 하나라도 나갔나
-  let cancelled = false, timedOut = false, handed = false;
+  let cancelled = false, timedOut = false, handed = false, cut = "";   // cut = 답을 다 못 쓴 까닭 (길이·도구 횟수)
   let inflight: Promise<void> = Promise.resolve(), lastPut = 0, sent = "";
   // deno-lint-ignore no-explicit-any
   let stream: any = null;
   let usedModel = MODEL[tier];
 
   const out = (o: Json) => put(sb, "ai_out/" + id, { ...o, via: "cloud", updatedAt: nowIso() });
+  // 마지막 쓰기는 한 번 더 해 보고, 그래도 안 되면 짧은 오류만이라도 남긴다 (앱이 「쓰는 중」에 멈춰 있지 않게)
+  const finish = async (o: Json) => {
+    try { await out(o); } catch {
+      try { await out(o); } catch (e) {
+        console.error(`brainy-ai ${id} 마지막 쓰기 실패: ${e instanceof Error ? e.message : e}`);
+        await out({ status: "오류", text: "", error: "답을 저장하지 못했어요 — 다시 보내 주세요" }).catch(() => {});
+      }
+    }
+  };
   const push = (force = false) => {
     if (!force && (Date.now() - lastPut < 500 || text === sent)) return;
     lastPut = Date.now();
@@ -390,7 +409,8 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
 
   const watch = setInterval(async () => {
     if (Date.now() - t0 > HARD_MS) { timedOut = true; stream?.abort(); return; }
-    const { data } = await sb.from("docs").select("data").eq("path", "ai/" + id).maybeSingle();
+    const { data, error } = await sb.from("docs").select("data").eq("path", "ai/" + id).maybeSingle();
+    if (error) return;   // 잠깐 못 읽은 것을 취소로 보지 않는다
     if (!data || data.data?.status === "취소") { cancelled = true; stream?.abort(); }
   }, 2000);
 
@@ -414,6 +434,7 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
         model,
         max_tokens: 16000,
         system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+        cache_control: { type: "ephemeral" },   // 대화 끝까지도 캐시 — 도구를 쓸 때마다 사진·읽은 노트를 제값으로 다시 보내지 않게
         tools,
         messages,
         output_config: { effort: EFFORT[tier] },
@@ -434,6 +455,8 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
       }
       const msg = await stream.finalMessage();
       stream = null;
+      const us = msg.usage ?? {};
+      console.log(`brainy-ai ${id} ${turn + 1}번째 — 입력 ${us.input_tokens ?? 0} · 캐시 읽음 ${us.cache_read_input_tokens ?? 0} · 캐시 씀 ${us.cache_creation_input_tokens ?? 0} · 출력 ${us.output_tokens ?? 0}`);
 
       if (msg.stop_reason === "refusal") {
         if (!text.trim()) text = "이 요청에는 답할 수 없어요.";
@@ -441,13 +464,17 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
       }
       if (msg.stop_reason === "pause_turn") { messages.push({ role: "assistant", content: msg.content }); continue; }
       const uses = msg.content.filter((b: Json) => b.type === "tool_use");
+      if (msg.stop_reason === "max_tokens") { cut = "⚠ 답이 길어서 여기서 끊겼어요 — 이어서 물어봐 주세요."; break; }   // 잘린 도구 입력은 실행하지 않는다
       if (!uses.length) break;
-      if (msg.stop_reason === "max_tokens") break;   // 잘린 도구 입력은 실행하지 않는다
+      if (turn === MAX_TURNS - 1) cut = "⚠ 확인할 것이 많아 여기까지만 봤어요 — 이어서 물어봐 주세요.";
 
       messages.push({ role: "assistant", content: msg.content });
       const results: Json[] = [];
       for (const u of uses) {
         if (SERVER_TOOL_NAMES.has(u.name)) {
+          if (timedOut || cancelled) { results.push({ type: "tool_result", tool_use_id: u.id, is_error: true, content: "시간이 다 돼서 하지 못했어요" }); continue; }
+          // 한 번 한 일(앱 고치기 맡기기·적용·버리기, 모델 바꾸기)은 뒤에 오류가 나도 맥으로 넘겨 다시 하지 않는다
+          if (u.name === "set_model" || (u.name.startsWith("app_edit_") && u.name !== "app_edit_status")) started = true;
           const res = await runServerTool(sb, u.name, u.input);
           if (res.isError) console.error(`brainy-ai ${id} 도구 ${u.name} 실패: ${res.content.slice(0, 300)}`);
           else if (u.name.startsWith("app_edit_") || u.name === "set_model") console.log(`brainy-ai ${id} 도구 ${u.name} 됨`);
@@ -465,7 +492,7 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     if (cancelled) {
-      await inflight; await out({ status: "취소", text });
+      await inflight; await finish({ status: "취소", text });
       return;
     }
     if (!timedOut) {
@@ -481,7 +508,7 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
         return;
       }
       await inflight;
-      await out({ status: "오류", text, error: "답하다 멈췄어요 — 다시 보내 주세요" });
+      await finish({ status: "오류", text, error: "답하다 멈췄어요 — 다시 보내 주세요" });
       return;
     }
   } finally {
@@ -492,15 +519,23 @@ async function run(sb: SupabaseClient, id: string, r: Json) {
     await sb.from("docs").delete().in("coll", ["ai", "ai_out"]).lt("updated_at", cutoff);
   }
 
-  if (cancelled) { await inflight; await out({ status: "취소", text }); return; }
+  if (cancelled) { await inflight; await finish({ status: "취소", text }); return; }
   let body = text.trim();
-  if (timedOut) body += (body ? "\n\n" : "") + "⚠ 답이 길어서 여기서 멈췄어요.";
-  if (r.json) body = body.replace(/^```(?:json)?\s*|\s*```$/g, "");
+  if (r.json) {
+    // JSON 을 달라는 요청 — 앞뒤에 붙은 말·코드 블록 표시는 떼고, JSON 이 아니면 오류로 알린다 (앱이 깨진 글을 받지 않게)
+    const a = body.search(/[{[]/), z = Math.max(body.lastIndexOf("}"), body.lastIndexOf("]"));
+    let ok = false;
+    if (a >= 0 && z > a) { try { JSON.parse(body.slice(a, z + 1)); body = body.slice(a, z + 1); ok = true; } catch { /* 아래에서 */ } }
+    if (!ok && !actions.length) { await inflight; await finish({ status: "오류", text: "", error: timedOut || cut ? "답이 길어서 끝까지 받지 못했어요 — 다시 해 주세요" : "답 모양이 맞지 않아요 — 다시 해 주세요" }); return; }
+  } else {
+    if (timedOut) body += (body ? "\n\n" : "") + "⚠ 답이 길어서 여기서 멈췄어요.";
+    else if (cut) body += (body ? "\n\n" : "") + cut;
+  }
   await inflight;
   if (!body && !actions.length) {
-    await out({ status: "오류", text: "", error: "빈 답이 왔어요" });
+    await finish({ status: "오류", text: "", error: "빈 답이 왔어요" });
     return;
   }
-  await out({ status: "끝", text: body, actions });
+  await finish({ status: "끝", text: body, actions });
   console.log(`brainy-ai ${id} ${usedModel} 끝 — ${((Date.now() - t0) / 1000).toFixed(1)}초, 글 ${body.length}자, 도구 ${actions.length}개`);
 }
