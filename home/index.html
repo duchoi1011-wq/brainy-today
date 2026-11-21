@@ -50,8 +50,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "6205b408cc"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루", colls: ["cal", "chat", "checks", "cmd", "config", "dayend", "garmin", "garminup", "inbox", "insta", "ledger", "marks", "morning", "plan", "proj", "reports", "snapshot", "sync", "tasklog", "taskwork", "twchat", "vocab"]};</script>
-<script src="../shim.js?v=6205b408cc"></script>
+<script>window.BRAINY_VERSION = "3b11f19d94"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루", colls: ["cal", "chat", "checks", "cmd", "config", "dayend", "garmin", "garminup", "inbox", "insta", "ledger", "marks", "morning", "plan", "proj", "reports", "snapshot", "sync", "tasklog", "taskwork", "twchat", "vocab"]};</script>
+<script src="../shim.js?v=3b11f19d94"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -522,9 +522,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     S.checks[dk] = body;
     if (!silent) render();
     /* 볼트 반영: 맥 동기화(dash_sync.py)가 바로 */
-    writeChain = writeChain.then(function () { return S.db.doc("checks/" + dk).set(body); }).catch(function (e) {
+    writeChain = writeChain.then(function () { return S.db.doc("checks/" + dk).set(body); }).then(function () { if (S.writeError && !S.readOnly) { S.writeError = ""; softRender(); } }).catch(function (e) {
       if (e && e.code === "invalid_argument") { S.readOnly = true; }
-      S.writeError = (e && e.code) || "unavailable"; render();
+      S.writeError = (e && e.code) || "unavailable"; softRender();
     });
     return writeChain;
   }
@@ -535,7 +535,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (read[title]) delete read[title]; else read[title] = TODAY;
     S.marks = { read: read, updatedAt: new Date().toISOString() };
     render();
-    markChain = markChain.then(function () { return S.db.doc("marks/wiki").set(S.marks); }).catch(function (e) { S.writeError = (e && e.code) || "unavailable"; render(); });
+    markChain = markChain.then(function () { return S.db.doc("marks/wiki").set(S.marks); }).catch(function (e) { S.writeError = (e && e.code) || "unavailable"; softRender(); });
   }
 
   /* ---------- speech ---------- */
@@ -546,7 +546,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (S.speaking === id) { window.speechSynthesis.cancel(); S.speaking = null; render(); return; }
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text); u.lang = "ko-KR"; u.rate = 1.02;
-      u.onend = u.onerror = function () { if (S.speaking === id) { S.speaking = null; render(); } };
+      u.onend = u.onerror = function () { if (S.speaking === id) { S.speaking = null; softRender(); } };
       S.speaking = id; window.speechSynthesis.speak(u); render();
     } catch (e) { S.speaking = null; }
   }
@@ -580,7 +580,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var m = S.main, d = NOW;
     var title = (d.getMonth() + 1) + "월 " + d.getDate() + "일 <span class='muted' style='font-weight:500'>" + DOW[d.getDay()] + "</span>";
     var wk = "W" + isoWeek(d);
-    var sub = wk + (m ? " · 브리핑 " + md(m.date) + " " + m.generatedAt.slice(11, 16) + " 기준" : "");
+    var sub = wk + (m ? " · 브리핑 " + md(m.date) + " " + String(m.generatedAt || "").slice(11, 16) + " 기준" : "");
     var listen = '<div class="row"><button class="btn" data-act="gowrite" data-key="sentence">기록하러 가기</button>' + ((m && canSpeak) ? '<button class="btn primary" data-act="brief">' + (S.speaking === "brief" ? "멈추기" : "브리핑 듣기") + "</button>" : "") + "</div>";
     var h = headView(title, sub, listen) + statusNotice();
     var canCmd = S.db && !S.readOnly && S.mcp && cmdTriggerId();
@@ -589,7 +589,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var repCmd = function (r) { return lastCmd(function (t) { return t.indexOf("reports/" + r.id + ")") >= 0; }); };
     fresh = fresh.filter(function (r) { var c = repCmd(r); return !(c && c.status === "끝"); });
     if (!m) return h + (fresh.length ? reportCard(fresh[0], true) : "") + emptyMain();
-    var b = m.brainy;
+    var b = m.brainy || {};
     h += '<div class="card brief"><p class="line">' + esc(b.line) + '</p><dl class="kv"><dt>오늘 한 걸음</dt><dd>' + esc(b.next) + "</dd><dt>잘한 것</dt><dd>" + esc(b.good) + "</dd><dt>직면할 것</dt><dd>" + esc(b.confront) + "</dd></dl></div>";
     if (fresh.length) h += '<section class="section"><h2>📋 최근 점검</h2><p class="small muted">예약 점검이 끝나면 자동으로 떠요 · 답이 반영되면 사라져요</p>' + fresh.slice(0, 1).map(function (r, i) {
       var c = repCmd(r);
@@ -1015,7 +1015,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       if (c) {
         if (d.kcal == null && c.est) { d.kcal = c.est.kcal; d.protein = c.est.protein; app = true; }
         else if (d.kcal == null && c.meals && c.meals.length) { d.note = c.meals.length + "끼 적음"; }
-        if (!d.exercise && c.notes && c.notes.workout) d.exercise = c.notes.workout.type + (c.notes.workout.sets ? " · " + c.notes.workout.sets : "");
+        if (!d.exercise && c.notes && c.notes.workout) d.exercise = [c.notes.workout.type, c.notes.workout.sets].filter(Boolean).join(" · ");
       }
       var dd = parse(d.date);
       h += "<tr><td>" + md(d.date) + " " + DOW[dd.getDay()] + '</td><td class="n">' + (d.kcal == null ? '<span class="muted">' + (d.note || "기록 없음") + "</span>" : d.kcal.toLocaleString() + (app ? '<span class="muted small"> 앱</span>' : "")) + '</td><td class="n">' + (d.protein == null ? "—" : d.protein + "g") + "</td><td>" + (d.exercise ? esc(d.exercise) : '<span class="muted">—</span>') + "</td></tr>";
@@ -1111,14 +1111,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     h += '<section class="card"><h2>HRV 지난밤 (최근 3주)</h2>' + bars(hv.map(function (d) { var dd = parse(d.d); return { label: dd.getDate() + "", v: d.hrv, top: d.hrv, color: d.hrv < 50 ? "var(--warn)" : "var(--accent)", title: d.d + " 7일 " + d.hrvW }; }), { h: 110 }) + '<p class="small muted">7일 평균 ' + (last.hrvW || "") + "ms · 50 아래로 떨어진 밤은 주황</p></section>";
 
     // ---- 활동 기록 ----
-    h += '<details class="fold"><summary><span>활동 기록 ' + acts.length + '개</span></summary><div class="md"><table><thead><tr><th>날짜</th><th>종류</th><th>거리·시간</th><th>심박</th><th>kcal</th><th>효과</th></tr></thead><tbody>' + acts.map(function (x) { return "<tr><td>" + md(x.date) + (x.time ? "<br>" + esc(x.time) : "") + "</td><td>" + esc(x.type) + (x.sets ? "<br>" + x.sets + "세트" : "") + "</td><td>" + (x.km ? x.km + "km<br>" : "") + (x.min ? x.min + "분" : esc(x.time || "")) + "</td><td>" + (x.hr || "") + (x.maxHr ? "<br>최고 " + x.maxHr : "") + "</td><td>" + (x.kcal || "") + "</td><td>" + esc(x.te || x.effect || "") + (x.load ? "<br>부하 " + x.load : "") + "</td></tr>"; }).join("") + "</tbody></table></div></details>";
+    h += '<details class="fold"><summary><span>활동 기록 ' + acts.length + '개</span></summary><div class="md"><table><thead><tr><th>날짜</th><th>종류</th><th>거리·시간</th><th>심박</th><th>kcal</th><th>효과</th></tr></thead><tbody>' + acts.map(function (x) { return "<tr><td>" + md(x.date) + (x.time ? "<br>" + esc(x.time) : "") + "</td><td>" + esc(x.type) + (x.sets ? "<br>" + esc(x.sets) + "세트" : "") + "</td><td>" + (x.km ? esc(x.km) + "km<br>" : "") + (x.min ? esc(x.min) + "분" : esc(x.time || "")) + "</td><td>" + esc(x.hr || "") + (x.maxHr ? "<br>최고 " + esc(x.maxHr) : "") + "</td><td>" + esc(x.kcal || "") + "</td><td>" + esc(x.te || x.effect || "") + (x.load ? "<br>부하 " + esc(x.load) : "") + "</td></tr>"; }).join("") + "</tbody></table></div></details>";
 
     // ---- 업로드 ----
     var canImg = S.sample && !S.sampleOff && S.canImages;
     h += '<section class="card"><p class="small"><b>가민 캡처 올리기</b> — 웹에서 못 읽은 화면이 있으면 캡처를 올려 주세요. Brainy가 숫자를 읽어 넣어요. 정기 갱신은 중간 결산·하루 결산 때 가민 웹에서 해요.</p>';
     if (canImg) h += '<div class="row"><label class="btn" for="garmin-file" style="cursor:pointer">' + (S.gBusy ? "읽는 중…" : "캡처 고르기") + '</label><input type="file" id="garmin-file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden' + (S.gBusy || !S.db ? " disabled" : "") + "></div>";
     if (S.gMsg) h += '<p class="small" style="color:' + (S.gOk ? "var(--good)" : "var(--warn)") + '">' + esc(S.gMsg) + "</p>";
-    if (S.gups.length) h += '<p class="small muted">올린 캡처에서 읽은 지표: ' + gm.metrics.filter(function (x) { return x.src === "up"; }).map(function (x) { return x.label + " " + x.value + (x.unit || ""); }).join(" · ") + "</p>";
+    if (S.gups.length) h += '<p class="small muted">올린 캡처에서 읽은 지표: ' + gm.metrics.filter(function (x) { return x.src === "up"; }).map(function (x) { return esc(x.label + " " + x.value + (x.unit || "")); }).join(" · ") + "</p>";
     return h + "</section>";
   }
   // 일별 기록(days) 없이 지표·활동만 있는 데이터(캡처로 읽은 것 포함)도 그대로 보여 준다
@@ -1297,7 +1297,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function deleteNote(id) {
     if (!S.db || S.readOnly) return;
     S.confirmDel = null;
-    S.db.doc("inbox/" + id).delete().catch(function (e) { S.writeError = (e && e.code) || "unavailable"; render(); });
+    S.db.doc("inbox/" + id).delete().catch(function (e) { S.writeError = (e && e.code) || "unavailable"; softRender(); });
   }
   function askContext() {
     var m = S.main || {};
@@ -1344,7 +1344,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function saveAnswer() {
     if (!S.db || S.readOnly || !S.ask.text) return;
     var doc = { createdAt: new Date().toISOString(), date: TODAY, raw: "Q. " + S.ask.q + "\n\n" + S.ask.text, status: "대기", ai: { kind: "회고", title: "Brainy 답 — " + S.ask.q.slice(0, 16), clean: S.ask.text.slice(0, 600), points: [], links: [], next: "" } };
-    S.db.collection("inbox").doc().set(doc).then(function () { S.ask.saved = true; render(); }).catch(function (e) { S.writeError = (e && e.code) || "unavailable"; render(); });
+    S.db.collection("inbox").doc().set(doc).then(function () { S.ask.saved = true; render(); }).catch(function (e) { S.writeError = (e && e.code) || "unavailable"; softRender(); });
   }
 
   function noteCard(n) {
@@ -1494,7 +1494,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (S.toolsOK) opts.tools = twTools(title);
     S.sample(input, opts).then(function (res) { ai.content = res.text; if (res.truncated) ai.err = "답이 길어서 끊겼어요."; })
       .catch(function (e) { var c = e && e.code; ai.content = (e && e.text) || ai.content; ai.err = c === "cancelled" ? "멈췄어요." : c === "rate_limited" ? "지금은 요청이 많아요. 잠시 뒤 다시." : c === "not_granted" ? "Claude 사용이 허락되지 않았어요." : "끝까지 받지 못했어요. 다시 보내 주세요."; if (c === "not_granted") S.sampleOff = true; })
-      .then(function () { ai.pending = false; r.busy = false; r.ctl = null; r.ai = null; twChatSave(title, r); render(); });
+      .then(function () { ai.pending = false; r.busy = false; r.ctl = null; r.ai = null; twChatSave(title, r); softRender(); });
   }
   function twLogOnly(title) {
     var tx = String(S.twDraft[title] || "").trim(); if (!tx) return;
@@ -1827,7 +1827,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 
   /* ---------- Brainy 답 (보낸 명령의 결과를 그 자리에) ---------- */
-  function lastCmd(pred) { return (S.cmds || []).filter(function (c) { return String(c.createdAt || "").slice(0, 10) >= ymd(new Date(NOW.getTime() - 86400000)) && pred(String(c.text || "")); })[0]; }
+  function lastCmd(pred) { return (S.cmds || []).filter(function (c) { return (c.createdAt ? ymd(new Date(c.createdAt)) : "") >= ymd(new Date(NOW.getTime() - 86400000)) && pred(String(c.text || "")); })[0]; }
   function replyBox(c) {
     if (!c) return "";
     var st = c.status || "", wait = st === "처리 중" || st === "보내는 중", stuck = st === "맥 대기" || /못|확인/.test(st);
@@ -1839,7 +1839,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     return h + "</div>";
   }
   var MO_FOLLOW = "오늘 계획 이어서 (이미 데일리 노트에 올린 「오늘의 계획」을 이 말대로 고치거나 답해 줘): ";
-  function cmdsWhere(pred) { return (S.cmds || []).filter(function (c) { return String(c.createdAt || "").slice(0, 10) >= ymd(new Date(NOW.getTime() - 86400000)) && pred(String(c.text || "")); }).slice().reverse(); }
+  function cmdsWhere(pred) { return (S.cmds || []).filter(function (c) { return (c.createdAt ? ymd(new Date(c.createdAt)) : "") >= ymd(new Date(NOW.getTime() - 86400000)) && pred(String(c.text || "")); }).slice().reverse(); }
   function moreBtn(key, n) { var on = !!S.thOpen[key]; return '<button class="more" data-act="thtoggle" data-k="' + esc(key) + '">' + (on ? "▴ 이전 대화 숨기기" : "▾ 이전 대화 " + n + "개 보기") + "</button>"; }
   /* ---------- 접기·펼치기 (오늘 탭 공통) — 머리줄 오른쪽 「펼치기 ▾/접기 ▴」 하나, 내용은 늘 그려 두고 누르면 그 자리에서 같은 시간 동안 열린다.
      다시 그리지 않으므로 다른 칸이 튀지 않고, 열림 상태는 S.thOpen[key] 에 남아 다시 그려도 그대로다. o.open: 처음 열림 · o.flat: 칸 안 한 줄 · o.extra: 머리줄 오른쪽 표시(pill 등) · o.cls: 겉 상자 모양(pcard = 프로젝트 카드) ---------- */
@@ -2336,7 +2336,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   }
   function answerNow(qid, txt) {
     var q = (((S.main || {}).brainy || {}).questions || []).filter(function (x) { return x.id === qid; })[0];
-    var done = function (msg, err) { S.qa[qid] = { msg: msg, err: !!err }; render(); setTimeout(function () { delete S.qa[qid]; render(); }, 6000); };
+    var done = function (msg, err) { S.qa[qid] = { msg: msg, err: !!err }; softRender(); setTimeout(function () { delete S.qa[qid]; softRender(); }, 6000); };
     S.qa = S.qa || {};
     if (!S.sample || S.sampleOff) { done("저장했어요 — 결산 때 반영돼요"); return; }
     S.qa[qid] = { busy: true }; render();
@@ -2368,7 +2368,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     ledgerAnswer(n, v, note).then(function () {
       var ai = lgPush(n, { r: "ai", t: "", pending: true }); render();
       if (!S.sample || S.sampleOff || !it) { ai.pending = false; ai.t = "보냈어요."; render(); return; }
-      S.sample("결산 대기 " + n + "번 「" + it.text + "」에 동욱이 「" + v + (note ? " — " + note : "") + "」로 답했고, 맥의 Brainy에게 반영하라고 보냈다. 이제 무엇이 어떻게 반영되는지 동욱에게 한두 문장, 해요체로 짧게 알려 줘. 마크다운 기호 없이.", { modelTier: "quick", cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; render(); } })
+      S.sample("결산 대기 " + n + "번 「" + it.text + "」에 동욱이 「" + v + (note ? " — " + note : "") + "」로 답했고, 맥의 Brainy에게 반영하라고 보냈다. 이제 무엇이 어떻게 반영되는지 동욱에게 한두 문장, 해요체로 짧게 알려 줘. 마크다운 기호 없이.", { modelTier: "quick", cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; softRender(); } })
         .then(function (r) { ai.t = (r && r.text) || ai.t || "보냈어요."; }, function () { ai.t = ai.t || "보냈어요 — 처리 결과가 여기 떠요."; }).then(function () { ai.pending = false; render(); });
     }, function (e) { lgPush(n, { r: "warn", t: "못 보냈어요 — " + e.message }); render(); });
   }
@@ -2377,7 +2377,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var hist = (S.lgT[n] || []).filter(function (m) { return (m.r === "me" || m.r === "ai") && m.t; }).slice(-8).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: m.t }; });
     lgPush(n, { r: "me", t: q }); S.lgQ[n] = ""; var ai = lgPush(n, { r: "ai", t: "", pending: true }); S.lgAsk[n] = true; render();
     var rules = chatRules() + "\n\n=== 지금 이 대화 ===\n앱 「🗳 결산 대기」의 " + n + "번 칸 안에서 이 항목 하나만 동욱과 이야기한다: 「" + it.text + "」(" + (it.date || "") + "). 필요하면 볼트 「3_Action/결산 원장.md」를 읽어 사정을 확인한다. 답은 3~5줄, 마크다운 기호 없이. 뜻·왜 올라왔는지·추천(응/고쳐서/나중에/빼)과 근거. 동욱이 분명히 정하면 ledger_answer 로 이 항목(n=" + n + ")을 보낸다.";
-    var opts = { cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; var el = document.querySelector('[data-lgq="' + n + '"]'); render(); } };
+    var opts = { cache: false, onText: function (u) { ai.t = u.text; ai.pending = false; softRender(); } };
     if (S.toolsOK) opts.tools = chatTools();
     S.sample([{ role: "user", content: rules }].concat(hist).concat([{ role: "user", content: q }]), opts)
       .then(function (r) { ai.t = (r && r.text) || ai.t; }, function (e) { ai.t = (e && e.text) || "답을 받지 못했어요. 다시 물어봐 주세요."; })
@@ -2390,7 +2390,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (k === "memo") return "기록 탭 「지금 떠오른 것」 메모 칸 — 동욱이 쓰던 메모를 같이 다듬거나 정리한다. 남기라고 하면 add_note 로 남긴다.";
     if (k === "tl") { var th = findTask(rest); return "태스크 「" + rest + "」 기록 칸 — 동욱이 이 태스크에 한 일·정한 것·막힌 것을 이야기한다. 태스크 노트: " + (th ? clip(th.task.body, 5000) : "(없음)"); }
     if (k === "fd") return "오늘 쓰기 「" + labelOf(rest) + "」 칸 (key " + rest + ") — 지금 적힌 것: " + clip(JSON.stringify(((d.notes || {})[rest]) || {}), 4000) + ". 동욱이 이 칸 글을 같이 쓰거나 다듬자고 하면 write_today 로 그 칸에 바로 적는다.";
-    if (k === "ans") { var r = (S.reports || []).filter(function (x) { return x.id === rest; })[0]; return "기록 탭 「점검 결과」 칸 — " + (r ? (r.title || "") + " " + (r.date || "") + ": " + clip(JSON.stringify({ lines: r.lines, items: r.items }), 5000) : rest) + ". 항목을 어떻게 할지 동욱과 이야기하고, 정해지면 run_command 로 보낸다."; }
+    if (k === "ans") { var rid = rest.replace(/^rp:/, ""), r = (S.reports || []).filter(function (x) { return x.id === rid; })[0]; return "기록 탭 「점검 결과」 칸 — " + (r ? (r.title || "") + " " + (r.date || "") + ": " + clip(JSON.stringify({ lines: r.lines, items: r.items }), 5000) : rest) + ". 항목을 어떻게 할지 동욱과 이야기하고, 정해지면 run_command 로 보낸다."; }
     return "";
   }
   function icId(key, i) { return "icm-" + key.replace(/[^\w가-힣-]/g, "_") + "-" + i; }
@@ -2413,7 +2413,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (S.toolsOK) opts.tools = chatTools();
     S.sample([{ role: "user", content: rules }].concat(hist).concat([{ role: "user", content: text }]), opts)
       .then(function (r) { ai.t = (r && r.text) || ai.t; }, function (e) { ai.t = (e && e.text) || "답을 받지 못했어요. 다시 보내 주세요."; })
-      .then(function () { ai.pending = false; S.icBusy[key] = false; render(); });
+      .then(function () { ai.pending = false; S.icBusy[key] = false; softRender(); });
   }
   /* ── 긴 할 일 줄을 「짧은 제목 — 설명」으로 나눠 보이기 (볼트 규칙: 완료 기준·결산 줄은 짧은 제목 — 설명) ── */
   function stepSplit(s) {
@@ -2431,8 +2431,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (["응", "고쳐서", "나중에", "빼", "지시"].indexOf(ans) < 0) throw new Error("answer 는 응·고쳐서·나중에·빼 중 하나");
     if (ans === "고쳐서" && !String(note || "").trim()) throw new Error("고쳐서는 어떻게 고칠지 note 가 필요해요");
     var tx = "🗳 결산 대기 답\n" + it.n + " " + ans + " — 「" + clip(it.text, 60) + "」" + (String(note || "").trim() ? " — 추가: " + String(note).trim() : "");
-    return sendCommand(tx, true).then(function (m) {
-      var sn = Object.assign({}, S.ledger.sent || {}), cm = Object.assign({}, S.ledger.cmds || {}); sn[it.n] = new Date().toISOString(); cm[it.n] = S.lastCmdId; S.ledger.sent = sn; S.ledger.cmds = cm; S.lgCmdLocal[String(it.n)] = S.lastCmdId;
+    var sent = sendCommand(tx, true), cid = S.lastCmdId;   // 연달아 누르면 lastCmdId 가 다음 명령으로 바뀐다
+    return sent.then(function (m) {
+      var sn = Object.assign({}, S.ledger.sent || {}), cm = Object.assign({}, S.ledger.cmds || {}); sn[it.n] = new Date().toISOString(); cm[it.n] = cid; S.ledger.sent = sn; S.ledger.cmds = cm; S.lgCmdLocal[String(it.n)] = cid;
       if (S.db) S.db.doc("ledger/main").update({ sent: sn, cmds: cm }).catch(function () {});
       act("🗳 " + it.n + "번 " + ans + " 보냄"); render(); return "보냈어요: " + it.n + "번 " + ans + ". 남은 열린 항목: " + ledgerOpen().map(function (x) { return x.n + "번 " + clip(x.text, 40); }).join(" / ");
     });
@@ -2493,7 +2494,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   var sheet = document.getElementById("sheet"), msgsIn = document.getElementById("msgs-in"), chatInput = document.getElementById("chat-input");
   function openChat(project, q) {
     if (!S.sample || S.sampleOff) { S.chatUnavailable = true; }
-    if (project !== undefined && project !== S.chat.project) { S.chat = { turns: [], busy: false, ctl: null, project: project }; }
+    if (project !== undefined && project !== S.chat.project) { if (S.chat.busy && S.chat.ctl) S.chat.ctl.abort(); S.chat = { turns: [], busy: false, ctl: null, project: project }; }
     if (!S.chat.turns.length && !S.chat.task && !q) { var rec = (S.threads || []).filter(function (x) { return (x.project || null) === (S.chat.project || null) && !x.task && (x.turns || []).length && Date.now() - Date.parse(x.updatedAt || 0) < 6 * 3600e3; })[0]; if (rec) resumeChat(rec); }
     sheet.hidden = false; document.getElementById("fab").hidden = true; document.documentElement.classList.add("chat-dock"); fitSheet();
     document.getElementById("chat-ctx").textContent = S.chat.project ? "보고 있는 프로젝트: " + S.chat.project + " · 볼트 전체도 함께 봐요" : "내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요";
@@ -2643,7 +2644,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var ed = S.tab === "notes" && S.noteView === "cal" ? calCur() : null;
     if (ed !== EDIT_DAY) { flushAuto(); Object.keys(S.fd).forEach(function (k) { if (/^f-/.test(k)) delete S.fd[k]; }); S.openRow = {}; S.autoAt = {}; EDIT_DAY = ed; fid = null; }
     var v = S.tab === "notes" ? viewNotes() : S.tab === "work" ? viewWork() : S.tab === "body" ? viewBody() : S.tab === "wiki" ? viewWiki() : viewToday();
-    var foot = '<p class="foot">' + (S.main ? "옵시디언 " + md(S.main.date) + " " + S.main.generatedAt.slice(11, 16) + " 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <a class="more" href="../shortcuts/" style="display:inline">맥 단축키</a> · <a class="more" href="../vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';
+    var foot = '<p class="foot">' + (S.main ? "옵시디언 " + md(S.main.date) + " " + String(S.main.generatedAt || "").slice(11, 16) + " 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <a class="more" href="../shortcuts/" style="display:inline">맥 단축키</a> · <a class="more" href="../vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';
     app.innerHTML = v + foot;
     if (!S.deTried && S.checksLive) setTimeout(dayEndAuto, 0);
     app.querySelectorAll("textarea.grow").forEach(grow);
@@ -2674,7 +2675,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (act === "chatkeep") { keepChat(+t.getAttribute("data-i")); return; }
     if (act === "taskopen") { S.tab = "work"; S.taskOpen = t.getAttribute("data-title"); render(); window.scrollTo(0, 0); return; }
     if (act === "taskback") { S.taskOpen = null; render(); window.scrollTo(0, 0); return; }
-    if (act === "chattask") { var tt = t.getAttribute("data-title"), th = findTask(tt); S.chat = { turns: [], busy: false, ctl: null, project: th ? th.proj.name : null, task: tt }; openChat(S.chat.project); return; }
+    if (act === "chattask") { var tt = t.getAttribute("data-title"), th = findTask(tt); if (S.chat.busy && S.chat.ctl) S.chat.ctl.abort(); S.chat = { turns: [], busy: false, ctl: null, project: th ? th.proj.name : null, task: tt }; openChat(S.chat.project); return; }
     if (act === "wview") { S.wView = t.getAttribute("data-v"); render(); return; }
     if (act === "vdom") { S.vDom = t.getAttribute("data-v"); S.vCat = "all"; S.vIdx = 0; S.vFlip = false; render(); return; }
     if (act === "vcat") { S.vCat = t.getAttribute("data-v"); render(); return; }
@@ -2776,8 +2777,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       var ans = (S.checks[TODAY] && S.checks[TODAY].answers) || {};
       if (btn) btn.disabled = !(S.db && !S.readOnly && el.value.trim() && ans[el.getAttribute("data-q")] !== el.value.trim());
     }
-    if (el.id === "wiki-search") { S.query = el.value; render(); }
-    if (el.id === "vocab-search") { S.vQ = el.value; render(); }
+    if (el.id === "wiki-search") { S.query = el.value; if (!ev.isComposing) render(); }
+    if (el.id === "vocab-search") { S.vQ = el.value; if (!ev.isComposing) render(); }
     if (el.id === "note-input") {
       var had = !!S.note.trim(); S.note = el.value; S.justSaved = false;
       if (S.opt.state === "error") S.opt = { state: "idle", data: null, msg: "" };
@@ -2788,7 +2789,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       var asc2 = el.getAttribute("data-ans"), ank = el.getAttribute("data-ansn"), ast2 = ansState(asc2);
       if (ank === "__all") ast2.all = el.value; else ast2.sel[ank] = Object.assign({}, ast2.sel[ank] || {}, { note: el.value });
       if (el.classList.contains("grow")) grow(el);
-      var ab = document.querySelector('[data-act="anssend"][data-scope="' + CSS.escape(asc2) + '"]'); if (ab) { ab.disabled = !ansCanSend(asc2); var an2 = ansPicked(asc2).length; ab.textContent = "Brainy에게 보내기" + (an2 ? " (" + an2 + ")" : ""); }
+      var ab = document.querySelector('[data-act="anssend"][data-scope="' + CSS.escape(asc2) + '"]'); if (ab) { ab.disabled = !ansCanSend(asc2); var an2 = ansPicked(asc2).length; ab.textContent = "로그" + (an2 ? " (" + an2 + ")" : ""); }
     }
     if (el.getAttribute && el.getAttribute("data-nr")) { S.nrDraft[el.getAttribute("data-nr")] = el.value; if (el.classList.contains("grow")) grow(el); }
     if (el.getAttribute && el.getAttribute("data-igcap")) { S.igCap[el.getAttribute("data-igcap")] = el.value; if (el.classList.contains("grow")) grow(el); }
@@ -2809,6 +2810,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   });
   function grow(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight + 2, 900) + "px"; }
   function typing() { var a = document.activeElement; return !!(a && a.getAttribute && (a.getAttribute("data-fd") || (/^(note|ask|cmd)-input$/.test(a.id) || a.getAttribute("data-tl") || a.getAttribute("data-tw") || a.getAttribute("data-lg") || a.getAttribute("data-lgq") || a.getAttribute("data-icq") || a.getAttribute("data-lgall") || a.getAttribute("data-ans") || a.getAttribute("data-mo") || a.getAttribute("data-igcap") || a.getAttribute("data-igfix") || a.getAttribute("data-nr")))); }
+  document.addEventListener("compositionend", function (ev) { var el = ev.target; if (!el) return; if (el.id === "wiki-search") { S.query = el.value; render(); } else if (el.id === "vocab-search") { S.vQ = el.value; render(); } });
+  setInterval(function () { if (ymd(new Date()) !== TODAY && !typing()) location.reload(); }, 60000);   // 켜 둔 채 자정을 넘겨도 어제 칸에 적히지 않게
   function softRender() { if (typing()) { S.pendingRender = true; return; } render(); }
   document.addEventListener("focusout", function () { setTimeout(function () { if (S.pendingRender && !typing()) { S.pendingRender = false; render(); } }, 300); });
   document.addEventListener("change", function (ev) { if (ev.target && ev.target.id === "cal-pick") { if (isPastDay(ev.target.value)) { S.calDay = ev.target.value; render(); } return; } if (ev.target && ev.target.id === "garmin-file") { uploadGarmin(ev.target.files); } if (ev.target && ev.target.id === "chat-file") { addChatPics(ev.target.files); ev.target.value = ""; } });
@@ -2830,15 +2833,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (!db) { clearTimeout(slowTimer); S.dbState = "none"; render(); return; }
     S.db = db; S.dbState = "ok"; render();
     function fail(e) { clearTimeout(slowTimer); if (e && e.code === "revoked") { S.dbState = "none"; } render(); }
-    db.doc("snapshot/main").onSnapshot(function (s) { S.main = s.exists ? s.data() : null; if (!s.metadata.fromCache) { S.loaded.main = true; clearTimeout(slowTimer); if (S.dbState === "slow") S.dbState = "ok"; } else if (S.main) S.loaded.main = true; render(); }, fail);
-    db.doc("snapshot/wiki").onSnapshot(function (s) { S.wiki = s.exists ? s.data() : null; S.loaded.wiki = true; render(); }, fail);
+    db.doc("snapshot/main").onSnapshot(function (s) { S.main = s.exists ? s.data() : null; if (!s.metadata.fromCache) { S.loaded.main = true; clearTimeout(slowTimer); if (S.dbState === "slow") S.dbState = "ok"; } else if (S.main) S.loaded.main = true; softRender(); }, fail);
+    db.doc("snapshot/wiki").onSnapshot(function (s) { S.wiki = s.exists ? s.data() : null; S.loaded.wiki = true; softRender(); }, fail);
     db.collection("checks").onSnapshot(function (q) {
       var c = {}; q.docs.forEach(function (d) { c[d.id] = d.data(); });
       [TODAY, EDIT_DAY].forEach(function (dk) { var mine = dk && S.checks[dk]; if (mine && (!c[dk] || (c[dk].updatedAt || "") < (mine.updatedAt || ""))) c[dk] = mine; });
       if (!q.metadata || !q.metadata.fromCache) S.checksLive = true;
       S.checks = c; softRender();
     }, fail);
-    db.doc("marks/wiki").onSnapshot(function (s) { S.marks = s.exists ? s.data() : {}; render(); }, fail);
+    db.doc("marks/wiki").onSnapshot(function (s) { S.marks = s.exists ? s.data() : {}; softRender(); }, fail);
     db.collection("dayend").onSnapshot(function (q) { var o = {}; q.docs.forEach(function (d) { o[d.id] = d.data(); }); Object.keys(S.deBusy).forEach(function (k) { if (S.deBusy[k] && S.dayend[k]) o[k] = S.dayend[k]; }); S.dayend = o; if (!q.metadata || !q.metadata.fromCache) S.deLive = true; softRender(); }, fail);
     db.doc("garmin/main").onSnapshot(function (s) { S.garmin = s.exists ? s.data() : { metrics: [], activities: [], sleepDays: [] }; softRender(); }, fail);
     db.collection("garminup").onSnapshot(function (q) { S.gups = q.docs.map(function (d) { return d.data(); }); softRender(); }, fail);
@@ -2861,7 +2864,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     db.collection("cmd").orderBy("createdAt", "desc").limit(15).onSnapshot(function (q) { S.cmds = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);
     db.collection("inbox").orderBy("createdAt", "desc").limit(50).onSnapshot(function (q) {
       S.notes = q.docs.map(function (d) { var x = Object.assign({ id: d.id }, d.data()); return x; }); S.notesLoaded = true;
-      if (!(S.tab === "notes" && document.activeElement && /^(note|ask)-input$/.test(document.activeElement.id))) render();
+      softRender();
     }, function (e) { S.notesLoaded = true; fail(e); });
   }).catch(function () { clearTimeout(slowTimer); S.dbState = "none"; render(); });
   cl.use("mcp").then(function (mc) {

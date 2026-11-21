@@ -5,7 +5,7 @@
     if (k === "memo") return "기록 탭 「지금 떠오른 것」 메모 칸 — 동욱이 쓰던 메모를 같이 다듬거나 정리한다. 남기라고 하면 add_note 로 남긴다.";
     if (k === "tl") { var th = findTask(rest); return "태스크 「" + rest + "」 기록 칸 — 동욱이 이 태스크에 한 일·정한 것·막힌 것을 이야기한다. 태스크 노트: " + (th ? clip(th.task.body, 5000) : "(없음)"); }
     if (k === "fd") return "오늘 쓰기 「" + labelOf(rest) + "」 칸 (key " + rest + ") — 지금 적힌 것: " + clip(JSON.stringify(((d.notes || {})[rest]) || {}), 4000) + ". 동욱이 이 칸 글을 같이 쓰거나 다듬자고 하면 write_today 로 그 칸에 바로 적는다.";
-    if (k === "ans") { var r = (S.reports || []).filter(function (x) { return x.id === rest; })[0]; return "기록 탭 「점검 결과」 칸 — " + (r ? (r.title || "") + " " + (r.date || "") + ": " + clip(JSON.stringify({ lines: r.lines, items: r.items }), 5000) : rest) + ". 항목을 어떻게 할지 동욱과 이야기하고, 정해지면 run_command 로 보낸다."; }
+    if (k === "ans") { var rid = rest.replace(/^rp:/, ""), r = (S.reports || []).filter(function (x) { return x.id === rid; })[0]; return "기록 탭 「점검 결과」 칸 — " + (r ? (r.title || "") + " " + (r.date || "") + ": " + clip(JSON.stringify({ lines: r.lines, items: r.items }), 5000) : rest) + ". 항목을 어떻게 할지 동욱과 이야기하고, 정해지면 run_command 로 보낸다."; }
     return "";
   }
   function icId(key, i) { return "icm-" + key.replace(/[^\w가-힣-]/g, "_") + "-" + i; }
@@ -28,7 +28,7 @@
     if (S.toolsOK) opts.tools = chatTools();
     S.sample([{ role: "user", content: rules }].concat(hist).concat([{ role: "user", content: text }]), opts)
       .then(function (r) { ai.t = (r && r.text) || ai.t; }, function (e) { ai.t = (e && e.text) || "답을 받지 못했어요. 다시 보내 주세요."; })
-      .then(function () { ai.pending = false; S.icBusy[key] = false; render(); });
+      .then(function () { ai.pending = false; S.icBusy[key] = false; softRender(); });
   }
   /* ── 긴 할 일 줄을 「짧은 제목 — 설명」으로 나눠 보이기 (볼트 규칙: 완료 기준·결산 줄은 짧은 제목 — 설명) ── */
   function stepSplit(s) {
