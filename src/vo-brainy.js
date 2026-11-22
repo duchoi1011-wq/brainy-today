@@ -32,7 +32,7 @@
         inputSchema: { type: "object", properties: { view: { type: "string" }, term: { type: "string" } } },
         execute: function (i) {
           var t = i.term ? findTerm(i.term) : null;
-          if (t) { S.detail = t.id; location.hash = "list"; render(); return t.term; }
+          if (t) { S.detail = t.id; if (view() !== "list") { S.jump = true; location.hash = "list"; } else { render(); showDetail(); } return t.term; }
           var v = i.view === "learn" || i.view === "do" ? "stage" : (i.view || "home"); location.hash = v; return v;
         } }
     ]

@@ -118,6 +118,7 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .bt{border-top:1px solid var(--line);padding:12px 0;display:flex;flex-direction:column;gap:6px}.bt:first-of-type{border-top:0}
 .bt textarea{min-height:64px}
 .pick{display:flex;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}.pick:first-child{border-top:0}
+.pick.open .t b{color:var(--accent)}.pick + #detail{margin:2px 0 10px;background:var(--bg)}
 .pick input{width:22px;height:22px;accent-color:var(--accent);flex:none;cursor:pointer}.pick .t{all:unset;flex:1;min-width:0;cursor:pointer}.pick .t b{display:block;font-weight:600}.pick .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom, 0px));z-index:7;width:min(620px, calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.15)}
 #pickbar>span:first-child{flex:1;min-width:0}
@@ -460,12 +461,12 @@ function renderList(){
   const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}</div>`;
   return `<input type="search" id="listQ" placeholder="단어나 뜻으로 찾기" value="${esc(S.listQ)}" aria-label="단어 찾기">
   ${chips}
-  <section class="card" id="listOut">${listRows()}</section>
-  ${S.detail ? detailHtml(BYID[S.detail]) : ""}`;
+  ${S.detail && BYID[S.detail] && !listItems().slice(0, 300).some(t => t.id === S.detail) ? detailHtml(BYID[S.detail]) : ""}
+  <section class="card" id="listOut">${listRows()}</section>`;
 }
+const listItems = () => { const q = S.listQ.trim().toLowerCase(); return TERMS.filter(t => (S.listCat === "all" || t.cat === S.listCat) && (!q || (t.term + " " + t.def).toLowerCase().includes(q))); };
 function listRows(){
-  const q = S.listQ.trim().toLowerCase();
-  const items = TERMS.filter(t => (S.listCat === "all" || t.cat === S.listCat) && (!q || (t.term + " " + t.def).toLowerCase().includes(q)));
+  const items = listItems();
   if (!items.length) return `<p class="empty">${TERMS.length ? "찾는 단어가 없어요." : esc(S.domain) + "에는 아직 단어가 없어요."}</p>`;
   return pickList(items, 300);
 }
@@ -531,13 +532,25 @@ document.addEventListener("click", e => {
   if (d.act === "regen") { ensureCtx(d.id, true); render(); return; }
   if (d.act === "core") { const id = d.id; save(id, { core: !isCore(id) }, "체화/소통용 변경"); return; }
   if (d.listcat) { S.listCat = d.listcat; render(); return; }
-  if (d.detail) { S.detail = d.detail; if (view() !== "list") { location.hash = "list"; } else { render(); document.getElementById("detail")?.scrollIntoView({ block: "start", behavior: "smooth" }); } return; }
+  if (d.detail) {
+    /* 목록 줄을 누르면 그 줄 바로 밑에 펼치고(다시 누르면 접음), 단어 줄이 머리말 바로 밑에 오게 올린다 — 스크롤 안 내려도 보이게 (2026-11-22 동욱) */
+    if (el.closest(".pick")) { S.detail = S.detail === d.detail ? null : d.detail; render(); if (S.detail) showDetail(); return; }
+    S.detail = d.detail; if (view() !== "list") { S.jump = true; location.hash = "list"; } else { render(); showDetail(); } return;
+  }
 });
 document.addEventListener("input", e => {
   if (e.target.id === "listQ") { S.listQ = e.target.value; document.getElementById("listOut").innerHTML = listRows(); }
 });
 /* 입력 중 미뤄 둔 화면 갱신은 다음 버튼 동작 때 함께 반영한다 (focusout에서 다시 그리면 누르려던 버튼이 바뀌어 클릭이 사라짐) */
-window.addEventListener("hashchange", () => { if (view() !== "list") S.detail = S.detail; render(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); if (S.jump && view() === "list") showDetail(false); S.jump = false; });
+/* 펼친 단어(#detail)와 그 줄을 고정 머리말 바로 밑으로 — 폰에서도 밑 탭바·고른 바에 가리지 않게 위쪽에 둔다 */
+function showDetail(smooth = true){
+  const det = document.getElementById("detail"); if (!det) return;
+  const row = det.previousElementSibling?.classList.contains("pick") ? det.previousElementSibling : det;
+  const hb = document.querySelector("header")?.getBoundingClientRect().bottom || 0;
+  const top = row.getBoundingClientRect().top + window.scrollY - hb - 8;
+  window.scrollTo({ top: Math.max(0, top), behavior: smooth ? "smooth" : "instant" });
+}
 
 /* ---------- start ---------- */
 async function init(){
