@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "b27550d33d"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=b27550d33d"></script>
+<script>window.BRAINY_VERSION = "63b1c06656"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=63b1c06656"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -172,6 +172,7 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .bt{border-top:1px solid var(--line);padding:12px 0;display:flex;flex-direction:column;gap:6px}.bt:first-of-type{border-top:0}
 .bt textarea{min-height:64px}
 .pick{display:flex;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}.pick:first-child{border-top:0}
+.pick.open .t b{color:var(--accent)}.pick + #detail{margin:2px 0 10px;background:var(--bg)}
 .pick input{width:22px;height:22px;accent-color:var(--accent);flex:none;cursor:pointer}.pick .t{all:unset;flex:1;min-width:0;cursor:pointer}.pick .t b{display:block;font-weight:600}.pick .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom, 0px));z-index:7;width:min(620px, calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.15)}
 #pickbar>span:first-child{flex:1;min-width:0}
@@ -514,12 +515,12 @@ function renderList(){
   const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}</div>`;
   return `<input type="search" id="listQ" placeholder="단어나 뜻으로 찾기" value="${esc(S.listQ)}" aria-label="단어 찾기">
   ${chips}
-  <section class="card" id="listOut">${listRows()}</section>
-  ${S.detail ? detailHtml(BYID[S.detail]) : ""}`;
+  ${S.detail && BYID[S.detail] && !listItems().slice(0, 300).some(t => t.id === S.detail) ? detailHtml(BYID[S.detail]) : ""}
+  <section class="card" id="listOut">${listRows()}</section>`;
 }
+const listItems = () => { const q = S.listQ.trim().toLowerCase(); return TERMS.filter(t => (S.listCat === "all" || t.cat === S.listCat) && (!q || (t.term + " " + t.def).toLowerCase().includes(q))); };
 function listRows(){
-  const q = S.listQ.trim().toLowerCase();
-  const items = TERMS.filter(t => (S.listCat === "all" || t.cat === S.listCat) && (!q || (t.term + " " + t.def).toLowerCase().includes(q)));
+  const items = listItems();
   if (!items.length) return `<p class="empty">${TERMS.length ? "찾는 단어가 없어요." : esc(S.domain) + "에는 아직 단어가 없어요."}</p>`;
   return pickList(items, 300);
 }
@@ -585,13 +586,25 @@ document.addEventListener("click", e => {
   if (d.act === "regen") { ensureCtx(d.id, true); render(); return; }
   if (d.act === "core") { const id = d.id; save(id, { core: !isCore(id) }, "체화/소통용 변경"); return; }
   if (d.listcat) { S.listCat = d.listcat; render(); return; }
-  if (d.detail) { S.detail = d.detail; if (view() !== "list") { location.hash = "list"; } else { render(); document.getElementById("detail")?.scrollIntoView({ block: "start", behavior: "smooth" }); } return; }
+  if (d.detail) {
+    /* 목록 줄을 누르면 그 줄 바로 밑에 펼치고(다시 누르면 접음), 단어 줄이 머리말 바로 밑에 오게 올린다 — 스크롤 안 내려도 보이게 (2026-11-22 동욱) */
+    if (el.closest(".pick")) { S.detail = S.detail === d.detail ? null : d.detail; render(); if (S.detail) showDetail(); return; }
+    S.detail = d.detail; if (view() !== "list") { S.jump = true; location.hash = "list"; } else { render(); showDetail(); } return;
+  }
 });
 document.addEventListener("input", e => {
   if (e.target.id === "listQ") { S.listQ = e.target.value; document.getElementById("listOut").innerHTML = listRows(); }
 });
 /* 입력 중 미뤄 둔 화면 갱신은 다음 버튼 동작 때 함께 반영한다 (focusout에서 다시 그리면 누르려던 버튼이 바뀌어 클릭이 사라짐) */
-window.addEventListener("hashchange", () => { if (view() !== "list") S.detail = S.detail; render(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); if (S.jump && view() === "list") showDetail(false); S.jump = false; });
+/* 펼친 단어(#detail)와 그 줄을 고정 머리말 바로 밑으로 — 폰에서도 밑 탭바·고른 바에 가리지 않게 위쪽에 둔다 */
+function showDetail(smooth = true){
+  const det = document.getElementById("detail"); if (!det) return;
+  const row = det.previousElementSibling?.classList.contains("pick") ? det.previousElementSibling : det;
+  const hb = document.querySelector("header")?.getBoundingClientRect().bottom || 0;
+  const top = row.getBoundingClientRect().top + window.scrollY - hb - 8;
+  window.scrollTo({ top: Math.max(0, top), behavior: smooth ? "smooth" : "instant" });
+}
 
 /* ---------- start ---------- */
 async function init(){
@@ -870,8 +883,8 @@ function stageStart(ids, from){
 /* 체크해서 고르기 (2026-11-13 동욱) — 단계별·새 개념·분야·전체 어디서든 보이는 단어를 골라 밑 바에서 바로 시험 */
 const PICK_MAX = 30;
 function pickRow(t){
-  return `<div class="pick"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
-    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>`;
+  return `<div class="pick${S.detail === t.id ? " open" : ""}"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
+    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
 }
 function pickList(list, max = 80){
   if (!list.length) return "";
@@ -1224,7 +1237,7 @@ init();
         inputSchema: { type: "object", properties: { view: { type: "string" }, term: { type: "string" } } },
         execute: function (i) {
           var t = i.term ? findTerm(i.term) : null;
-          if (t) { S.detail = t.id; location.hash = "list"; render(); return t.term; }
+          if (t) { S.detail = t.id; if (view() !== "list") { S.jump = true; location.hash = "list"; } else { render(); showDetail(); } return t.term; }
           var v = i.view === "learn" || i.view === "do" ? "stage" : (i.view || "home"); location.hash = v; return v;
         } }
     ]
