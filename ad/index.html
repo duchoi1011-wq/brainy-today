@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "d9b00639ea"; window.BRAINY_APP = {key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]};</script>
-<script src="../shim.js?v=d9b00639ea"></script>
+<script>window.BRAINY_VERSION = "924dcef4e7"; window.BRAINY_APP = {key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]};</script>
+<script src="../shim.js?v=924dcef4e7"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -374,6 +374,7 @@ tr:last-child td { border-bottom: 0; }
   function $(id) { return document.getElementById(id); }
   function name(t) { return t.title.replace(/^T-/, ""); }
   function taskBy(id) { return TASKS.filter(function (t) { return t.id === id; })[0]; }
+  function prods() { return (PLAN.order && PLAN.order.products) || Object.keys(PLAN.products); }
   function prodChip(p) { return '<span class="chip ' + p + '">' + esc(PLAN.products[p].name) + "</span>"; }
   function isCh(c) { return CH.indexOf(c) >= 0; }
   function color(c) { return isCh(c) ? "var(--" + c + ")" : "var(--accent)"; }
@@ -410,7 +411,7 @@ tr:last-child td { border-bottom: 0; }
       return "<div><b>" + esc(x.label) + "</b><p>" + esc(x.value) + "</p></div>";
     }).join("");
     $("budget-note").textContent = PLAN.budgetShare.note;
-    $("budget").innerHTML = Object.keys(PLAN.products).map(function (pk) {
+    $("budget").innerHTML = prods().map(function (pk) {
       var s = PLAN.budgetShare[pk] || {}, pr = PLAN.products[pk];
       var on = CH.filter(function (c) { return s[c] > 0; });
       var off = CH.filter(function (c) { return !s[c]; }).map(function (c) { return PLAN.channels[c].short; });
@@ -422,7 +423,7 @@ tr:last-child td { border-bottom: 0; }
     ["both", "goat", "event"].forEach(function (k) { $("prod-" + k).setAttribute("aria-pressed", String(ui.prod === k)); });
     $("boards").innerHTML = PLAN.boards.map(function (b) {
       var ch = PLAN.channels[b.channel];
-      var prods = Object.keys(PLAN.products).filter(function (pk) { return ui.prod === "both" || ui.prod === pk; });
+      var prods = prods().filter(function (pk) { return ui.prod === "both" || ui.prod === pk; });
       var rows = b.rows.map(function (r) {
         var lines = prods.filter(function (pk) { return r[pk] && r[pk] !== "—"; }).map(function (pk) {
           return '<div class="line">' + prodChip(pk) + "<span>" + esc(r[pk]) + "</span></div>";
@@ -689,7 +690,7 @@ tr:last-child td { border-bottom: 0; }
   function apply(v) {
     if (!v || !v.plan || !Array.isArray(v.tasks)) return false;
     var first = !PLAN;
-    PLAN = v.plan; TASKS = v.tasks; CH = Object.keys(PLAN.channels); DATA_AT = v.updatedAt || "";
+    PLAN = v.plan; TASKS = v.tasks; CH = (PLAN.order && PLAN.order.channels) || Object.keys(PLAN.channels); DATA_AT = v.updatedAt || "";
     if (first) {
       var w = parseInt(store("ad.week"), 10); ui.week = w >= 1 && w <= PLAN.weeks.length ? w : 1;
       var p = store("ad.prod"); ui.prod = p === "both" || PLAN.products[p] ? p : "both";
