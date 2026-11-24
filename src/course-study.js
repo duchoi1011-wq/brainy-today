@@ -11,6 +11,8 @@ function studyLoad(c){
   db.doc("cr.study/" + c.id).onSnapshot(s => { STUDY[c.id] = s.exists ? s.data() : { pages: [] }; if (["study", "cell"].includes(view())) render(); }, () => {});
 }
 const KEEP_OPEN = /^핵심/;   // 처음부터 펼쳐 둘 칸 (나머지는 접어 둔다)
+/* 장 이름 — Part 가 있으면 「Part N」, 없으면 제목의 차시 번호(「CH01-02 iTerm2 세팅」 같은 따로 만든 요약) 또는 「강의 전체」(전체 커리큘럼) */
+const pageName = t => t.part != null ? "Part " + t.part : ((t.title || "").match(/(?:CH|Ch)\d+-\d+\s*\S+/) || ["강의 전체"])[0];
 const partName = p => p == null ? "강의 전체" : "Part " + p;
 function renderStudy(c){
   studyLoad(c);
@@ -19,12 +21,12 @@ function renderStudy(c){
     <p class="small muted" style="margin-top:6px">볼트 지도 카드 머리말(frontmatter)에 <code>study:</code> 로 위키 요약 이름 앞부분을 적으면 여기에 강의 내용 쉬운 설명이 보여요.</p></section>`;
   const doc = STUDY[c.id];
   let h = `<section class="card"><h2>공부 · 요약 ${toc.length}장</h2><p class="small muted" style="margin-bottom:8px">볼트 위키에 Part마다 정리한 강의 내용이에요. 읽고, 그 아래 칸으로 바로 실습하거나 들은 칸을 체크해요.</p>
-    <div class="chips">${toc.map((t, i) => `<button type="button" class="chip" data-page="${i}">${esc(partName(t.part))}</button>`).join("")}</div></section>`;
+    <div class="chips">${toc.map((t, i) => `<button type="button" class="chip" data-page="${i}">${esc(pageName(t))}</button>`).join("")}</div></section>`;
   if (!doc) return h + `<section class="card"><p class="empty">공부 내용을 불러오는 중이에요…</p></section>`;
   (doc.pages || []).forEach((pg, i) => {
     const cells = pg.part == null ? [] : cellsOf(c).filter(x => partNo(c, x) === pg.part);
     const done = cells.filter(x => cellOn(c, x)).length;
-    h += `<section class="card" id="page-${i}"><div class="part"><h2>${esc(partName(pg.part))}</h2>${cells.length ? `<small>끝 ${done}/${cells.length}</small>` : ""}</div>
+    h += `<section class="card" id="page-${i}"><div class="part"><h2>${esc(pageName(pg))}</h2>${cells.length ? `<small>끝 ${done}/${cells.length}</small>` : ""}</div>
       <h3 style="font-size:17px;margin:2px 0 8px">${inline(pg.title)}</h3>
       ${pg.tldr ? `<div class="tldr">${inline(pg.tldr)}</div>` : ""}
       ${(pg.secs || []).map(s => `<details class="fold sfold"${KEEP_OPEN.test(s.h) ? " open" : ""}><summary><b>${inline(s.h)}</b></summary><div class="md">${mdHtml(s.body)}</div></details>`).join("")}
@@ -40,7 +42,7 @@ function easyBox(c, x){
   if (!x.easy) return (c.study || []).length ? `<div class="sec"><span class="lbl">쉬운 설명</span><p class="small muted">위키 요약에 이 차시만의 줄이 없어요. ${partNo(c, x) != null ? `<button type="button" class="linkbtn" data-studypart="${partNo(c, x)}">${esc(partName(partNo(c, x)))} 공부 보기 →</button>` : ""}</p></div>` : "";
   const t = c.study[x.easy.page] || {};
   return `<div class="sec"><span class="lbl">쉬운 설명 — 위키 「${esc(t.title || "")}」 ${esc(x.easy.code)}</span><p>${inline(x.easy.t)}</p>
-    <button type="button" class="linkbtn" data-page="${x.easy.page}">${esc(partName(t.part))} 공부 전체 보기 →</button></div>`;
+    <button type="button" class="linkbtn" data-page="${x.easy.page}">${esc(pageName(t))} 공부 전체 보기 →</button></div>`;
 }
 function goPage(i){
   S.page = +i;
