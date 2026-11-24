@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""src/ 의 원본 → Supabase 로 도는 독립 웹앱 4개 (조립만 한다).
+"""src/ 의 원본 → Supabase 로 도는 독립 웹앱 5개 (조립만 한다).
 
   src/brainy-home.html → home/index.html       (Brainy 홈)
   src/shortcuts.html   → shortcuts/index.html  (맥 단축키)
   src/vocab.html       → vocab/index.html      (체화 단어장)
+  src/course.html      → course/index.html     (강의 실습)
   src/content.html     → content/index.html    (콘텐츠 기획)
 
 원본이 그대로 앱이다 — 여기선 머리말(로그인 화면·받침 shim.js·아이콘)을 붙이고 /*@include 파일*/ 자리에 src/ 의 파일을 끼울 뿐이다.
@@ -151,6 +152,7 @@ BRAINY_CHAT = "\n" + (root / "src" / "brainy-chat.js").read_text(encoding="utf-8
 SC_BRAINY = "\n" + (root / "src" / "sc-brainy.js").read_text(encoding="utf-8")
 VO_BRAINY = "\n" + (root / "src" / "vo-brainy.js").read_text(encoding="utf-8")
 CT_BRAINY = "\n" + (root / "src" / "content-brainy.js").read_text(encoding="utf-8")
+CR_BRAINY = "\n" + (root / "src" / "course-brainy.js").read_text(encoding="utf-8")
 
 # ═════════════════════════ 맥 단축키 ═════════════════════════
 load("shortcuts.html")
@@ -170,6 +172,18 @@ emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
      '<link rel="apple-touch-icon" href="vo-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="vo-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="vo-icon-64.png">',
      '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]}',
      '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vo-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vo-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', "", VO_BRAINY + BRAINY_CHAT)
+
+# ═════════════════════════ 강의 실습 ═════════════════════════
+# 강의 지도(볼트 33_카드 「C-<강의> 수강·실습 분류」)·학습 노트·지금 태스크를 보며 Brainy와 한 칸씩 실습 (2026-11-24 동욱).
+# 데이터 cr.data/main 은 볼트 → 맥 동기화(course_app.py)가 올리고, 앱이 쓰는 건 cr.marks(내 메모)뿐. 아이콘은 course/ 에 그대로 둔다.
+load("course.html")
+include()
+emit("course", "강의 실습", "강의 실습", ("#F1F1F6", "#101117"),
+     "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--s-sim);--g-ok:var(--s-done)",
+     '<link rel="apple-touch-icon" href="cr-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="cr-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="cr-icon-64.png">',
+     '{key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.marks", "bchat"]}',
+     '{"id":"/brainy-today/course/","name":"강의 실습","short_name":"강의 실습","start_url":"./","scope":"./","display":"standalone","background_color":"#F1F1F6","theme_color":"#F1F1F6","icons":[{"src":"cr-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"cr-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
+     "", CR_BRAINY + BRAINY_CHAT)
 
 # ═════════════════════════ 콘텐츠 기획 ═════════════════════════
 # 브랜드 → 키워드 → 콘텐츠 → 대본 (편집 믹서 바로 앞 단계). 조종판 — 실행은 맥의 Claude(콘텐츠 스킬 셋).
@@ -210,7 +224,7 @@ redirect = """<!doctype html>
 <title>Brainy 홈</title><meta http-equiv="refresh" content="0; url=home/">
 <script>location.replace("home/" + location.search + location.hash);</script></head>
 <body style="font-family:-apple-system,sans-serif;padding:24px">
-<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
+<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="course/">강의 실습</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
 """
 (root / "index.html").write_text(redirect, encoding="utf-8")
 # 열려 있던 옛 화면이 version.txt 를 보고 스스로 새로 고치면 → 이 넘김 페이지 → home/

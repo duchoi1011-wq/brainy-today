@@ -1,6 +1,6 @@
 <script>
 /* Brainy 대화창 — 모든 앱 공통 (원본은 이 파일 하나)
-   · 웹 앱(맥 단축키 · 체화 단어장 · 콘텐츠 기획): build.py 가 앱 끝에 붙인다 → 클라우드 Brainy(supabase/functions/brainy-ai)
+   · 웹 앱(맥 단축키 · 체화 단어장 · 콘텐츠 기획 · 강의 실습): build.py 가 앱 끝에 붙인다 → 클라우드 Brainy(supabase/functions/brainy-ai)
    · 로컬 앱(편집 믹서 · 검증 대시보드): 그 앱의 server.py 가 이 파일을 /brainy-chat.js 로 내준다 → 그 맥의 Claude Code(~/.claude/tools/app_chat.py)
    생김새: 서비스형 채팅 — 오른쪽 아래 말풍선 단추 → 컴퓨터는 오른쪽 아래에 붙는 창, 폰은 아래에서 올라오는 창. 앱 화면은 그대로 보이고 쓸 수 있다.
    앱마다 window.BRAINY_HOOK = { mode() 대화 방식 {where, model} · rules() 앱 규칙에 더할 글 · ctx() 지금 앱 상태 · tools 앱 도구 · chips 예시 · editNote 첫 안내의 고치기 설명 · local 로컬 앱이면 true(그 서버의 /api/chat) · avoid 피할 아래 막대 선택자 · modelPick false 면 모델 버튼 줄을 빼기 }
@@ -270,7 +270,9 @@
   setInterval(lift, 1500);   // 앱이 탭 막대를 나중에 그려도 맞춘다
   function open() { box.hidden = false; fab.hidden = true; if (HOOK.push !== false) document.documentElement.classList.add("bc-push"); window.dispatchEvent(new Event("resize")); unread = false; lift(); render(); try { localStorage.setItem(KEY + ".open", "1"); } catch (e) {} if (window.matchMedia("(pointer: fine)").matches) setTimeout(function () { try { text.focus(); } catch (e) {} }, 50); }
   function close() { box.hidden = true; fab.hidden = false; document.documentElement.classList.remove("bc-push"); window.dispatchEvent(new Event("resize")); paintFab(); try { localStorage.removeItem(KEY + ".open"); } catch (e) {} }
-  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); } };   // 앱 안 다른 단추에서 대화를 열 때
+  /* 앱 안 다른 단추에서 대화를 열 때 — ask 는 바로 보내고, fill 은 입력칸만 채워 둔다(동욱이 고쳐서 ↑ — 강의 실습 「Brainy와 이 칸 하기」) */
+  function fill(q) { showHist = false; viewPast = -1; open(); text.value = String(q || ""); text.dispatchEvent(new Event("input")); }
+  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, fill: fill };
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");

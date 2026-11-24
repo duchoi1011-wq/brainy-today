@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#6a55e6"/><stop offset="1" stop-color="#3a2a9e"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="translate(106 106)">
+    <rect x="0" y="0" width="84" height="84" rx="18" fill="#38c18a"/>
+    <rect x="108" y="0" width="84" height="84" rx="18" fill="#38c18a"/>
+    <rect x="216" y="0" width="84" height="84" rx="18" fill="#f0b52a"/>
+    <rect x="0" y="108" width="84" height="84" rx="18" fill="#f0b52a"/>
+    <rect x="108" y="108" width="84" height="84" rx="18" fill="#f7f6ff"/>
+    <path d="M140 128 L172 150 L140 172 Z" fill="#5b45d6"/>
+    <rect x="216" y="108" width="84" height="84" rx="18" fill="#ffffff" fill-opacity=".28"/>
+    <rect x="0" y="216" width="84" height="84" rx="18" fill="#ffffff" fill-opacity=".28"/>
+    <rect x="108" y="216" width="84" height="84" rx="18" fill="#ffffff" fill-opacity=".28"/>
+    <rect x="216" y="216" width="84" height="84" rx="18" fill="#ffffff" fill-opacity=".28"/>
+  </g>
+</svg>

@@ -2535,7 +2535,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var ed = S.tab === "notes" && S.noteView === "cal" ? calCur() : null;
     if (ed !== EDIT_DAY) { flushAuto(); Object.keys(S.fd).forEach(function (k) { if (/^f-/.test(k)) delete S.fd[k]; }); S.openRow = {}; S.autoAt = {}; EDIT_DAY = ed; fid = null; }
     var v = S.tab === "notes" ? viewNotes() : S.tab === "work" ? viewWork() : S.tab === "body" ? viewBody() : S.tab === "wiki" ? viewWiki() : viewToday();
-    var foot = '<p class="foot">' + (S.main ? "옵시디언 " + md(S.main.date) + " " + S.main.generatedAt.slice(11, 16) + " 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <a class="more" href="../shortcuts/" style="display:inline">맥 단축키</a> · <a class="more" href="../vocab/" style="display:inline">체화 단어장</a> · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';
+    var foot = '<p class="foot">' + (S.main ? "옵시디언 " + md(S.main.date) + " " + S.main.generatedAt.slice(11, 16) + " 기준 · 쓴 건 몇 초 안에 볼트로 들어가요" : "Brainy 홈") + ' · <a class="more" href="../shortcuts/" style="display:inline">맥 단축키</a> · <a class="more" href="../vocab/" style="display:inline">체화 단어장</a> · <a class="more" href="../course/" style="display:inline">강의 실습</a> · <button class="more" data-brainy="out" style="display:inline">로그아웃</button></p>';
     app.innerHTML = v + foot;
     if (!S.deTried && S.checksLive) setTimeout(dayEndAuto, 0);
     app.querySelectorAll("textarea.grow").forEach(grow);
