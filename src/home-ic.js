@@ -1,9 +1,12 @@
   /* ── 칸 안 대화: 직접 쓰는 칸마다 「💬 Brainy와 대화」 — 그 칸 바로 아래에서 이어진다 (build.py 가 끼움) ── */
   function icCtx(key) {
     var k = key.split(":")[0], rest = key.slice(k.length + 1), d = curDay();
-    if (k === "q") { var q = (((S.main || {}).brainy || {}).questions || []).filter(function (x) { return x.id === rest; })[0]; return "오늘 탭 「Brainy 질문」 칸 — 결산 때 Brainy가 한 질문: 「" + (q ? q.text : rest) + "」. 동욱의 답을 듣고 필요하면 앱 도구로 바로 반영한다."; }
-    if (k === "memo") return "기록 탭 「지금 떠오른 것」 메모 칸 — 동욱이 쓰던 메모를 같이 다듬거나 정리한다. 남기라고 하면 add_note 로 남긴다.";
-    if (k === "tl") { var th = findTask(rest); return "태스크 「" + rest + "」 기록 칸 — 동욱이 이 태스크에 한 일·정한 것·막힌 것을 이야기한다. 태스크 노트: " + (th ? clip(th.task.body, 5000) : "(없음)"); }
+    if (k === "mo") {
+      var mo = S.morning && S.morning.date === TODAY ? S.morning : null, lv = liveOf(), up = !!(mo && mo.status === "올림");
+      var rows = mo ? (mo.rows || []).map(function (r) { return (r.time ? r.time + " " : "") + (r.what || "") + (r.task ? " (" + r.task + ")" : ""); }) : [];
+      var plan = lv ? (lv.plan || []).map(function (x) { return (planDone(x, lv) ? "[x] " : "[ ] ") + x.text; }) : [];
+      return "오늘 탭 「☀️ " + (up ? "오늘 계획" : "오늘 아침 제안") + "」 칸 (" + (mo ? mo.status || "대기" : "제안 아직 없음") + ")" + (mo && mo.coach ? " — Brainy 한마디: " + clip(mo.coach, 400) : "") + (rows.length ? "\n아침 제안 줄:\n" + clip(rows.join("\n"), 2500) : "") + (plan.length ? "\n데일리 노트 「오늘의 계획」 줄:\n" + clip(plan.join("\n"), 2500) : "") + "\n동욱이 오늘 계획을 어떻게 고칠지 같이 이야기하고, 정해지면 run_command 로 보낸다.";
+    }
     if (k === "fd") return "오늘 쓰기 「" + labelOf(rest) + "」 칸 (key " + rest + ") — 지금 적힌 것: " + clip(JSON.stringify(((d.notes || {})[rest]) || {}), 4000) + ". 동욱이 이 칸 글을 같이 쓰거나 다듬자고 하면 write_today 로 그 칸에 바로 적는다.";
     if (k === "ans") { var rid = rest.replace(/^rp:/, ""), r = (S.reports || []).filter(function (x) { return x.id === rid; })[0]; return "기록 탭 「점검 결과」 칸 — " + (r ? (r.title || "") + " " + (r.date || "") + ": " + clip(JSON.stringify({ lines: r.lines, items: r.items }), 5000) : rest) + ". 항목을 어떻게 할지 동욱과 이야기하고, 정해지면 run_command 로 보낸다."; }
     return "";
