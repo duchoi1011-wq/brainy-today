@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "675bacfd97"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "bchat"]};</script>
-<script src="../shim.js?v=675bacfd97"></script>
+<script>window.BRAINY_VERSION = "3dc1575aeb"; window.BRAINY_APP = {key: "shortcuts", name: "맥 단축키", icon: "sc-icon-192.png", sub: "볼트 위키와 같이 늘 최신인 단축키", colls: ["sc.data", "sc.marks", "additions", "requests", "sc.creq", "bchat"]};</script>
+<script src="../shim.js?v=3dc1575aeb"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-title" content="맥 단축키">
@@ -135,6 +135,14 @@ select{background:var(--surface);border-color:var(--accent);font-size:15px;paddi
 .it-k{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .it-src{font:inherit;font-family:var(--f-mono);font-size:11px;color:var(--muted);background:none;border:0;padding:0;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:2px}
 .it.m-pass .it-m,.it.m-no .it-m{opacity:.5}
+.it-h .tag.req{color:var(--accent);border-color:var(--accent)}
+/* 오류·중복 수정 요청 — 체화 단어장의 같은 칸과 같은 생김새 */
+.rq{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border-left:3px solid var(--accent);font-size:14px;color:var(--ink)}
+.rq .lbl{margin:0}
+.rq textarea{width:100%;min-height:64px;resize:vertical;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.rq textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rq-t{white-space:pre-wrap;overflow-wrap:anywhere}
+.rq-b{display:flex;gap:6px;flex-wrap:wrap}
 .combo{display:inline-flex;flex-wrap:wrap;gap:3px;align-items:center}
 .combo .sep{color:var(--muted);font-size:12px;margin:0 3px}
 kbd{display:inline-block;min-width:24px;text-align:center;font-family:var(--f-mono);font-weight:600;font-size:12px;line-height:1.5;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px}
@@ -275,6 +283,30 @@ function setMark(id, kind){
   if(DB && DB.doc) DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){});
 }
 
+/* ── 오류·중복 수정 요청 (2026-11-24 동욱) — 항목마다 짧은 글. sc.marks/req 의 reqs: id→{text, at, t}. 「전체」 탭의 「수정 요청」 칩에 모인다. 체화 단어장에도 같은 칸이 있다 ── */
+var reqs = load("sc.reqs", {}) || {}, reqEdit = null, reqOnly = false, reqPend = false;
+function reqOf(id){ var r = reqs[id]; return r && r.text ? String(r.text) : "" }
+function reqCount(){ return ITEMS.filter(function(s){ return reqOf(s.id) }).length }
+function setReq(id, text){
+  text = String(text || "").trim().slice(0, 300);
+  reqs = Object.assign({}, reqs);
+  if(text) reqs[id] = { text: text, at: new Date().toISOString(), t: BY_ID[id] ? String(BY_ID[id].t).replace(/<[^>]*>/g, "") : "" };
+  else delete reqs[id];
+  save("sc.reqs", reqs);
+  if(DB && DB.doc) DB.doc("sc.marks/req").set({ reqs: reqs, updatedAt: new Date().toISOString() }).catch(function(){});
+}
+function reqTyping(){ var a = document.activeElement; return !!(a && a.classList && a.classList.contains("rq-in")) }
+function reqHtml(s){
+  var r = reqOf(s.id), id = esc(s.id);
+  if(reqEdit === s.id) return "<div class=\"rq\"><p class=\"lbl\">오류·중복 수정 요청</p>" +
+    "<textarea class=\"rq-in\" id=\"rq-" + id + "\" maxlength=\"300\" placeholder=\"예: 키가 틀림 / 다른 항목과 중복 / 설명이 너무 기본적임\" aria-label=\"" + esc(s.t) + " 수정 요청\">" + esc(r) + "</textarea>" +
+    "<div class=\"rq-b\"><button type=\"button\" class=\"btn primary sm\" data-rq=\"save\" data-id=\"" + id + "\">저장</button><button type=\"button\" class=\"btn ghost sm\" data-rq=\"cancel\" data-id=\"" + id + "\">취소</button>" +
+    (r ? "<button type=\"button\" class=\"btn ghost sm\" data-rq=\"del\" data-id=\"" + id + "\">지우기</button>" : "") + "</div></div>";
+  if(r) return "<div class=\"rq\"><p class=\"lbl\">오류·중복 수정 요청" + (reqs[s.id].at ? " · " + esc(String(reqs[s.id].at).slice(0, 10)) : "") + "</p><span class=\"rq-t\">" + esc(r) + "</span>" +
+    "<div class=\"rq-b\"><button type=\"button\" class=\"btn ghost sm\" data-rq=\"edit\" data-id=\"" + id + "\">고치기</button><button type=\"button\" class=\"btn ghost sm\" data-rq=\"del\" data-id=\"" + id + "\">지우기</button></div></div>";
+  return "<button type=\"button\" class=\"it-src\" data-rq=\"edit\" data-id=\"" + id + "\">✎ 오류·중복 수정 요청 적기</button>";
+}
+
 /* ── 그리기 조각 ── */
 function cap(k){ return "<kbd>" + k + "</kbd>" }
 function combo(cs){
@@ -283,11 +315,11 @@ function combo(cs){
 function row(s, o){
   var m = marks[s.id] || "";
   return "<div class=\"it" + (m ? " m-" + m : "") + "\"><div class=\"it-m\">" +
-    "<div class=\"it-h\"><b>" + s.t + "</b>" + (s.tag ? "<span class=\"tag" + (s.unver ? " unver" : "") + "\">" + s.tag + "</span>" : "") + "</div>" +
+    "<div class=\"it-h\"><b>" + s.t + "</b>" + (s.tag ? "<span class=\"tag" + (s.unver ? " unver" : "") + "\">" + s.tag + "</span>" : "") + (reqOf(s.id) ? "<span class=\"tag req\">수정 요청</span>" : "") + "</div>" +
     (s.d ? "<div class=\"it-d\">" + s.d + "</div>" : "") +
     "<div class=\"it-k\">" + combo(s.k) + "</div>" +
     (o && o.src ? "<button type=\"button\" class=\"it-src\" data-goarea=\"" + esc(areaOf(s)) + "\">" + esc(catOf(areaOf(s))) + " · " + esc(areaOf(s)) + "</button>" : "") +
-    "</div>" + mkBtns("data-mark", s.id, m, esc(s.t)) + "</div>";
+    reqHtml(s) + "</div>" + mkBtns("data-mark", s.id, m, esc(s.t)) + "</div>";
 }
 function card(title, inner, o){
   o = o || {};
@@ -330,6 +362,8 @@ function show(name){
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 function render(){
+  if(reqTyping()){ reqPend = true; renderNav(); return }   // 수정 요청을 치는 중엔 다시 그리지 않는다 — 저장·취소 때 함께 반영
+  reqPend = false;
   renderNav();
   var v = document.getElementById("view");
   if(current === "now"){ v.innerHTML = viewNow(); fillNow(); }
@@ -340,6 +374,7 @@ function render(){
 }
 // 입력칸이 있는 탭(지금·전체)은 칸은 두고 아래만 다시 그린다 — 치는 중에 커서가 안 튄다
 function refresh(){
+  if(reqTyping()){ reqPend = true; renderNav(); return }
   renderNav();
   if(current === "now" && document.getElementById("now-out")) fillNow();
   else if(current === "all" && document.getElementById("all-out")) fillAll();
@@ -435,9 +470,17 @@ function viewAll(){
 }
 function fillAll(){
   var out = document.getElementById("all-out"); if(!out) return;
-  var t = query.trim().toLowerCase();
+  var t = query.trim().toLowerCase(), nr = reqCount();
+  if(!nr) reqOnly = false;
+  var chips = nr ? "<div class=\"chips\"><button type=\"button\" class=\"chip" + (reqOnly ? "" : " on") + "\" data-reqonly=\"0\">전체</button>" +
+    "<button type=\"button\" class=\"chip" + (reqOnly ? " on" : "") + "\" data-reqonly=\"1\"" + (reqOnly ? "" : " style=\"color:var(--accent);border-color:var(--accent)\"") + ">수정 요청<span>" + nr + "</span></button></div>" : "";
+  if(reqOnly){
+    var rl = ITEMS.filter(function(s){ return reqOf(s.id) && (!t || (s.t + " " + (s.d || "") + " " + areaOf(s) + " " + reqOf(s.id)).toLowerCase().indexOf(t) > -1) });
+    out.innerHTML = chips + listCard("수정 요청", rl, { src: true, lead: "오류·중복 수정 요청을 적어 둔 단축키예요. 줄 안에서 글을 고치거나 지울 수 있어요.", empty: "수정 요청을 적은 단축키가 없어요." });
+    return;
+  }
   if(!t){
-    out.innerHTML = legend() + catList().map(function(c){
+    out.innerHTML = chips + legend() + catList().map(function(c){
       return "<p class=\"lbl\" style=\"margin-top:6px\">" + esc(c) + "</p>" + areaList().filter(function(g){ return catOf(g) === c }).map(function(g){
         return listCard(esc(g), ITEMS.filter(function(s){ return areaOf(s) === g }), {});
       }).join("");
@@ -449,7 +492,7 @@ function fillAll(){
     return hay.indexOf(t) > -1;
   });
   var cs = typeof courseSearch === "function" ? courseSearch(t) : "";
-  out.innerHTML = (res.length ? listCard("‘" + esc(t) + "’", res, { src: true }) : "") + cs +
+  out.innerHTML = chips + (res.length ? listCard("‘" + esc(t) + "’", res, { src: true }) : "") + cs +
     (!res.length && !cs ? card("‘" + esc(t) + "’ — 없어요",
       "<p class=\"lead\">한글(복사·캡처·리플)이나 영문(cmd, finder, premiere)으로 다시 찾아보거나, 정말 없으면 채워 넣어요.</p>" +
       "<button class=\"btn primary\" type=\"button\" data-fill=\"" + esc(t) + "\">‘" + esc(t) + "’ 찾아서 넣기</button>") : "");
@@ -720,6 +763,16 @@ document.addEventListener("keydown", function(e){
 document.addEventListener("click", function(e){
   var b;
   if((b = e.target.closest("[data-mark]"))){ setMark(b.getAttribute("data-id"), b.getAttribute("data-mark")); refresh(); return }
+  if((b = e.target.closest("[data-rq]"))){
+    var rid = b.getAttribute("data-id"), act = b.getAttribute("data-rq");
+    if(act === "save" || act === "del"){ var box2 = document.getElementById("rq-" + rid); setReq(rid, act === "save" && box2 ? box2.value : ""); reqEdit = null }
+    else reqEdit = act === "edit" ? rid : null;
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    refresh();
+    if(reqEdit){ var ta = document.getElementById("rq-" + rid); if(ta) ta.focus() }
+    return;
+  }
+  if((b = e.target.closest("[data-reqonly]"))){ reqOnly = b.getAttribute("data-reqonly") === "1"; fillAll(); return }
   if((b = e.target.closest("[data-tab]"))){ show(b.getAttribute("data-tab")); return }
   if((b = e.target.closest("[data-area]"))){ area = b.getAttribute("data-area"); save("sc.area", area); render(); return }
   if((b = e.target.closest("[data-goarea]"))){ area = b.getAttribute("data-goarea"); save("sc.area", area); st = "all"; show("field"); return }
@@ -794,6 +847,11 @@ var capReady;   // sample·db 준비가 끝나면 resolve
       var v = s.exists ? s.data() : null;
       if(v && v.marks){ marks = v.marks; save("mk.marks", marks); refresh(); }
       else if(Object.keys(marks).length){ DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){}); }
+    }, function(){});
+    DB.doc("sc.marks/req").onSnapshot(function(s){
+      var v = s.exists ? s.data() : null;
+      if(v && v.reqs){ reqs = v.reqs; save("sc.reqs", reqs); refresh(); }
+      else if(Object.keys(reqs).length){ DB.doc("sc.marks/req").set({ reqs: reqs, updatedAt: new Date().toISOString() }).catch(function(){}); }
     }, function(){});
     try{
       DB.collection("additions").onSnapshot(function(snap){
@@ -898,13 +956,14 @@ render();
         "- 보고 있는 탭: " + current + " (now 지금 · field 분야 · course 강의 · all 전체 · fav ★즐겨찾기 · pass ✓외웠어 · no ✕필요없어)" + (current === "field" ? " · 고른 앱: " + area : ""),
         "- 분야: " + catList().map(function (c) { return c + "(" + areaList().filter(function (g) { return catOf(g) === c; }).join(", ") + ")"; }).join(" / "),
         "- 단축키 목록 " + ITEMS.length + "개 · ★ " + favs.length + "개" + (favs.length ? "(" + favs.slice(0, 25).join(", ") + ")" : "") + " · ✓외웠어 " + pass + "개 · ✕필요없어 " + no + "개 (표시는 하나만, ✓·✕는 목록에서 빠짐)",
+        "- 오류·중복 수정 요청(동욱이 항목에 적은 글, sc.marks/req): " + ITEMS.filter(function (s) { return reqOf(s.id); }).slice(0, 30).map(function (s) { return s.t + " — " + reqOf(s.id).slice(0, 80); }).join(" / "),
         "- 강의들: " + csList().map(function (x) { return (x.tag ? x.tag + " " : "") + x.name + " [" + x.id + "]"; }).join(" / ")];
       if (c) {
         L.push("- 고른 강의: " + c.name + " · 지금 들을 강의(챕터): " + (here ? here.title : "-") + " · 그 강의 단축키·명령어 " + (c.cheat || []).length + "개");
         var mine = (c.cheat || []).filter(function (x) { return here && x.ch === here.id; }).slice(0, 30);
         if (mine.length) L.push("- 지금 들을 강의의 단축키·명령어: " + mine.map(function (x) { return x.t + " = " + (x.code || (x.k || []).map(function (a) { return a.join(""); }).join(" / ")); }).join(" · "));
       }
-      L.push("- 앱 저장소(app_doc): sc.data/main(단축키 목록) · sc.marks/main(marks: id→fav|pass|no) · sc.data/course(강의·단축키·명령어) · sc.marks/course(진도 · cp✓ cf★ cn✕)");
+      L.push("- 앱 저장소(app_doc): sc.data/main(단축키 목록) · sc.marks/main(marks: id→fav|pass|no) · sc.data/course(강의·단축키·명령어) · sc.marks/course(진도 · cp✓ cf★ cn✕) · sc.marks/req(reqs: id→{text, at, t} 수정 요청)");
       return L.join("\n");
     },
     tools: [

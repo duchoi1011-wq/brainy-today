@@ -29,13 +29,14 @@
         "- 보고 있는 탭: " + current + " (now 지금 · field 분야 · course 강의 · all 전체 · fav ★즐겨찾기 · pass ✓외웠어 · no ✕필요없어)" + (current === "field" ? " · 고른 앱: " + area : ""),
         "- 분야: " + catList().map(function (c) { return c + "(" + areaList().filter(function (g) { return catOf(g) === c; }).join(", ") + ")"; }).join(" / "),
         "- 단축키 목록 " + ITEMS.length + "개 · ★ " + favs.length + "개" + (favs.length ? "(" + favs.slice(0, 25).join(", ") + ")" : "") + " · ✓외웠어 " + pass + "개 · ✕필요없어 " + no + "개 (표시는 하나만, ✓·✕는 목록에서 빠짐)",
+        "- 오류·중복 수정 요청(동욱이 항목에 적은 글, sc.marks/req): " + ITEMS.filter(function (s) { return reqOf(s.id); }).slice(0, 30).map(function (s) { return s.t + " — " + reqOf(s.id).slice(0, 80); }).join(" / "),
         "- 강의들: " + csList().map(function (x) { return (x.tag ? x.tag + " " : "") + x.name + " [" + x.id + "]"; }).join(" / ")];
       if (c) {
         L.push("- 고른 강의: " + c.name + " · 지금 들을 강의(챕터): " + (here ? here.title : "-") + " · 그 강의 단축키·명령어 " + (c.cheat || []).length + "개");
         var mine = (c.cheat || []).filter(function (x) { return here && x.ch === here.id; }).slice(0, 30);
         if (mine.length) L.push("- 지금 들을 강의의 단축키·명령어: " + mine.map(function (x) { return x.t + " = " + (x.code || (x.k || []).map(function (a) { return a.join(""); }).join(" / ")); }).join(" · "));
       }
-      L.push("- 앱 저장소(app_doc): sc.data/main(단축키 목록) · sc.marks/main(marks: id→fav|pass|no) · sc.data/course(강의·단축키·명령어) · sc.marks/course(진도 · cp✓ cf★ cn✕)");
+      L.push("- 앱 저장소(app_doc): sc.data/main(단축키 목록) · sc.marks/main(marks: id→fav|pass|no) · sc.data/course(강의·단축키·명령어) · sc.marks/course(진도 · cp✓ cf★ cn✕) · sc.marks/req(reqs: id→{text, at, t} 수정 요청)");
       return L.join("\n");
     },
     tools: [
