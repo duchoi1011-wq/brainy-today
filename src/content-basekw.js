@@ -1,6 +1,7 @@
 /* ── 기준 키워드 · 영상 주제 한 줄 · 목록 지우기와 되돌리기 · 찾는 나라 ──
    2026-11-18 동욱 (같은 부탁이 두 번 와서 한 벌로 넣음):
-   ① 기준 키워드 — 대본 탭(구축 · 참고 페이지 · 대본) 맨 위. 잘 나온 키워드(🚀 자동 진행이 고른 최고 키워드 → ★ 점수 높은 순)를 기본으로 쓰고, 동욱이 직접 넣고 뺀다.
+   ① 기준 키워드 — 대본 탭(구축 · 참고 페이지 · 대본) 맨 위. 잘 나온 키워드(🚀 자동 진행이 고른 최고 키워드 → 없으면 점수 높은 순)를 기본으로 쓰고, 동욱이 직접 넣고 뺀다.
+      ★(콘텐츠 검색용으로 고른 키워드)는 기본에 넣지 않는다 — 검색어로 고른 것이라 대본 기준과 따로 (2026-11-22 동욱).
       ct.set baseKw {add:[키워드…], off:{키워드:1}} — 기본 목록은 자료가 바뀌면 따라 바뀌고, 직접 넣은 것·뺀 것만 기억한다.
    ② 영상 주제 한 줄 — 같은 칸. ct.set topic (글 한 줄).
       ①② 는 맥에 보내는 구축·대본·참고 페이지·소재·고치기 명령(cmd params.baseKw · params.topic)과 🚀 자동 진행(autoReq.params)에 같이 실린다 (send → BASE_KINDS).
@@ -10,11 +11,10 @@
       키워드 추천(kwrec params.country) · 콘텐츠 검색(searchReq.country) · 단어 후보 찾기(wordReq.country)에도 실린다. */
 var BASE_N = 5;   // 기본으로 쓰는 잘 나온 키워드 수
 function baseSet(){ var o = (SETS[cur] || {}).baseKw || {}; return { add: (o.add || []).slice(), off: Object.assign({}, o.off || {}) } }
-function baseKwAuto(){   // 잘 나온 키워드 — 자동 진행이 고른 최고 키워드가 먼저, 그다음 ★ 점수 높은 순, ★ 가 없으면 점수 높은 순
+function baseKwAuto(){   // 잘 나온 키워드 — 자동 진행이 고른 최고 키워드, 없으면 점수 높은 순 (★ 검색어는 넣지 않는다)
   var s = S(), all = scored(), out = [];
   function put(k){ if(k && !s.ex[k] && out.indexOf(k) < 0 && out.length < BASE_N) out.push(k) }
   ((((part("kwrec") || {}).auto) || {}).best || []).forEach(put);
-  all.filter(function(x){ return s.pin[x.kw] }).forEach(function(x){ put(x.kw) });
   if(!out.length) all.filter(function(x){ return kwShown(x) }).forEach(function(x){ put(x.kw) });
   return out;
 }
@@ -33,7 +33,7 @@ function baseBarHtml(){
     "<p class=\"lead\">구축 문서 · 참고 페이지 · 대본을 만들 때 맥의 Claude가 이 키워드와 주제를 기준으로 써요. 잘 나온 키워드가 기본으로 들어가고, ✕로 빼고 아래에서 넣어요.</p>" +
     "<div class=\"chips\">" + (list.map(function(k){ var mine = o.add.indexOf(k) >= 0;
       return "<span class=\"chip on base-kw\">" + (mine ? "" : "<i class=\"dot i\" title=\"잘 나온 키워드 — 기본\"></i>") + esc(k) + "<button class=\"x0\" data-act=\"basekwdel\" data-kw=\"" + esc(k) + "\" aria-label=\"" + esc(k) + " 빼기\">✕</button></span>" }).join("") ||
-      "<span class=\"lead\" style=\"margin:0\">아직 없어요 — 키워드 탭에서 ★하거나 아래에서 넣으세요.</span>") + "</div>" +
+      "<span class=\"lead\" style=\"margin:0\">아직 없어요 — 아래에서 넣으세요.</span>") + "</div>" +
     (offAuto.length ? "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">뺀 기본 키워드 (눌러 되돌리기)</span>" + offAuto.map(function(k){ return "<button class=\"chip dash\" data-act=\"basekwback\" data-kw=\"" + esc(k) + "\">↺ " + esc(k) + "</button>" }).join("") + "</div>" : "") +
     "<div class=\"row2\" style=\"margin-top:8px\"><input type=\"text\" id=\"base-kw-in\" data-basekw=\"1\" maxlength=\"30\" placeholder=\"기준 키워드 넣기\" value=\"" + esc(ui.baseDraft || "") + "\"><button class=\"btn sm primary\" data-act=\"basekwadd\">넣기</button>" +
       (o.add.length || Object.keys(o.off).length ? "<button class=\"btn sm\" data-act=\"basekwreset\">기본으로</button>" : "") + "</div>" +
