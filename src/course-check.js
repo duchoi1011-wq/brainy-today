@@ -110,7 +110,7 @@ function checkList(c, x, kind){
     const on = itemOn(c, x, kind, it), wait = !!TOG_WAIT[togId(c.id, x.key, kind, it.id)];
     const text = kind === "chk" ? (it.q || it.t) : it.t;
     return `<li><button type="button" class="ckrow${on ? " on" : ""}" data-tog="${esc(kind)}" data-id="${esc(it.id)}" aria-pressed="${on}" ${x.st === "done" && !x.mine ? "disabled" : ""}>
-      <span class="ck" aria-hidden="true">${on ? "✓" : ""}</span><span>${inline(text)}${noteHtml(it.note)}${wait ? ` <span class="small muted">· ${TOG_WAIT[togId(c.id, x.key, kind, it.id)].sent ? "볼트에 적는 중" : "아직 못 보냄 — 연결되면 보내요"}</span>` : ""}</span></button></li>`;
+      <span class="ck" aria-hidden="true">${on ? "✓" : ""}</span><span>${inline(text)}${noteHtml(it.note)}${wait ? ` <span class="small muted">· ${TOG_WAIT[togId(c.id, x.key, kind, it.id)].sent ? "볼트에 적는 중" : (navigator.onLine === false ? "아직 못 보냄 — 연결되면 보내요" : "보내는 중 — 몇 초 안에")}</span>` : ""}</span></button></li>`;
   }).join("")}</ul>`;
 }
 /* 칸 끝 표시 단추 — 실습은 「내가 끝냈어요」, 듣기는 「들었어요」. Brainy가 대조해 끝낸 칸은 풀지 않는다 */
