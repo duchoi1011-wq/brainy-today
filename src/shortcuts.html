@@ -82,7 +82,7 @@ select{background:var(--surface);border-color:var(--accent);font-size:15px;paddi
 .it-src{font:inherit;font-family:var(--f-mono);font-size:11px;color:var(--muted);background:none;border:0;padding:0;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:2px}
 .it.m-pass .it-m,.it.m-no .it-m{opacity:.5}
 .it-h .tag.req{color:var(--accent);border-color:var(--accent)}
-/* 오류·중복 수정 요청 — 체화 단어장의 같은 칸과 같은 생김새 */
+/* 고칠 단축키 — 체화 단어장의 「고칠 단어」 칸과 같은 생김새 */
 .rq{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border-left:3px solid var(--accent);font-size:14px;color:var(--ink)}
 .rq .lbl{margin:0}
 .rq textarea{width:100%;min-height:64px;resize:vertical;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
@@ -229,28 +229,37 @@ function setMark(id, kind){
   if(DB && DB.doc) DB.doc("sc.marks/main").set({ marks: marks, updatedAt: new Date().toISOString() }).catch(function(){});
 }
 
-/* ── 오류·중복 수정 요청 (2026-11-24 동욱) — 항목마다 짧은 글. sc.marks/req 의 reqs: id→{text, at, t}. 「전체」 탭의 「수정 요청」 칩에 모인다. 체화 단어장에도 같은 칸이 있다 ── */
+/* ── 고칠 단축키 (2026-11-24 동욱 — 체화 단어장의 「고칠 단어」와 같은 방식) — 「이 단축키는 고쳐요」 표시 + 무엇을 고칠지 적는 글 한 칸을 하나로.
+   sc.marks/req 의 reqs: id→{fix, text, at, t} (예전 「수정 요청」 글만 있던 것도 고칠 단축키로 본다). 「전체」 탭의 「고칠 단축키」 칩에 모이고,
+   「✦ Brainy에게 고치기 맡기기」로 Brainy 가 볼트 노트를 vault_write 로 고친다 (부탁 글은 세 앱 공통 부품 brainy-parts.js) ── */
 var reqs = load("sc.reqs", {}) || {}, reqEdit = null, reqOnly = false, reqPend = false;
 function reqOf(id){ var r = reqs[id]; return r && r.text ? String(r.text) : "" }
-function reqCount(){ return ITEMS.filter(function(s){ return reqOf(s.id) }).length }
-function setReq(id, text){
+function isFix(id){ return !!reqs[id] }
+function fixItems(){ return ITEMS.filter(function(s){ return isFix(s.id) }) }
+function reqCount(){ return fixItems().length }
+function setReq(id, text, on){   // on: 고칠 표시 (false 면 글까지 지운다)
   text = String(text || "").trim().slice(0, 300);
   reqs = Object.assign({}, reqs);
-  if(text) reqs[id] = { text: text, at: new Date().toISOString(), t: BY_ID[id] ? String(BY_ID[id].t).replace(/<[^>]*>/g, "") : "" };
+  if(on) reqs[id] = { fix: true, text: text, at: new Date().toISOString(), t: BY_ID[id] ? String(BY_ID[id].t).replace(/<[^>]*>/g, "") : "" };
   else delete reqs[id];
   save("sc.reqs", reqs);
   if(DB && DB.doc) DB.doc("sc.marks/req").set({ reqs: reqs, updatedAt: new Date().toISOString() }).catch(function(){});
 }
+function fixAskText(list){
+  return BRAINY_PARTS.fixAsk({ app: "맥 단축키", what: "단축키", source: "볼트 4_Outputs/단축키 앱/단축키 데이터.json · 위키 「맥 핵심 단축키」", clearTool: "shortcut_fix_clear",
+    items: list.map(function(s){ var t = String(s.t).replace(/<[^>]*>/g, ""); return { name: t + " [" + areaOf(s) + " · " + s.k.map(function(c){ return c.join("") }).join(" / ") + "]", note: reqOf(s.id) } }) });
+}
 function reqTyping(){ var a = document.activeElement; return !!(a && a.classList && a.classList.contains("rq-in")) }
 function reqHtml(s){
   var r = reqOf(s.id), id = esc(s.id);
-  if(reqEdit === s.id) return "<div class=\"rq\"><p class=\"lbl\">오류·중복 수정 요청</p>" +
-    "<textarea class=\"rq-in\" id=\"rq-" + id + "\" maxlength=\"300\" placeholder=\"예: 키가 틀림 / 다른 항목과 중복 / 설명이 너무 기본적임\" aria-label=\"" + esc(s.t) + " 수정 요청\">" + esc(r) + "</textarea>" +
-    "<div class=\"rq-b\"><button type=\"button\" class=\"btn primary sm\" data-rq=\"save\" data-id=\"" + id + "\">저장</button><button type=\"button\" class=\"btn ghost sm\" data-rq=\"cancel\" data-id=\"" + id + "\">취소</button>" +
-    (r ? "<button type=\"button\" class=\"btn ghost sm\" data-rq=\"del\" data-id=\"" + id + "\">지우기</button>" : "") + "</div></div>";
-  if(r) return "<div class=\"rq\"><p class=\"lbl\">오류·중복 수정 요청" + (reqs[s.id].at ? " · " + esc(String(reqs[s.id].at).slice(0, 10)) : "") + "</p><span class=\"rq-t\">" + esc(r) + "</span>" +
-    "<div class=\"rq-b\"><button type=\"button\" class=\"btn ghost sm\" data-rq=\"edit\" data-id=\"" + id + "\">고치기</button><button type=\"button\" class=\"btn ghost sm\" data-rq=\"del\" data-id=\"" + id + "\">지우기</button></div></div>";
-  return "<button type=\"button\" class=\"it-src\" data-rq=\"edit\" data-id=\"" + id + "\">✎ 오류·중복 수정 요청 적기</button>";
+  if(reqEdit === s.id) return "<div class=\"rq\"><p class=\"lbl\">고칠 단축키 — 무엇을 고칠지 (비워 둬도 돼요)</p>" +
+    "<textarea class=\"rq-in\" id=\"rq-" + id + "\" maxlength=\"300\" placeholder=\"예: 키가 틀림 / 다른 항목과 중복 / 설명이 너무 기본적임\" aria-label=\"" + esc(s.t) + " 고칠 내용\">" + esc(r) + "</textarea>" +
+    "<div class=\"rq-b\"><button type=\"button\" class=\"btn primary sm\" data-rq=\"save\" data-id=\"" + id + "\">저장</button><button type=\"button\" class=\"btn ghost sm\" data-rq=\"cancel\" data-id=\"" + id + "\">닫기</button>" +
+    "<button type=\"button\" class=\"btn ghost sm\" data-rq=\"del\" data-id=\"" + id + "\">표시 풀기</button></div></div>";
+  if(isFix(s.id)) return "<div class=\"rq\"><p class=\"lbl\">✓ 고칠 단축키로 표시됨" + (reqs[s.id].at ? " · " + esc(String(reqs[s.id].at).slice(0, 10)) : "") + "</p>" +
+    (r ? "<span class=\"rq-t\">" + esc(r) + "</span>" : "<span class=\"rq-t\" style=\"color:var(--muted)\">적은 글 없음 — Brainy가 틀린 곳·중복을 살펴봐요</span>") +
+    "<div class=\"rq-b\"><button type=\"button\" class=\"btn ghost sm\" data-rq=\"edit\" data-id=\"" + id + "\">" + (r ? "글 고치기" : "글 적기") + "</button><button type=\"button\" class=\"btn ghost sm\" data-rq=\"ask\" data-id=\"" + id + "\">✦ Brainy에게 맡기기</button><button type=\"button\" class=\"btn ghost sm\" data-rq=\"del\" data-id=\"" + id + "\">표시 풀기</button></div></div>";
+  return "<button type=\"button\" class=\"it-src\" data-rq=\"mark\" data-id=\"" + id + "\">✎ 이 단축키는 고쳐요</button>";
 }
 
 /* ── 그리기 조각 ── */
@@ -261,7 +270,7 @@ function combo(cs){
 function row(s, o){
   var m = marks[s.id] || "";
   return "<div class=\"it" + (m ? " m-" + m : "") + "\"><div class=\"it-m\">" +
-    "<div class=\"it-h\"><b>" + s.t + "</b>" + (s.tag ? "<span class=\"tag" + (s.unver ? " unver" : "") + "\">" + s.tag + "</span>" : "") + (reqOf(s.id) ? "<span class=\"tag req\">수정 요청</span>" : "") + "</div>" +
+    "<div class=\"it-h\"><b>" + s.t + "</b>" + (s.tag ? "<span class=\"tag" + (s.unver ? " unver" : "") + "\">" + s.tag + "</span>" : "") + (isFix(s.id) ? "<span class=\"tag req\">고칠 단축키</span>" : "") + "</div>" +
     (s.d ? "<div class=\"it-d\">" + s.d + "</div>" : "") +
     "<div class=\"it-k\">" + combo(s.k) + "</div>" +
     (o && o.src ? "<button type=\"button\" class=\"it-src\" data-goarea=\"" + esc(areaOf(s)) + "\">" + esc(catOf(areaOf(s))) + " · " + esc(areaOf(s)) + "</button>" : "") +
@@ -419,10 +428,12 @@ function fillAll(){
   var t = query.trim().toLowerCase(), nr = reqCount();
   if(!nr) reqOnly = false;
   var chips = nr ? "<div class=\"chips\"><button type=\"button\" class=\"chip" + (reqOnly ? "" : " on") + "\" data-reqonly=\"0\">전체</button>" +
-    "<button type=\"button\" class=\"chip" + (reqOnly ? " on" : "") + "\" data-reqonly=\"1\"" + (reqOnly ? "" : " style=\"color:var(--accent);border-color:var(--accent)\"") + ">수정 요청<span>" + nr + "</span></button></div>" : "";
+    "<button type=\"button\" class=\"chip" + (reqOnly ? " on" : "") + "\" data-reqonly=\"1\"" + (reqOnly ? "" : " style=\"color:var(--accent);border-color:var(--accent)\"") + ">고칠 단축키<span>" + nr + "</span></button></div>" : "";
   if(reqOnly){
-    var rl = ITEMS.filter(function(s){ return reqOf(s.id) && (!t || (s.t + " " + (s.d || "") + " " + areaOf(s) + " " + reqOf(s.id)).toLowerCase().indexOf(t) > -1) });
-    out.innerHTML = chips + listCard("수정 요청", rl, { src: true, lead: "오류·중복 수정 요청을 적어 둔 단축키예요. 줄 안에서 글을 고치거나 지울 수 있어요.", empty: "수정 요청을 적은 단축키가 없어요." });
+    var rl = fixItems().filter(function(s){ return !t || (s.t + " " + (s.d || "") + " " + areaOf(s) + " " + reqOf(s.id)).toLowerCase().indexOf(t) > -1 });
+    var ask = rl.length ? card("✦ Brainy에게 고치기 맡기기", "<button type=\"button\" class=\"btn primary\" data-rqask=\"1\">✦ Brainy에게 고치기 맡기기 (" + rl.length + "개)</button>",
+      { lead: "아래 고칠 단축키를 Brainy가 볼트 노트(단축키 데이터 · 위키)에서 바로 고치거나 새 페이지를 만들어요. 맥이 켜져 있으면 몇 초 안에 볼트와 이 앱에 들어가요." }) : "";
+    out.innerHTML = chips + ask + listCard("고칠 단축키", rl, { src: true, lead: "「이 단축키는 고쳐요」로 표시한 단축키예요. 줄 안에서 고칠 내용을 적거나 표시를 풀 수 있어요.", empty: "고칠 단축키로 표시한 게 없어요. 줄 안의 「이 단축키는 고쳐요」를 누르면 여기에 모여요." });
     return;
   }
   if(!t){
@@ -473,13 +484,16 @@ document.addEventListener("click", function(e){
   if((b = e.target.closest("[data-mark]"))){ setMark(b.getAttribute("data-id"), b.getAttribute("data-mark")); refresh(); return }
   if((b = e.target.closest("[data-rq]"))){
     var rid = b.getAttribute("data-id"), act = b.getAttribute("data-rq");
-    if(act === "save" || act === "del"){ var box2 = document.getElementById("rq-" + rid); setReq(rid, act === "save" && box2 ? box2.value : ""); reqEdit = null }
+    if(act === "ask"){ if(window.BRAINY_CHAT && BY_ID[rid]) BRAINY_CHAT.ask(fixAskText([BY_ID[rid]])); return }
+    if(act === "save" || act === "del"){ var box2 = document.getElementById("rq-" + rid); setReq(rid, act === "save" && box2 ? box2.value : "", act === "save"); reqEdit = null }
+    else if(act === "mark"){ setReq(rid, "", true); reqEdit = rid }   // 표시하고 바로 글 칸을 연다 — 비워 둬도 표시는 남는다
     else reqEdit = act === "edit" ? rid : null;
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
     refresh();
     if(reqEdit){ var ta = document.getElementById("rq-" + rid); if(ta) ta.focus() }
     return;
   }
+  if((b = e.target.closest("[data-rqask]"))){ var fl = fixItems(); if(fl.length && window.BRAINY_CHAT) BRAINY_CHAT.ask(fixAskText(fl)); return }
   if((b = e.target.closest("[data-reqonly]"))){ reqOnly = b.getAttribute("data-reqonly") === "1"; fillAll(); return }
   if((b = e.target.closest("[data-tab]"))){ show(b.getAttribute("data-tab")); return }
   if((b = e.target.closest("[data-area]"))){ area = b.getAttribute("data-area"); save("sc.area", area); render(); return }

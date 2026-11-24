@@ -3,13 +3,16 @@
    · 웹 앱(맥 단축키 · 체화 단어장 · 콘텐츠 기획): build.py 가 앱 끝에 붙인다 → 클라우드 Brainy(supabase/functions/brainy-ai)
    · 로컬 앱(편집 믹서 · 검증 대시보드): 그 앱의 server.py 가 이 파일을 /brainy-chat.js 로 내준다 → 그 맥의 Claude Code(~/.claude/tools/app_chat.py)
    생김새: 서비스형 채팅 — 오른쪽 아래 말풍선 단추 → 컴퓨터는 오른쪽 아래에 붙는 창, 폰은 아래에서 올라오는 창. 앱 화면은 그대로 보이고 쓸 수 있다.
-   앱마다 window.BRAINY_HOOK = { mode() 대화 방식 {where, model} · rules() 앱 규칙에 더할 글 · ctx() 지금 앱 상태 · tools 앱 도구 · chips 예시 · editNote 첫 안내의 고치기 설명 · local 로컬 앱이면 true(그 서버의 /api/chat) · avoid 피할 아래 막대 선택자 · modelPick 창 위에 답할 모델 고르기 줄 }
+   앱마다 window.BRAINY_HOOK = { mode() 대화 방식 {where, model} · rules() 앱 규칙에 더할 글 · ctx() 지금 앱 상태 · tools 앱 도구 · chips 예시 · editNote 첫 안내의 고치기 설명 · local 로컬 앱이면 true(그 서버의 /api/chat) · avoid 피할 아래 막대 선택자 · modelPick 창 위에 답할 모델 고르기 줄 · vaultNote 첫 안내의 노트 쓰기 설명 }
+   세 앱(Brainy 홈 · 맥 단축키 · 체화 단어장)이 같이 쓰는 부품(모델 버튼 줄 · 안내문 · 고치기 맡기기)은 brainy-parts.js 하나가 원본 — build.py 가 이 파일 앞에 붙인다.
+   그 세 앱은 modelPick · vaultNote 가 기본으로 켜진다 (앱 HOOK 에서 false 로 끌 수 있다).
    대화는 이 기기에 최근 30개만 남긴다. */
 (function () {
   "use strict";
   if (window.__brainyChat) return; window.__brainyChat = 1;
   var APP = window.BRAINY_APP || {}, NAME = APP.name || "이 앱", KEY = "bc." + (APP.key || "app");
   var HOOK = window.BRAINY_HOOK || {};
+  var P = window.BRAINY_PARTS || null, FAM = !!(P && P.inFamily(APP.key));   // 세 앱 공통 부품 (로컬 앱엔 없다)
   var LOCAL = !!HOOK.local;   // 로컬 앱: 그 앱 서버의 /api/chat → 그 맥의 Claude Code 가 앱 원본을 그 자리에서 바로 고친다
   var SID = KEY + ".sid";     // 로컬 앱 대화는 Claude Code 세션을 이어 간다 (새 대화 = 새 세션)
   function localSend(req, o) {
@@ -133,21 +136,15 @@
     "#bc .bc-shots{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-bottom:6px}#bc .bc-shots img{width:96px;height:96px;object-fit:cover;border-radius:12px;display:block;border:1px solid rgba(255,255,255,.35)}" +
     "#bc .bc-shot-n{display:block;font-size:12.5px;opacity:.85;margin-bottom:4px}" +
     "#bc.bc-drop{outline:3px dashed var(--bc-acc);outline-offset:-6px}" +
-    /* 답할 모델 고르기 줄 (HOOK.modelPick) — Brainy 홈 「답할 Claude 모델」 상자 · set_model 과 같은 config/ai 의 model */
+    /* 답할 모델 고르기 줄 (HOOK.modelPick) — 생김새는 brainy-parts.js 의 .bp-models (세 앱 같이) */
     "#bc.bc-has-m{grid-template-rows:auto auto 1fr auto auto}" +
-    "#bc .bc-models{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--bc-line);background:var(--bc-card);min-width:0}" +
-    "#bc .bc-m{flex:1;min-width:0;min-height:44px;padding:4px 2px;border:1px solid var(--bc-line);border-radius:12px;background:var(--bc-bg);color:var(--bc-fg);line-height:1.2;display:grid;place-content:center;text-align:center}" +
-    "#bc .bc-m b{display:block;font-size:13.5px;white-space:nowrap}#bc .bc-m small{display:block;font-size:11px;color:var(--bc-mut)}" +
-    "#bc .bc-m:hover{border-color:var(--bc-acc)}#bc .bc-m:disabled{opacity:.5;cursor:default}" +
-    "#bc .bc-m[aria-pressed=true]{background:var(--bc-acc);border-color:var(--bc-acc);color:var(--bc-acc-ink)}#bc .bc-m[aria-pressed=true] small{color:inherit;opacity:.85}" +
     /* 폰: 아래에서 올라오는 창 — 위쪽 앱 화면은 그대로 보인다 */
     "@media (max-width:640px){#bc{left:8px;right:8px;width:auto;bottom:calc(var(--bc-lift,0px) + 8px + env(safe-area-inset-bottom,0px));height:min(68vh,calc(100vh - var(--bc-lift,0px) - 80px));height:min(68dvh,calc(100dvh - var(--bc-lift,0px) - 80px));border-radius:20px;transform-origin:bottom center}" +
     "#bc.kb{bottom:calc(var(--bc-kb,0px) + 8px)}#bc-fab{height:48px;padding:0 16px 0 12px;font-size:14px}}";
   document.head.appendChild(css);
 
-  /* 답할 모델 — 값은 Brainy 홈 상자와 같다 (auto 또는 모델 id). 클라우드 Brainy 가 다음 질문부터 이 모델로 답한다 (짧은 일은 늘 Haiku) */
-  var PICK = !LOCAL && !!HOOK.modelPick, aiModel = "auto";
-  var MODELS = [["auto", "자동", "auto"], ["claude-haiku-5-5", "빠름", "Haiku"], ["claude-sonnet-5-5", "기본", "Sonnet"], ["claude-opus-5-5", "깊게", "Opus"], ["claude-fable-5-1", "최고", "Fable"]];
+  /* 답할 모델 — 값은 config/ai 의 model (Brainy 홈 · set_model 과 같은 곳, 세 앱이 같이 본다). 클라우드 Brainy 가 다음 질문부터 이 모델로 답한다 (짧은 일은 늘 Haiku) */
+  var PICK = !LOCAL && !!P && (HOOK.modelPick != null ? !!HOOK.modelPick : FAM), aiModel = "auto";
   var fab = document.createElement("button");
   fab.id = "bc-fab"; fab.type = "button"; fab.hidden = true;
   fab.innerHTML = '<span class="bc-star" aria-hidden="true">✦</span>Brainy';
@@ -158,7 +155,7 @@
     '<button type="button" class="bc-ic" data-bc="hist" title="지난 대화" aria-label="지난 대화">🕘</button>' +
     '<button type="button" class="bc-ic" data-bc="new" title="새 대화 (지금 대화는 지난 대화로)" aria-label="새 대화">↺</button>' +
     '<button type="button" class="bc-ic" data-bc="close" title="작게 (Esc)" aria-label="작게">⌄</button></div>' +
-    (PICK ? '<div class="bc-models" id="bc-models" role="group" aria-label="답할 Claude 모델 — 다음 질문부터"></div>' : "") +
+    (PICK ? '<div class="bc-models bp-models" id="bc-models" role="group" aria-label="답할 Claude 모델 — 다음 질문부터"></div>' : "") +
     '<div class="bc-msgs" id="bc-msgs" aria-live="polite"></div>' +
     '<div class="bc-pics" id="bc-pics" hidden></div>' +
     '<div class="bc-in">' + (LOCAL ? "" : '<button type="button" class="bc-att" id="bc-att" title="사진 넣기 (붙여 넣기도 돼요)" aria-label="사진 넣기">📎</button><input type="file" id="bc-file" accept="image/*" multiple hidden>') +
@@ -167,8 +164,7 @@
   document.body.appendChild(fab); document.body.appendChild(box);
   function paintModels() {
     var el = box.querySelector("#bc-models"); if (!el) return;
-    if (!MODELS.some(function (m) { return m[0] === aiModel; })) aiModel = "auto";
-    el.innerHTML = MODELS.map(function (m) { var on = m[0] === aiModel; return '<button type="button" class="bc-m" data-bc-model="' + m[0] + '" aria-pressed="' + on + '"' + (DBC ? "" : " disabled") + ' title="' + esc(m[1] + " · " + m[2] + (on ? " — 지금 이 모델로 답해요" : " — 누르면 다음 질문부터")) + '"><b>' + (on ? "✓ " : "") + m[1] + "</b><small>" + m[2] + "</small></button>"; }).join("");
+    el.innerHTML = P.modelRow(aiModel, !!DBC);
   }
   paintModels();
   var msgs = box.querySelector("#bc-msgs"), text = box.querySelector("#bc-text"), send = box.querySelector("#bc-send");
@@ -209,6 +205,7 @@
     if (!turns.length) {
       h += '<div class="bc-hello"><b>동욱 님, 무엇을 도와드릴까요?</b><p>' + esc(NAME) + "에 대해 묻거나 바꾸고 싶은 걸 말해 주세요. " +
         (HOOK.editNote || (LOCAL ? "이 맥의 Claude가 앱 원본을 바로 고쳐요. 고친 뒤 새로고침하면 보여요." : "고친 판은 5~15분 뒤 준비되고, 「적용해 줘」라고 해야 실제 앱에 들어가요.")) +
+        (!LOCAL && P && (HOOK.vaultNote != null ? HOOK.vaultNote : FAM) && !/볼트에 들어가/.test(HOOK.editNote || "") ? " " + P.VAULT_NOTE : "") +
         (LOCAL ? "" : " 📎로 사진(화면 캡처)도 같이 보낼 수 있어요 — 붙여 넣어도 돼요.") + "</p>";
       h += '<div class="bc-chips">' + CHIPS.map(function (c) { return '<button type="button" class="bc-chip" data-bc-chip="' + esc(c) + '">' + esc(c) + "</button>"; }).join("") + "</div></div>";
     }
@@ -284,8 +281,8 @@
     if (up) { var k = +up.getAttribute("data-bc-unpic"), drop = pics.splice(k, 1)[0]; if (drop) URL.revokeObjectURL(drop.url); paintPics(); return; }
     var pp = e.target.closest("[data-bc-past]"); if (pp) { viewPast = +pp.getAttribute("data-bc-past"); render(); return; }
     var po = e.target.closest("[data-bc-other]"); if (po) { viewPast = 1000 + (+po.getAttribute("data-bc-other")); render(); return; }
-    var bm = e.target.closest("[data-bc-model]");
-    if (bm) { if (!DBC) return; aiModel = bm.getAttribute("data-bc-model"); paintModels(); DBC.doc("config/ai").set({ model: aiModel, at: new Date().toISOString() }).catch(function () {}); return; }
+    var bm = e.target.closest("[data-bp-model]");
+    if (bm) { if (!DBC) return; aiModel = bm.getAttribute("data-bp-model"); paintModels(); P.setModel(DBC, aiModel); return; }
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");
     if (a === "close") return close();
@@ -324,7 +321,7 @@
     claude.use("sample").then(function (s) { sample = s; if (s) ready(); }, function () {});   // 로그인돼 Brainy를 부를 수 있을 때만
     claude.use("db").then(function (db) {   // 다른 기기에서 이어 쓴 기록을 받는다 — 더 새것만
       if (!db) return; DBC = db;
-      if (PICK) { paintModels(); db.doc("config/ai").onSnapshot(function (s) { aiModel = (s.exists && s.data().model) || "auto"; paintModels(); }, function () {}); }
+      if (PICK) { paintModels(); P.watchModel(db, function (v) { aiModel = v; paintModels(); }); }
       db.doc(PATH).onSnapshot(function (snap) {
         if (!snap.exists) { if (turns.length || past.length) keep(); return; }
         var d = snap.data() || {}; remote = d;

@@ -29,20 +29,24 @@
         "- 보고 있는 탭: " + current + " (now 지금 · field 분야 · course 강의 · all 전체 · fav ★즐겨찾기 · pass ✓외웠어 · no ✕필요없어)" + (current === "field" ? " · 고른 앱: " + area : ""),
         "- 분야: " + catList().map(function (c) { return c + "(" + areaList().filter(function (g) { return catOf(g) === c; }).join(", ") + ")"; }).join(" / "),
         "- 단축키 목록 " + ITEMS.length + "개 · ★ " + favs.length + "개" + (favs.length ? "(" + favs.slice(0, 25).join(", ") + ")" : "") + " · ✓외웠어 " + pass + "개 · ✕필요없어 " + no + "개 (표시는 하나만, ✓·✕는 목록에서 빠짐)",
-        "- 오류·중복 수정 요청(동욱이 항목에 적은 글, sc.marks/req): " + ITEMS.filter(function (s) { return reqOf(s.id); }).slice(0, 30).map(function (s) { return s.t + " — " + reqOf(s.id).slice(0, 80); }).join(" / "),
+        "- 고칠 단축키(동욱이 「이 단축키는 고쳐요」로 표시 + 적은 글, sc.marks/req) " + fixItems().length + "개: " + fixItems().slice(0, 30).map(function (s) { return s.t + (reqOf(s.id) ? " — " + reqOf(s.id).slice(0, 80) : ""); }).join(" / "),
+        "- 단축키 목록의 정본은 볼트 4_Outputs/단축키 앱/단축키 데이터.json (+ 위키 「맥 핵심 단축키」). 고칠 땐 vault_read 로 읽고 vault_write 로 고친다 — 맥의 동기화가 몇 초 안에 이 앱(sc.data/main)으로 올린다",
         "- 강의들: " + csList().map(function (x) { return (x.tag ? x.tag + " " : "") + x.name + " [" + x.id + "]"; }).join(" / ")];
       if (c) {
         L.push("- 고른 강의: " + c.name + " · 지금 들을 강의(챕터): " + (here ? here.title : "-") + " · 그 강의 단축키·명령어 " + (c.cheat || []).length + "개");
         var mine = (c.cheat || []).filter(function (x) { return here && x.ch === here.id; }).slice(0, 30);
         if (mine.length) L.push("- 지금 들을 강의의 단축키·명령어: " + mine.map(function (x) { return x.t + " = " + (x.code || (x.k || []).map(function (a) { return a.join(""); }).join(" / ")); }).join(" · "));
       }
-      L.push("- 앱 저장소(app_doc): sc.data/main(단축키 목록) · sc.marks/main(marks: id→fav|pass|no) · sc.data/course(강의·단축키·명령어) · sc.marks/course(진도 · cp✓ cf★ cn✕) · sc.marks/req(reqs: id→{text, at, t} 수정 요청)");
+      L.push("- 앱 저장소(app_doc): sc.data/main(단축키 목록) · sc.marks/main(marks: id→fav|pass|no) · sc.data/course(강의·단축키·명령어) · sc.marks/course(진도 · cp✓ cf★ cn✕) · sc.marks/req(reqs: id→{fix, text, at, t} 고칠 단축키)");
       return L.join("\n");
     },
     tools: [
       { name: "shortcut_mark", description: "맥 단축키 목록의 단축키 하나에 ★즐겨찾기(fav)·✓외웠어(pass)·✕필요없어(no) 중 하나를 붙이거나 뗀다(none). query 는 단축키 이름이나 id.",
         inputSchema: { type: "object", properties: { query: { type: "string" }, mark: { type: "string", enum: ["fav", "pass", "no", "none"] } }, required: ["query", "mark"] },
         execute: function (i) { var s = findItem(i.query); if (!s) throw new Error("「" + i.query + "」 단축키를 못 찾았어요"); if (i.mark === "none" || marks[s.id] !== i.mark) setMark(s.id, i.mark); refresh(); return s.t + " → " + i.mark; } },
+      { name: "shortcut_fix_clear", description: "고칠 단축키 표시(「이 단축키는 고쳐요」 + 적은 글)를 푼다. 볼트 노트에서 그 단축키를 다 고친 뒤, 또는 동욱이 풀라고 할 때만. query 는 단축키 이름이나 id.",
+        inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
+        execute: function (i) { var s = findItem(i.query); if (!s) throw new Error("「" + i.query + "」 단축키를 못 찾았어요"); if (isFix(s.id)) setReq(s.id, "", false); refresh(); return s.t + " → 고칠 표시 풂"; } },
       { name: "course_item_mark", description: "강의 탭의 단축키·명령어 하나에 ★즐겨찾기(fav)·✓외웠어(pass)·✕필요없어(no) 중 하나를 붙이거나 뗀다(none). course 는 강의 이름(비우면 지금 고른 강의), query 는 명령(code)이나 이름(t).",
         inputSchema: { type: "object", properties: { course: { type: "string" }, query: { type: "string" }, mark: { type: "string", enum: ["fav", "pass", "no", "none"] } }, required: ["query", "mark"] },
         execute: function (i) {
