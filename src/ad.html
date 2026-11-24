@@ -369,9 +369,9 @@ tr:last-child td { border-bottom: 0; }
     ["both", "goat", "event"].forEach(function (k) { $("prod-" + k).setAttribute("aria-pressed", String(ui.prod === k)); });
     $("boards").innerHTML = PLAN.boards.map(function (b) {
       var ch = PLAN.channels[b.channel];
-      var prods = prods().filter(function (pk) { return ui.prod === "both" || ui.prod === pk; });
+      var shown = prods().filter(function (pk) { return ui.prod === "both" || ui.prod === pk; });
       var rows = b.rows.map(function (r) {
-        var lines = prods.filter(function (pk) { return r[pk] && r[pk] !== "—"; }).map(function (pk) {
+        var lines = shown.filter(function (pk) { return r[pk] && r[pk] !== "—"; }).map(function (pk) {
           return '<div class="line">' + prodChip(pk) + "<span>" + esc(r[pk]) + "</span></div>";
         });
         return lines.length ? "<div><dt>" + esc(r.label) + "</dt><dd>" + lines.join("") + "</dd></div>" : "";
