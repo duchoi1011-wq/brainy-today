@@ -10,12 +10,12 @@ const keepCell = x => {
   return f === "left" ? ["similar", "doing", "todo"].includes(x.st) : x.st === f;
 };
 function cellRow(c, x, keys){
-  const memo = memoOf(c.id, x.key);
-  const sub = x.remain ? "남은 것: " + x.remain : x.desc;
+  const memo = memoOf(c.id, x.key), miss = missingOf(c, x), done = cellOn(c, x);
+  const sub = !done && miss.has && miss.n ? `빠진 것 ${miss.n}개: ` + miss.req.concat(miss.chk).map(it => it.t).slice(0, 2).join(" · ") + (miss.n > 2 ? " …" : "") : x.remain && !done ? "남은 것: " + x.remain : x.desc;
   const tags = [keys.has(x.key) ? `<span class="pill now">지금</span>` : "", x.need ? `<span class="pill" title="계정·열쇠가 필요해요">🔑</span>` : "", memo ? `<span class="pill" title="내 메모 있음">✍︎</span>` : ""].join("");
-  return `<button type="button" class="cell ${x.st}${keys.has(x.key) ? " isnow" : ""}" data-cell="${esc(x.key)}" aria-label="${esc(x.title)} — ${ST[x.st].name}">
+  return `<button type="button" class="cell ${done ? "done" : x.st}${keys.has(x.key) ? " isnow" : ""}" data-cell="${esc(x.key)}" aria-label="${esc(x.title)} — ${ST[x.st].name}">
     <span class="ct"><b>${esc(x.title)}</b>${sub ? `<span>${esc(sub.replace(/`/g, ""))}</span>` : ""}</span>
-    <span class="tags">${pill(x.st)}${tags}</span></button>`;
+    <span class="tags">${pill(done ? "done" : x.st)}${tags}</span></button>`;
 }
 function renderMap(c){
   const keys = nowKeys(c), n = counts(c);

@@ -8,7 +8,7 @@ function renderNow(c){
     h += `<section class="card nowcell"><h2>지금 할 칸</h2>
       <div class="meta">${esc(partOf(c, x))}${keys.has(x.key) ? ` · <span class="pill now">지금 태스크</span>` : ""} ${pill(x.st)}</div>
       <h3>${esc(x.title)}</h3>
-      ${x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${remainHtml(x.remain)}</div>` : x.desc ? `<p class="small muted" style="margin-bottom:12px">${inline(x.desc)}</p>` : ""}
+      ${(() => { const m = missingOf(c, x); return m.has && m.n ? `<div class="remain"><span class="lbl">빠진 것 ${m.n}개</span>${m.req.concat(m.chk).slice(0, 3).map(it => inline(it.t)).join("<br>")}${m.n > 3 ? `<br><span class="muted">… 외 ${m.n - 3}개 — 요구사항 보기에서 전부</span>` : ""}</div>` : ""; })() || (x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${remainHtml(x.remain)}</div>` : "") || (x.desc ? `<p class="small muted" style="margin-bottom:12px">${inline(x.desc)}</p>` : "")}
       <div class="btns">${doBtn(x)}<button type="button" class="btn" data-cell="${esc(x.key)}">요구사항 보기</button></div>
       <p class="small muted" style="margin-top:10px">누르면 Brainy 대화창에 「${esc(sayDo(c, x))}」가 채워져요. ↑ 로 보내면 Brainy가 이 칸이 뭔지 설명하고 한 단계씩 같이 진행해요.</p>
     </section>`;
@@ -30,7 +30,7 @@ function renderNow(c){
   }
   const others = c.tasks.filter(o => o !== t);
   if (others.length) h += `<section class="card"><h2>이 강의를 쓰는 다른 태스크</h2><ul class="plain">${others.map(o => `<li>${esc(o.name.replace(/^T-/, ""))} <span class="muted small">· ${esc(o.status)}</span></li>`).join("")}</ul></section>`;
-  h += `<p class="small muted" style="text-align:center;padding:0 8px">✅ 끝 표시는 Brainy가 교안 요구사항을 하나씩 대조하고 확인 질문을 마친 뒤 볼트 지도 카드에 적어요. 이 앱은 그 결과를 몇 초 뒤 그대로 보여 줘요.</p>`;
+  h += `<p class="small muted" style="text-align:center;padding:0 8px">혼자 한 것은 칸을 열어 직접 체크해요. Brainy와 하면 Brainy가 요구를 대조하고 확인 질문을 한 뒤 체크해요. 체크는 모두 볼트 지도 카드에 적혀요.</p>`;
   return h;
 }
 function critRow(c, k){
