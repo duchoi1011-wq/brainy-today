@@ -182,7 +182,7 @@ include()
 emit("course", "강의 실습", "강의 실습", ("#F1F1F6", "#101117"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--s-sim);--g-ok:var(--s-done)",
      '<link rel="apple-touch-icon" href="cr-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="cr-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="cr-icon-64.png">',
-     '{key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "cr.study", "cr.tog", "bchat"]}',
+     '{key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "cr.study", "cr.tog", "taskwork", "bchat"]}',
      '{"id":"/brainy-today/course/","name":"강의 실습","short_name":"강의 실습","start_url":"./","scope":"./","display":"standalone","background_color":"#F1F1F6","theme_color":"#F1F1F6","icons":[{"src":"cr-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"cr-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
      "", CR_BRAINY + BRAINY_CHAT)
 

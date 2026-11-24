@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "c5c7e6f295"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "cr.study", "cr.tog", "bchat"]};</script>
-<script src="../shim.js?v=c5c7e6f295"></script>
+<script>window.BRAINY_VERSION = "584c7f654a"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "cr.study", "cr.tog", "taskwork", "bchat"]};</script>
+<script src="../shim.js?v=584c7f654a"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -157,7 +157,7 @@ button{font:inherit}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--s-todo)}
 .legend i.done{background:var(--s-done)}.legend i.similar{background:var(--s-sim)}.legend i.doing{background:var(--s-doing)}.legend i.now{background:var(--now-bg);border:1px solid var(--accent)}
 .legend i.merged{background:transparent;border:1px dashed var(--s-todo)}
-details.fold>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-height:32px}
+details.fold>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px}
 details.fold>summary::-webkit-details-marker{display:none}
 details.fold>summary h2{margin:0}
 details.fold>summary::after{content:"펼치기";font-size:12px;color:var(--accent);font-weight:600}
@@ -170,7 +170,9 @@ details.fold[open]>summary{margin-bottom:8px}
 .remain .lbl,.lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);margin-bottom:2px}
 .crit{display:flex;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
 .crit:first-of-type{border-top:0}
-.crit .box{flex:none;width:22px;height:22px;border-radius:7px;border:1.5px solid var(--muted);display:grid;place-items:center;font-size:13px;font-weight:700;margin-top:2px}
+.crit .box{all:unset;box-sizing:border-box;cursor:pointer;flex:none;width:26px;height:26px;border-radius:7px;border:1.5px solid var(--muted);display:grid;place-items:center;font-size:14px;font-weight:700;margin-top:0;position:relative;color:var(--ink)}
+.crit .box::after{content:"";position:absolute;inset:-9px}  /* 누르는 자리 44px */
+.crit .box:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .crit.on .box{background:var(--s-done);border-color:var(--s-done);color:#fff}
 .crit .cb{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .crit .cb>b{font-weight:600}
@@ -377,7 +379,7 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
 /* 강의 실습 — 볼트의 강의 지도·학습 노트·지금 태스크를 보며 Brainy와 한 칸씩 실습한다.
    데이터는 볼트가 정본이다: 3_Action/33_카드/C-<강의> 수강·실습 분류.md · C-<강의> 실습 학습 노트.md · 그 지도를 잇는 32_태스크
    → 맥 동기화(볼트 .claude/scripts/course_app.py) → Supabase cr.data/main → 아래 db.doc("cr.data/main") 가 채운다. 강의 내용을 코드에 넣지 않는다.
-   이 앱이 쓰는 것: cr.memo/<강의 id>-<칸 번호표> (칸마다 내 메모) · cr.tog/<번호표> (동욱이 누른 체크 — 맥이 볼트 지도 카드에 적는다, course-check.js) · Brainy 대화(ai·bchat).
+   이 앱이 쓰는 것: cr.memo/<강의 id>-<칸 번호표> (칸마다 내 메모) · cr.tog/<번호표> (동욱이 누른 체크 — 맥이 볼트 지도 카드에 적는다, course-check.js) · taskwork/cr-<번호표> (지금 태스크 기준 줄·상태 — 맥 task_sync 가 태스크 노트에 적는다, course-task.js) · Brainy 대화(ai·bchat).
    공부 본문은 cr.study/<강의 id> (볼트 위키 요약, course-study.js). Brainy(course-practice 스킬)는 요구 대조 + 확인 질문 뒤 같은 지도 카드에 체크를 쓴다. */
 let DATA = { courses: [] };
 let db = null, loaded = false, pendingRender = false;
@@ -460,7 +462,7 @@ function renderHead(){
   const n = counts(c);
   sum.innerHTML = [
     ["k-done", "done", `${n.done}<small>/${n.goal}</small>`, "실습 끝"],
-    ["k-sim", "similar", n.similar, "🔁 빠진 것"],
+    ["k-sim", "similar", n.similar, "🔁 칸"],
     ["k-doing", "doing", n.doing, "⏳ 하는 중"],
     ["", "todo", n.todo, "남음 (아직)"],
     ["", "listen", `${n.lDone}<small>/${n.lAll}</small>`, "듣기 끝"]
@@ -486,8 +488,14 @@ function render(){
   if (!c) { main.innerHTML = `<section class="card"><p class="empty">${loaded ? "볼트에 강의 지도가 아직 없어요.<br>Brainy에게 「이 강의 분류해 줘」라고 하면 지도 카드를 만들어요." : "강의를 불러오는 중이에요…"}</p></section>`; return; }
   main.innerHTML = v === "study" ? renderStudy(c) : v === "map" ? renderMap(c) : v === "notes" ? renderNotes(c) : v === "memo" ? renderMemo(c) : v === "cell" ? renderCell(c, cellBy(c, S.cell)) : renderNow(c);
   if (v === "cell") { paintMemoState(); studyLoad(c); }
-  if (v === "study" && S.page != null) { const el = document.getElementById("page-" + S.page); if (el) { el.scrollIntoView({ block: "start" }); S.page = null; } }
+  if (v === "study" && S.page != null) { const el = document.getElementById("page-" + S.page); if (el) { jumpTo(el); S.page = null; } }
   if (S.backTo) { const el = main.querySelector(`[data-cell="${CSS.escape(S.backTo)}"]`); S.backTo = ""; if (el) el.scrollIntoView({ block: "center" }); }
+}
+/* 장·단원으로 건너뛰기 — 위에 붙은 머리 칸(강의 고르기·숫자) 아래에 제목이 보이게 (11-24 검증 중간 4) */
+function jumpTo(el){
+  if (!el) return;
+  const head = document.querySelector("header").getBoundingClientRect().bottom;
+  window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top - head - 12);
 }
 function openCell(key){
   if (document.activeElement && document.activeElement.classList.contains("memo-in")) document.activeElement.blur();   // 다른 칸으로 갈 때 쓰던 메모 칸을 놓아야 화면이 바뀐다
@@ -511,7 +519,7 @@ document.addEventListener("click", e => {
   if (d.back !== undefined) { S.backTo = S.cell; location.hash = S.from || "map"; return; }
   if (d.sum) { S.filt = d.sum; if (view() === "map") render(); else location.hash = "map"; return; }
   if (d.filt) { S.filt = d.filt; render(); return; }
-  if (d.unit) { const el = document.getElementById("unit-" + d.unit); if (el) { el.open = true; el.scrollIntoView({ block: "start" }); } return; }
+  if (d.unit) { const el = document.getElementById("unit-" + d.unit); if (el) { el.open = true; jumpTo(el); } return; }
 });
 window.addEventListener("hashchange", () => { const keep = !!S.backTo; if (!keep) window.scrollTo(0, 0); render(); });   // 칸에서 돌아오면 그 칸 줄로 (render 가 옮긴다)
 document.addEventListener("focusout", e => { if (e.target.classList && e.target.classList.contains("memo-in")) setTimeout(() => { if (pendingRender) render(); }, 0); });
@@ -523,7 +531,8 @@ document.addEventListener("focusout", e => { if (e.target.classList && e.target.
    그리고 그 문서에 { ok_at: at, result } 를 붙인다. 지도 카드가 바뀌면 cr.data/main 이 다시 와서 화면이 그 결과를 보여 준다.
    그 사이(보통 몇 초)에는 누른 대로 먼저 보여 준다(TOG_WAIT). 맥이 꺼져 있으면 켜질 때 적힌다. */
 let TOG = {};                               // 문서 id -> 저장소에서 받은 것
-let TOG_WAIT = lsGet("cr.tog.wait", {});    // 아직 맥이 지도 카드에 적었다고 확인 안 된 것: 문서 id -> 보낸 것
+let TOG_WAIT = lsGet("cr.tog.wait", {});    // 아직 맥이 지도 카드에 적었다고 확인 안 된 것: 문서 id -> 보낸 것 (sent: 저장소가 받았나)
+Object.values(TOG_WAIT).forEach(w => { delete w.sending; });
 const togId = (cid, key, kind, id) => memoId(cid, key + "|" + kind + "|" + (id || ""));
 
 /* 지금 보이는 체크 상태 — 기다리는 것이 있으면 그것, 없으면 볼트 지도 카드 그대로 */
@@ -544,29 +553,50 @@ function missingOf(c, x){
   return { req, chk, n: req.length + chk.length, has: (x.req || []).some(it => it.id) || (x.chk || []).some(it => it.id && it.t) };
 }
 
+/* 빠진 것 세는 말 — 요구와 확인 질문을 따로 (「빠진 것 17개」만으로는 무엇이 몇 개인지 모름) */
+const missWord = m => [m.req.length ? `요구 ${m.req.length}개` : "", m.chk.length ? `확인 질문 ${m.chk.length}개` : ""].filter(Boolean).join(" · ");
 function togSend(c, x, kind, it, done){
   const id = togId(c.id, x.key, kind, it && it.id);
-  const body = { cid: c.id, map: c.map, key: x.key, title: x.title, kind, id: it ? it.id : "", t: it ? it.t : "", done, at: nowIso() };
-  TOG_WAIT[id] = body; lsPut("cr.tog.wait", TOG_WAIT);
+  TOG_WAIT[id] = { cid: c.id, map: c.map, key: x.key, title: x.title, kind, id: it ? it.id : "", t: it ? it.t : "", done, at: nowIso(), sent: 0 };
+  lsPut("cr.tog.wait", TOG_WAIT);
   render();
-  if (!db) { toast("아직 연결이 안 됐어요. 이 기기에 두었다가 연결되면 보내요."); return; }
-  db.doc("cr.tog/" + id).set(body).then(() => toast(kind === "cell" ? (done ? "끝 표시했어요 · 볼트 지도 카드에 적는 중" : "끝 표시를 풀었어요 · 볼트에 적는 중") : (done ? "체크했어요 · 볼트 지도 카드에 적는 중" : "체크를 풀었어요 · 볼트에 적는 중")),
-    () => toast("아직 못 보냈어요. 이 기기에 두었다가 연결되면 다시 보내요."));
+  togPush(id, true);
 }
-/* 저장소 소식 — 맥이 적은 결과를 보고 기다리던 것을 놓는다. 적지 못했으면(칸·항목 글이 바뀜 등) 이유를 알리고 원래대로 */
+/* 보내기 — 저장소가 「받았다」고 답한 것만 sent:1. 못 보낸 것(sent:0)은 연결이 돌아올 때·30초마다 다시 보낸다.
+   받침은 보내기 전에 이 기기 사본을 먼저 바꾸므로, 「서버에 그 문서가 있나」로는 보냈는지 알 수 없다 (11-24 검증 높음 1 · 지침 F25). */
+function togPush(id, say){
+  const w = TOG_WAIT[id];
+  if (!w || w.sent || w.sending) return;
+  if (!db) { if (say) toast("아직 연결이 안 됐어요. 이 기기에 두었다가 연결되면 보내요."); return; }
+  w.sending = 1;
+  const { sent, sending, ...body } = w;
+  db.doc("cr.tog/" + id).set(body).then(() => {
+    w.sending = 0;
+    if (TOG_WAIT[id] !== w) return;   // 그 사이 또 누름 — 새 것이 따로 간다
+    w.sent = 1; lsPut("cr.tog.wait", TOG_WAIT);
+    if (say) toast(w.kind === "cell" ? (w.done ? "끝 표시했어요 · 볼트 지도 카드에 적는 중" : "끝 표시를 풀었어요 · 볼트에 적는 중") : (w.done ? "체크했어요 · 볼트 지도 카드에 적는 중" : "체크를 풀었어요 · 볼트에 적는 중"));
+  }, () => { w.sending = 0; if (say) toast("아직 못 보냈어요. 이 기기에 두었다가 연결되면 다시 보내요."); });
+}
+const togRetry = () => Object.keys(TOG_WAIT).forEach(id => togPush(id, false));
+window.addEventListener("online", togRetry);
+setInterval(() => { if (Object.values(TOG_WAIT).some(w => !w.sent)) togRetry(); }, 30000);
+/* 저장소 소식 — 맥이 적은 결과를 보고 기다리던 것을 놓는다. 적지 못했으면(칸·항목 글이 바뀜 등) 이유를 알리고 원래대로.
+   다른 기기가 같은 항목을 더 나중에 눌렀으면(r.at > w.at) 그쪽이 이긴다 — 이 기기의 기다림을 놓는다. 소식은 저장을 부르지 않는다(F23). */
 function togListen(){
   if (!db) return;
   db.collection("cr.tog").onSnapshot(snap => {
     const m = {};
     snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); });
     TOG = m;
+    if (!snap.metadata.fromCache && !togListen.live) { togListen.live = true; togRetry(); }   // 지난번 못 보낸 것 — 연결되면 한 번
     let changed = false;
     Object.entries(TOG_WAIT).forEach(([id, w]) => {
       const r = TOG[id];
-      if (!r) { if (!snap.metadata.fromCache && db && !w.resent) { w.resent = 1; const { resent, ...b } = w; db.doc("cr.tog/" + id).set(b).catch(() => {}); } return; }   // 못 보낸 것 — 이 화면에서 한 번만 다시 (저장이 저장을 부르지 않게, 지침 F23)
-      if (r.at !== w.at || r.ok_at !== w.at) return;   // 아직 맥이 안 적음 (또는 더 새로 누름)
+      if (!r) return;
+      if (w.sent && r.at > w.at) { delete TOG_WAIT[id]; changed = true; return; }   // 다른 기기가 더 나중에 누름
+      if (r.at !== w.at || r.ok_at !== w.at) return;   // 아직 맥이 안 적음
       if (!/^적음|^이미/.test(r.result || "")) toast("볼트에 못 적었어요 — " + (r.result || "이유 모름"));
-      if (/^적음|^이미/.test(r.result || "") && !reflected(w)) return;   // 지도 카드가 다시 올 때까지 누른 대로 보여 준다
+      else if (!reflected(w)) return;   // 지도 카드가 다시 올 때까지 누른 대로 보여 준다
       delete TOG_WAIT[id]; changed = true;
     });
     if (changed) { lsPut("cr.tog.wait", TOG_WAIT); render(); }
@@ -595,11 +625,11 @@ function checkList(c, x, kind){
   return `<ul class="checks">${L.map(it => {
     if (!it.t) return `<li class="qnote muted small">${inline(it.note || "")}</li>`;   // 안내 줄 (질문이 아님)
     if (it.skip) return `<li><span class="ck skip" aria-hidden="true">⏭</span><span class="muted">${inline(it.t)} <span class="small">— 넘김</span>${noteHtml(it.note)}</span></li>`;
-    if (naItem(it)) return `<li><span class="ck skip" aria-hidden="true">–</span><span class="muted">${inline(it.t)}${noteHtml(it.note)}</span></li>`;
+    if (naItem(it)) return `<li><span class="ck skip" aria-hidden="true">–</span><span class="muted">${inline(it.t)}${/해당 없음/.test(it.note || "") ? noteHtml(it.note) : ` <span class="small">— 해당 없음 (빠진 것으로 안 세요)</span>`}</span></li>`;
     const on = itemOn(c, x, kind, it), wait = !!TOG_WAIT[togId(c.id, x.key, kind, it.id)];
     const text = kind === "chk" ? (it.q || it.t) : it.t;
     return `<li><button type="button" class="ckrow${on ? " on" : ""}" data-tog="${esc(kind)}" data-id="${esc(it.id)}" aria-pressed="${on}" ${x.st === "done" && !x.mine ? "disabled" : ""}>
-      <span class="ck" aria-hidden="true">${on ? "✓" : ""}</span><span>${inline(text)}${noteHtml(it.note)}${wait ? ` <span class="small muted">· 볼트에 적는 중</span>` : ""}</span></button></li>`;
+      <span class="ck" aria-hidden="true">${on ? "✓" : ""}</span><span>${inline(text)}${noteHtml(it.note)}${wait ? ` <span class="small muted">· ${TOG_WAIT[togId(c.id, x.key, kind, it.id)].sent ? "볼트에 적는 중" : "아직 못 보냄 — 연결되면 보내요"}</span>` : ""}</span></button></li>`;
   }).join("")}</ul>`;
 }
 /* 칸 끝 표시 단추 — 실습은 「내가 끝냈어요」, 듣기는 「들었어요」. Brainy가 대조해 끝낸 칸은 풀지 않는다 */
@@ -612,7 +642,12 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-tog],[data-togcell]");
   if (!b) return;
   const c = course(); if (!c) return;
-  if (b.dataset.togcell !== undefined) { const x = cellBy(c, b.dataset.togcell); if (x) togSend(c, x, "cell", null, !cellOn(c, x)); return; }
+  if (b.dataset.togcell !== undefined) {
+    const x = cellBy(c, b.dataset.togcell); if (!x) return;
+    const on = cellOn(c, x), m = missingOf(c, x);
+    if (!on && !isListen(x) && m.n && !confirm(`아직 체크 안 된 것이 있어요 (${missWord(m)}).\n그래도 이 칸을 끝으로 표시할까요?`)) return;
+    togSend(c, x, "cell", null, !on); return;
+  }
   const x = cellBy(c, S.cell), it = x && (x[b.dataset.tog] || []).find(i => i.id === b.dataset.id);
   if (it) togSend(c, x, b.dataset.tog, it, !itemOn(c, x, b.dataset.tog, it));
 });
@@ -644,8 +679,10 @@ function renderStudy(c){
   if (!doc) return h + `<section class="card"><p class="empty">공부 내용을 불러오는 중이에요…</p></section>`;
   (doc.pages || []).forEach((pg, i) => {
     const cells = pg.part == null ? [] : cellsOf(c).filter(x => partNo(c, x) === pg.part);
-    const done = cells.filter(x => cellOn(c, x)).length;
-    h += `<section class="card" id="page-${i}"><div class="part"><h2>${esc(pageName(pg))}</h2>${cells.length ? `<small>끝 ${done}/${cells.length}</small>` : ""}</div>
+    /* 숫자는 지도와 같은 셈 — 실습 「끝 x/N」의 N은 합친 칸·건너뛴 칸을 뺀 수, 듣기도 건너뛴 칸을 뺀다 (COUNT_RULE 한 곳) */
+    const pr = cells.filter(x => !isListen(x) && !["merged", "skip"].includes(x.st)), ls = cells.filter(x => isListen(x) && x.st !== "skip");
+    const cnt = [pr.length ? `실습 끝 ${pr.filter(x => cellOn(c, x)).length}/${pr.length}` : "", ls.length ? `듣기 끝 ${ls.filter(x => cellOn(c, x)).length}/${ls.length}` : ""].filter(Boolean).join(" · ");
+    h += `<section class="card" id="page-${i}"><div class="part"><h2>${esc(pageName(pg))}</h2>${cnt ? `<small>${cnt}</small>` : ""}</div>
       <h3 style="font-size:17px;margin:2px 0 8px">${inline(pg.title)}</h3>
       ${pg.tldr ? `<div class="tldr">${inline(pg.tldr)}</div>` : ""}
       ${(pg.secs || []).map(s => `<details class="fold sfold"${KEEP_OPEN.test(s.h) ? " open" : ""}><summary><b>${inline(s.h)}</b></summary><div class="md">${mdHtml(s.body)}</div></details>`).join("")}
@@ -666,7 +703,7 @@ function easyBox(c, x){
 function goPage(i){
   S.page = +i;
   if (view() !== "study") { location.hash = "study"; return; }
-  const el = document.getElementById("page-" + i); if (el) el.scrollIntoView({ block: "start" });
+  jumpTo(document.getElementById("page-" + i)); S.page = null;
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-page],[data-studypart]");
@@ -677,9 +714,77 @@ document.addEventListener("click", e => {
   if (i >= 0) goPage(i);
 });
 
+/* ── 지금 태스크 — 완료 기준 체크·상태 바꾸기 (build.py 가 course.html 에 끼움 · 2026-11-24 동욱 「볼트의 액션(3_Action 태스크)과 연동돼서 움직이도록」) ──
+   볼트 태스크 노트가 정본이다. 앱은 누른 것을 문서 하나에 모아 보낸다 (광고 실습 앱과 같은 규약):
+     taskwork/cr-<번호표> = { task: "T- 뺀 노트 이름", from: "강의 실습", status: "할일|진행|완료|보류"(노트와 같으면 ""),
+                             steps: { "<본문 체크칸 번호 = crit.box>": true|false }, log: [], synced: false, updatedAt }
+   맥의 task_sync.py 가 노트 status·머리줄·로그·허브·실행 로그·데일리 노트에 적고 synced:true 로 바꾼다.
+   그 뒤 노트가 바뀌어 cr.data/main 이 다시 오면 화면은 노트 그대로. 그 사이에는 누른 대로 먼저 보여 준다. */
+let TW = {};   // 문서 id -> taskwork 문서 (강의 실습 것만)
+const twId = t => "cr-" + memoId("t", t.name);
+const twName = t => t.name.replace(/^T-/, "");
+function twOf(t){ const d = TW[twId(t)]; return d && d.synced === false ? d : null; }   // 아직 노트에 안 들어간 것만
+function critOn(t, k){ const d = twOf(t); return d && d.steps && d.steps[k.box] !== undefined ? !!d.steps[k.box] : k.done; }
+function taskStatus(t){ const d = twOf(t); return (d && d.status) || t.status; }
+function twListen(){
+  if (!db) return;
+  db.collection("taskwork").onSnapshot(snap => {
+    const m = {};
+    snap.docs.forEach(d => { if (d.exists && d.id.indexOf("cr-") === 0) m[d.id] = d.data(); });
+    Object.keys(TW_UNSENT).forEach(id => { if (TW[id]) m[id] = TW[id]; });   // 아직 못 보낸 것은 이 기기 것을 지킨다
+    TW = m;
+    if (view() === "now") render();
+  }, () => {});
+}
+function twChange(t, mutate){
+  if (!db) { toast("아직 연결이 안 됐어요. 잠시 뒤 다시 눌러 주세요."); return; }
+  const id = twId(t);
+  const cur = JSON.parse(JSON.stringify(TW[id] || {}));
+  if (cur.synced !== false) { cur.steps = {}; cur.status = ""; }   // 지난번 것은 이미 노트에 들어감 — 새로 시작
+  cur.task = twName(t); cur.from = "강의 실습"; cur.steps = cur.steps || {}; cur.log = cur.log || [];
+  mutate(cur);
+  Object.keys(cur.steps).forEach(b => { const k = t.crit.find(x => String(x.box) === b); if (k && cur.steps[b] === k.done) delete cur.steps[b]; });   // 노트와 같아진 칸은 뺀다
+  if (cur.status === t.status) cur.status = "";
+  cur.synced = false; cur.updatedAt = nowIso();
+  TW[id] = cur; TW_UNSENT[id] = 1; render();
+  twPush(id, true);
+}
+/* 못 보낸 것은 연결이 돌아올 때·30초마다 다시 (받침이 이 기기 사본을 먼저 바꾸므로 「보냈나」는 저장소 답으로만 안다 — 지침 F25) */
+const TW_UNSENT = {};
+function twPush(id, say){
+  if (!TW_UNSENT[id] || !db) return;
+  const body = TW[id];
+  db.doc("taskwork/" + id).set(body).then(() => { if (TW[id] === body) delete TW_UNSENT[id]; if (say) toast("볼트 태스크 노트에 적는 중이에요 (몇 초)"); },
+    () => { if (say) toast("아직 못 보냈어요. 연결되면 다시 보내요."); });
+}
+window.addEventListener("online", () => Object.keys(TW_UNSENT).forEach(id => twPush(id)));
+setInterval(() => Object.keys(TW_UNSENT).forEach(id => twPush(id)), 30000);
+const TASK_ST = ["할일", "진행", "완료", "보류"];
+function statusBtns(t){
+  const now = taskStatus(t);
+  return `<div class="chips" role="group" aria-label="태스크 상태" style="margin-top:8px">${TASK_ST.map(s => `<button type="button" class="chip ${s === now ? "on" : ""}" data-tstatus="${s}" aria-pressed="${s === now}">${s}</button>`).join("")}</div>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-tbox],[data-tstatus]");
+  if (!b) return;
+  const c = course(), t = taskOf(c); if (!t) return;
+  if (b.dataset.tbox !== undefined) {
+    const k = t.crit.find(x => String(x.box) === b.dataset.tbox); if (!k) return;
+    const on = critOn(t, k);
+    return twChange(t, cur => { cur.steps[k.box] = !on; });
+  }
+  const s = b.dataset.tstatus;
+  if (s === taskStatus(t)) return;
+  if (s === "완료") {
+    const left = t.crit.filter(k => !critOn(t, k)).length;
+    if (!confirm(left ? `완료 기준 ${left}줄이 아직 체크 안 됐어요.\n그래도 이 태스크를 완료로 바꿀까요? (볼트 태스크 노트에 적혀요)` : "이 태스크를 완료로 바꿀까요? (볼트 태스크 노트에 적혀요)")) return;
+  }
+  twChange(t, cur => { cur.status = s; });
+});
+
 /* ── 「지금」 탭 — 오늘 할 칸 하나 + 지금 태스크의 완료 기준 (build.py 가 course.html 에 끼움) ──
    지금 태스크 = 볼트 32_태스크 중 이 강의 지도를 잇는 것 (동기화가 진행 → 할일 순으로 보냄). 기준 줄마다 맞는 지도 칸(crit.cell)이 붙어 온다.
-   끝 표시(☑)는 볼트 태스크 노트의 체크 그대로 — 여기서 누르지 않는다. */
+   기준 줄 체크(☑)와 상태 버튼은 course-task.js — 누르면 taskwork/cr-… 로 가서 맥이 볼트 태스크 노트에 적는다. 화면은 노트 그대로(그 사이엔 누른 대로). */
 function renderNow(c){
   const t = taskOf(c), x = nextCell(c), keys = nowKeys(c);
   let h = c.full || c.meta ? `<p class="small muted" style="padding:0 4px">${fullHtml(c.full)}${c.full && c.meta ? "<br>" : ""}${inline(c.meta || "")}</p>` : "";
@@ -687,7 +792,7 @@ function renderNow(c){
     h += `<section class="card nowcell"><h2>지금 할 칸</h2>
       <div class="meta">${esc(partOf(c, x))}${keys.has(x.key) ? ` · <span class="pill now">지금 태스크</span>` : ""} ${pill(x.st)}</div>
       <h3>${esc(x.title)}</h3>
-      ${(() => { const m = missingOf(c, x); return m.has && m.n ? `<div class="remain"><span class="lbl">빠진 것 ${m.n}개</span>${m.req.concat(m.chk).slice(0, 3).map(it => inline(it.t)).join("<br>")}${m.n > 3 ? `<br><span class="muted">… 외 ${m.n - 3}개 — 요구사항 보기에서 전부</span>` : ""}</div>` : ""; })() || (x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${remainHtml(x.remain)}</div>` : "") || (x.desc ? `<p class="small muted" style="margin-bottom:12px">${inline(x.desc)}</p>` : "")}
+      ${(() => { const m = missingOf(c, x); return m.has && m.n ? `<div class="remain"><span class="lbl">빠진 것 — ${missWord(m)}</span>${m.req.concat(m.chk).slice(0, 3).map(it => inline(it.t)).join("<br>")}${m.n > 3 ? `<br><span class="muted">… 외 ${m.n - 3}개 — 요구사항 보기에서 전부</span>` : ""}</div>` : ""; })() || (x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${remainHtml(x.remain)}</div>` : "") || (x.desc ? `<p class="small muted" style="margin-bottom:12px">${inline(x.desc)}</p>` : "")}
       <div class="btns">${doBtn(x)}<button type="button" class="btn" data-cell="${esc(x.key)}">요구사항 보기</button></div>
       <p class="small muted" style="margin-top:10px">누르면 Brainy 대화창에 「${esc(sayDo(c, x))}」가 채워져요. ↑ 로 보내면 Brainy가 이 칸이 뭔지 설명하고 한 단계씩 같이 진행해요.</p>
     </section>`;
@@ -695,11 +800,12 @@ function renderNow(c){
     h += `<section class="card"><h2>지금 할 칸</h2><p class="empty">남은 실습 칸이 없어요. 이 강의는 실습을 다 끝냈어요.</p></section>`;
   }
   if (t) {
-    const done = t.crit.filter(k => k.done).length;
+    const done = t.crit.filter(k => critOn(t, k)).length;
     h += `<section class="card"><h2>지금 태스크 · ${done}/${t.crit.length} 끝</h2>
       <p style="font-weight:700;margin-bottom:2px">${esc(t.name.replace(/^T-/, ""))}</p>
-      <p class="small muted">${esc(t.status || "")}${t.estimate ? " · 예상 " + esc(t.estimate) : ""}${t.due ? " · 기한 " + esc(t.due) : ""} · 칸마다 아래 기준을 다 맞추면 끝이에요</p>
-      <div style="margin-top:6px">${t.crit.map(k => critRow(c, k)).join("") || `<p class="empty">이 태스크에 완료 기준 줄이 없어요.</p>`}</div>
+      <p class="small muted">${t.estimate ? "예상 " + esc(t.estimate) : ""}${t.due ? " · 기한 " + esc(t.due) : ""}${t.estimate || t.due ? " · " : ""}기준 줄을 다 체크하면 끝이에요 · 누르면 볼트 태스크 노트에 적혀요${twOf(t) ? ` <span class="muted">· 볼트에 적는 중</span>` : ""}</p>
+      ${statusBtns(t)}
+      <div style="margin-top:6px">${t.crit.map(k => critRow(c, t, k)).join("") || `<p class="empty">이 태스크에 완료 기준 줄이 없어요.</p>`}</div>
     </section>`;
   } else {
     h += `<section class="card"><h2>지금 태스크</h2>
@@ -712,20 +818,20 @@ function renderNow(c){
   h += `<p class="small muted" style="text-align:center;padding:0 8px">혼자 한 것은 칸을 열어 직접 체크해요. Brainy와 하면 Brainy가 요구를 대조하고 확인 질문을 한 뒤 체크해요. 체크는 모두 볼트 지도 카드에 적혀요.</p>`;
   return h;
 }
-function critRow(c, k){
-  const x = k.cell && cellBy(c, k.cell);
+function critRow(c, t, k){
+  const x = k.cell && cellBy(c, k.cell), on = critOn(t, k);
   const [head, ...rest] = k.text.split(" — ");
-  return `<div class="crit ${k.done ? "on" : ""}"><span class="box" aria-label="${k.done ? "끝" : "아직"}">${k.done ? "✓" : ""}</span><div class="cb">
+  return `<div class="crit ${on ? "on" : ""}"><button type="button" class="box" data-tbox="${k.box}" aria-pressed="${on}" aria-label="${esc(head)} — ${on ? "체크됨, 누르면 풀기" : "누르면 체크"}">${on ? "✓" : ""}</button><div class="cb">
     <b>${inline(head)}</b>${rest.length ? `<p>${inline(rest.join(" — "))}</p>` : ""}
-    ${x ? `<div class="meta">${pill(x.st)}${x.remain && !k.done ? ` <span>지도 카드의 남은 것: ${remainHtml(x.remain)}</span>` : ""}</div>
-    ${k.done ? "" : `<div class="btns">${doBtn(x)}<button type="button" class="btn" data-cell="${esc(x.key)}">요구사항 보기</button></div>`}` : `<p class="small muted">지도에서 맞는 칸을 못 찾았어요 — 태스크 줄 그대로예요.</p>`}
+    ${x ? `<div class="meta">${pill(x.st)}${x.remain && !on ? ` <span>지도 카드의 남은 것: ${remainHtml(x.remain)}</span>` : ""}</div>
+    ${on ? "" : `<div class="btns">${doBtn(x)}<button type="button" class="btn" data-cell="${esc(x.key)}">요구사항 보기</button></div>`}` : `<p class="small muted">지도에서 맞는 칸을 못 찾았어요 — 태스크 줄 그대로예요.</p>`}
   </div></div>`;
 }
 
 /* ── 「지도」 탭 — 강의의 모든 칸을 Part 별로, 상태 색으로 (build.py 가 course.html 에 끼움) ──
    거르기(S.filt): all 전체 · left 남은 칸(🔁·⏳·아직) · done · similar · doing · todo · listen 듣기만. 머리말 숫자를 눌러도 여기로 온다.
    지금 태스크의 칸은 보라 바탕(isnow). 칸을 누르면 자세히(course-detail.js). */
-const FILTS = [["all", "전체"], ["left", "남은 칸"], ["similar", "🔁 빠진 것"], ["doing", "⏳ 하는 중"], ["todo", "○ 아직"], ["done", "✅ 끝"], ["listen", "🎧 듣기"]];
+const FILTS = [["all", "전체"], ["left", "남은 칸"], ["similar", "🔁 빠진 것 있음"], ["doing", "⏳ 하는 중"], ["todo", "○ 아직"], ["done", "✅ 끝"], ["listen", "🎧 듣기"]];
 const keepCell = x => {
   const f = S.filt;
   if (f === "all") return true;
@@ -735,7 +841,7 @@ const keepCell = x => {
 };
 function cellRow(c, x, keys){
   const memo = memoOf(c.id, x.key), miss = missingOf(c, x), done = cellOn(c, x);
-  const sub = !done && miss.has && miss.n ? `빠진 것 ${miss.n}개: ` + miss.req.concat(miss.chk).map(it => it.t).slice(0, 2).join(" · ") + (miss.n > 2 ? " …" : "") : x.remain && !done ? "남은 것: " + x.remain : x.desc;
+  const sub = !done && miss.has && miss.n ? `빠진 것 ${missWord(miss)}: ` + miss.req.concat(miss.chk).map(it => it.t.replace(/\*\*/g, "")).slice(0, 2).join(" · ") + (miss.n > 2 ? " …" : "") : x.remain && !done ? "남은 것: " + x.remain : x.desc;
   const tags = [keys.has(x.key) ? `<span class="pill now">지금</span>` : "", x.need ? `<span class="pill" title="계정·열쇠가 필요해요">🔑</span>` : "", memo ? `<span class="pill" title="내 메모 있음">✍︎</span>` : ""].join("");
   return `<button type="button" class="cell ${done ? "done" : x.st}${keys.has(x.key) ? " isnow" : ""}" data-cell="${esc(x.key)}" aria-label="${esc(x.title)} — ${ST[x.st].name}">
     <span class="ct"><b>${esc(x.title)}</b>${sub ? `<span>${esc(sub.replace(/`/g, ""))}</span>` : ""}</span>
@@ -780,8 +886,8 @@ function renderCell(c, x){
   /* 빠진 것 — 항목이 있는 칸은 체크 안 된 항목 그대로, 항목이 없는 칸은 지도 카드의 「빠진 것/남은 것」 글 */
   let missHtml = "";
   if (!done && !listen && miss.has) {
-    missHtml = miss.n ? `<div class="remain"><span class="lbl">빠진 것 ${miss.n}개 — 교안이 요구했는데 아직 체크 안 된 것</span>
-      ${miss.req.length ? `<ol class="miss">${miss.req.map(it => `<li>${inline(it.t)}</li>`).join("")}</ol>` : ""}
+    missHtml = miss.n ? `<div class="remain"><span class="lbl">빠진 것 — ${missWord(miss)} · 교안이 요구했는데 아직 체크 안 된 것</span>
+      ${miss.req.length ? `<ul class="miss">${miss.req.map(it => `<li>${inline(it.t)}</li>`).join("")}</ul>` : ""}
       ${miss.chk.length ? `<p class="small" style="margin-top:6px"><b>아직 답 안 한 확인 질문 ${miss.chk.length}개</b> — 아래 「확인 질문」에서 답할 수 있으면 체크해요.</p>` : ""}
       <p class="small muted" style="margin-top:6px">한 것은 아래 목록에서 눌러 체크하면 여기서 빠져요.</p></div>`
       : `<div class="remain ok"><span class="lbl">빠진 것 없음</span>요구 ${nReq}개${nChk ? `·확인 ${nChk}개` : ""}를 다 체크했어요. 끝났으면 「내가 끝냈어요」를 눌러요.</div>`;
@@ -978,6 +1084,7 @@ async function init(){
   }, () => { loaded = true; render(); });
   memoListen();
   togListen();
+  twListen();
 }
 init();
 </script>

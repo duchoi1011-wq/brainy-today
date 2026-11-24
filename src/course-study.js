@@ -25,8 +25,10 @@ function renderStudy(c){
   if (!doc) return h + `<section class="card"><p class="empty">공부 내용을 불러오는 중이에요…</p></section>`;
   (doc.pages || []).forEach((pg, i) => {
     const cells = pg.part == null ? [] : cellsOf(c).filter(x => partNo(c, x) === pg.part);
-    const done = cells.filter(x => cellOn(c, x)).length;
-    h += `<section class="card" id="page-${i}"><div class="part"><h2>${esc(pageName(pg))}</h2>${cells.length ? `<small>끝 ${done}/${cells.length}</small>` : ""}</div>
+    /* 숫자는 지도와 같은 셈 — 실습 「끝 x/N」의 N은 합친 칸·건너뛴 칸을 뺀 수, 듣기도 건너뛴 칸을 뺀다 (COUNT_RULE 한 곳) */
+    const pr = cells.filter(x => !isListen(x) && !["merged", "skip"].includes(x.st)), ls = cells.filter(x => isListen(x) && x.st !== "skip");
+    const cnt = [pr.length ? `실습 끝 ${pr.filter(x => cellOn(c, x)).length}/${pr.length}` : "", ls.length ? `듣기 끝 ${ls.filter(x => cellOn(c, x)).length}/${ls.length}` : ""].filter(Boolean).join(" · ");
+    h += `<section class="card" id="page-${i}"><div class="part"><h2>${esc(pageName(pg))}</h2>${cnt ? `<small>${cnt}</small>` : ""}</div>
       <h3 style="font-size:17px;margin:2px 0 8px">${inline(pg.title)}</h3>
       ${pg.tldr ? `<div class="tldr">${inline(pg.tldr)}</div>` : ""}
       ${(pg.secs || []).map(s => `<details class="fold sfold"${KEEP_OPEN.test(s.h) ? " open" : ""}><summary><b>${inline(s.h)}</b></summary><div class="md">${mdHtml(s.body)}</div></details>`).join("")}
@@ -47,7 +49,7 @@ function easyBox(c, x){
 function goPage(i){
   S.page = +i;
   if (view() !== "study") { location.hash = "study"; return; }
-  const el = document.getElementById("page-" + i); if (el) el.scrollIntoView({ block: "start" });
+  jumpTo(document.getElementById("page-" + i)); S.page = null;
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-page],[data-studypart]");

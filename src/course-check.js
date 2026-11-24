@@ -5,7 +5,8 @@
    그리고 그 문서에 { ok_at: at, result } 를 붙인다. 지도 카드가 바뀌면 cr.data/main 이 다시 와서 화면이 그 결과를 보여 준다.
    그 사이(보통 몇 초)에는 누른 대로 먼저 보여 준다(TOG_WAIT). 맥이 꺼져 있으면 켜질 때 적힌다. */
 let TOG = {};                               // 문서 id -> 저장소에서 받은 것
-let TOG_WAIT = lsGet("cr.tog.wait", {});    // 아직 맥이 지도 카드에 적었다고 확인 안 된 것: 문서 id -> 보낸 것
+let TOG_WAIT = lsGet("cr.tog.wait", {});    // 아직 맥이 지도 카드에 적었다고 확인 안 된 것: 문서 id -> 보낸 것 (sent: 저장소가 받았나)
+Object.values(TOG_WAIT).forEach(w => { delete w.sending; });
 const togId = (cid, key, kind, id) => memoId(cid, key + "|" + kind + "|" + (id || ""));
 
 /* 지금 보이는 체크 상태 — 기다리는 것이 있으면 그것, 없으면 볼트 지도 카드 그대로 */
@@ -26,29 +27,50 @@ function missingOf(c, x){
   return { req, chk, n: req.length + chk.length, has: (x.req || []).some(it => it.id) || (x.chk || []).some(it => it.id && it.t) };
 }
 
+/* 빠진 것 세는 말 — 요구와 확인 질문을 따로 (「빠진 것 17개」만으로는 무엇이 몇 개인지 모름) */
+const missWord = m => [m.req.length ? `요구 ${m.req.length}개` : "", m.chk.length ? `확인 질문 ${m.chk.length}개` : ""].filter(Boolean).join(" · ");
 function togSend(c, x, kind, it, done){
   const id = togId(c.id, x.key, kind, it && it.id);
-  const body = { cid: c.id, map: c.map, key: x.key, title: x.title, kind, id: it ? it.id : "", t: it ? it.t : "", done, at: nowIso() };
-  TOG_WAIT[id] = body; lsPut("cr.tog.wait", TOG_WAIT);
+  TOG_WAIT[id] = { cid: c.id, map: c.map, key: x.key, title: x.title, kind, id: it ? it.id : "", t: it ? it.t : "", done, at: nowIso(), sent: 0 };
+  lsPut("cr.tog.wait", TOG_WAIT);
   render();
-  if (!db) { toast("아직 연결이 안 됐어요. 이 기기에 두었다가 연결되면 보내요."); return; }
-  db.doc("cr.tog/" + id).set(body).then(() => toast(kind === "cell" ? (done ? "끝 표시했어요 · 볼트 지도 카드에 적는 중" : "끝 표시를 풀었어요 · 볼트에 적는 중") : (done ? "체크했어요 · 볼트 지도 카드에 적는 중" : "체크를 풀었어요 · 볼트에 적는 중")),
-    () => toast("아직 못 보냈어요. 이 기기에 두었다가 연결되면 다시 보내요."));
+  togPush(id, true);
 }
-/* 저장소 소식 — 맥이 적은 결과를 보고 기다리던 것을 놓는다. 적지 못했으면(칸·항목 글이 바뀜 등) 이유를 알리고 원래대로 */
+/* 보내기 — 저장소가 「받았다」고 답한 것만 sent:1. 못 보낸 것(sent:0)은 연결이 돌아올 때·30초마다 다시 보낸다.
+   받침은 보내기 전에 이 기기 사본을 먼저 바꾸므로, 「서버에 그 문서가 있나」로는 보냈는지 알 수 없다 (11-24 검증 높음 1 · 지침 F25). */
+function togPush(id, say){
+  const w = TOG_WAIT[id];
+  if (!w || w.sent || w.sending) return;
+  if (!db) { if (say) toast("아직 연결이 안 됐어요. 이 기기에 두었다가 연결되면 보내요."); return; }
+  w.sending = 1;
+  const { sent, sending, ...body } = w;
+  db.doc("cr.tog/" + id).set(body).then(() => {
+    w.sending = 0;
+    if (TOG_WAIT[id] !== w) return;   // 그 사이 또 누름 — 새 것이 따로 간다
+    w.sent = 1; lsPut("cr.tog.wait", TOG_WAIT);
+    if (say) toast(w.kind === "cell" ? (w.done ? "끝 표시했어요 · 볼트 지도 카드에 적는 중" : "끝 표시를 풀었어요 · 볼트에 적는 중") : (w.done ? "체크했어요 · 볼트 지도 카드에 적는 중" : "체크를 풀었어요 · 볼트에 적는 중"));
+  }, () => { w.sending = 0; if (say) toast("아직 못 보냈어요. 이 기기에 두었다가 연결되면 다시 보내요."); });
+}
+const togRetry = () => Object.keys(TOG_WAIT).forEach(id => togPush(id, false));
+window.addEventListener("online", togRetry);
+setInterval(() => { if (Object.values(TOG_WAIT).some(w => !w.sent)) togRetry(); }, 30000);
+/* 저장소 소식 — 맥이 적은 결과를 보고 기다리던 것을 놓는다. 적지 못했으면(칸·항목 글이 바뀜 등) 이유를 알리고 원래대로.
+   다른 기기가 같은 항목을 더 나중에 눌렀으면(r.at > w.at) 그쪽이 이긴다 — 이 기기의 기다림을 놓는다. 소식은 저장을 부르지 않는다(F23). */
 function togListen(){
   if (!db) return;
   db.collection("cr.tog").onSnapshot(snap => {
     const m = {};
     snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); });
     TOG = m;
+    if (!snap.metadata.fromCache && !togListen.live) { togListen.live = true; togRetry(); }   // 지난번 못 보낸 것 — 연결되면 한 번
     let changed = false;
     Object.entries(TOG_WAIT).forEach(([id, w]) => {
       const r = TOG[id];
-      if (!r) { if (!snap.metadata.fromCache && db && !w.resent) { w.resent = 1; const { resent, ...b } = w; db.doc("cr.tog/" + id).set(b).catch(() => {}); } return; }   // 못 보낸 것 — 이 화면에서 한 번만 다시 (저장이 저장을 부르지 않게, 지침 F23)
-      if (r.at !== w.at || r.ok_at !== w.at) return;   // 아직 맥이 안 적음 (또는 더 새로 누름)
+      if (!r) return;
+      if (w.sent && r.at > w.at) { delete TOG_WAIT[id]; changed = true; return; }   // 다른 기기가 더 나중에 누름
+      if (r.at !== w.at || r.ok_at !== w.at) return;   // 아직 맥이 안 적음
       if (!/^적음|^이미/.test(r.result || "")) toast("볼트에 못 적었어요 — " + (r.result || "이유 모름"));
-      if (/^적음|^이미/.test(r.result || "") && !reflected(w)) return;   // 지도 카드가 다시 올 때까지 누른 대로 보여 준다
+      else if (!reflected(w)) return;   // 지도 카드가 다시 올 때까지 누른 대로 보여 준다
       delete TOG_WAIT[id]; changed = true;
     });
     if (changed) { lsPut("cr.tog.wait", TOG_WAIT); render(); }
@@ -77,11 +99,11 @@ function checkList(c, x, kind){
   return `<ul class="checks">${L.map(it => {
     if (!it.t) return `<li class="qnote muted small">${inline(it.note || "")}</li>`;   // 안내 줄 (질문이 아님)
     if (it.skip) return `<li><span class="ck skip" aria-hidden="true">⏭</span><span class="muted">${inline(it.t)} <span class="small">— 넘김</span>${noteHtml(it.note)}</span></li>`;
-    if (naItem(it)) return `<li><span class="ck skip" aria-hidden="true">–</span><span class="muted">${inline(it.t)}${noteHtml(it.note)}</span></li>`;
+    if (naItem(it)) return `<li><span class="ck skip" aria-hidden="true">–</span><span class="muted">${inline(it.t)}${/해당 없음/.test(it.note || "") ? noteHtml(it.note) : ` <span class="small">— 해당 없음 (빠진 것으로 안 세요)</span>`}</span></li>`;
     const on = itemOn(c, x, kind, it), wait = !!TOG_WAIT[togId(c.id, x.key, kind, it.id)];
     const text = kind === "chk" ? (it.q || it.t) : it.t;
     return `<li><button type="button" class="ckrow${on ? " on" : ""}" data-tog="${esc(kind)}" data-id="${esc(it.id)}" aria-pressed="${on}" ${x.st === "done" && !x.mine ? "disabled" : ""}>
-      <span class="ck" aria-hidden="true">${on ? "✓" : ""}</span><span>${inline(text)}${noteHtml(it.note)}${wait ? ` <span class="small muted">· 볼트에 적는 중</span>` : ""}</span></button></li>`;
+      <span class="ck" aria-hidden="true">${on ? "✓" : ""}</span><span>${inline(text)}${noteHtml(it.note)}${wait ? ` <span class="small muted">· ${TOG_WAIT[togId(c.id, x.key, kind, it.id)].sent ? "볼트에 적는 중" : "아직 못 보냄 — 연결되면 보내요"}</span>` : ""}</span></button></li>`;
   }).join("")}</ul>`;
 }
 /* 칸 끝 표시 단추 — 실습은 「내가 끝냈어요」, 듣기는 「들었어요」. Brainy가 대조해 끝낸 칸은 풀지 않는다 */
@@ -94,7 +116,12 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-tog],[data-togcell]");
   if (!b) return;
   const c = course(); if (!c) return;
-  if (b.dataset.togcell !== undefined) { const x = cellBy(c, b.dataset.togcell); if (x) togSend(c, x, "cell", null, !cellOn(c, x)); return; }
+  if (b.dataset.togcell !== undefined) {
+    const x = cellBy(c, b.dataset.togcell); if (!x) return;
+    const on = cellOn(c, x), m = missingOf(c, x);
+    if (!on && !isListen(x) && m.n && !confirm(`아직 체크 안 된 것이 있어요 (${missWord(m)}).\n그래도 이 칸을 끝으로 표시할까요?`)) return;
+    togSend(c, x, "cell", null, !on); return;
+  }
   const x = cellBy(c, S.cell), it = x && (x[b.dataset.tog] || []).find(i => i.id === b.dataset.id);
   if (it) togSend(c, x, b.dataset.tog, it, !itemOn(c, x, b.dataset.tog, it));
 });

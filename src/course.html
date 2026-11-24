@@ -103,7 +103,7 @@ button{font:inherit}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--s-todo)}
 .legend i.done{background:var(--s-done)}.legend i.similar{background:var(--s-sim)}.legend i.doing{background:var(--s-doing)}.legend i.now{background:var(--now-bg);border:1px solid var(--accent)}
 .legend i.merged{background:transparent;border:1px dashed var(--s-todo)}
-details.fold>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-height:32px}
+details.fold>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px}
 details.fold>summary::-webkit-details-marker{display:none}
 details.fold>summary h2{margin:0}
 details.fold>summary::after{content:"펼치기";font-size:12px;color:var(--accent);font-weight:600}
@@ -116,7 +116,9 @@ details.fold[open]>summary{margin-bottom:8px}
 .remain .lbl,.lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);margin-bottom:2px}
 .crit{display:flex;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
 .crit:first-of-type{border-top:0}
-.crit .box{flex:none;width:22px;height:22px;border-radius:7px;border:1.5px solid var(--muted);display:grid;place-items:center;font-size:13px;font-weight:700;margin-top:2px}
+.crit .box{all:unset;box-sizing:border-box;cursor:pointer;flex:none;width:26px;height:26px;border-radius:7px;border:1.5px solid var(--muted);display:grid;place-items:center;font-size:14px;font-weight:700;margin-top:0;position:relative;color:var(--ink)}
+.crit .box::after{content:"";position:absolute;inset:-9px}  /* 누르는 자리 44px */
+.crit .box:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .crit.on .box{background:var(--s-done);border-color:var(--s-done);color:#fff}
 .crit .cb{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .crit .cb>b{font-weight:600}
@@ -212,7 +214,7 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
 /* 강의 실습 — 볼트의 강의 지도·학습 노트·지금 태스크를 보며 Brainy와 한 칸씩 실습한다.
    데이터는 볼트가 정본이다: 3_Action/33_카드/C-<강의> 수강·실습 분류.md · C-<강의> 실습 학습 노트.md · 그 지도를 잇는 32_태스크
    → 맥 동기화(볼트 .claude/scripts/course_app.py) → Supabase cr.data/main → 아래 db.doc("cr.data/main") 가 채운다. 강의 내용을 코드에 넣지 않는다.
-   이 앱이 쓰는 것: cr.memo/<강의 id>-<칸 번호표> (칸마다 내 메모) · cr.tog/<번호표> (동욱이 누른 체크 — 맥이 볼트 지도 카드에 적는다, course-check.js) · Brainy 대화(ai·bchat).
+   이 앱이 쓰는 것: cr.memo/<강의 id>-<칸 번호표> (칸마다 내 메모) · cr.tog/<번호표> (동욱이 누른 체크 — 맥이 볼트 지도 카드에 적는다, course-check.js) · taskwork/cr-<번호표> (지금 태스크 기준 줄·상태 — 맥 task_sync 가 태스크 노트에 적는다, course-task.js) · Brainy 대화(ai·bchat).
    공부 본문은 cr.study/<강의 id> (볼트 위키 요약, course-study.js). Brainy(course-practice 스킬)는 요구 대조 + 확인 질문 뒤 같은 지도 카드에 체크를 쓴다. */
 let DATA = { courses: [] };
 let db = null, loaded = false, pendingRender = false;
@@ -295,7 +297,7 @@ function renderHead(){
   const n = counts(c);
   sum.innerHTML = [
     ["k-done", "done", `${n.done}<small>/${n.goal}</small>`, "실습 끝"],
-    ["k-sim", "similar", n.similar, "🔁 빠진 것"],
+    ["k-sim", "similar", n.similar, "🔁 칸"],
     ["k-doing", "doing", n.doing, "⏳ 하는 중"],
     ["", "todo", n.todo, "남음 (아직)"],
     ["", "listen", `${n.lDone}<small>/${n.lAll}</small>`, "듣기 끝"]
@@ -321,8 +323,14 @@ function render(){
   if (!c) { main.innerHTML = `<section class="card"><p class="empty">${loaded ? "볼트에 강의 지도가 아직 없어요.<br>Brainy에게 「이 강의 분류해 줘」라고 하면 지도 카드를 만들어요." : "강의를 불러오는 중이에요…"}</p></section>`; return; }
   main.innerHTML = v === "study" ? renderStudy(c) : v === "map" ? renderMap(c) : v === "notes" ? renderNotes(c) : v === "memo" ? renderMemo(c) : v === "cell" ? renderCell(c, cellBy(c, S.cell)) : renderNow(c);
   if (v === "cell") { paintMemoState(); studyLoad(c); }
-  if (v === "study" && S.page != null) { const el = document.getElementById("page-" + S.page); if (el) { el.scrollIntoView({ block: "start" }); S.page = null; } }
+  if (v === "study" && S.page != null) { const el = document.getElementById("page-" + S.page); if (el) { jumpTo(el); S.page = null; } }
   if (S.backTo) { const el = main.querySelector(`[data-cell="${CSS.escape(S.backTo)}"]`); S.backTo = ""; if (el) el.scrollIntoView({ block: "center" }); }
+}
+/* 장·단원으로 건너뛰기 — 위에 붙은 머리 칸(강의 고르기·숫자) 아래에 제목이 보이게 (11-24 검증 중간 4) */
+function jumpTo(el){
+  if (!el) return;
+  const head = document.querySelector("header").getBoundingClientRect().bottom;
+  window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top - head - 12);
 }
 function openCell(key){
   if (document.activeElement && document.activeElement.classList.contains("memo-in")) document.activeElement.blur();   // 다른 칸으로 갈 때 쓰던 메모 칸을 놓아야 화면이 바뀐다
@@ -346,13 +354,14 @@ document.addEventListener("click", e => {
   if (d.back !== undefined) { S.backTo = S.cell; location.hash = S.from || "map"; return; }
   if (d.sum) { S.filt = d.sum; if (view() === "map") render(); else location.hash = "map"; return; }
   if (d.filt) { S.filt = d.filt; render(); return; }
-  if (d.unit) { const el = document.getElementById("unit-" + d.unit); if (el) { el.open = true; el.scrollIntoView({ block: "start" }); } return; }
+  if (d.unit) { const el = document.getElementById("unit-" + d.unit); if (el) { el.open = true; jumpTo(el); } return; }
 });
 window.addEventListener("hashchange", () => { const keep = !!S.backTo; if (!keep) window.scrollTo(0, 0); render(); });   // 칸에서 돌아오면 그 칸 줄로 (render 가 옮긴다)
 document.addEventListener("focusout", e => { if (e.target.classList && e.target.classList.contains("memo-in")) setTimeout(() => { if (pendingRender) render(); }, 0); });
 
 /*@include course-check.js*/
 /*@include course-study.js*/
+/*@include course-task.js*/
 /*@include course-now.js*/
 /*@include course-map.js*/
 /*@include course-detail.js*/
@@ -374,6 +383,7 @@ async function init(){
   }, () => { loaded = true; render(); });
   memoListen();
   togListen();
+  twListen();
 }
 init();
 </script>

@@ -11,8 +11,8 @@ function renderCell(c, x){
   /* 빠진 것 — 항목이 있는 칸은 체크 안 된 항목 그대로, 항목이 없는 칸은 지도 카드의 「빠진 것/남은 것」 글 */
   let missHtml = "";
   if (!done && !listen && miss.has) {
-    missHtml = miss.n ? `<div class="remain"><span class="lbl">빠진 것 ${miss.n}개 — 교안이 요구했는데 아직 체크 안 된 것</span>
-      ${miss.req.length ? `<ol class="miss">${miss.req.map(it => `<li>${inline(it.t)}</li>`).join("")}</ol>` : ""}
+    missHtml = miss.n ? `<div class="remain"><span class="lbl">빠진 것 — ${missWord(miss)} · 교안이 요구했는데 아직 체크 안 된 것</span>
+      ${miss.req.length ? `<ul class="miss">${miss.req.map(it => `<li>${inline(it.t)}</li>`).join("")}</ul>` : ""}
       ${miss.chk.length ? `<p class="small" style="margin-top:6px"><b>아직 답 안 한 확인 질문 ${miss.chk.length}개</b> — 아래 「확인 질문」에서 답할 수 있으면 체크해요.</p>` : ""}
       <p class="small muted" style="margin-top:6px">한 것은 아래 목록에서 눌러 체크하면 여기서 빠져요.</p></div>`
       : `<div class="remain ok"><span class="lbl">빠진 것 없음</span>요구 ${nReq}개${nChk ? `·확인 ${nChk}개` : ""}를 다 체크했어요. 끝났으면 「내가 끝냈어요」를 눌러요.</div>`;
