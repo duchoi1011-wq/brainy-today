@@ -3,7 +3,7 @@
    끝 표시(☑)는 볼트 태스크 노트의 체크 그대로 — 여기서 누르지 않는다. */
 function renderNow(c){
   const t = taskOf(c), x = nextCell(c), keys = nowKeys(c);
-  let h = c.full || c.meta ? `<p class="small muted" style="padding:0 4px">${inline(c.full || "")}${c.full && c.meta ? "<br>" : ""}${inline(c.meta || "")}</p>` : "";
+  let h = c.full || c.meta ? `<p class="small muted" style="padding:0 4px">${fullHtml(c.full)}${c.full && c.meta ? "<br>" : ""}${inline(c.meta || "")}</p>` : "";
   if (x) {
     h += `<section class="card nowcell"><h2>지금 할 칸</h2>
       <div class="meta">${esc(partOf(c, x))}${keys.has(x.key) ? ` · <span class="pill now">지금 태스크</span>` : ""} ${pill(x.st)}</div>

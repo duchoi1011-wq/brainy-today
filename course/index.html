@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "0a00630459"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.marks", "bchat"]};</script>
-<script src="../shim.js?v=0a00630459"></script>
+<script>window.BRAINY_VERSION = "2680154686"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "bchat"]};</script>
+<script src="../shim.js?v=2680154686"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,7 +63,6 @@ header>.brand{padding-right:min(46vw,190px)}
   --bg:#F1F1F6; --surface:#FFFFFF; --surface-2:#F6F6FA; --ink:#15161C; --muted:#5E6170; --line:#DADBE5;
   --accent:#5B45D6; --accent-ink:#FFFFFF; --now-bg:#EEEAFE;
   --s-done:#1C9467; --s-sim:#B97F00; --s-doing:#3A78D4; --s-todo:#A3A6B3;
-  --ok-bg:#E3F4EC; --warn-bg:#FCF1DA;
   --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -71,13 +70,13 @@ header>.brand{padding-right:min(46vw,190px)}
   --bg:#101117; --surface:#181A22; --surface-2:#1E2029; --ink:#E9EAF2; --muted:#9A9DAE; --line:#2B2E3A;
   --accent:#8F7DFF; --accent-ink:#120D2B; --now-bg:#231F3D;
   --s-done:#38C18A; --s-sim:#F0B52A; --s-doing:#5C9BF0; --s-todo:#5E6272;
-  --ok-bg:#163126; --warn-bg:#33290F; color-scheme:dark;
+  color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#101117; --surface:#181A22; --surface-2:#1E2029; --ink:#E9EAF2; --muted:#9A9DAE; --line:#2B2E3A;
   --accent:#8F7DFF; --accent-ink:#120D2B; --now-bg:#231F3D;
   --s-done:#38C18A; --s-sim:#F0B52A; --s-doing:#5C9BF0; --s-todo:#5E6272;
-  --ok-bg:#163126; --warn-bg:#33290F; color-scheme:dark;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
@@ -91,6 +90,8 @@ h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.01em}
 .brand small{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .brand #sub{font-family:var(--f-body);flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brand .out{font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
+/* 머리말 작은 링크 — 보이는 크기는 그대로, 누르는 자리만 44px (위아래로 넓힘) */
+.brand .links a,.brand .links .out{display:inline-flex;align-items:center;min-height:44px;margin-block:-13px;padding-inline:2px}
 main{display:flex;flex-direction:column;gap:16px;padding-top:16px;min-width:0}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
 h2{font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--muted);margin:0 0 12px}
@@ -100,27 +101,27 @@ a{color:var(--accent)}
 .muted{color:var(--muted)}
 .small{font-size:13px}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--warn-bg)}
-.stack{display:flex;flex-direction:column;gap:12px}
 .empty{padding:22px 4px;text-align:center;color:var(--muted)}
 code{font-family:var(--f-mono);font-size:.88em;background:var(--surface-2);border:1px solid var(--line);padding:0 5px;border-radius:5px;overflow-wrap:anywhere}
 button{font:inherit}
 .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 16px;border-radius:10px;font-weight:600;cursor:pointer;min-height:44px;text-align:center}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.btn.ghost{background:transparent}
 .btn:disabled{opacity:.5;cursor:default}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 .btns .btn{flex:1 1 160px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;min-height:36px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;min-height:44px}
 .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip b{font-family:var(--f-mono);font-weight:500;font-size:12px;margin-left:4px;opacity:.8}
 /* 강의 고르기 — 단어장의 단어장 고르기와 같은 띠 */
 .seg{display:flex;gap:0;margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow-x:auto;background:var(--surface);scrollbar-width:none}
 .seg::-webkit-scrollbar{display:none}
-.seg button{flex:1 0 auto;border:0;background:transparent;color:var(--muted);padding:8px 12px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;min-height:40px}
+.seg button{flex:1 0 auto;border:0;background:transparent;color:var(--muted);padding:8px 12px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;min-height:44px}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button.on{background:var(--accent);color:var(--accent-ink)}
+/* 강의가 화면 밖에도 있으면 오른쪽 끝을 흐리게 + ›  (옆으로 밀어 보라는 표시) */
+.segwrap{position:relative}
+.segwrap.more::after{content:"›";position:absolute;right:1px;top:11px;bottom:1px;width:36px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:20px;font-weight:700;color:var(--accent);background:linear-gradient(90deg,transparent,var(--surface) 60%);border-radius:0 10px 10px 0;pointer-events:none}
 .seg button span{font-family:var(--f-mono);font-weight:500;font-size:11px;margin-left:5px;opacity:.8}
 /* 머리말 숫자 — 누르면 지도에서 그 칸만 */
 .sum{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:10px}
@@ -176,7 +177,7 @@ details.fold[open]>summary{margin-bottom:8px}
 .crit .cb>p{font-size:13.5px;color:var(--muted)}
 .crit .cb .btns .btn{flex:0 1 auto;padding:8px 14px;font-size:14px}
 /* 칸 자세히 */
-.back{all:unset;cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;min-height:36px;display:inline-flex;align-items:center}
+.back{all:unset;cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;min-height:44px;display:inline-flex;align-items:center}
 .sec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
 .sec:first-child{border-top:0;padding-top:0;margin-top:0}
 .reqs{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
@@ -184,9 +185,11 @@ details.fold[open]>summary{margin-bottom:8px}
 .reqs li::before{content:"";flex:none;width:16px;height:16px;margin-top:4px;border:1.5px solid var(--muted);border-radius:4px}
 .reqs li.na{color:var(--muted)}.reqs li>span{flex:1;min-width:0}
 .qs{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:14.5px}
+.qs li.qnote{list-style:none;margin-left:-22px}
+a.ext{display:inline-flex;align-items:center;min-height:44px;margin-block:-12px;font-weight:600}
 .plain{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .plain li{padding-left:14px;position:relative}.plain li::before{content:"·";position:absolute;left:2px;color:var(--muted)}
-textarea{width:100%;font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:96px;resize:vertical}
+textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:96px;resize:vertical}
 textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .saved{font-size:12px;color:var(--muted);min-height:18px}
 .saved.fail{color:var(--s-sim)}
@@ -220,8 +223,8 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
 
 <div class="wrap">
   <header>
-    <div class="brand"><h1>강의 실습</h1><small id="sub">볼트 강의 지도와 같이</small><small class="muted" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" class="out" data-brainy="out">로그아웃</button></small></div>
-    <div class="seg" id="courses" role="tablist" aria-label="강의 고르기"></div>
+    <div class="brand"><h1>강의 실습</h1><small id="sub">볼트 강의 지도와 같이</small><small class="muted links" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" class="out" data-brainy="out">로그아웃</button></small></div>
+    <div class="segwrap" id="segwrap"><div class="seg" id="courses" role="tablist" aria-label="강의 고르기"></div></div>
     <div class="sum" id="sum"></div>
   </header>
   <main id="view"></main>
@@ -352,7 +355,7 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
 /* 강의 실습 — 볼트의 강의 지도·학습 노트·지금 태스크를 보며 Brainy와 한 칸씩 실습한다.
    데이터는 볼트가 정본이다: 3_Action/33_카드/C-<강의> 수강·실습 분류.md · C-<강의> 실습 학습 노트.md · 그 지도를 잇는 32_태스크
    → 맥 동기화(볼트 .claude/scripts/course_app.py) → Supabase cr.data/main → 아래 db.doc("cr.data/main") 가 채운다. 강의 내용을 코드에 넣지 않는다.
-   이 앱이 쓰는 것: cr.marks/<강의 id> (내 메모) 와 Brainy 대화(ai·bchat)뿐. ✅ 끝 표시는 앱이 바꾸지 않는다 —
+   이 앱이 쓰는 것: cr.memo/<강의 id>-<칸 번호표> (칸마다 내 메모) 와 Brainy 대화(ai·bchat)뿐. ✅ 끝 표시는 앱이 바꾸지 않는다 —
    Brainy(course-practice 스킬)가 요구사항 대조 + 확인 질문 뒤 볼트 지도 카드에 쓰고, 동기화가 되돌려 보여 준다. */
 let DATA = { courses: [] };
 let db = null, loaded = false, pendingRender = false;
@@ -390,6 +393,8 @@ function counts(c){
   const L = c ? c.listen.filter(x => x.st !== "skip") : [];
   return { ...n, all: practice(c).length, goal: practice(c).length - n.merged - n.skip, lDone: L.filter(x => x.st === "done").length, lAll: L.length };
 }
+/* 숫자 세는 법 (한 곳) — 실습 끝 x/N 의 N 과 듣기 끝 x/N 의 N 은 「다른 칸과 합침」·「건너뜀」 칸을 뺀 수. 화면 글 COUNT_RULE 도 이것 하나 */
+const COUNT_RULE = "끝 x/N 의 N은 합친 칸·건너뛴 칸을 빼고 세요.";
 /* 지금 태스크 — 지도 칸과 이어진 완료 기준이 있는 태스크 (동기화가 진행 → 할일 순으로 보낸다) */
 const taskOf = c => !c || !c.tasks.length ? null : (c.tasks.find(t => t.crit.some(k => k.cell)) || c.tasks[0]);
 const nowKeys = c => { const t = taskOf(c); return new Set(t ? t.crit.filter(k => k.cell && !k.done).map(k => k.cell) : []); };
@@ -411,6 +416,13 @@ const doBtn = (x, cls = "primary") => isListen(x)
   ? `<button type="button" class="btn ${cls}" data-listen="${esc(x.key)}">✦ Brainy에게 3줄 요약 듣기</button>`
   : `<button type="button" class="btn ${cls}" data-do="${esc(x.key)}">✦ Brainy와 이 칸 하기</button>`;
 
+function segMore(){ const seg = document.getElementById("courses"); document.getElementById("segwrap").classList.toggle("more", seg.scrollLeft + seg.clientWidth < seg.scrollWidth - 4); }
+window.addEventListener("resize", segMore);
+document.getElementById("courses").addEventListener("scroll", segMore, { passive: true });
+/* 교안 정보(지도 카드 source) — 맨 주소면 「교안 열기」 링크로 */
+const fullHtml = s => /^https?:\/\/\S+$/.test(s || "") ? `<a class="ext" href="${esc(s)}" target="_blank" rel="noopener">교안 열기 ↗</a>` : inline(s || "");
+/* 「~로 / ~으로」: 받침이 있으면(ㄹ 받침 빼고) 「으로」 */
+const josaRo = w => { const ch = String(w).trim().slice(-1).charCodeAt(0) - 0xAC00; if (ch < 0 || ch > 11171) return "로"; const jong = ch % 28; return jong && jong !== 8 ? "으로" : "로"; };
 function toast(msg){
   let el = document.getElementById("toast");
   if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
@@ -431,7 +443,10 @@ function renderHead(){
     ["", "todo", n.todo, "남음 (아직)"],
     ["", "listen", `${n.lDone}<small>/${n.lAll}</small>`, "듣기 끝"]
   ].map(([k, f, v, t]) => `<button type="button" class="${k}" data-sum="${f}" aria-label="${t} ${String(v).replace(/<[^>]+>/g, "")} — 지도에서 보기"><b>${v}</b><span>${t}</span></button>`).join("");
-  document.getElementById("sub").textContent = c.full ? c.full.split(" · ")[0] : "볼트 강의 지도와 같이";
+  document.getElementById("sub").textContent = c.full && !/^https?:/.test(c.full) ? c.full.split(" · ")[0] : c.name + " 강의";
+  const seg = document.getElementById("courses"), on = seg.querySelector(".on");
+  if (on && (on.offsetLeft < seg.scrollLeft || on.offsetLeft + on.offsetWidth > seg.scrollLeft + seg.clientWidth)) seg.scrollLeft = on.offsetLeft - 8;
+  segMore();
 }
 
 /* ── 화면 고르기 ── */
@@ -482,7 +497,7 @@ document.addEventListener("focusout", e => { if (e.target.classList && e.target.
    끝 표시(☑)는 볼트 태스크 노트의 체크 그대로 — 여기서 누르지 않는다. */
 function renderNow(c){
   const t = taskOf(c), x = nextCell(c), keys = nowKeys(c);
-  let h = c.full || c.meta ? `<p class="small muted" style="padding:0 4px">${inline(c.full || "")}${c.full && c.meta ? "<br>" : ""}${inline(c.meta || "")}</p>` : "";
+  let h = c.full || c.meta ? `<p class="small muted" style="padding:0 4px">${fullHtml(c.full)}${c.full && c.meta ? "<br>" : ""}${inline(c.meta || "")}</p>` : "";
   if (x) {
     h += `<section class="card nowcell"><h2>지금 할 칸</h2>
       <div class="meta">${esc(partOf(c, x))}${keys.has(x.key) ? ` · <span class="pill now">지금 태스크</span>` : ""} ${pill(x.st)}</div>
@@ -546,11 +561,11 @@ function renderMap(c){
   const fcount = f => f === "all" ? n.all + c.listen.length : f === "listen" ? c.listen.length : f === "left" ? n.similar + n.doing + n.todo : n[f];
   /* 거르기 줄은 옆으로 밀리는 한 줄 — 본 목록이 첫 화면에 보이게 (색 뜻은 그 밑 한 줄, 자세한 뜻은 칸을 열면) */
   let h = `<div><div class="filt" role="group" aria-label="칸 거르기">${FILTS.map(([f, t]) => `<button type="button" class="chip ${S.filt === f ? "on" : ""}" data-filt="${f}" aria-pressed="${S.filt === f}">${t}<b>${fcount(f)}</b></button>`).join("")}</div>
-    <div class="legend" aria-label="색 뜻">${["done", "similar", "doing", "todo", "merged"].map(s => `<span title="${esc(ST[s].how)}"><i class="${s}"></i>${ST[s].name}</span>`).join("")}<span><i class="now"></i>지금 태스크</span></div></div>`;
+    <div class="legend" aria-label="색 뜻">${["done", "similar", "doing", "todo", "merged"].map(s => `<span title="${esc(ST[s].how)}"><i class="${s}"></i>${ST[s].name}</span>`).join("")}<span><i class="now"></i>지금 태스크</span></div><p class="small muted" style="margin-top:4px">칩의 숫자는 그 칸 수 그대로예요. ${COUNT_RULE}</p></div>`;
   const showListen = S.filt === "all" || S.filt === "listen";
   if (showListen && c.listen.length) {
     const L = c.listen.filter(keepCell);
-    h += `<section class="card"><details class="fold"${S.filt === "listen" ? " open" : ""}><summary><h2>🎧 듣기만 · 끝 ${n.lDone}/${n.lAll}</h2></summary>
+    h += `<section class="card"><details class="fold"${S.filt === "listen" ? " open" : ""}><summary><h2>🎧 듣기만 ${c.listen.length}칸 · 끝 ${n.lDone}/${n.lAll}${c.listen.length > n.lAll ? ` (건너뜀 ${c.listen.length - n.lAll}칸 뺌)` : ""}</h2></summary>
       <p class="small muted" style="margin-bottom:6px">실습 문제가 없는 차시예요. 실습 사이에 Brainy가 필요한 것만 3줄로 요약해 줘요.</p>
       <div>${L.map(x => cellRow(c, x, keys)).join("")}</div></details></section>`;
   }
@@ -568,50 +583,18 @@ function renderMap(c){
 }
 
 /* ── 칸 자세히 — 제목 · 상태 · 남은 것 · 요구(완료 기준, 읽기만) · 확인 질문 · 결과 · 원문 · 교안 오류 · 재료 · 열쇠 · 내 메모 (build.py 가 course.html 에 끼움) ──
-   볼트 지도 카드의 칸 밑 줄(원문·요구·확인·결과·교안 오류)을 그대로 보여 준다. 줄은 「 · 」로 나뉜 항목 — 괄호·따옴표·코드 안의 「 · 」는 나누지 않는다.
-   확인 줄은 끝낼 때 Brainy가 물을 질문으로 바꿔 보여 준다 (글은 볼트 그대로, 끝말만 「~할 수 있나요?」). */
-function splitItems(s){
-  const out = []; let cur = "", depth = 0, tick = false;
-  const open = "(（「『[", close = ")）」』]";
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    if (ch === "`") tick = !tick;
-    else if (!tick && open.includes(ch)) depth++;
-    else if (!tick && close.includes(ch)) depth = Math.max(0, depth - 1);
-    if (!tick && depth === 0 && s.startsWith(" · ", i)) { out.push(cur.trim()); cur = ""; i += 2; continue; }
-    cur += ch;
-  }
-  if (cur.trim()) out.push(cur.trim());
-  /* 값 나열(「`allowAll` · `denyAll`」 「rm -rf · sudo」 「/help · /init」)은 한 항목으로 다시 붙인다 — 앞이 영문·코드로 끝나고 뒤가 영문·코드로 시작하면 */
-  return out.filter(Boolean).reduce((acc, x) => {
-    const prev = acc[acc.length - 1];
-    if (prev && /[A-Za-z0-9_`'")\]*.\-]$/.test(prev) && /^[`A-Za-z\/\-.]/.test(x) && !/^(Step|STEP|Clip|Part)\b/.test(x)) acc[acc.length - 1] = prev + " · " + x;
-    else acc.push(x);
-    return acc;
-  }, []);
-}
-function asQuestion(s){
-  s = s.trim().replace(/[.。]$/, "");
-  const rules = [
-    [/할 수 있다$/, "할 수 있나요?"], [/수 있는가$/, "수 있나요?"], [/할 수 있음$/, "할 수 있나요?"],
-    [/(이해|확인|설치|실행|사용|작성|선택|적용|체험|등록|생성|입력|해결)했다$/, "$1했나요?"], [/했다$/, "했나요?"],
-    [/안다$/, "알고 있나요?"], [/있다$/, "있나요?"], [/된다$/, "되나요?"], [/나온다$/, "나오나요?"], [/보여 준다$/, "보여 주나요?"], [/인가$/, "인가요?"],
-    [/설명$/, "설명할 수 있나요?"], [/말하기$/, "말할 수 있나요?"], [/하기$/, "할 수 있나요?"],
-    [/(이해|확인|설치|실행|사용|작성|선택|적용|체험|등록|생성|입력|해결|완료)$/, "$1했나요?"]
-  ];
-  for (const [re, to] of rules) if (re.test(s)) return s.replace(re, to);
-  return /[?？]$/.test(s) ? s : s + " — 할 수 있나요?";
-}
-const isNote = s => /다\.?$/.test(s.trim()) && !/(수 있다|안다|했다)\.?$/.test(s.trim());   // 「원문에 없음. …이다.」 같은 설명 줄은 질문으로 바꾸지 않는다
+   볼트 지도 카드의 칸 밑 줄(원문·요구·확인·결과·교안 오류)을 보여 주기만 한다. 항목 나누기·판정 메모 떼기·질문 끝말은 맥 동기화(course_app.py)가 한 곳에서 정해 보낸다:
+   req [{t, note}] · chk [{t, q, note}] (q 가 비면 원문 t 그대로, t 가 비면 안내 줄) · out·err [글]. */
 function renderCell(c, x){
   const keys = nowKeys(c), memo = memoOf(c.id, x.key), listen = isListen(x);
   const sec = (title, body) => body ? `<div class="sec"><span class="lbl">${title}</span>${body}</div>` : "";
-  const reqs = x.req ? `<ul class="reqs">${splitItems(x.req).map(r => `<li class="${/해당 없음/.test(r) ? "na" : ""}"><span>${inline(r)}</span></li>`).join("")}</ul>` : "";
-  const chk = x.chk ? (() => { const L = splitItems(x.chk); const notes = L.filter(isNote), qs = L.filter(q => !isNote(q));
-    return (notes.length ? `<p class="small muted">${notes.map(inline).join(" ")}</p>` : "") + (qs.length ? `<ol class="qs">${qs.map(q => `<li>${inline(asQuestion(q))}</li>`).join("")}</ol>` : ""); })() : "";
-  const list = s => `<ul class="plain">${splitItems(s).map(r => `<li>${inline(r)}</li>`).join("")}</ul>`;
+  const noteHtml = n => n ? ` <span class="muted small">— ${remainHtml(n)}</span>` : "";
+  const reqs = (x.req || []).length ? `<ul class="reqs">${x.req.map(r => `<li class="${/해당 없음/.test(r.note || r.t) ? "na" : ""}"><span>${inline(r.t)}${noteHtml(r.note)}</span></li>`).join("")}</ul>` : "";
+  const chk = (x.chk || []).length ? `<ol class="qs">${x.chk.map(q => q.t ? `<li>${inline(q.q || q.t)}${noteHtml(q.note)}</li>` : `<li class="qnote muted small">${inline(q.note)}</li>`).join("")}</ol>` : "";
+  const list = L => (L || []).length ? `<ul class="plain">${L.map(r => `<li>${inline(r)}</li>`).join("")}</ul>` : "";
+  const back = { now: "지금", memo: "내 메모", notes: "배운 것", map: "지도" }[S.from] || "지도";
   return `<section class="card">
-    <button type="button" class="back" data-back>← ${S.from === "now" ? "지금" : S.from === "memo" ? "내 메모" : S.from === "notes" ? "배운 것" : "지도"}로</button>
+    <button type="button" class="back" data-back>← ${back}${josaRo(back)} 돌아가기</button>
     <div class="meta" style="margin-top:6px">${esc(partOf(c, x))}${keys.has(x.key) ? ` · <span class="pill now">지금 태스크</span>` : ""}</div>
     <h3 style="margin:4px 0 8px">${esc(x.title)}</h3>
     <div class="meta">${pill(x.st)}<span>${esc(ST[x.st].how)}</span></div>
@@ -621,15 +604,15 @@ function renderCell(c, x){
   </section>
   <section class="card">
     ${sec("지도 카드에 적힌 것", x.desc && x.desc.replace(x.remain || "", "").replace(/[🔁⏳✅·\s]|(빠진|남은) 것\s*[:：]/g, "") ? `<p>${inline(x.desc)}</p>` : "")}
-    ${sec(`요구 — 교안이 정한 완료 기준 (${x.req ? splitItems(x.req).length : 0}개, 다 맞아야 끝)`, reqs)}
-    ${sec("끝낼 때 Brainy가 물어볼 질문", chk)}
-    ${sec("이 실습이 만드는 것", x.out ? list(x.out) : "")}
+    ${sec(`요구 — 교안이 정한 완료 기준 (${(x.req || []).length}개, 다 맞아야 끝)`, reqs)}
+    ${sec("끝낼 때 Brainy가 확인할 것 — 질문으로 물어요", chk)}
+    ${sec("이 실습이 만드는 것", list(x.out))}
     ${sec("📎 쓸 재료 — 동욱의 실제 파일·자료", x.mat ? `<p>${inline(x.mat)}</p>` : "")}
     ${sec("🔑 계정·열쇠 필요 — 로그인·열쇠는 동욱이 직접 넣어요", x.need ? `<p>${inline(x.need)}</p>` : "")}
-    ${sec("교안이 틀린 곳 — 실제 도구와 달라 고쳐서 해요", x.err ? list(x.err) : "")}
+    ${sec("교안이 틀린 곳 — 실제 도구와 달라 고쳐서 해요", list(x.err))}
     ${sec("원문 위치 — 볼트 교안의 줄 번호", x.src ? `<p class="small">${inline(x.src)}</p>` : "")}
     ${sec("그 밖에 적힌 것", x.extra ? `<ul class="plain">${x.extra.map(r => `<li>${inline(r)}</li>`).join("")}</ul>` : "")}
-    ${!x.req && !x.chk && !x.out && !x.src && !listen ? `<p class="small muted">이 칸에는 아직 교안 대조 줄(원문·요구·확인)이 없어요. Brainy와 이 칸을 할 때 원문에서 옮겨 적어요.</p>` : ""}
+    ${!(x.req || []).length && !(x.chk || []).length && !(x.out || []).length && !x.src && !listen ? `<p class="small muted">이 칸에는 아직 교안 대조 줄(원문·요구·확인)이 없어요. Brainy와 이 칸을 할 때 원문에서 옮겨 적어요.</p>` : ""}
     <p class="small muted sec">정본: 볼트 「${esc(c.map.split("/").pop().replace(/\.md$/, ""))}」 ${x.line}번째 줄</p>
   </section>
   ${memoBox(c, x, memo)}`;
@@ -692,9 +675,9 @@ function renderNotes(c){
   const units = n.units.slice().sort((a, b) => a.n - b.n);
   const have = new Set(units.map(u => u.n));
   let h = `<section class="card"><h2>단원 목록 · ${(n.list.length || units.length)}개</h2><p class="small muted" style="margin-bottom:6px">실습 칸마다 무엇을 배웠는지 모은 볼트 노트예요. 누르면 그 단원으로 가요.</p><div class="ulist">` +
-    (n.list.length ? n.list : units.map(u => ({ n: u.n, cell: u.title, state: "" }))).map(r => {
+    (n.list.length ? n.list : units.map(u => ({ n: u.n, what: u.title, state: "" }))).map(r => {
       const ok = have.has(r.n);
-      return `<button type="button" class="cell ${ok ? "done" : "todo"}"${ok ? ` data-unit="${r.n}"` : " disabled"}><span class="ct"><b>단원 ${esc(r.n)} · ${inline(r.cell)}</b>${r.state ? `<span>${esc(r.state.replace(/`/g, ""))}</span>` : ""}</span><span class="tags">${ok ? `<span class="pill">읽기</span>` : `<span class="pill">아직 본문 없음</span>`}</span></button>`;
+      return `<button type="button" class="cell ${ok ? "done" : "todo"}"${ok ? ` data-unit="${r.n}"` : " disabled"}><span class="ct"><b>단원 ${esc(r.n)} · ${inline(r.what)}</b>${r.state ? `<span>${esc(r.state.replace(/`/g, ""))}</span>` : ""}</span><span class="tags">${ok ? `<span class="pill">읽기</span>` : `<span class="pill">아직 본문 없음</span>`}</span></button>`;
     }).join("") + `</div></section>`;
   units.forEach((u, k) => {
     h += `<section class="card"><details class="fold unit" id="unit-${u.n}"${k === 0 ? " open" : ""}><summary><b>단원 ${u.n}. ${inline(u.title)}</b></summary>
@@ -704,48 +687,51 @@ function renderNotes(c){
 }
 
 /* ── 내 메모 — 칸마다 동욱이 적는 메모 (build.py 가 course.html 에 끼움) ──
-   저장: Supabase cr.marks/<강의 id> = { memo: { 칸 key: { t 글, at 쓴 시각, title 칸 제목 } }, updatedAt } — 모든 기기에서 같다.
-   이 앱이 직접 쓰는 유일한 자료다(볼트에는 안 들어간다). 지운 메모도 { t: "" , at } 로 남겨 두 기기가 합칠 때 되살아나지 않게 한다.
-   합치기: 칸마다 at 이 늦은 쪽이 이긴다. 저장이 실패하면 이 기기(localStorage cr.memo)에 두고 다시 이어지면 보낸다. */
-let MEMO = lsGet("cr.memo", {});          // 강의 id -> { 칸 key -> {t, at, title} }
-let DIRTY = lsGet("cr.memo.dirty", {});   // 아직 저장소에 못 보낸 강의 id
+   저장: 칸 하나 = 문서 하나 — Supabase cr.memo/<강의 id>-<칸 번호표> = { cid, key 칸 key, title 칸 제목, t 글, at 쓴 시각 }.
+   칸마다 따로라서 두 기기가 다른 칸에 쓰면 서로 지우지 않는다. 같은 칸이면 나중에 쓴 글이 남는다. 지운 메모는 t: "" 로 남는다.
+   이 앱이 직접 쓰는 유일한 자료다(볼트에는 안 들어간다).
+   저장은 「쓰기 → 0.7초 쉬면 그 칸 하나만 보낸다」 뿐이다. 저장소에서 온 소식(스냅숏)은 화면만 맞추고 절대 저장을 부르지 않는다
+   (2026-11-24 검증: 소식마다 다시 보내 한 번 쓰기가 실시간 UPDATE 약 1,400건이 됨 — 11-19 전송량 초과 선례).
+   못 보낸 칸은 이 기기(localStorage cr.memo.wait)에 두었다가 연결이 돌아오면(online · 30초마다) 그 칸만 다시 보낸다. */
+let MEMO = {};                              // 문서 id -> {cid, key, title, t, at}  (저장소에서 받은 것)
+let WAIT = lsGet("cr.memo.wait", {});       // 아직 저장소가 받았다고 확인 안 된 칸: 문서 id -> 같은 모양
+Object.values(WAIT).forEach(d => { delete d.sending; });
 let memoT = 0, memoState = "";
-const memoOf = (cid, key) => ((MEMO[cid] || {})[key] || {}).t || "";
-function memoMerge(cid, remote){
-  const mine = MEMO[cid] || {}, all = { ...remote };
-  Object.keys(mine).forEach(k => { if (!all[k] || (mine[k].at || "") > (all[k].at || "")) all[k] = mine[k]; });
-  MEMO[cid] = all;
-  return JSON.stringify(all) !== JSON.stringify(remote);   // 이 기기에만 있는 게 있으면 true
-}
+const memoId = (cid, key) => { let h = 2166136261; for (const ch of key) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return cid + "-" + (h >>> 0).toString(36); };
+const memoGet = (cid, key) => WAIT[memoId(cid, key)] || MEMO[memoId(cid, key)] || null;
+const memoOf = (cid, key) => (memoGet(cid, key) || {}).t || "";
 function memoListen(){
   if (!db) return;
-  db.collection("cr.marks").onSnapshot(snap => {
-    snap.docs.forEach(d => { if (!d.exists) return; const v = d.data() || {}; if (memoMerge(d.id, v.memo || {}) && !d.metadata.fromCache) DIRTY[d.id] = 1; });
-    lsPut("cr.memo", MEMO);
-    memoFlush();
-    if (["memo", "map", "cell"].includes(view())) render();
+  db.collection("cr.memo").onSnapshot(snap => {
+    const m = {};
+    snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); });
+    MEMO = m;
+    if (!snap.metadata.fromCache && !memoListen.live) { memoListen.live = true; memoRetry(); }   // 지난번 못 보낸 칸 — 처음 한 번만
+    if (["memo", "map", "cell"].includes(view())) render();   // 쓰는 중이면 render 가 미룬다 — 여기서 저장은 부르지 않는다
   }, () => {});
 }
-function memoSet(cid, key, title, t){
-  MEMO[cid] = MEMO[cid] || {};
-  MEMO[cid][key] = { t, at: nowIso(), title };
-  DIRTY[cid] = 1; lsPut("cr.memo", MEMO); lsPut("cr.memo.dirty", DIRTY);
+function memoSet(c, x, t){
+  const id = memoId(c.id, x.key);
+  WAIT[id] = { cid: c.id, key: x.key, title: x.title, t, at: nowIso() };
+  lsPut("cr.memo.wait", WAIT);
   memoState = "saving"; paintMemoState();
-  clearTimeout(memoT); memoT = setTimeout(memoFlush, 700);
+  clearTimeout(memoT); memoT = setTimeout(() => { memoT = 0; memoSend(id); }, 700);
 }
-function memoFlush(){
-  const ids = Object.keys(DIRTY);
-  if (!ids.length) return;
+function memoSend(id){
+  const doc = WAIT[id];
+  if (!doc || doc.sending) return;
   if (!db) { memoState = "fail"; paintMemoState(); return; }
-  ids.forEach(cid => {
-    db.doc("cr.marks/" + cid).set({ memo: MEMO[cid] || {}, updatedAt: nowIso() }).then(() => {
-      delete DIRTY[cid]; lsPut("cr.memo.dirty", DIRTY);
-      if (!Object.keys(DIRTY).length) { memoState = "saved"; paintMemoState(); }
-    }, () => { memoState = "fail"; paintMemoState(); });
-  });
+  doc.sending = true;
+  const { sending, ...body } = doc;
+  db.doc("cr.memo/" + id).set(body).then(() => {
+    if (WAIT[id] === doc) { delete WAIT[id]; lsPut("cr.memo.wait", WAIT); }   // 보내는 사이 더 썼으면 그 글은 다음 차례에
+    MEMO[id] = body;
+    if (WAIT[id]) memoSend(id); else { memoState = "saved"; paintMemoState(); }   // 저장소가 받은 글 = 지금 칸의 글일 때만 「저장했어요」
+  }, () => { doc.sending = false; memoState = "fail"; paintMemoState(); });
 }
-window.addEventListener("online", memoFlush);
-setInterval(() => { if (Object.keys(DIRTY).length) memoFlush(); }, 30000);
+const memoRetry = () => { if (!memoT) Object.keys(WAIT).forEach(memoSend); };
+window.addEventListener("online", memoRetry);
+setInterval(() => { if (Object.keys(WAIT).length) memoRetry(); }, 30000);
 function paintMemoState(){
   const el = document.getElementById("memo-state"); if (!el) return;
   el.className = "saved" + (memoState === "fail" ? " fail" : "");
@@ -759,19 +745,22 @@ function memoBox(c, x, memo){
 document.addEventListener("input", e => {
   if (e.target.id !== "memo-in") return;
   const c = course(), x = c && cellBy(c, e.target.dataset.key);
-  if (x) memoSet(c.id, x.key, x.title, e.target.value);
+  if (x) memoSet(c, x, e.target.value);
 });
 
 /* 「내 메모」 탭 — 이 강의에서 메모를 적은 칸 전부 (최근 순) */
+function memoList(cid){
+  const all = { ...MEMO, ...WAIT };
+  return Object.values(all).filter(v => v && v.cid === cid && (v.t || "").trim()).sort((a, b) => (b.at || "").localeCompare(a.at || ""));
+}
 function renderMemo(c){
-  const m = MEMO[c.id] || {};
-  const rows = Object.keys(m).filter(k => (m[k].t || "").trim()).sort((a, b) => (m[b].at || "").localeCompare(m[a].at || ""));
-  const other = DATA.courses.filter(o => o !== c).map(o => [o, Object.values(MEMO[o.id] || {}).filter(v => (v.t || "").trim()).length]).filter(([, n]) => n);
+  const rows = memoList(c.id);
+  const other = DATA.courses.filter(o => o !== c).map(o => [o, memoList(o.id).length]).filter(([, n]) => n);
   let h = `<section class="card"><h2>내 메모 · ${rows.length}칸</h2>`;
   if (!rows.length) h += `<p class="empty">아직 적은 메모가 없어요.<br>지도에서 칸을 열면 맨 아래에 메모 칸이 있어요. 쓰면 바로 저장되고 모든 기기에서 같아요.</p>`;
-  else h += rows.map(k => {
-    const x = cellBy(c, k), v = m[k], when = new Date(v.at);
-    return `<button type="button" class="cell ${x ? x.st : "todo"}"${x ? ` data-cell="${esc(k)}"` : " disabled"}><span class="ct"><b>${esc(x ? x.title : v.title || k)}</b><span style="white-space:pre-wrap;-webkit-line-clamp:4">${esc(v.t)}</span></span>
+  else h += rows.map(v => {
+    const x = cellBy(c, v.key), when = new Date(v.at);
+    return `<button type="button" class="cell ${x ? x.st : "todo"}"${x ? ` data-cell="${esc(v.key)}"` : " disabled"}><span class="ct"><b>${esc(x ? x.title : v.title || v.key)}</b><span style="white-space:pre-wrap;-webkit-line-clamp:4">${esc(v.t)}</span></span>
       <span class="tags">${x ? pill(x.st) : `<span class="pill" title="지도에서 칸 이름이 바뀌어 못 찾았어요">칸 없음</span>`}<small class="muted mono">${when.getMonth() + 1}/${when.getDate()}</small></span></button>`;
   }).join("");
   h += `</section>`;
@@ -812,8 +801,10 @@ init();
   function cellText(c, x) {
     return ["  · 칸: " + partOf(c, x) + " › " + x.title + " [" + ST[x.st].icon + " " + ST[x.st].name + "] (지도 카드 " + x.line + "번째 줄)",
       x.remain ? "  · 남은 것: " + x.remain : "", x.desc ? "  · 지도에 적힌 것: " + x.desc : "",
-      x.src ? "  · 원문: " + x.src : "", x.req ? "  · 요구: " + x.req : "", x.chk ? "  · 확인: " + x.chk : "",
-      x.out ? "  · 결과: " + x.out : "", x.err ? "  · 교안 오류: " + x.err : "", x.mat ? "  · 📎 재료: " + x.mat : "", x.need ? "  · 🔑 열쇠: " + x.need : "",
+      x.src ? "  · 원문: " + x.src : "",
+      (x.req || []).length ? "  · 요구 " + x.req.length + "개: " + x.req.map(function (r) { return r.t + (r.note ? " — " + r.note : ""); }).join(" / ") : "",
+      (x.chk || []).length ? "  · 확인: " + x.chk.map(function (q) { return (q.t || "") + (q.note ? " — " + q.note : ""); }).join(" / ") : "",
+      (x.out || []).length ? "  · 결과: " + x.out.join(" / ") : "", (x.err || []).length ? "  · 교안 오류: " + x.err.join(" / ") : "", x.mat ? "  · 📎 재료: " + x.mat : "", x.need ? "  · 🔑 열쇠: " + x.need : "",
       memoOf(c.id, x.key) ? "  · 동욱의 메모: " + memoOf(c.id, x.key) : ""].filter(Boolean).join("\n");
   }
   window.BRAINY_HOOK = {
@@ -843,7 +834,7 @@ init();
       if (t) L.push("- 지금 태스크 「" + t.name + "」 (" + t.status + ") 완료 기준:\n" + t.crit.map(function (k) { return "  " + (k.done ? "[x] " : "[ ] ") + k.text; }).join("\n"));
       if (x) L.push("- 앱이 고른 다음 칸:\n" + cellText(c, x));
       if (sel && sel !== x) L.push("- 동욱이 지금 열어 본 칸:\n" + cellText(c, sel));
-      L.push("- 앱 저장소(app_doc): cr.data/main(강의·칸·학습 노트·태스크 — 볼트에서 맥 동기화가 올림, 직접 쓰지 않는다) · cr.marks/<강의 id>(동욱의 칸 메모)");
+      L.push("- 앱 저장소(app_doc): cr.data/main(강의·칸·학습 노트·태스크 — 볼트에서 맥 동기화가 올림, 직접 쓰지 않는다) · cr.memo/<강의 id>-<칸 번호표>(동욱의 칸 메모, 칸마다 문서 하나 {cid, key, title, t, at})");
       return L.filter(Boolean).join("\n");
     },
     tools: [

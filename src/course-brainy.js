@@ -13,8 +13,10 @@
   function cellText(c, x) {
     return ["  · 칸: " + partOf(c, x) + " › " + x.title + " [" + ST[x.st].icon + " " + ST[x.st].name + "] (지도 카드 " + x.line + "번째 줄)",
       x.remain ? "  · 남은 것: " + x.remain : "", x.desc ? "  · 지도에 적힌 것: " + x.desc : "",
-      x.src ? "  · 원문: " + x.src : "", x.req ? "  · 요구: " + x.req : "", x.chk ? "  · 확인: " + x.chk : "",
-      x.out ? "  · 결과: " + x.out : "", x.err ? "  · 교안 오류: " + x.err : "", x.mat ? "  · 📎 재료: " + x.mat : "", x.need ? "  · 🔑 열쇠: " + x.need : "",
+      x.src ? "  · 원문: " + x.src : "",
+      (x.req || []).length ? "  · 요구 " + x.req.length + "개: " + x.req.map(function (r) { return r.t + (r.note ? " — " + r.note : ""); }).join(" / ") : "",
+      (x.chk || []).length ? "  · 확인: " + x.chk.map(function (q) { return (q.t || "") + (q.note ? " — " + q.note : ""); }).join(" / ") : "",
+      (x.out || []).length ? "  · 결과: " + x.out.join(" / ") : "", (x.err || []).length ? "  · 교안 오류: " + x.err.join(" / ") : "", x.mat ? "  · 📎 재료: " + x.mat : "", x.need ? "  · 🔑 열쇠: " + x.need : "",
       memoOf(c.id, x.key) ? "  · 동욱의 메모: " + memoOf(c.id, x.key) : ""].filter(Boolean).join("\n");
   }
   window.BRAINY_HOOK = {
@@ -44,7 +46,7 @@
       if (t) L.push("- 지금 태스크 「" + t.name + "」 (" + t.status + ") 완료 기준:\n" + t.crit.map(function (k) { return "  " + (k.done ? "[x] " : "[ ] ") + k.text; }).join("\n"));
       if (x) L.push("- 앱이 고른 다음 칸:\n" + cellText(c, x));
       if (sel && sel !== x) L.push("- 동욱이 지금 열어 본 칸:\n" + cellText(c, sel));
-      L.push("- 앱 저장소(app_doc): cr.data/main(강의·칸·학습 노트·태스크 — 볼트에서 맥 동기화가 올림, 직접 쓰지 않는다) · cr.marks/<강의 id>(동욱의 칸 메모)");
+      L.push("- 앱 저장소(app_doc): cr.data/main(강의·칸·학습 노트·태스크 — 볼트에서 맥 동기화가 올림, 직접 쓰지 않는다) · cr.memo/<강의 id>-<칸 번호표>(동욱의 칸 메모, 칸마다 문서 하나 {cid, key, title, t, at})");
       return L.filter(Boolean).join("\n");
     },
     tools: [

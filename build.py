@@ -175,13 +175,13 @@ emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
 
 # ═════════════════════════ 강의 실습 ═════════════════════════
 # 강의 지도(볼트 33_카드 「C-<강의> 수강·실습 분류」)·학습 노트·지금 태스크를 보며 Brainy와 한 칸씩 실습 (2026-11-24 동욱).
-# 데이터 cr.data/main 은 볼트 → 맥 동기화(course_app.py)가 올리고, 앱이 쓰는 건 cr.marks(내 메모)뿐. 아이콘은 course/ 에 그대로 둔다.
+# 데이터 cr.data/main 은 볼트 → 맥 동기화(course_app.py)가 올리고, 앱이 쓰는 건 cr.memo(칸마다 메모 문서 하나)뿐. 아이콘은 course/ 에 그대로 둔다.
 load("course.html")
 include()
 emit("course", "강의 실습", "강의 실습", ("#F1F1F6", "#101117"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--s-sim);--g-ok:var(--s-done)",
      '<link rel="apple-touch-icon" href="cr-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="cr-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="cr-icon-64.png">',
-     '{key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.marks", "bchat"]}',
+     '{key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "bchat"]}',
      '{"id":"/brainy-today/course/","name":"강의 실습","short_name":"강의 실습","start_url":"./","scope":"./","display":"standalone","background_color":"#F1F1F6","theme_color":"#F1F1F6","icons":[{"src":"cr-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"cr-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
      "", CR_BRAINY + BRAINY_CHAT)
 

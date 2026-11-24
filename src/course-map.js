@@ -22,11 +22,11 @@ function renderMap(c){
   const fcount = f => f === "all" ? n.all + c.listen.length : f === "listen" ? c.listen.length : f === "left" ? n.similar + n.doing + n.todo : n[f];
   /* 거르기 줄은 옆으로 밀리는 한 줄 — 본 목록이 첫 화면에 보이게 (색 뜻은 그 밑 한 줄, 자세한 뜻은 칸을 열면) */
   let h = `<div><div class="filt" role="group" aria-label="칸 거르기">${FILTS.map(([f, t]) => `<button type="button" class="chip ${S.filt === f ? "on" : ""}" data-filt="${f}" aria-pressed="${S.filt === f}">${t}<b>${fcount(f)}</b></button>`).join("")}</div>
-    <div class="legend" aria-label="색 뜻">${["done", "similar", "doing", "todo", "merged"].map(s => `<span title="${esc(ST[s].how)}"><i class="${s}"></i>${ST[s].name}</span>`).join("")}<span><i class="now"></i>지금 태스크</span></div></div>`;
+    <div class="legend" aria-label="색 뜻">${["done", "similar", "doing", "todo", "merged"].map(s => `<span title="${esc(ST[s].how)}"><i class="${s}"></i>${ST[s].name}</span>`).join("")}<span><i class="now"></i>지금 태스크</span></div><p class="small muted" style="margin-top:4px">칩의 숫자는 그 칸 수 그대로예요. ${COUNT_RULE}</p></div>`;
   const showListen = S.filt === "all" || S.filt === "listen";
   if (showListen && c.listen.length) {
     const L = c.listen.filter(keepCell);
-    h += `<section class="card"><details class="fold"${S.filt === "listen" ? " open" : ""}><summary><h2>🎧 듣기만 · 끝 ${n.lDone}/${n.lAll}</h2></summary>
+    h += `<section class="card"><details class="fold"${S.filt === "listen" ? " open" : ""}><summary><h2>🎧 듣기만 ${c.listen.length}칸 · 끝 ${n.lDone}/${n.lAll}${c.listen.length > n.lAll ? ` (건너뜀 ${c.listen.length - n.lAll}칸 뺌)` : ""}</h2></summary>
       <p class="small muted" style="margin-bottom:6px">실습 문제가 없는 차시예요. 실습 사이에 Brainy가 필요한 것만 3줄로 요약해 줘요.</p>
       <div>${L.map(x => cellRow(c, x, keys)).join("")}</div></details></section>`;
   }

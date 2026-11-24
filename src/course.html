@@ -9,7 +9,6 @@
   --bg:#F1F1F6; --surface:#FFFFFF; --surface-2:#F6F6FA; --ink:#15161C; --muted:#5E6170; --line:#DADBE5;
   --accent:#5B45D6; --accent-ink:#FFFFFF; --now-bg:#EEEAFE;
   --s-done:#1C9467; --s-sim:#B97F00; --s-doing:#3A78D4; --s-todo:#A3A6B3;
-  --ok-bg:#E3F4EC; --warn-bg:#FCF1DA;
   --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -17,13 +16,13 @@
   --bg:#101117; --surface:#181A22; --surface-2:#1E2029; --ink:#E9EAF2; --muted:#9A9DAE; --line:#2B2E3A;
   --accent:#8F7DFF; --accent-ink:#120D2B; --now-bg:#231F3D;
   --s-done:#38C18A; --s-sim:#F0B52A; --s-doing:#5C9BF0; --s-todo:#5E6272;
-  --ok-bg:#163126; --warn-bg:#33290F; color-scheme:dark;
+  color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#101117; --surface:#181A22; --surface-2:#1E2029; --ink:#E9EAF2; --muted:#9A9DAE; --line:#2B2E3A;
   --accent:#8F7DFF; --accent-ink:#120D2B; --now-bg:#231F3D;
   --s-done:#38C18A; --s-sim:#F0B52A; --s-doing:#5C9BF0; --s-todo:#5E6272;
-  --ok-bg:#163126; --warn-bg:#33290F; color-scheme:dark;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
@@ -37,6 +36,8 @@ h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.01em}
 .brand small{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .brand #sub{font-family:var(--f-body);flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brand .out{font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
+/* 머리말 작은 링크 — 보이는 크기는 그대로, 누르는 자리만 44px (위아래로 넓힘) */
+.brand .links a,.brand .links .out{display:inline-flex;align-items:center;min-height:44px;margin-block:-13px;padding-inline:2px}
 main{display:flex;flex-direction:column;gap:16px;padding-top:16px;min-width:0}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
 h2{font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--muted);margin:0 0 12px}
@@ -46,27 +47,27 @@ a{color:var(--accent)}
 .muted{color:var(--muted)}
 .small{font-size:13px}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--warn-bg)}
-.stack{display:flex;flex-direction:column;gap:12px}
 .empty{padding:22px 4px;text-align:center;color:var(--muted)}
 code{font-family:var(--f-mono);font-size:.88em;background:var(--surface-2);border:1px solid var(--line);padding:0 5px;border-radius:5px;overflow-wrap:anywhere}
 button{font:inherit}
 .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 16px;border-radius:10px;font-weight:600;cursor:pointer;min-height:44px;text-align:center}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.btn.ghost{background:transparent}
 .btn:disabled{opacity:.5;cursor:default}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 .btns .btn{flex:1 1 160px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;min-height:36px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;min-height:44px}
 .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip b{font-family:var(--f-mono);font-weight:500;font-size:12px;margin-left:4px;opacity:.8}
 /* 강의 고르기 — 단어장의 단어장 고르기와 같은 띠 */
 .seg{display:flex;gap:0;margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow-x:auto;background:var(--surface);scrollbar-width:none}
 .seg::-webkit-scrollbar{display:none}
-.seg button{flex:1 0 auto;border:0;background:transparent;color:var(--muted);padding:8px 12px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;min-height:40px}
+.seg button{flex:1 0 auto;border:0;background:transparent;color:var(--muted);padding:8px 12px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;min-height:44px}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button.on{background:var(--accent);color:var(--accent-ink)}
+/* 강의가 화면 밖에도 있으면 오른쪽 끝을 흐리게 + ›  (옆으로 밀어 보라는 표시) */
+.segwrap{position:relative}
+.segwrap.more::after{content:"›";position:absolute;right:1px;top:11px;bottom:1px;width:36px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:20px;font-weight:700;color:var(--accent);background:linear-gradient(90deg,transparent,var(--surface) 60%);border-radius:0 10px 10px 0;pointer-events:none}
 .seg button span{font-family:var(--f-mono);font-weight:500;font-size:11px;margin-left:5px;opacity:.8}
 /* 머리말 숫자 — 누르면 지도에서 그 칸만 */
 .sum{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:10px}
@@ -122,7 +123,7 @@ details.fold[open]>summary{margin-bottom:8px}
 .crit .cb>p{font-size:13.5px;color:var(--muted)}
 .crit .cb .btns .btn{flex:0 1 auto;padding:8px 14px;font-size:14px}
 /* 칸 자세히 */
-.back{all:unset;cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;min-height:36px;display:inline-flex;align-items:center}
+.back{all:unset;cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;min-height:44px;display:inline-flex;align-items:center}
 .sec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
 .sec:first-child{border-top:0;padding-top:0;margin-top:0}
 .reqs{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
@@ -130,9 +131,11 @@ details.fold[open]>summary{margin-bottom:8px}
 .reqs li::before{content:"";flex:none;width:16px;height:16px;margin-top:4px;border:1.5px solid var(--muted);border-radius:4px}
 .reqs li.na{color:var(--muted)}.reqs li>span{flex:1;min-width:0}
 .qs{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:14.5px}
+.qs li.qnote{list-style:none;margin-left:-22px}
+a.ext{display:inline-flex;align-items:center;min-height:44px;margin-block:-12px;font-weight:600}
 .plain{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .plain li{padding-left:14px;position:relative}.plain li::before{content:"·";position:absolute;left:2px;color:var(--muted)}
-textarea{width:100%;font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:96px;resize:vertical}
+textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:96px;resize:vertical}
 textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .saved{font-size:12px;color:var(--muted);min-height:18px}
 .saved.fail{color:var(--s-sim)}
@@ -166,8 +169,8 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
 
 <div class="wrap">
   <header>
-    <div class="brand"><h1>강의 실습</h1><small id="sub">볼트 강의 지도와 같이</small><small class="muted" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" class="out" data-brainy="out">로그아웃</button></small></div>
-    <div class="seg" id="courses" role="tablist" aria-label="강의 고르기"></div>
+    <div class="brand"><h1>강의 실습</h1><small id="sub">볼트 강의 지도와 같이</small><small class="muted links" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <button type="button" class="out" data-brainy="out">로그아웃</button></small></div>
+    <div class="segwrap" id="segwrap"><div class="seg" id="courses" role="tablist" aria-label="강의 고르기"></div></div>
     <div class="sum" id="sum"></div>
   </header>
   <main id="view"></main>
@@ -187,7 +190,7 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
 /* 강의 실습 — 볼트의 강의 지도·학습 노트·지금 태스크를 보며 Brainy와 한 칸씩 실습한다.
    데이터는 볼트가 정본이다: 3_Action/33_카드/C-<강의> 수강·실습 분류.md · C-<강의> 실습 학습 노트.md · 그 지도를 잇는 32_태스크
    → 맥 동기화(볼트 .claude/scripts/course_app.py) → Supabase cr.data/main → 아래 db.doc("cr.data/main") 가 채운다. 강의 내용을 코드에 넣지 않는다.
-   이 앱이 쓰는 것: cr.marks/<강의 id> (내 메모) 와 Brainy 대화(ai·bchat)뿐. ✅ 끝 표시는 앱이 바꾸지 않는다 —
+   이 앱이 쓰는 것: cr.memo/<강의 id>-<칸 번호표> (칸마다 내 메모) 와 Brainy 대화(ai·bchat)뿐. ✅ 끝 표시는 앱이 바꾸지 않는다 —
    Brainy(course-practice 스킬)가 요구사항 대조 + 확인 질문 뒤 볼트 지도 카드에 쓰고, 동기화가 되돌려 보여 준다. */
 let DATA = { courses: [] };
 let db = null, loaded = false, pendingRender = false;
@@ -225,6 +228,8 @@ function counts(c){
   const L = c ? c.listen.filter(x => x.st !== "skip") : [];
   return { ...n, all: practice(c).length, goal: practice(c).length - n.merged - n.skip, lDone: L.filter(x => x.st === "done").length, lAll: L.length };
 }
+/* 숫자 세는 법 (한 곳) — 실습 끝 x/N 의 N 과 듣기 끝 x/N 의 N 은 「다른 칸과 합침」·「건너뜀」 칸을 뺀 수. 화면 글 COUNT_RULE 도 이것 하나 */
+const COUNT_RULE = "끝 x/N 의 N은 합친 칸·건너뛴 칸을 빼고 세요.";
 /* 지금 태스크 — 지도 칸과 이어진 완료 기준이 있는 태스크 (동기화가 진행 → 할일 순으로 보낸다) */
 const taskOf = c => !c || !c.tasks.length ? null : (c.tasks.find(t => t.crit.some(k => k.cell)) || c.tasks[0]);
 const nowKeys = c => { const t = taskOf(c); return new Set(t ? t.crit.filter(k => k.cell && !k.done).map(k => k.cell) : []); };
@@ -246,6 +251,13 @@ const doBtn = (x, cls = "primary") => isListen(x)
   ? `<button type="button" class="btn ${cls}" data-listen="${esc(x.key)}">✦ Brainy에게 3줄 요약 듣기</button>`
   : `<button type="button" class="btn ${cls}" data-do="${esc(x.key)}">✦ Brainy와 이 칸 하기</button>`;
 
+function segMore(){ const seg = document.getElementById("courses"); document.getElementById("segwrap").classList.toggle("more", seg.scrollLeft + seg.clientWidth < seg.scrollWidth - 4); }
+window.addEventListener("resize", segMore);
+document.getElementById("courses").addEventListener("scroll", segMore, { passive: true });
+/* 교안 정보(지도 카드 source) — 맨 주소면 「교안 열기」 링크로 */
+const fullHtml = s => /^https?:\/\/\S+$/.test(s || "") ? `<a class="ext" href="${esc(s)}" target="_blank" rel="noopener">교안 열기 ↗</a>` : inline(s || "");
+/* 「~로 / ~으로」: 받침이 있으면(ㄹ 받침 빼고) 「으로」 */
+const josaRo = w => { const ch = String(w).trim().slice(-1).charCodeAt(0) - 0xAC00; if (ch < 0 || ch > 11171) return "로"; const jong = ch % 28; return jong && jong !== 8 ? "으로" : "로"; };
 function toast(msg){
   let el = document.getElementById("toast");
   if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
@@ -266,7 +278,10 @@ function renderHead(){
     ["", "todo", n.todo, "남음 (아직)"],
     ["", "listen", `${n.lDone}<small>/${n.lAll}</small>`, "듣기 끝"]
   ].map(([k, f, v, t]) => `<button type="button" class="${k}" data-sum="${f}" aria-label="${t} ${String(v).replace(/<[^>]+>/g, "")} — 지도에서 보기"><b>${v}</b><span>${t}</span></button>`).join("");
-  document.getElementById("sub").textContent = c.full ? c.full.split(" · ")[0] : "볼트 강의 지도와 같이";
+  document.getElementById("sub").textContent = c.full && !/^https?:/.test(c.full) ? c.full.split(" · ")[0] : c.name + " 강의";
+  const seg = document.getElementById("courses"), on = seg.querySelector(".on");
+  if (on && (on.offsetLeft < seg.scrollLeft || on.offsetLeft + on.offsetWidth > seg.scrollLeft + seg.clientWidth)) seg.scrollLeft = on.offsetLeft - 8;
+  segMore();
 }
 
 /* ── 화면 고르기 ── */
