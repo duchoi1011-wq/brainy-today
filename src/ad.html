@@ -157,6 +157,8 @@ section { display: grid; gap: 12px; }
 .crit .pend .box { border-style: dashed; }
 .logs { display: grid; gap: 2px; font-size: .8rem; color: var(--muted); }
 .logs .p { color: var(--doing); }
+.logs .lh { font-weight: 600; font-size: .74rem; letter-spacing: .02em; }
+code { font-family: var(--font-num); font-size: .85em; background: var(--sunk); border-radius: 4px; padding: 0 4px; overflow-wrap: anywhere; }
 .addlog { display: flex; gap: 6px; }
 .note { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 6px; padding: 6px 8px; font: inherit; font-size: .88rem; }
 .addlog button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 6px 12px; font-size: .85rem; font-weight: 600; }
@@ -229,17 +231,17 @@ tr:last-child td { border-bottom: 0; }
     <section>
       <div class="sec-head">
         <h2>트랙별 다음 할 일</h2>
-        <span class="muted small">공통 기반을 끝낸 뒤에는 세 트랙이 서로 기다리지 않는다. 각 트랙에서 아직 안 끝난 첫 태스크</span>
+        <span class="muted small">채널마다 아직 안 끝난 첫 태스크. 공통 기반을 끝낸 뒤에는 채널끼리 서로 기다리지 않는다 · <a href="#run" data-jump="week-title">체크·기록은 주차별 할 일에서 ↓</a></span>
       </div>
       <div class="next" id="next"></div>
     </section>
 
     <section>
       <div class="sec-head">
-        <h2 id="week-title">주차별 할 일</h2>
+        <h2 id="week-title" tabindex="-1">주차별 할 일</h2>
         <div class="seg" id="week-seg" role="group" aria-label="주차 고르기"></div>
       </div>
-      <p class="muted small">상태 버튼·완료 기준 체크·기록 한 줄은 볼트 태스크 노트에 들어가요 (맥 동기화가 몇 초 안에). 옵시디언에서 고친 것도 여기에 그대로 보여요.</p>
+      <p class="muted small">상태 버튼·완료 기준 체크·기록 한 줄은 볼트 태스크 노트에 들어가요 (맥 동기화가 몇 초 안에). 옵시디언에서 고친 것도 1분 안에 여기에 보여요.<br>C1·N1·M1·G1·W1 = 계획 번호(공통·네이버·메타·구글·주간) · 1h 30m = 예상 시간</p>
       <div class="panel tasklist" id="tasklist"></div>
     </section>
 
@@ -270,9 +272,6 @@ tr:last-child td { border-bottom: 0; }
       <div class="sec-head">
         <h2>플랫폼 전략판</h2>
         <div class="seg" id="prod-seg" role="group" aria-label="상품 고르기">
-          <button type="button" id="prod-both" data-p="both">둘 다</button>
-          <button type="button" id="prod-goat" data-p="goat">염소</button>
-          <button type="button" id="prod-event" data-p="event">이벤트랩</button>
         </div>
       </div>
       <div class="boards" id="boards"></div>
@@ -319,6 +318,8 @@ tr:last-child td { border-bottom: 0; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function $(id) { return document.getElementById(id); }
   function name(t) { return t.title.replace(/^T-/, ""); }
+  // 노트 글의 **굵게**·`코드` 를 기호 없이 (이스케이프한 뒤 바꾼다)
+  function md(s) { return esc(s).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>"); }
   function taskBy(id) { return TASKS.filter(function (t) { return t.id === id; })[0]; }
   function prods() { return (PLAN.order && PLAN.order.products) || Object.keys(PLAN.products); }
   function prodChip(p) { return '<span class="chip ' + p + '">' + esc(PLAN.products[p].name) + "</span>"; }
@@ -366,7 +367,9 @@ tr:last-child td { border-bottom: 0; }
         (off.length ? '<p class="muted small">' + esc(off.join("·")) + " 집행 안 함</p>" : "") + "</div>";
     }).join("");
 
-    ["both", "goat", "event"].forEach(function (k) { $("prod-" + k).setAttribute("aria-pressed", String(ui.prod === k)); });
+    // 상품 고르기 — 계획의 상품 목록에서 (둘 이상이면 「모두」)
+    $("prod-seg").innerHTML = '<button type="button" data-p="both" aria-pressed="' + (ui.prod === "both") + '">모두</button>' +
+      prods().map(function (pk) { return '<button type="button" data-p="' + esc(pk) + '" aria-pressed="' + (ui.prod === pk) + '">' + esc(PLAN.products[pk].name) + "</button>"; }).join("");
     $("boards").innerHTML = PLAN.boards.map(function (b) {
       var ch = PLAN.channels[b.channel];
       var shown = prods().filter(function (pk) { return ui.prod === "both" || ui.prod === pk; });
@@ -420,17 +423,17 @@ tr:last-child td { border-bottom: 0; }
     var box = $("detail"), t = taskBy(ui.open);
     if (!t) { box.hidden = true; return; }
     box.hidden = false;
-    var learn = (t.learn || []).length ? "<ul>" + t.learn.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : '<span class="muted">노트에 적힌 것 없음</span>';
-    var crit = (t.crit || []).length ? "<ul>" + t.crit.map(function (k) { return "<li>" + (critDone(t.id, k) ? "☑ " : "☐ ") + esc(k.t) + "</li>"; }).join("") + "</ul>" : '<span class="muted">노트에 완료 기준 칸이 없음</span>';
+    var learn = (t.learn || []).length ? "<ul>" + t.learn.map(function (x) { return "<li>" + md(x) + "</li>"; }).join("") + "</ul>" : '<span class="muted">노트에 적힌 것 없음</span>';
+    var crit = (t.crit || []).length ? "<ul>" + t.crit.map(function (k) { return "<li>" + (critDone(t.id, k) ? "☑ " : "☐ ") + md(k.t) + "</li>"; }).join("") + "</ul>" : '<span class="muted">노트에 완료 기준 칸이 없음</span>';
     box.innerHTML = '<div class="sec-head"><h3>' + esc(t.id) + " " + esc(name(t)) + '</h3><span class="muted small">' + esc(track(t.track).name) + " · " + t.week + "주차" + (t.recurring ? "부터 매주" : "") + "</span></div>" +
-      (t.exists ? "" : '<p class="warn small">볼트에 이 이름의 태스크 노트가 없어요 (' + esc(t.title) + ").</p>") +
+      (t.exists ? "" : '<p class="warn small">볼트에 「' + esc(t.title) + '」 노트가 없어요. Brainy에게 「/log 로 이 태스크 만들어」라고 하면 생겨요.</p>') +
       '<dl class="kv"><dt>상품</dt><dd>' + t.products.map(prodChip).join(" ") + "</dd>" +
       "<dt>상태</dt><dd>" + esc(stateOf(t.id)) + (t.archived ? " · 보관됨" : "") + "</dd>" +
       "<dt>배우는 것</dt><dd>" + learn + "</dd>" +
       "<dt>완료 기준</dt><dd>" + crit + "</dd>" +
       "<dt>담당</dt><dd>" + esc(t.owner || t.worker || "") + "</dd>" +
       '<dt>예상</dt><dd class="num">' + esc(t.estimate || "") + "</dd></dl>" +
-      '<p class="small muted">상태·체크는 「실행」 화면에서 바꿔요. 내용의 정본은 볼트 노트 ' + esc(t.title) + "</p>";
+      '<p class="small muted">상태·체크는 <a href="#run">실행 화면</a>에서 바꿔요. 내용의 정본은 볼트 노트 ' + esc(t.title) + "</p>";
   }
 
   /* ---------- 실행: 요약 (입력칸 없음, 언제든 다시 그림) ---------- */
@@ -452,14 +455,15 @@ tr:last-child td { border-bottom: 0; }
         '<span class="num small muted">' + d + "/" + list.length + (g ? " · 진행 " + g : "") + "</span></div>";
     }).join("");
 
-    var commonLeft = TASKS.filter(function (t) { return t.track === "common" && stateOf(t.id) !== "완료"; });
+    var base = PLAN.tracks.filter(function (tr) { return !isCh(tr.id); })[0] || {};   // 채널이 아닌 첫 트랙 = 공통 기반
+    var commonLeft = TASKS.filter(function (t) { return t.track === base.id && stateOf(t.id) !== "완료"; });
     $("next").innerHTML = CH.map(function (c) {
       var first = TASKS.filter(function (t) { return t.track === c && stateOf(t.id) !== "완료"; })[0];
       var k = first && firstOpenCrit(first);
       var body = !first ? '<p class="small">이 트랙 태스크를 모두 끝냈어요.</p>' :
         '<p class="small num muted">' + esc(first.id) + " · " + first.week + "주차" + (first.estimate ? " · " + esc(first.estimate) : "") + "</p>" +
-        "<p><b>" + esc(name(first)) + "</b></p>" + (k ? '<p class="small muted">다음 칸: ' + esc(k.t) + "</p>" : "") +
-        (commonLeft.length ? '<p class="small warn">공통 기반이 ' + commonLeft.length + "개 남았어요: " + esc(commonLeft.slice(0, 2).map(name).join(", ")) + (commonLeft.length > 2 ? " 외 " + (commonLeft.length - 2) + "개" : "") + "</p>" : "") +
+        "<p><b>" + esc(name(first)) + "</b></p>" + (k ? '<p class="small muted">다음 체크할 기준: ' + md(k.t) + "</p>" : "") +
+        (commonLeft.length ? '<p class="small warn">' + esc(base.name) + "이 " + commonLeft.length + "개 남았어요: " + esc(commonLeft.slice(0, 2).map(name).join(", ")) + (commonLeft.length > 2 ? " 외 " + (commonLeft.length - 2) + "개" : "") + "</p>" : "") +
         stateSeg(first);
       return '<div class="panel" style="--c:' + color(c) + '"><span class="k">' + dot(c) + esc(PLAN.channels[c].name) + "</span>" + body + "</div>";
     }).join("");
@@ -480,7 +484,7 @@ tr:last-child td { border-bottom: 0; }
     var sig = ui.week + "|" + list.map(function (t) { return t.id + ":" + t.exists + ":" + (t.crit || []).map(function (k) { return k.box + k.t; }).join(",") + ":" + (t.log || []).join("¶"); }).join("|");
     if (!force && sig === builtSig) { syncRows(); return; }
     var typing = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute("data-note");
-    if (typing && !force) { syncRows(); return; }
+    if ((typing || pressing) && !force) { syncRows(); return; }
     builtSig = sig;
     $("week-seg").innerHTML = PLAN.weeks.map(function (wk) {
       return '<button type="button" data-week="' + wk.week + '" aria-pressed="' + (ui.week === wk.week) + '">' + wk.week + "주</button>";
@@ -493,12 +497,12 @@ tr:last-child td { border-bottom: 0; }
       var trackChip = isCh(t.track) ? '<span class="chip ' + t.track + '">' + esc(PLAN.channels[t.track].short) + "</span>" : '<span class="chip plain">' + esc(track(t.track).name) + "</span>";
       var off = canWrite(t) ? "" : " disabled";
       var crit = (t.crit || []).map(function (k) {
-        return '<button type="button" data-crit="' + esc(t.id) + '" data-box="' + k.box + '" aria-pressed="false"' + off + '><span class="box" aria-hidden="true"></span><span class="ct">' + esc(k.t) + "</span></button>";
+        return '<button type="button" data-crit="' + esc(t.id) + '" data-box="' + k.box + '" aria-pressed="false"' + off + '><span class="box" aria-hidden="true"></span><span class="ct">' + md(k.t) + "</span></button>";
       }).join("");
       return '<div class="trow2" data-row="' + esc(t.id) + '"><div class="info"><div class="head"><span class="tid">' + esc(t.id) + "</span>" + trackChip + t.products.map(prodChip).join("") +
         '<span class="small muted num">' + esc(t.estimate || "") + (t.owner ? " · " + esc(t.owner) : "") + '</span><span class="chip pend" data-pend="' + esc(t.id) + '" hidden>볼트에 넣는 중</span></div>' +
         '<span class="title">' + esc(name(t)) + "</span>" +
-        (t.exists ? "" : '<span class="small warn">볼트에 이 태스크 노트가 없어요 — 상태를 바꿀 수 없어요</span>') +
+        (t.exists ? "" : '<span class="small warn">볼트에 「' + esc(t.title) + '」 노트가 없어 상태·체크·기록을 못 해요. Brainy에게 「/log 로 이 태스크 만들어」라고 하면 열려요.</span>') +
         (crit ? '<div class="crit" role="group" aria-label="' + esc(t.id) + ' 완료 기준">' + crit + "</div>" : "") +
         '<div class="logs" data-logs="' + esc(t.id) + '"></div>' +
         '<div class="addlog"><input class="note" data-note="' + esc(t.id) + '" placeholder="기록 한 줄 (막힌 점, 결과 숫자) → 노트 로그에" maxlength="300" autocomplete="off"' + off + '>' +
@@ -529,7 +533,7 @@ tr:last-child td { border-bottom: 0; }
         b.disabled = !canWrite(t);
       });
       var lg = row.querySelector("[data-logs]");
-      if (lg) lg.innerHTML = (t.log || []).map(function (l) { return "<span>" + esc(l) + "</span>"; }).join("") +
+      if (lg) lg.innerHTML = ((t.log || []).length || pendLogs(id).length ? '<b class="lh">최근 기록 (노트 「로그」 끝 3줄)</b>' : "") + (t.log || []).map(function (l) { return "<span>" + md(l) + "</span>"; }).join("") +
         pendLogs(id).map(function (l) { return '<span class="p">넣는 중 · ' + esc(l.text) + "</span>"; }).join("");
       Array.prototype.forEach.call(row.querySelectorAll(".note,[data-addlog]"), function (el) { el.disabled = !canWrite(t); });
     });
@@ -537,8 +541,9 @@ tr:last-child td { border-bottom: 0; }
   // 아직 노트에 안 들어간 기록 — 노트의 최근 로그에 같은 글이 보이면 들어간 것
   function pendLogs(id) {
     var d = tw(id), t = taskBy(id); if (!d || !d.log) return [];
+    if (d.synced !== false) return [];
     var seen = (t && t.log || []).join("\n");
-    return d.log.filter(function (l) { return d.synced === false && seen.indexOf(l.text) < 0; });
+    return d.log.filter(function (l) { return seen.indexOf(l.text) < 0; });
   }
 
   function fmt(n) { return typeof n === "number" && isFinite(n) ? n.toLocaleString("ko-KR") : "—"; }
@@ -573,7 +578,7 @@ tr:last-child td { border-bottom: 0; }
     var t = taskBy(id);
     if (!canWrite(t)) { $("sync").textContent = DB ? "볼트에 이 태스크 노트가 없어 바꿀 수 없어요." : "로그인하지 않아 바꿀 수 없어요."; return; }
     var cur = JSON.parse(JSON.stringify(tw(id) || {}));
-    if (cur.synced !== false) { cur.steps = {}; cur.status = ""; }   // 지난번 것은 이미 노트에 들어감 — 새로 시작
+    if (cur.synced !== false) { cur.steps = {}; cur.status = ""; cur.log = []; }   // 지난번 것은 이미 노트에 들어감 — 새로 시작 (지난 기록을 안고 가면 「넣는 중」 유령이 됨)
     cur.task = name(t); cur.from = "광고 실습"; cur.steps = cur.steps || {}; cur.log = cur.log || [];
     mutate(cur, t);
     if (cur.status === t.status) cur.status = "";   // 노트와 같아지면 보낼 것 없음
@@ -586,10 +591,13 @@ tr:last-child td { border-bottom: 0; }
     var q = queue[docId] || (queue[docId] = {});
     if (q.busy) { q.again = true; return; }
     q.busy = true; q.again = false;
-    DB.collection("taskwork").doc(docId).set(JSON.parse(JSON.stringify(TW[docId]))).then(null, function (err) {
-      $("sync").textContent = "저장하지 못했어요 (" + ((err && (err.code || err.message)) || "오류") + "). 인터넷 연결을 확인하고 다시 눌러 주세요.";
+    DB.collection("taskwork").doc(docId).set(JSON.parse(JSON.stringify(TW[docId]))).then(function () { delete unsent[docId]; }, function () {
+      unsent[docId] = true;
+      $("sync").textContent = "인터넷이 끊겨 아직 못 보냈어요 — 다시 연결되면 저절로 보내요.";
     }).then(function () { q.busy = false; if (q.again) save(docId); });
   }
+  var unsent = {};   // 못 보낸 문서 — 다시 연결되면 보낸다
+  window.addEventListener("online", function () { Object.keys(unsent).forEach(save); });
   function addLog(id) {
     var inp = document.querySelector('.note[data-note="' + id + '"]'); if (!inp) return;
     var tx = inp.value.trim().slice(0, 300); if (!tx) { inp.focus(); return; }
@@ -598,6 +606,8 @@ tr:last-child td { border-bottom: 0; }
   }
 
   document.addEventListener("click", function (e) {
+    var jb = e.target.closest("[data-jump]");
+    if (jb) { e.preventDefault(); var to = $(jb.getAttribute("data-jump")); to.scrollIntoView({ block: "start" }); to.focus({ preventScroll: true }); return; }
     var wb = e.target.closest("[data-week]");
     if (wb) { ui.week = +wb.getAttribute("data-week"); store("ad.week", String(ui.week)); buildWeek(true); return; }
     var pb = e.target.closest("[data-p]");
@@ -629,7 +639,18 @@ tr:last-child td { border-bottom: 0; }
     var id = e.target.getAttribute && e.target.getAttribute("data-note");
     if (id && e.key === "Enter" && !e.isComposing) { e.preventDefault(); addLog(id); }
   });
-  document.addEventListener("focusout", function (e) { if (e.target.getAttribute && e.target.getAttribute("data-note")) setTimeout(function () { if (PLAN) buildWeek(); }, 0); });
+  // 기록 칸을 쓰는 동안 미룬 목록 다시 그리기는, 칸을 떠나고 누르기(포인터)가 끝난 뒤에 — 누르는 도중에 목록을 바꾸면 그 누름이 사라진다
+  var pressing = false;
+  document.addEventListener("pointerdown", function () { pressing = true; }, true);
+  document.addEventListener("pointerup", function () { setTimeout(function () { pressing = false; flushBuild(); }, 0); }, true);
+  document.addEventListener("pointercancel", function () { pressing = false; }, true);
+  function flushBuild() {
+    if (!PLAN || pressing) return;
+    var a = document.activeElement;
+    if (a && a.getAttribute && a.getAttribute("data-note")) return;
+    buildWeek();
+  }
+  document.addEventListener("focusout", function (e) { if (e.target.getAttribute && e.target.getAttribute("data-note")) setTimeout(flushBuild, 300); });
 
   /* ---------- 시작 ---------- */
   route();
