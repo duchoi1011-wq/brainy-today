@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "584c7f654a"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "cr.study", "cr.tog", "taskwork", "bchat"]};</script>
-<script src="../shim.js?v=584c7f654a"></script>
+<script>window.BRAINY_VERSION = "a9a035b721"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "cr.study", "cr.tog", "taskwork", "bchat"]};</script>
+<script src="../shim.js?v=a9a035b721"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -171,7 +171,7 @@ details.fold[open]>summary{margin-bottom:8px}
 .crit{display:flex;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
 .crit:first-of-type{border-top:0}
 .crit .box{all:unset;box-sizing:border-box;cursor:pointer;flex:none;width:26px;height:26px;border-radius:7px;border:1.5px solid var(--muted);display:grid;place-items:center;font-size:14px;font-weight:700;margin-top:0;position:relative;color:var(--ink)}
-.crit .box::after{content:"";position:absolute;inset:-9px}  /* 누르는 자리 44px */
+.crit .box::after{content:"";position:absolute;inset:-10.5px}  /* 누르는 자리 44px */
 .crit .box:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .crit.on .box{background:var(--s-done);border-color:var(--s-done);color:#fff}
 .crit .cb{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
@@ -462,7 +462,7 @@ function renderHead(){
   const n = counts(c);
   sum.innerHTML = [
     ["k-done", "done", `${n.done}<small>/${n.goal}</small>`, "실습 끝"],
-    ["k-sim", "similar", n.similar, "🔁 칸"],
+    ["k-sim", "similar", n.similar, "🔁 덜 끝난 칸"],
     ["k-doing", "doing", n.doing, "⏳ 하는 중"],
     ["", "todo", n.todo, "남음 (아직)"],
     ["", "listen", `${n.lDone}<small>/${n.lAll}</small>`, "듣기 끝"]
@@ -567,18 +567,25 @@ function togSend(c, x, kind, it, done){
 function togPush(id, say){
   const w = TOG_WAIT[id];
   if (!w || w.sent || w.sending) return;
+  const r = TOG[id];
+  if (r && r.at > w.at) { delete TOG_WAIT[id]; lsPut("cr.tog.wait", TOG_WAIT); render(); return; }   // 다른 기기가 더 나중에 누름 — 옛 것을 보내 덮지 않는다 (11-25 재검증 중간 2)
   if (!db) { if (say) toast("아직 연결이 안 됐어요. 이 기기에 두었다가 연결되면 보내요."); return; }
   w.sending = 1;
   const { sent, sending, ...body } = w;
   db.doc("cr.tog/" + id).set(body).then(() => {
     w.sending = 0;
     if (TOG_WAIT[id] !== w) return;   // 그 사이 또 누름 — 새 것이 따로 간다
-    w.sent = 1; lsPut("cr.tog.wait", TOG_WAIT);
+    w.sent = 1; lsPut("cr.tog.wait", TOG_WAIT); render();   // 「아직 못 보냄」 → 「볼트에 적는 중」 (11-25 재검증 중간 1)
     if (say) toast(w.kind === "cell" ? (w.done ? "끝 표시했어요 · 볼트 지도 카드에 적는 중" : "끝 표시를 풀었어요 · 볼트에 적는 중") : (w.done ? "체크했어요 · 볼트 지도 카드에 적는 중" : "체크를 풀었어요 · 볼트에 적는 중"));
   }, () => { w.sending = 0; if (say) toast("아직 못 보냈어요. 이 기기에 두었다가 연결되면 다시 보내요."); });
 }
-const togRetry = () => Object.keys(TOG_WAIT).forEach(id => togPush(id, false));
-window.addEventListener("online", togRetry);
+/* 연결이 돌아오면 서버 소식(다른 기기가 더 나중에 누른 것)을 먼저 받은 뒤에 보낸다 — 소식이 오거나 15초가 지나면.
+   그 전에 보내면 이 기기의 옛 체크가 다른 기기의 새 체크를 덮는다 (11-25 재검증 중간 2) */
+let togNetBack = Date.now(), togLiveAt = 0;   // 앱을 막 열었을 때도 서버 소식을 먼저 (또는 15초)
+const togReady = () => navigator.onLine !== false && (togLiveAt > togNetBack || Date.now() - togNetBack > 15000);
+const togRetry = () => { if (togReady()) Object.keys(TOG_WAIT).forEach(id => togPush(id, false)); };
+window.addEventListener("offline", () => { togNetBack = Infinity; });
+window.addEventListener("online", () => { togNetBack = Date.now(); setTimeout(togRetry, 15500); });
 setInterval(() => { if (Object.values(TOG_WAIT).some(w => !w.sent)) togRetry(); }, 30000);
 /* 저장소 소식 — 맥이 적은 결과를 보고 기다리던 것을 놓는다. 적지 못했으면(칸·항목 글이 바뀜 등) 이유를 알리고 원래대로.
    다른 기기가 같은 항목을 더 나중에 눌렀으면(r.at > w.at) 그쪽이 이긴다 — 이 기기의 기다림을 놓는다. 소식은 저장을 부르지 않는다(F23). */
@@ -588,7 +595,7 @@ function togListen(){
     const m = {};
     snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); });
     TOG = m;
-    if (!snap.metadata.fromCache && !togListen.live) { togListen.live = true; togRetry(); }   // 지난번 못 보낸 것 — 연결되면 한 번
+    if (!snap.metadata.fromCache) { togLiveAt = Date.now(); togRetry(); }   // 서버 소식을 받은 뒤 못 보낸 것을 견주어 보낸다 (더 나중 것이 있으면 놓음) — 이미 보낸 것은 다시 안 보낸다(F23)
     let changed = false;
     Object.entries(TOG_WAIT).forEach(([id, w]) => {
       const r = TOG[id];
@@ -721,6 +728,7 @@ document.addEventListener("click", e => {
    맥의 task_sync.py 가 노트 status·머리줄·로그·허브·실행 로그·데일리 노트에 적고 synced:true 로 바꾼다.
    그 뒤 노트가 바뀌어 cr.data/main 이 다시 오면 화면은 노트 그대로. 그 사이에는 누른 대로 먼저 보여 준다. */
 let TW = {};   // 문서 id -> taskwork 문서 (강의 실습 것만)
+const TW_UNSENT = lsGet("cr.tw.wait", {});   // 아직 저장소가 받았다고 답하지 않은 것: 문서 id -> 보낼 문서 (앱을 닫아도 남는다 — 지침 F25 · 11-25 재검증 중간 6)
 const twId = t => "cr-" + memoId("t", t.name);
 const twName = t => t.name.replace(/^T-/, "");
 function twOf(t){ const d = TW[twId(t)]; return d && d.synced === false ? d : null; }   // 아직 노트에 안 들어간 것만
@@ -731,8 +739,9 @@ function twListen(){
   db.collection("taskwork").onSnapshot(snap => {
     const m = {};
     snap.docs.forEach(d => { if (d.exists && d.id.indexOf("cr-") === 0) m[d.id] = d.data(); });
-    Object.keys(TW_UNSENT).forEach(id => { if (TW[id]) m[id] = TW[id]; });   // 아직 못 보낸 것은 이 기기 것을 지킨다
+    Object.entries(TW_UNSENT).forEach(([id, w]) => { if (m[id] && m[id].updatedAt > w.updatedAt) { delete TW_UNSENT[id]; lsPut("cr.tw.wait", TW_UNSENT); } else m[id] = w; });   // 못 보낸 것은 이 기기 것을 지킨다 — 다른 기기가 더 나중이면 그쪽
     TW = m;
+    if (!snap.metadata.fromCache) Object.keys(TW_UNSENT).forEach(id => twPush(id));
     if (view() === "now") render();
   }, () => {});
 }
@@ -746,23 +755,24 @@ function twChange(t, mutate){
   Object.keys(cur.steps).forEach(b => { const k = t.crit.find(x => String(x.box) === b); if (k && cur.steps[b] === k.done) delete cur.steps[b]; });   // 노트와 같아진 칸은 뺀다
   if (cur.status === t.status) cur.status = "";
   cur.synced = false; cur.updatedAt = nowIso();
-  TW[id] = cur; TW_UNSENT[id] = 1; render();
+  TW[id] = cur; TW_UNSENT[id] = cur; lsPut("cr.tw.wait", TW_UNSENT); render();
   twPush(id, true);
 }
 /* 못 보낸 것은 연결이 돌아올 때·30초마다 다시 (받침이 이 기기 사본을 먼저 바꾸므로 「보냈나」는 저장소 답으로만 안다 — 지침 F25) */
-const TW_UNSENT = {};
 function twPush(id, say){
-  if (!TW_UNSENT[id] || !db) return;
-  const body = TW[id];
-  db.doc("taskwork/" + id).set(body).then(() => { if (TW[id] === body) delete TW_UNSENT[id]; if (say) toast("볼트 태스크 노트에 적는 중이에요 (몇 초)"); },
-    () => { if (say) toast("아직 못 보냈어요. 연결되면 다시 보내요."); });
+  const body = TW_UNSENT[id];
+  if (!body || !db || twPush.busy[id]) return;
+  twPush.busy[id] = 1;
+  db.doc("taskwork/" + id).set(body).then(() => { twPush.busy[id] = 0; if (TW_UNSENT[id] === body) { delete TW_UNSENT[id]; lsPut("cr.tw.wait", TW_UNSENT); } else twPush(id); render(); if (say) toast("볼트 태스크 노트에 적는 중이에요 (몇 초)"); },
+    () => { twPush.busy[id] = 0; if (say) toast("아직 못 보냈어요. 연결되면 다시 보내요."); });
 }
-window.addEventListener("online", () => Object.keys(TW_UNSENT).forEach(id => twPush(id)));
+twPush.busy = {};
+window.addEventListener("online", () => setTimeout(() => Object.keys(TW_UNSENT).forEach(id => twPush(id)), 15500));   // 서버 소식을 먼저 받고
 setInterval(() => Object.keys(TW_UNSENT).forEach(id => twPush(id)), 30000);
 const TASK_ST = ["할일", "진행", "완료", "보류"];
 function statusBtns(t){
   const now = taskStatus(t);
-  return `<div class="chips" role="group" aria-label="태스크 상태" style="margin-top:8px">${TASK_ST.map(s => `<button type="button" class="chip ${s === now ? "on" : ""}" data-tstatus="${s}" aria-pressed="${s === now}">${s}</button>`).join("")}</div>`;
+  return `<div class="chips" role="group" aria-label="태스크 상태" style="margin-top:8px;align-items:center"><span class="small muted" style="margin-right:2px">태스크 상태</span>${TASK_ST.map(s => `<button type="button" class="chip ${s === now ? "on" : ""}" data-tstatus="${s}" aria-pressed="${s === now}">${s}</button>`).join("")}</div>`;
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-tbox],[data-tstatus]");
@@ -815,7 +825,7 @@ function renderNow(c){
   }
   const others = c.tasks.filter(o => o !== t);
   if (others.length) h += `<section class="card"><h2>이 강의를 쓰는 다른 태스크</h2><ul class="plain">${others.map(o => `<li>${esc(o.name.replace(/^T-/, ""))} <span class="muted small">· ${esc(o.status)}</span></li>`).join("")}</ul></section>`;
-  h += `<p class="small muted" style="text-align:center;padding:0 8px">혼자 한 것은 칸을 열어 직접 체크해요. Brainy와 하면 Brainy가 요구를 대조하고 확인 질문을 한 뒤 체크해요. 체크는 모두 볼트 지도 카드에 적혀요.</p>`;
+  h += `<p class="small muted" style="text-align:center;padding:0 8px">위 태스크 기준 줄 체크와 상태는 볼트 태스크 노트에, 칸을 열어 하는 요구·확인 체크와 「내가 끝냈어요」는 볼트 지도 카드에 적혀요. Brainy와 하면 Brainy가 대조하고 확인 질문을 한 뒤 체크해요.</p>`;
   return h;
 }
 function critRow(c, t, k){

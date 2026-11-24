@@ -31,7 +31,7 @@ function renderNow(c){
   }
   const others = c.tasks.filter(o => o !== t);
   if (others.length) h += `<section class="card"><h2>이 강의를 쓰는 다른 태스크</h2><ul class="plain">${others.map(o => `<li>${esc(o.name.replace(/^T-/, ""))} <span class="muted small">· ${esc(o.status)}</span></li>`).join("")}</ul></section>`;
-  h += `<p class="small muted" style="text-align:center;padding:0 8px">혼자 한 것은 칸을 열어 직접 체크해요. Brainy와 하면 Brainy가 요구를 대조하고 확인 질문을 한 뒤 체크해요. 체크는 모두 볼트 지도 카드에 적혀요.</p>`;
+  h += `<p class="small muted" style="text-align:center;padding:0 8px">위 태스크 기준 줄 체크와 상태는 볼트 태스크 노트에, 칸을 열어 하는 요구·확인 체크와 「내가 끝냈어요」는 볼트 지도 카드에 적혀요. Brainy와 하면 Brainy가 대조하고 확인 질문을 한 뒤 체크해요.</p>`;
   return h;
 }
 function critRow(c, t, k){

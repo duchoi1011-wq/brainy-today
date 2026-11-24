@@ -41,18 +41,25 @@ function togSend(c, x, kind, it, done){
 function togPush(id, say){
   const w = TOG_WAIT[id];
   if (!w || w.sent || w.sending) return;
+  const r = TOG[id];
+  if (r && r.at > w.at) { delete TOG_WAIT[id]; lsPut("cr.tog.wait", TOG_WAIT); render(); return; }   // 다른 기기가 더 나중에 누름 — 옛 것을 보내 덮지 않는다 (11-25 재검증 중간 2)
   if (!db) { if (say) toast("아직 연결이 안 됐어요. 이 기기에 두었다가 연결되면 보내요."); return; }
   w.sending = 1;
   const { sent, sending, ...body } = w;
   db.doc("cr.tog/" + id).set(body).then(() => {
     w.sending = 0;
     if (TOG_WAIT[id] !== w) return;   // 그 사이 또 누름 — 새 것이 따로 간다
-    w.sent = 1; lsPut("cr.tog.wait", TOG_WAIT);
+    w.sent = 1; lsPut("cr.tog.wait", TOG_WAIT); render();   // 「아직 못 보냄」 → 「볼트에 적는 중」 (11-25 재검증 중간 1)
     if (say) toast(w.kind === "cell" ? (w.done ? "끝 표시했어요 · 볼트 지도 카드에 적는 중" : "끝 표시를 풀었어요 · 볼트에 적는 중") : (w.done ? "체크했어요 · 볼트 지도 카드에 적는 중" : "체크를 풀었어요 · 볼트에 적는 중"));
   }, () => { w.sending = 0; if (say) toast("아직 못 보냈어요. 이 기기에 두었다가 연결되면 다시 보내요."); });
 }
-const togRetry = () => Object.keys(TOG_WAIT).forEach(id => togPush(id, false));
-window.addEventListener("online", togRetry);
+/* 연결이 돌아오면 서버 소식(다른 기기가 더 나중에 누른 것)을 먼저 받은 뒤에 보낸다 — 소식이 오거나 15초가 지나면.
+   그 전에 보내면 이 기기의 옛 체크가 다른 기기의 새 체크를 덮는다 (11-25 재검증 중간 2) */
+let togNetBack = Date.now(), togLiveAt = 0;   // 앱을 막 열었을 때도 서버 소식을 먼저 (또는 15초)
+const togReady = () => navigator.onLine !== false && (togLiveAt > togNetBack || Date.now() - togNetBack > 15000);
+const togRetry = () => { if (togReady()) Object.keys(TOG_WAIT).forEach(id => togPush(id, false)); };
+window.addEventListener("offline", () => { togNetBack = Infinity; });
+window.addEventListener("online", () => { togNetBack = Date.now(); setTimeout(togRetry, 15500); });
 setInterval(() => { if (Object.values(TOG_WAIT).some(w => !w.sent)) togRetry(); }, 30000);
 /* 저장소 소식 — 맥이 적은 결과를 보고 기다리던 것을 놓는다. 적지 못했으면(칸·항목 글이 바뀜 등) 이유를 알리고 원래대로.
    다른 기기가 같은 항목을 더 나중에 눌렀으면(r.at > w.at) 그쪽이 이긴다 — 이 기기의 기다림을 놓는다. 소식은 저장을 부르지 않는다(F23). */
@@ -62,7 +69,7 @@ function togListen(){
     const m = {};
     snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); });
     TOG = m;
-    if (!snap.metadata.fromCache && !togListen.live) { togListen.live = true; togRetry(); }   // 지난번 못 보낸 것 — 연결되면 한 번
+    if (!snap.metadata.fromCache) { togLiveAt = Date.now(); togRetry(); }   // 서버 소식을 받은 뒤 못 보낸 것을 견주어 보낸다 (더 나중 것이 있으면 놓음) — 이미 보낸 것은 다시 안 보낸다(F23)
     let changed = false;
     Object.entries(TOG_WAIT).forEach(([id, w]) => {
       const r = TOG[id];

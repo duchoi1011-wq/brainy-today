@@ -5,6 +5,7 @@
    맥의 task_sync.py 가 노트 status·머리줄·로그·허브·실행 로그·데일리 노트에 적고 synced:true 로 바꾼다.
    그 뒤 노트가 바뀌어 cr.data/main 이 다시 오면 화면은 노트 그대로. 그 사이에는 누른 대로 먼저 보여 준다. */
 let TW = {};   // 문서 id -> taskwork 문서 (강의 실습 것만)
+const TW_UNSENT = lsGet("cr.tw.wait", {});   // 아직 저장소가 받았다고 답하지 않은 것: 문서 id -> 보낼 문서 (앱을 닫아도 남는다 — 지침 F25 · 11-25 재검증 중간 6)
 const twId = t => "cr-" + memoId("t", t.name);
 const twName = t => t.name.replace(/^T-/, "");
 function twOf(t){ const d = TW[twId(t)]; return d && d.synced === false ? d : null; }   // 아직 노트에 안 들어간 것만
@@ -15,8 +16,9 @@ function twListen(){
   db.collection("taskwork").onSnapshot(snap => {
     const m = {};
     snap.docs.forEach(d => { if (d.exists && d.id.indexOf("cr-") === 0) m[d.id] = d.data(); });
-    Object.keys(TW_UNSENT).forEach(id => { if (TW[id]) m[id] = TW[id]; });   // 아직 못 보낸 것은 이 기기 것을 지킨다
+    Object.entries(TW_UNSENT).forEach(([id, w]) => { if (m[id] && m[id].updatedAt > w.updatedAt) { delete TW_UNSENT[id]; lsPut("cr.tw.wait", TW_UNSENT); } else m[id] = w; });   // 못 보낸 것은 이 기기 것을 지킨다 — 다른 기기가 더 나중이면 그쪽
     TW = m;
+    if (!snap.metadata.fromCache) Object.keys(TW_UNSENT).forEach(id => twPush(id));
     if (view() === "now") render();
   }, () => {});
 }
@@ -30,23 +32,24 @@ function twChange(t, mutate){
   Object.keys(cur.steps).forEach(b => { const k = t.crit.find(x => String(x.box) === b); if (k && cur.steps[b] === k.done) delete cur.steps[b]; });   // 노트와 같아진 칸은 뺀다
   if (cur.status === t.status) cur.status = "";
   cur.synced = false; cur.updatedAt = nowIso();
-  TW[id] = cur; TW_UNSENT[id] = 1; render();
+  TW[id] = cur; TW_UNSENT[id] = cur; lsPut("cr.tw.wait", TW_UNSENT); render();
   twPush(id, true);
 }
 /* 못 보낸 것은 연결이 돌아올 때·30초마다 다시 (받침이 이 기기 사본을 먼저 바꾸므로 「보냈나」는 저장소 답으로만 안다 — 지침 F25) */
-const TW_UNSENT = {};
 function twPush(id, say){
-  if (!TW_UNSENT[id] || !db) return;
-  const body = TW[id];
-  db.doc("taskwork/" + id).set(body).then(() => { if (TW[id] === body) delete TW_UNSENT[id]; if (say) toast("볼트 태스크 노트에 적는 중이에요 (몇 초)"); },
-    () => { if (say) toast("아직 못 보냈어요. 연결되면 다시 보내요."); });
+  const body = TW_UNSENT[id];
+  if (!body || !db || twPush.busy[id]) return;
+  twPush.busy[id] = 1;
+  db.doc("taskwork/" + id).set(body).then(() => { twPush.busy[id] = 0; if (TW_UNSENT[id] === body) { delete TW_UNSENT[id]; lsPut("cr.tw.wait", TW_UNSENT); } else twPush(id); render(); if (say) toast("볼트 태스크 노트에 적는 중이에요 (몇 초)"); },
+    () => { twPush.busy[id] = 0; if (say) toast("아직 못 보냈어요. 연결되면 다시 보내요."); });
 }
-window.addEventListener("online", () => Object.keys(TW_UNSENT).forEach(id => twPush(id)));
+twPush.busy = {};
+window.addEventListener("online", () => setTimeout(() => Object.keys(TW_UNSENT).forEach(id => twPush(id)), 15500));   // 서버 소식을 먼저 받고
 setInterval(() => Object.keys(TW_UNSENT).forEach(id => twPush(id)), 30000);
 const TASK_ST = ["할일", "진행", "완료", "보류"];
 function statusBtns(t){
   const now = taskStatus(t);
-  return `<div class="chips" role="group" aria-label="태스크 상태" style="margin-top:8px">${TASK_ST.map(s => `<button type="button" class="chip ${s === now ? "on" : ""}" data-tstatus="${s}" aria-pressed="${s === now}">${s}</button>`).join("")}</div>`;
+  return `<div class="chips" role="group" aria-label="태스크 상태" style="margin-top:8px;align-items:center"><span class="small muted" style="margin-right:2px">태스크 상태</span>${TASK_ST.map(s => `<button type="button" class="chip ${s === now ? "on" : ""}" data-tstatus="${s}" aria-pressed="${s === now}">${s}</button>`).join("")}</div>`;
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-tbox],[data-tstatus]");
