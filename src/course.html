@@ -302,6 +302,7 @@ function render(){
   if (S.backTo) { const el = main.querySelector(`[data-cell="${CSS.escape(S.backTo)}"]`); S.backTo = ""; if (el) el.scrollIntoView({ block: "center" }); }
 }
 function openCell(key){
+  if (document.activeElement && document.activeElement.classList.contains("memo-in")) document.activeElement.blur();   // 다른 칸으로 갈 때 쓰던 메모 칸을 놓아야 화면이 바뀐다
   const v = view(); if (v !== "cell") S.from = v;
   S.cell = key; lsPut("cr.cell", key);
   if (v === "cell") { render(); window.scrollTo(0, 0); } else location.hash = "cell";
