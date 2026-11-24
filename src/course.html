@@ -197,6 +197,8 @@ function lsGet(k, d){ try { const v = JSON.parse(localStorage.getItem(k) || "nul
 function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const inline = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+/* 남은 것 — 괄호 속 지난 기록(날짜·누가 무엇을 했나)은 흐리게: 할 일은 괄호 밖만 */
+const remainHtml = s => inline(s).replace(/ \(([^()]*)\)/g, ' <span class="muted">($1)</span>');
 const nowIso = () => new Date().toISOString();
 
 /* 칸 상태 — 이름·뜻은 여기 한 곳. 값(st)은 동기화가 지도 카드의 표시(✅ 🔁 ⏳ ↪ ⏭)에서 읽어 온다 */

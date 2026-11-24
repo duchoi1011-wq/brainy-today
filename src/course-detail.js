@@ -46,7 +46,7 @@ function renderCell(c, x){
     <div class="meta" style="margin-top:6px">${esc(partOf(c, x))}${keys.has(x.key) ? ` · <span class="pill now">지금 태스크</span>` : ""}</div>
     <h3 style="margin:4px 0 8px">${esc(x.title)}</h3>
     <div class="meta">${pill(x.st)}<span>${esc(ST[x.st].how)}</span></div>
-    ${x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${inline(x.remain)}</div>` : ""}
+    ${x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${remainHtml(x.remain)}</div>` : ""}
     <div class="btns" style="margin-top:${x.remain ? 0 : 12}px">${doBtn(x)}</div>
     <p class="small muted" style="margin-top:8px">${listen ? "누르면 Brainy 대화창에 요약 부탁이 채워져요. 듣고 나서 「들었어」라고 하면 Brainy가 볼트 지도에 체크해요." : "누르면 Brainy 대화창에 이 칸 진행 부탁이 채워져요. 끝 표시는 Brainy가 아래 요구를 하나씩 대조하고 확인 질문을 마친 뒤 볼트에 적어요."}</p>
   </section>

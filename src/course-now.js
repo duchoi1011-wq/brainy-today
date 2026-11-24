@@ -8,7 +8,7 @@ function renderNow(c){
     h += `<section class="card nowcell"><h2>지금 할 칸</h2>
       <div class="meta">${esc(partOf(c, x))}${keys.has(x.key) ? ` · <span class="pill now">지금 태스크</span>` : ""} ${pill(x.st)}</div>
       <h3>${esc(x.title)}</h3>
-      ${x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${inline(x.remain)}</div>` : x.desc ? `<p class="small muted" style="margin-bottom:12px">${inline(x.desc)}</p>` : ""}
+      ${x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${remainHtml(x.remain)}</div>` : x.desc ? `<p class="small muted" style="margin-bottom:12px">${inline(x.desc)}</p>` : ""}
       <div class="btns">${doBtn(x)}<button type="button" class="btn" data-cell="${esc(x.key)}">요구사항 보기</button></div>
       <p class="small muted" style="margin-top:10px">누르면 Brainy 대화창에 「${esc(sayDo(c, x))}」가 채워져요. ↑ 로 보내면 Brainy가 이 칸이 뭔지 설명하고 한 단계씩 같이 진행해요.</p>
     </section>`;
@@ -38,7 +38,7 @@ function critRow(c, k){
   const [head, ...rest] = k.text.split(" — ");
   return `<div class="crit ${k.done ? "on" : ""}"><span class="box" aria-label="${k.done ? "끝" : "아직"}">${k.done ? "✓" : ""}</span><div class="cb">
     <b>${inline(head)}</b>${rest.length ? `<p>${inline(rest.join(" — "))}</p>` : ""}
-    ${x ? `<div class="meta">${pill(x.st)}${x.remain && !k.done ? ` <span>지도 카드의 남은 것: ${inline(x.remain)}</span>` : ""}</div>
+    ${x ? `<div class="meta">${pill(x.st)}${x.remain && !k.done ? ` <span>지도 카드의 남은 것: ${remainHtml(x.remain)}</span>` : ""}</div>
     ${k.done ? "" : `<div class="btns">${doBtn(x)}<button type="button" class="btn" data-cell="${esc(x.key)}">요구사항 보기</button></div>`}` : `<p class="small muted">지도에서 맞는 칸을 못 찾았어요 — 태스크 줄 그대로예요.</p>`}
   </div></div>`;
 }

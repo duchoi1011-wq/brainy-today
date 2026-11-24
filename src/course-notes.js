@@ -54,7 +54,7 @@ function renderNotes(c){
   }
   const units = n.units.slice().sort((a, b) => a.n - b.n);
   const have = new Set(units.map(u => u.n));
-  let h = `<section class="card"><h2>단원 목록 · ${units.length}개</h2><p class="small muted" style="margin-bottom:6px">실습 칸마다 무엇을 배웠는지 모은 볼트 노트예요. 누르면 그 단원으로 가요.</p><div class="ulist">` +
+  let h = `<section class="card"><h2>단원 목록 · ${(n.list.length || units.length)}개</h2><p class="small muted" style="margin-bottom:6px">실습 칸마다 무엇을 배웠는지 모은 볼트 노트예요. 누르면 그 단원으로 가요.</p><div class="ulist">` +
     (n.list.length ? n.list : units.map(u => ({ n: u.n, cell: u.title, state: "" }))).map(r => {
       const ok = have.has(r.n);
       return `<button type="button" class="cell ${ok ? "done" : "todo"}"${ok ? ` data-unit="${r.n}"` : " disabled"}><span class="ct"><b>단원 ${esc(r.n)} · ${inline(r.cell)}</b>${r.state ? `<span>${esc(r.state.replace(/`/g, ""))}</span>` : ""}</span><span class="tags">${ok ? `<span class="pill">읽기</span>` : `<span class="pill">아직 본문 없음</span>`}</span></button>`;
