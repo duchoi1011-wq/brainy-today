@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "44eb5f7117"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=44eb5f7117"></script>
+<script>window.BRAINY_VERSION = "dd3154c61c"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=dd3154c61c"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -251,20 +251,42 @@ const DOMAINS = {
   "학습 단어장": ["편집·구성","촬영","오디오","색","자막","모션","AI 편집 자동화"],
   "위키 개념": [],   // 위키 영역(관계·자기경영 …) — 볼트가 보내는 대로 wikiCats() 가 채운다
   "외국어 단어장": ["영어 단어","영어 회화","중국어 회화"],
-  /* 따로 떼어 보는 단어장 (2026-11-22 동욱) — 볼트가 dom 으로 보내거나, 분야 이름에 브랜드·상품 페이지 / 스킬·MCP 가 들어가면 여기로 온다 */
-  "브랜드·상품 페이지": [],
-  "스킬·MCP": []
+  /* 따로 떼어 보는 단어장 (2026-11-22 동욱 · 11-24 세 칸으로 나눔) — 볼트가 dom 으로 보내거나, 분야 이름에 브랜드·상품 / 스킬 / MCP 가 들어가면 여기로 온다.
+     예전 이름(브랜드·상품 페이지 · 스킬·MCP)으로 와도 새 칸으로 간다. 후보 옮기기·붙여 넣어 올린 단어는 vo.marks/add (ADD) */
+  "브랜드·상품": [],
+  "스킬": [],
+  "MCP": []
 };
+const SPLIT_DOMS = ["브랜드·상품", "스킬", "MCP"];
 const domOf = cat => Object.keys(DOMAINS).find(d => DOMAINS[d].includes(cat)) || "학습 단어장";
-const SPLIT = [["브랜드·상품 페이지", /브랜드|상품|상세 ?페이지|랜딩/], ["스킬·MCP", /스킬|MCP|플러그인/i]];
-const domFor = t => { if (t.dom !== "외국어 단어장") { const s = SPLIT.find(([d, re]) => t.dom === d || re.test(t.cat || "")); if (s) return s[0]; } return t.dom || domOf(t.cat); };
+/* ADD = { items: 붙여 넣어 올린 단어 [{id, term, def, cat, dom, at}], move: { 단어id: 옮긴 단어장 } } — 볼트에 넣기 전까지 앱에서 바로 보이게 */
+let ADD = { items: [], move: {} };
+const domFor = t => {
+  if (t.dom === "외국어 단어장") return t.dom;
+  const mv = ADD.move?.[t.id]; if (mv && DOMAINS[mv]) return mv;
+  const d = t.dom || "", c = t.cat || "";
+  if (d === "MCP" || /^MCP$/i.test(c) || ((d === "스킬·MCP" || /스킬|MCP|플러그인/i.test(c)) && /MCP/i.test(t.term || ""))) return "MCP";
+  if (d === "스킬" || d === "스킬·MCP" || /스킬|MCP|플러그인/i.test(c)) return "스킬";
+  if (d === "브랜드·상품" || d === "브랜드·상품 페이지" || /브랜드|상품|상세 ?페이지|랜딩/.test(c)) return "브랜드·상품";
+  return d || domOf(c);
+};
 /* 단어장·분야는 볼트(위키)가 정한다 — 「위키 개념」(위키 영역별)과 분야 단어장(심리학·개발 용어 …)이 새로 오면 그 단어장의 분야 칩이 저절로 는다 */
 function wikiCats(){ ALL.forEach(t => { const d = DOMAINS[t.dom]; if (d && !d.includes(t.cat)) d.push(t.cat); }); }
-let ALL = DATA.terms.concat(FOREIGN).map(t => ({ ...t, dom: domFor(t) }));
+const addItems = () => (Array.isArray(ADD.items) ? ADD.items : []).filter(x => x && x.id && x.term);
+let ALL = DATA.terms.concat(FOREIGN, addItems()).map(t => ({ ...t, dom: domFor(t) }));
 let BYID = Object.fromEntries(ALL.map(t => [t.id, t]));
+/* 볼트 단어·올린 단어·옮긴 단어가 바뀌면 단어장을 다시 짠다 */
+function rebuild(){
+  ALL = DATA.terms.concat(FOREIGN, addItems()).map(t => ({ ...t, dom: domFor(t) }));
+  BYID = Object.fromEntries(ALL.map(t => [t.id, t]));
+  wikiCats();
+  TERMS = ALL.filter(t => t.dom === S.domain);
+  CATS = DOMAINS[S.domain].filter(c => TERMS.some(t => t.cat === c));
+}
 const DOMKEY = "chewha-vocab-domain";
 let TERMS = ALL, CATS = [];
 function setDomain(d){
+  d = { "브랜드·상품 페이지": "브랜드·상품", "스킬·MCP": "스킬" }[d] || d;
   S.domain = DOMAINS[d] ? d : "학습 단어장";
   TERMS = ALL.filter(t => t.dom === S.domain);
   CATS = DOMAINS[S.domain].filter(c => TERMS.some(t => t.cat === c));
@@ -340,25 +362,69 @@ const lv = id => prog[id]?.level || 1;
 const isCore = id => (typeof prog[id]?.core === "boolean") ? prog[id].core : CORE.has(id);
 const coreTag = id => isCore(id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)">체화할 단어</span>` : `<span class="pill">소통용</span>`;
 const goalOf = id => isCore(id) ? 4 : 3;
-/* 고칠 단어 (2026-11-22 동욱) — 펼친 카드의 「이 단어는 고쳐요」로 progress/<id>.fix 를 켜고 끈다. 전체 탭의 「고칠 단어」 칩에 모든 단어장 것이 모인다 */
-const isFix = id => !!prog[id]?.fix;
-const fixList = () => ALL.filter(t => isFix(t.id));
-/* 오류·중복 수정 요청 (2026-11-24 동욱) — 펼친 카드에 짧은 글을 적어 progress/<id>.req 에 둔다. 전체 탭의 「수정 요청」 칩에 모든 단어장 것이 모인다. 맥 단축키 앱에도 같은 칸이 있다 */
+/* 고칠 단어 (2026-11-22 동욱 · 11-24 한 칸으로 합침) — 펼친 카드의 「이 단어는 고쳐요」를 누르면 입력칸이 열리고, 저장하면
+   progress/<id>.fix(표시)와 .req(오류·중복 글)가 함께 남는다. 전체 탭의 「고칠 단어」 칩에 모든 단어장 것이 모인다.
+   Brainy 가 처리하면(vocab_fix_done) 표시·글을 풀고 .fixDone 에 고친 내용을 남긴다 */
 const reqOf = id => String(prog[id]?.req || "");
-const reqList = () => ALL.filter(t => reqOf(t.id));
-const reqPill = `<span class="pill" style="color:var(--accent);border-color:var(--accent)">수정 요청</span>`;
-function reqHtml(t){
-  const r = reqOf(t.id);
-  if (S.reqEdit === t.id) return `<div class="rq"><span class="lbl">오류·중복 수정 요청</span>
-    <textarea class="rq-in" id="rq-${t.id}" maxlength="300" placeholder="예: 뜻이 틀림 / 다른 단어와 중복 / 설명이 너무 기본적임" aria-label="${esc(t.term)} 수정 요청">${esc(r)}</textarea>
-    <div class="btns"><button class="btn primary" data-act="rqsave" data-id="${t.id}">저장</button><button class="btn ghost" data-act="rqcancel" data-id="${t.id}">취소</button>${r ? `<button class="btn ghost" data-act="rqdel" data-id="${t.id}">지우기</button>` : ""}</div></div>`;
-  if (r) return `<div class="rq"><span class="lbl">오류·중복 수정 요청${prog[t.id]?.reqAt ? " · " + esc(String(prog[t.id].reqAt).slice(0, 10)) : ""}</span><span class="rq-t">${esc(r)}</span>
-    <div class="btns"><button class="btn ghost" data-act="rqedit" data-id="${t.id}">고치기</button><button class="btn ghost" data-act="rqdel" data-id="${t.id}">지우기</button></div></div>`;
-  return `<button class="btn ghost" data-act="rqedit" data-id="${t.id}">✎ 오류·중복 수정 요청 적기</button>`;
+const isFix = id => !!prog[id]?.fix || !!reqOf(id);
+const fixList = () => ALL.filter(t => isFix(t.id));
+const fixPill = `<span class="pill" style="color:var(--accent);border-color:var(--accent)">고칠 단어</span>`;
+function fixHtml(t){
+  const r = reqOf(t.id), on = isFix(t.id), p = prog[t.id] || {}, at = p.reqAt || p.fixAt;
+  if (S.reqEdit === t.id) return `<div class="rq"><span class="lbl">이 단어는 고쳐요 — 무엇이 틀렸나요?</span>
+    <textarea class="rq-in" id="rq-${t.id}" maxlength="300" placeholder="예: 뜻이 틀림 / 다른 단어와 중복 / 위키 페이지가 없음 / 설명이 너무 기본적임" aria-label="${esc(t.term)} 고칠 점">${esc(r)}</textarea>
+    <div class="btns"><button class="btn primary" data-act="rqsave" data-id="${t.id}">저장</button><button class="btn ghost" data-act="rqcancel" data-id="${t.id}">취소</button>${on ? `<button class="btn ghost" data-act="rqdel" data-id="${t.id}">표시 풀기</button>` : ""}</div></div>`;
+  if (on) return `<div class="rq"><span class="lbl">✓ 고칠 단어${at ? " · " + esc(String(at).slice(0, 10)) : ""}</span><span class="rq-t">${r ? esc(r) : `<span class="muted">적은 글이 없어요</span>`}</span>
+    <div class="btns"><button class="btn ghost" data-act="rqedit" data-id="${t.id}">글 고치기</button><button class="btn ghost" data-act="rqdel" data-id="${t.id}">표시 풀기</button></div></div>`;
+  return `<button class="btn ghost" data-act="rqedit" data-id="${t.id}">✎ 이 단어는 고쳐요 (오류·중복)</button>${p.fixDone?.note ? `<p class="small muted">지난번 고친 내용 · ${esc(String(p.fixDone.at || "").slice(0, 10))} · ${esc(p.fixDone.note)}</p>` : ""}`;
+}
+/* 고칠 단어를 Brainy 에게 맡긴다 — 뜻 고치기 + 위키 페이지 새로 만들기·고치기 (Brainy 의 노트 쓰기 도구) */
+const FIX_ASK = n => `고칠 단어 ${n}개를 처리해 줘. 적어 둔 글대로 뜻을 고치고, 위키 페이지가 없으면 새로 만들고, 틀린 페이지는 고쳐 줘. 중복이면 하나로 합쳐 줘. 다 고친 단어는 표시를 풀어 줘.`;
+const fixAskBtn = () => fixList().length ? `<button class="btn primary" data-act="fixask">✦ Brainy에게 고치기 맡기기 — 뜻 · 위키 페이지 만들기·고치기</button>` : "";
+
+/* 브랜드·상품 · 스킬 · MCP 단어장 (2026-11-24 동욱) — 다른 단어장에서 맞는 단어를 후보로 미리 보여 주고(넣으면 그 단어장으로 옮김),
+   「이름 — 설명」 줄을 붙여 넣어 한꺼번에 올린다. 둘 다 vo.marks/add 에 두고, 볼트에 넣는 것은 Brainy·맥 동기화가 한다 */
+const CAND_RE = { "브랜드·상품": /브랜드|상품|상세 ?페이지|랜딩|USP|셀링 ?포인트/i, "스킬": /스킬|skill|플러그인|plugin|슬래시 ?명령/i, "MCP": /MCP|커넥터|connector/i };
+const candOf = dom => { const re = CAND_RE[dom]; if (!re) return []; return ALL.filter(t => t.dom !== dom && t.dom !== "외국어 단어장" && re.test(t.term + " " + (t.cat || "") + " " + (t.def || ""))).sort((a, b) => re.test(b.term) - re.test(a.term)).slice(0, 40); };
+const isMine = id => addItems().some(x => x.id === id);
+function saveAdd(how){
+  ADD = { items: addItems(), move: { ...(ADD.move || {}) }, at: nowIso() };
+  rebuild();
+  if (mode === "db" && db) db.doc("vo.marks/add").set(ADD).catch(() => { note = "저장하지 못했어요(" + how + "). 잠시 후 다시 해 주세요."; render(); });
+  else { try { localStorage.setItem("chewha-vocab-add-v1", JSON.stringify(ADD)); } catch(e) {} }
+  render();
+}
+/* 붙여 넣은 글 → 단어: 한 줄에 하나, 「이름 — 설명」 「이름: 설명」 「이름 (탭) 설명」. 앞의 •·-·숫자. 는 떼고, 설명 없는 줄도 이름만으로 받는다 */
+function parsePaste(txt, dom){
+  const seen = new Set(ALL.filter(t => t.dom === dom).map(t => String(t.term).toLowerCase()));
+  return String(txt || "").split(/\n+/).map(l => l.replace(/^\s*(?:[-•*·]|\d+[.)])\s*/, "").trim()).filter(Boolean).map(l => {
+    const m = l.match(/^(.+?)\s*(?:\t| — | – | - |:\s|：)\s*(.+)$/);
+    const term = (m ? m[1] : l).trim().slice(0, 80), def = (m ? m[2] : "").trim().slice(0, 400);
+    return { id: "u-" + hash(dom + "|" + term.toLowerCase()).toString(36), term, def: def || "설명을 아직 안 적었어요", cat: dom, dom, at: today(), mine: true };
+  }).filter(x => { const k = x.term.toLowerCase(); if (!x.term || seen.has(k)) return false; seen.add(k); return true; });
+}
+function splitDomHtml(){
+  if (!SPLIT_DOMS.includes(S.domain)) return "";
+  const dom = S.domain, cand = candOf(dom), mine = addItems().filter(x => x.dom === dom).length;
+  const ex = { "브랜드·상품": "예: 상세페이지 — 상품을 사기 전 마지막으로 읽는 긴 소개 페이지", "스킬": "예: content-source — 콘텐츠 소재와 출처를 찾아 주는 스킬", "MCP": "예: Supabase MCP — Claude가 Supabase 표를 읽고 쓰게 이어 주는 연결" }[dom];
+  return `<section class="card stack">
+    <h2>후보 ${cand.length}개 · 다른 단어장에서 찾은 ${esc(dom)} 단어</h2>
+    ${cand.length ? `<div class="list">${cand.map(t => `<div class="row" style="cursor:default"><div class="t"><b>${esc(t.term)}</b><span>${esc(t.dom)} · ${esc(t.def)}</span></div><button class="btn ghost" data-act="candin" data-id="${t.id}" style="padding:6px 12px">넣기</button></div>`).join("")}</div>
+      <button class="btn ghost" data-act="candall">후보 ${cand.length}개 모두 넣기</button>` : `<p class="small muted">다른 단어장에 ${esc(dom)} 후보가 없어요. 아래에 붙여 넣어 올려 보세요.</p>`}
+  </section>
+  <section class="card stack">
+    <h2>붙여 넣어 올리기</h2>
+    <p class="small muted">한 줄에 하나씩 「이름 — 설명」으로 붙여 넣으세요. 이미 있는 이름은 건너뛰어요.${mine ? ` 지금까지 올린 단어 ${mine}개.` : ""}</p>
+    <textarea class="bt-in" id="addIn" maxlength="8000" placeholder="${esc(ex)}" aria-label="${esc(dom)} 단어 붙여 넣기">${esc(S.addTxt || "")}</textarea>
+    <button class="btn primary" data-act="addup">올리기</button>
+  </section>`;
 }
 const view = () => (location.hash || "#home").slice(1);
 
-function loadLocal(){ try { prog = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch(e) { prog = {}; } }
+function loadLocal(){
+  try { prog = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch(e) { prog = {}; }
+  try { const a = JSON.parse(localStorage.getItem("chewha-vocab-add-v1") || "null"); if (a) { ADD = { items: Array.isArray(a.items) ? a.items : [], move: a.move || {} }; rebuild(); } } catch(e) {}
+}
 function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(prog)); } catch(e) {} }
 
 const chains = {};
@@ -396,16 +462,17 @@ function renderHome(){
   return `
   ${statusNote()}
   ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때).</p>` : ""}
-  ${S.domain === "브랜드·상품 페이지" ? `<p class="note">브랜드와 상품 페이지(상세페이지·랜딩) 단어만 따로 모은 단어장이에요. 지금은 ${TERMS.length}개예요. 볼트에서 이 단어장으로 넣으면 몇 초 안에 여기에 들어와요.</p>` : ""}
-  ${S.domain === "스킬·MCP" ? `<p class="note">내가 모아 둔 스킬과 MCP를 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 볼트에서 이 단어장으로 넣으면 몇 초 안에 여기에 들어와요.</p>` : ""}
+  ${S.domain === "브랜드·상품" ? `<p class="note">브랜드와 상품(상세페이지·랜딩) 단어만 따로 모은 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
+  ${S.domain === "스킬" ? `<p class="note">내가 모아 둔 스킬을 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
+  ${S.domain === "MCP" ? `<p class="note">내가 연결한 MCP(Claude와 바깥 도구를 잇는 연결)를 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
+  ${splitDomHtml()}
   <section class="card stack">
     <h2>오늘 할 일</h2>
     <div class="list">
       <a class="row" href="#review" style="text-decoration:none"><div class="t"><b>복습 ${due}개</b><span>간격 반복 — 오늘 차례가 온 단어</span></div><span class="why">복습 →</span></a>
       ${[1, 2, 3].map(L => `<a class="row" href="#stage" data-stage="${L}" style="text-decoration:none"><div class="t"><b>${LV[L]} → ${LV[L + 1]} ${all[L]}개</b><span>${STAGE_TEST[L]}</span></div><span class="why">단계별 →</span></a>`).join("")}
       <a class="row" href="#new" style="text-decoration:none"><div class="t"><b>새 개념 ${fresh}개</b><span>최근 2주 안에 위키에 새로 정리된 개념·새로 들어온 단어</span></div><span class="why">새 개념 →</span></a>
-      ${fixList().length ? `<a class="row" href="#list" data-listcat="fix" style="text-decoration:none"><div class="t"><b>고칠 단어 ${fixList().length}개</b><span>「이 단어는 고쳐요」로 표시해 둔 단어 — 모든 단어장</span></div><span class="why">모아 보기 →</span></a>` : ""}
-      ${reqList().length ? `<a class="row" href="#list" data-listcat="req" style="text-decoration:none"><div class="t"><b>수정 요청 ${reqList().length}개</b><span>오류·중복 수정 요청을 적어 둔 단어 — 모든 단어장</span></div><span class="why">모아 보기 →</span></a>` : ""}
+      ${fixList().length ? `<a class="row" href="#list" data-listcat="fix" style="text-decoration:none"><div class="t"><b>고칠 단어 ${fixList().length}개</b><span>「이 단어는 고쳐요」로 표시하고 오류·중복을 적어 둔 단어 — 모든 단어장</span></div><span class="why">모아 보기 →</span></a>` : ""}
     </div>
   </section>
   <section class="card">
@@ -543,25 +610,25 @@ function renderDomField(){
     ${pickList(list, 200)}</section>`;
 }
 function renderList(){
-  const nf = fixList().length, nr = reqList().length;
-  const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}${nf || S.listCat === "fix" ? `<button class="chip ${S.listCat==="fix"?"on":""}" data-listcat="fix" style="${S.listCat==="fix"?"":"color:var(--accent);border-color:var(--accent)"}">고칠 단어 <span>${nf}</span></button>` : ""}${nr || S.listCat === "req" ? `<button class="chip ${S.listCat==="req"?"on":""}" data-listcat="req" style="${S.listCat==="req"?"":"color:var(--accent);border-color:var(--accent)"}">수정 요청 <span>${nr}</span></button>` : ""}</div>
-  ${S.listCat === "fix" ? `<p class="small muted">모든 단어장에서 「이 단어는 고쳐요」로 표시한 단어예요. 펼쳐서 버튼을 다시 누르면 표시가 풀려요.</p>` : ""}
-  ${S.listCat === "req" ? `<p class="small muted">모든 단어장에서 오류·중복 수정 요청을 적어 둔 단어예요. 펼쳐서 글을 고치거나 지울 수 있어요.</p>` : ""}`;
+  if (S.listCat === "req") S.listCat = "fix";   // 예전 「수정 요청」 칩은 「고칠 단어」로 합쳐짐
+  const nf = fixList().length;
+  const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}${nf || S.listCat === "fix" ? `<button class="chip ${S.listCat==="fix"?"on":""}" data-listcat="fix" style="${S.listCat==="fix"?"":"color:var(--accent);border-color:var(--accent)"}">고칠 단어 <span>${nf}</span></button>` : ""}</div>
+  ${S.listCat === "fix" ? `<p class="small muted">모든 단어장에서 「이 단어는 고쳐요」로 표시하고 오류·중복을 적어 둔 단어예요. 펼쳐서 글을 고치거나 표시를 풀 수 있어요. Brainy에게 맡기면 뜻을 고치고 위키 페이지도 새로 만들거나 고쳐요.</p>${fixAskBtn()}` : ""}`;
   return `<input type="search" id="listQ" placeholder="단어나 뜻으로 찾기" value="${esc(S.listQ)}" aria-label="단어 찾기">
   ${chips}
   ${S.detail && BYID[S.detail] && !listItems().slice(0, 300).some(t => t.id === S.detail) ? detailHtml(BYID[S.detail]) : ""}
   <section class="card" id="listOut">${listRows()}</section>`;
 }
-const listItems = () => { const q = S.listQ.trim().toLowerCase(), fx = S.listCat === "fix", rq = S.listCat === "req"; return (fx || rq ? ALL : TERMS).filter(t => (fx ? isFix(t.id) : rq ? !!reqOf(t.id) : (S.listCat === "all" || t.cat === S.listCat)) && (!q || (t.term + " " + t.def + " " + reqOf(t.id)).toLowerCase().includes(q))); };
+const listItems = () => { const q = S.listQ.trim().toLowerCase(), fx = S.listCat === "fix" || S.listCat === "req"; return (fx ? ALL : TERMS).filter(t => (fx ? isFix(t.id) : (S.listCat === "all" || t.cat === S.listCat)) && (!q || (t.term + " " + t.def + " " + reqOf(t.id)).toLowerCase().includes(q))); };
 function listRows(){
   const items = listItems();
-  if (!items.length) return `<p class="empty">${S.listCat === "fix" ? "고칠 단어로 표시한 단어가 없어요.<br>단어를 펼쳐 「이 단어는 고쳐요」를 누르면 여기에 모여요." : S.listCat === "req" ? "수정 요청을 적은 단어가 없어요.<br>단어를 펼쳐 「오류·중복 수정 요청 적기」를 누르면 여기에 모여요." : TERMS.length ? "찾는 단어가 없어요." : esc(S.domain) + "에는 아직 단어가 없어요."}</p>`;
+  if (!items.length) return `<p class="empty">${S.listCat === "fix" || S.listCat === "req" ? "고칠 단어로 표시한 단어가 없어요.<br>단어를 펼쳐 「이 단어는 고쳐요」를 누르고 무엇이 틀렸는지 적으면 여기에 모여요." : TERMS.length ? "찾는 단어가 없어요." : esc(S.domain) + "에는 아직 단어가 없어요."}</p>`;
   return pickList(items, 300);
 }
 function detailHtml(t){
   const p = prog[t.id] || {};
   return `<section class="card stack" id="detail">
-    <div class="meta"><span class="tc">${esc(t.cat)} · ${epOf(t)}</span><span>${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)">고칠 단어</span> ` : ""}${reqOf(t.id) ? reqPill + " " : ""}${pill(lv(t.id))}</span></div>
+    <div class="meta"><span class="tc">${esc(t.cat)} · ${epOf(t)}</span><span>${isFix(t.id) ? fixPill + " " : ""}${pill(lv(t.id))}</span></div>
     <h3>${esc(t.term)}</h3>
     ${stageHtml(t)}
     ${ctxOk(t.id) ? `<div class="scene"><span class="lbl">장면</span>${esc(CTX[t.id].scene)}</div>` : ""}
@@ -572,8 +639,8 @@ function detailHtml(t){
     ${p.history?.length ? `<div class="hist">${p.history.map(h => `<span class="mono">${esc(h.at.slice(0,10))} · ${h.level} ${LV[h.level]} · ${esc(h.how)}</span>`).join("")}</div>` : ""}
     ${lv(t.id) < 4 ? `<div class="btns"><button class="btn primary" data-onetest="${t.id}">▶ 이 단어 시험 — ${ro(LV[lv(t.id) + 1])}</button></div>` : ""}
     <button class="btn ghost" data-act="core" data-id="${t.id}">${isCore(t.id) ? "소통용으로 바꾸기 (소화까지만)" : "체화할 단어로 바꾸기 (실행까지)"}</button>
-    <button class="btn ${isFix(t.id) ? "primary" : "ghost"}" data-act="fix" data-id="${t.id}" aria-pressed="${isFix(t.id)}">${isFix(t.id) ? "✓ 고칠 단어로 표시됨 — 눌러서 풀기" : "이 단어는 고쳐요"}</button>
-    ${reqHtml(t)}
+    ${fixHtml(t)}
+    ${isMine(t.id) ? `<button class="btn ghost" data-act="mydel" data-id="${t.id}">붙여 넣어 올린 이 단어 지우기</button>` : ADD.move?.[t.id] ? `<button class="btn ghost" data-act="candout" data-id="${t.id}">${esc(t.dom)} 단어장에서 빼기 (원래 단어장으로)</button>` : ""}
   </section>`;
 }
 
@@ -621,13 +688,29 @@ document.addEventListener("click", e => {
   const d = el.dataset;
   if (d.act === "regen") { ensureCtx(d.id, true); render(); return; }
   if (d.act === "core") { const id = d.id; save(id, { core: !isCore(id) }, "체화/소통용 변경"); return; }
-  if (d.act === "fix") { const id = d.id, on = !isFix(id); save(id, { fix: on, fixAt: on ? nowIso() : null }, "고칠 단어 표시"); return; }
   if (d.act === "rqedit") { S.reqEdit = d.id; document.activeElement?.blur?.(); render(); document.getElementById("rq-" + d.id)?.focus(); return; }
   if (d.act === "rqcancel") { S.reqEdit = null; document.activeElement?.blur?.(); render(); return; }
-  if (d.act === "rqsave" || d.act === "rqdel") {
-    const id = d.id, txt = d.act === "rqsave" ? (document.getElementById("rq-" + id)?.value || "").trim().slice(0, 300) : "";
+  if (d.act === "rqsave") {   // 저장 = 고칠 단어 표시 + 적은 글을 함께 남김 (글 없이도 표시만 할 수 있다)
+    const id = d.id, txt = (document.getElementById("rq-" + id)?.value || "").trim().slice(0, 300);
     S.reqEdit = null; document.activeElement?.blur?.();
-    save(id, { req: txt || null, reqAt: txt ? nowIso() : null }, "수정 요청"); return;
+    save(id, { fix: true, fixAt: prog[id]?.fixAt || nowIso(), req: txt || null, reqAt: txt ? nowIso() : null }, "고칠 단어"); return;
+  }
+  if (d.act === "rqdel") { S.reqEdit = null; document.activeElement?.blur?.(); save(d.id, { fix: false, fixAt: null, req: null, reqAt: null }, "고칠 단어 풀기"); return; }
+  if (d.act === "fixask") {
+    if (window.BRAINY_CHAT) window.BRAINY_CHAT.ask(FIX_ASK(fixList().length));
+    else { note = "Brainy 대화창을 아직 못 불러왔어요. 잠시 뒤 다시 눌러 주세요."; render(); }
+    return;
+  }
+  if (d.act === "candin" || d.act === "candout") { const mv = { ...(ADD.move || {}) }; if (d.act === "candin") mv[d.id] = S.domain; else delete mv[d.id]; ADD.move = mv; if (d.act === "candout") S.detail = null; saveAdd("단어 옮기기"); return; }
+  if (d.act === "candall") { const mv = { ...(ADD.move || {}) }; candOf(S.domain).forEach(t => { mv[t.id] = S.domain; }); ADD.move = mv; saveAdd("단어 옮기기"); return; }
+  if (d.act === "mydel") { ADD.items = addItems().filter(x => x.id !== d.id); S.detail = null; saveAdd("단어 지우기"); return; }
+  if (d.act === "addup") {
+    const box = document.getElementById("addIn"), got = parsePaste(box?.value, S.domain);
+    document.activeElement?.blur?.();
+    if (!got.length) { S.addTxt = box?.value || ""; note = "올릴 새 단어가 없어요. 한 줄에 「이름 — 설명」으로 붙여 넣어 주세요."; render(); return; }
+    note = ""; S.addTxt = ""; ADD.items = addItems().concat(got); saveAdd("올린 단어");
+    const msg = note = `${got.length}개를 ${S.domain} 단어장에 올렸어요.`; render();
+    setTimeout(() => { if (note === msg) { note = ""; render(); } }, 4000); return;
   }
   if (d.listcat) { S.listCat = d.listcat; render(); return; }
   if (d.detail) {
@@ -665,13 +748,10 @@ async function init(){
     if (!v || !Array.isArray(v.terms) || !v.terms.length) return;
     DATA = { terms: v.terms, pairs: Array.isArray(v.pairs) ? v.pairs : DATA.pairs };
     FOREIGN = Array.isArray(v.foreign) ? v.foreign : FOREIGN;
-    ALL = DATA.terms.concat(FOREIGN).map(t => ({ ...t, dom: domFor(t) }));
-    BYID = Object.fromEntries(ALL.map(t => [t.id, t]));
-    wikiCats();
-    TERMS = ALL.filter(t => t.dom === S.domain);
-    CATS = DOMAINS[S.domain].filter(c => TERMS.some(t => t.cat === c));
+    rebuild();
     render();
   }, () => {});
+  db.doc("vo.marks/add").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { ADD = { items: Array.isArray(v.items) ? v.items : [], move: v.move || {} }; rebuild(); render(); } }, () => {});
   db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = v; lsPut("vo.lec", v); if (view() === "lec") render(); } }, () => {});
   db.doc("vo.marks/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { LM = { ...v, ok: v.ok || {}, fav: v.fav || {}, pk: v.pk || {} }; lsPut("vo.lecm", LM); if (view() === "lec") render(); } }, () => {});
   db.collection("ctx").onSnapshot(snap => {
@@ -928,7 +1008,7 @@ function stageStart(ids, from){
 const PICK_MAX = 30;
 function pickRow(t){
   return `<div class="pick${S.detail === t.id ? " open" : ""}"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
-    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)">고칠</span>` : ""}${reqOf(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)" title="${esc(reqOf(t.id))}">요청</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
+    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)"${reqOf(t.id) ? ` title="${esc(reqOf(t.id))}"` : ""}>고칠</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
 }
 function pickList(list, max = 80){
   if (!list.length) return "";
@@ -1259,7 +1339,15 @@ init();
   }
   window.BRAINY_HOOK = {
     modelPick: true,   // 창 위에 답할 모델 고르기 줄 (Brainy 홈 상자 · set_model 과 같은 값)
-    chips: ["오늘 복습할 단어 뭐야?", "헷갈리는 단어 3개 골라서 쉽게 설명해 줘", "이 앱에서 ○○ 고쳐 줘"],
+    chips: ["오늘 복습할 단어 뭐야?", "헷갈리는 단어 3개 골라서 쉽게 설명해 줘", "고칠 단어 처리해 줘", "이 앱에서 ○○ 고쳐 줘"],
+    /* 고칠 단어 처리 (2026-11-24 동욱) — 뜻 고치기뿐 아니라 위키 페이지 새로 만들기·고치기까지. Brainy 는 볼트 노트 쓰기 도구(vault_write — Supabase 노트 사본에 쓰면 맥이 볼트로 받아 감)로 한다 */
+    rules: function () {
+      return ["[고칠 단어 처리 — 동욱이 「고칠 단어 처리해 줘」 「오류 고쳐 줘」처럼 시키면]",
+        "- 이건 앱 고치기(app_edit_start)가 아니라 볼트 일이다. 단어 뜻·위키 페이지는 볼트가 정본이라, 볼트를 고치면 맥 동기화가 몇 초 안에 이 단어장에 다시 올린다.",
+        "- 순서: ① 아래 [지금 앱 상태]의 고칠 단어와 동욱이 적은 글을 본다 ② vault_search 로 그 단어가 있는 곳(단어장 표 줄 — 학습 단어장은 위키 「영상 편집 용어 사전」, 외국어는 영어 단어장 표, 위키 개념은 그 개념 페이지)과 그 단어의 위키 페이지를 찾고 vault_read 로 읽는다 ③ 뜻이 틀렸으면 표 줄을 vault_write patch 로 고친다 ④ 위키 페이지 내용이 틀렸으면 그 페이지를 patch 로 고친다 ⑤ 위키 페이지가 없거나 「페이지가 없음」이라고 적혀 있으면 같은 영역의 다른 위키 페이지를 하나 읽어 frontmatter·형식을 맞춘 뒤 vault_write create 로 새로 만든다 (2_LLMWiki/wiki/<영역>/<단어>.md) ⑥ 중복이면 한쪽 줄·페이지로 합치고 다른 쪽에는 합쳤다고 적는다 (지우기는 없다) ⑦ 다 고친 단어마다 vocab_fix_done 으로 표시를 풀고 무엇을 고쳤는지 한 줄 남긴다.",
+        "- 붙여 넣어 올린 단어와 옮긴 후보(브랜드·상품 · 스킬 · MCP)도 동욱이 볼트에 넣으라고 하면 같은 방법으로 볼트 표·페이지에 넣는다.",
+        "- 다 하면 단어마다 한 줄로 무엇을 했는지(뜻 고침 · 페이지 고침 · 페이지 새로 만듦 · 중복 합침) 알려 준다. 적은 글만으로 어떻게 고칠지 알 수 없는 단어는 고치지 말고 그 단어만 짧게 묻는다."].join("\n");
+    },
     ctx: function () {
       var day = kday(), by = { 1: [], 2: [], 3: [], 4: [] }, due = [];
       ALL.forEach(function (t) {
@@ -1272,13 +1360,16 @@ init();
         "- ② 만남: " + by[2].slice(0, 40).join(", "),
         "- ③·④: " + by[3].concat(by[4]).slice(0, 40).join(", "),
         "- 오늘 복습할 단어(" + due.length + "): " + due.slice(0, 40).join(", "),
-        "- 고칠 단어(동욱이 「이 단어는 고쳐요」로 표시, progress/<id>.fix): " + fixList().map(function (t) { return t.term; }).slice(0, 40).join(", "),
-        "- 오류·중복 수정 요청(동욱이 단어 카드에 적은 글, progress/<id>.req): " + reqList().slice(0, 30).map(function (t) { return t.term + " — " + reqOf(t.id).slice(0, 80); }).join(" / "),
+        "- 고칠 단어 " + fixList().length + "개(동욱이 「이 단어는 고쳐요」로 표시하고 오류·중복을 적은 것, progress/<id>.fix·.req — 단어장 · 단어 — 적은 글): " + fixList().slice(0, 30).map(function (t) { return t.dom + " · " + t.term + " — " + (reqOf(t.id).slice(0, 120) || "(글 없음)"); }).join(" / "),
+        "- 붙여 넣어 올리거나 옮긴 단어(vo.marks/add — 아직 볼트에 없을 수 있음): " + addItems().slice(0, 30).map(function (t) { return t.dom + " · " + t.term; }).concat(Object.keys(ADD.move || {}).slice(0, 30).map(function (id) { return ADD.move[id] + " ← " + (BYID[id] ? BYID[id].term : id); })).join(", "),
         "- 단어장: " + Object.keys(DOMAINS).map(function (d) { return d + " " + ALL.filter(function (t) { return t.dom === d; }).length; }).join(" · "),
-        "- 단어를 새로 넣거나 정리할 때 규칙: 맥 단축키 앱과 겹치는 내용은 한쪽에만 둔다(단축키는 단축키 앱, 개념 설명은 단어장) · 동욱이 이미 알 만한 기본 단어는 넣지 않는다 · 브랜드·상품 페이지 단어와 스킬·MCP 설명은 각자 단어장(dom)으로 따로 둔다",
-        "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록) · vo.marks/lec(강의 탭 표시) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");
+        "- 단어를 새로 넣거나 정리할 때 규칙: 맥 단축키 앱과 겹치는 내용은 한쪽에만 둔다(단축키는 단축키 앱, 개념 설명은 단어장) · 동욱이 이미 알 만한 기본 단어는 넣지 않는다 · 브랜드·상품 단어, 스킬 설명, MCP 설명은 각자 단어장(dom: 브랜드·상품 · 스킬 · MCP)으로 따로 둔다",
+        "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록 · fix/req 고칠 단어 · fixDone 고친 기록) · vo.marks/lec(강의 탭 표시) · vo.marks/add(items 붙여 넣어 올린 단어 · move 옮긴 후보) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");
     },
     tools: [
+      { name: "vocab_fix_done", description: "고칠 단어 하나를 다 고쳤을 때 「이 단어는 고쳐요」 표시와 적은 글을 풀고, 무엇을 고쳤는지 한 줄 남긴다 (예: 뜻 고침 · 위키 페이지 새로 만듦). 볼트를 실제로 고친 뒤에만.",
+        inputSchema: { type: "object", properties: { term: { type: "string" }, note: { type: "string" } }, required: ["term", "note"] },
+        execute: function (i) { var t = findTerm(i.term); if (!t) throw new Error("「" + i.term + "」 단어를 못 찾았어요"); save(t.id, { fix: false, fixAt: null, req: null, reqAt: null, fixDone: { at: nowIso(), note: String(i.note || "").slice(0, 200), req: reqOf(t.id) } }, "Brainy: 고침"); return t.term + " 고침 표시 풂"; } },
       { name: "vocab_set_level", description: "단어 하나의 단계를 올린다 (2 만남 = 뜻 보고 맞힘 · 3 소화 = 맥락 보고 맞힘 · 4 실행 = 단어로 명령·실제로 씀). 동욱이 그 수준에 왔다고 분명히 말했을 때만. 단계는 내려가지 않는다.",
         inputSchema: { type: "object", properties: { term: { type: "string" }, level: { type: "integer", enum: [2, 3, 4] }, why: { type: "string" } }, required: ["term", "level"] },
         execute: function (i) { var t = findTerm(i.term); if (!t) throw new Error("「" + i.term + "」 단어를 못 찾았어요"); save(t.id, { level: i.level }, "Brainy: " + (i.why || "대화에서")); return t.term + " → " + LV[i.level]; } },
