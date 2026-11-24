@@ -5,6 +5,7 @@
   src/shortcuts.html   → shortcuts/index.html  (맥 단축키)
   src/vocab.html       → vocab/index.html      (체화 단어장)
   src/course.html      → course/index.html     (강의 실습)
+  src/ad.html          → ad/index.html         (광고 실습)
   src/content.html     → content/index.html    (콘텐츠 기획)
 
 원본이 그대로 앱이다 — 여기선 머리말(로그인 화면·받침 shim.js·아이콘)을 붙이고 /*@include 파일*/ 자리에 src/ 의 파일을 끼울 뿐이다.
@@ -185,6 +186,18 @@ emit("course", "강의 실습", "강의 실습", ("#F1F1F6", "#101117"),
      '{"id":"/brainy-today/course/","name":"강의 실습","short_name":"강의 실습","start_url":"./","scope":"./","display":"standalone","background_color":"#F1F1F6","theme_color":"#F1F1F6","icons":[{"src":"cr-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"cr-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
      "", CR_BRAINY + BRAINY_CHAT)
 
+# ═════════════════════════ 광고 실습 ═════════════════════════
+# 염소(진액)·이벤트랩 × 네이버·메타·구글 광고를 배우며 동시에 집행하는 계획과 진행판 (2026-11-24 동욱 — claude.ai 아티팩트에서 옮김, 볼트 태스크와 같이 움직이게).
+# 데이터 ad.data/main 은 볼트 → 맥 동기화(ad_app.py)가 올린다. 앱이 쓰는 건 taskwork/ad-<번호>(상태·체크·기록 한 줄)뿐 — 맥의 task_sync.py 가 태스크 노트에 넣는다. 아이콘은 ad/ 에 그대로 둔다.
+load("ad.html")
+include()
+emit("ad", "광고 실습", "광고 실습", ("#f4f6f2", "#141814"),
+     "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--doing);--g-ok:var(--ok)",
+     '<link rel="apple-touch-icon" href="ad-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="ad-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="ad-icon-64.png">',
+     '{key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]}',
+     '{"id":"/brainy-today/ad/","name":"광고 실습","short_name":"광고 실습","start_url":"./","scope":"./","display":"standalone","background_color":"#f4f6f2","theme_color":"#f4f6f2","icons":[{"src":"ad-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ad-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
+     "", BRAINY_CHAT)
+
 # ═════════════════════════ 콘텐츠 기획 ═════════════════════════
 # 브랜드 → 키워드 → 콘텐츠 → 대본 (편집 믹서 바로 앞 단계). 조종판 — 실행은 맥의 Claude(콘텐츠 스킬 셋).
 # 2026-11-17 동욱: 맥에 앱으로 설치한 Brainy 홈(옛 범위 /brainy-today/)에 섞여 열려서 따로 웹앱으로 — 주소는 /content-plan/ (저장소 duchoi1011-wq/content-plan).
@@ -224,7 +237,7 @@ redirect = """<!doctype html>
 <title>Brainy 홈</title><meta http-equiv="refresh" content="0; url=home/">
 <script>location.replace("home/" + location.search + location.hash);</script></head>
 <body style="font-family:-apple-system,sans-serif;padding:24px">
-<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="course/">강의 실습</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
+<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="course/">강의 실습</a> · <a href="ad/">광고 실습</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
 """
 (root / "index.html").write_text(redirect, encoding="utf-8")
 # 열려 있던 옛 화면이 version.txt 를 보고 스스로 새로 고치면 → 이 넘김 페이지 → home/

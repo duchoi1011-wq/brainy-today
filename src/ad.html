@@ -1,0 +1,671 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>광고 실습</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* 광고 실습 — 염소(진액)·이벤트랩 × 네이버·메타·구글을 배우며 동시에 집행하는 계획과 진행판.
+   배치: 머리말(제목 + 화면 전환) → 요약 → 상세. 실행·학습 전략 두 화면이 같은 틀을 쓴다. */
+:root {
+  --bg: #f4f6f2; --surface: #ffffff; --sunk: #eceee8; --ink: #1c211b; --muted: #5e665b; --line: #dadfd3;
+  --accent: #2e5a4c; --accent-ink: #ffffff;
+  --naver: #1d8f4e; --meta: #2f66d0; --google: #b47b0c; --goat: #8a5626; --event: #8a3fb8;
+  --ok: #2c8a4a; --doing: #c27a00; --hold: #7a7f86; --on-color: #ffffff;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141814; --surface: #1d221d; --sunk: #252b25; --ink: #e8ece5; --muted: #a2ab9e; --line: #343b33;
+    --accent: #7fc3aa; --accent-ink: #0f1a15; --naver: #4fc27f; --meta: #7ea4f0; --google: #e0aa45;
+    --goat: #d29a63; --event: #c48ae6; --ok: #5cc47c; --doing: #e8a940; --hold: #9aa0a8; --on-color: #10140f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141814; --surface: #1d221d; --sunk: #252b25; --ink: #e8ece5; --muted: #a2ab9e; --line: #343b33;
+  --accent: #7fc3aa; --accent-ink: #0f1a15; --naver: #4fc27f; --meta: #7ea4f0; --google: #e0aa45;
+  --goat: #d29a63; --event: #c48ae6; --ok: #5cc47c; --doing: #e8a940; --hold: #9aa0a8; --on-color: #10140f; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: calc(48px + env(safe-area-inset-top, 0px)) 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+.view { display: grid; gap: 28px; }
+.view[hidden] { display: none; }
+h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.3; }
+h1 { font-size: 1.45rem; font-weight: 700; }
+h2 { font-size: 1.12rem; font-weight: 700; }
+h3 { font-size: .98rem; font-weight: 600; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: .84rem; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { cursor: default; opacity: .55; }
+
+.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 20px; }
+.top .sub { color: var(--muted); font-size: .88rem; margin-top: 2px; }
+.top .links { font-size: .8rem; color: var(--muted); }
+.top .links a, .top .links .out { color: inherit; display: inline-flex; align-items: center; min-height: 44px; margin-block: -13px; }
+.top .links .out { font: inherit; background: none; border: 0; padding: 0; text-decoration: underline; }
+.views { display: inline-flex; background: var(--sunk); border-radius: 999px; padding: 4px; gap: 2px; }
+.views a { text-decoration: none; color: var(--muted); padding: 8px 18px; border-radius: 999px; font-weight: 600; font-size: .9rem; }
+.views a[aria-current="page"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+
+section { display: grid; gap: 12px; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: .74rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; letter-spacing: .01em; }
+.chip.goat { color: var(--goat); } .chip.event { color: var(--event); }
+.chip.naver { color: var(--naver); } .chip.meta { color: var(--meta); } .chip.google { color: var(--google); }
+.chip.plain { color: var(--muted); }
+.chip.pend { color: var(--doing); border-style: dashed; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; background: var(--accent); }
+.dot.naver { background: var(--naver); } .dot.meta { background: var(--meta); } .dot.google { background: var(--google); }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); flex: none; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; font-size: .85rem; color: var(--muted); min-height: 34px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.stateseg button[data-v="완료"][aria-pressed="true"] { background: var(--ok); color: var(--on-color); }
+.stateseg button[data-v="진행"][aria-pressed="true"] { background: var(--doing); color: var(--on-color); }
+.stateseg button[data-v="보류"][aria-pressed="true"] { background: var(--hold); color: var(--on-color); }
+
+/* 학습 전략 */
+.principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.principles div { background: var(--surface); padding: 14px 16px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.principles b { font-size: .8rem; color: var(--accent); letter-spacing: .03em; }
+.budget { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.budget .panel { padding: 14px 16px; display: grid; gap: 10px; }
+.bar { display: flex; height: 26px; border-radius: 6px; overflow: hidden; background: var(--sunk); }
+.bar span { display: flex; align-items: center; justify-content: center; color: var(--on-color); font-size: .78rem; font-weight: 600; min-width: 0; white-space: nowrap; overflow: hidden; }
+.bar .naver { background: var(--naver); } .bar .meta { background: var(--meta); } .bar .google { background: var(--google); }
+.boards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.board { overflow: hidden; }
+.board-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 2px; border-top: 4px solid var(--c); }
+.board-head p { color: var(--muted); font-size: .86rem; }
+.board dl { margin: 0; display: grid; }
+.board dl > div { padding: 10px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; min-width: 0; }
+.board dl > div:last-child { border-bottom: 0; }
+.board dt { font-size: .76rem; font-weight: 600; color: var(--muted); letter-spacing: .03em; }
+.board dd { margin: 0; display: grid; gap: 4px; font-size: .9rem; }
+.board dd .line { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
+.board .none { padding: 14px 16px; color: var(--muted); font-size: .9rem; }
+
+.grid-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.plan { display: grid; grid-template-columns: 96px repeat(5, minmax(170px, 1fr)); min-width: 960px; }
+.plan > div { padding: 10px; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); display: grid; gap: 8px; align-content: start; min-width: 0; }
+.plan > div.wk { border-left: 0; }
+.plan .colh { font-weight: 600; font-size: .86rem; display: grid; gap: 2px; background: var(--sunk); }
+.plan .colh span.n { display: flex; align-items: center; gap: 6px; }
+.plan .colh small { font-weight: 400; color: var(--muted); font-size: .74rem; line-height: 1.35; }
+.plan .wk { font-size: .82rem; color: var(--muted); }
+.plan .wk b { display: block; color: var(--ink); font-size: .95rem; }
+.tcard { text-align: left; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px 10px; display: grid; gap: 4px; width: 100%; }
+.tcard:hover, .tcard[aria-expanded="true"] { border-color: var(--accent); }
+.tcard[aria-expanded="true"] { background: var(--surface); }
+.tcard .tid { font-family: var(--font-num); font-size: .74rem; color: var(--muted); display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+.tcard .trk { display: none; }
+.tcard .tt { font-size: .86rem; font-weight: 600; line-height: 1.4; }
+.tcard .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.state-mark { font-size: .7rem; font-weight: 600; }
+.state-mark.완료 { color: var(--ok); } .state-mark.진행 { color: var(--doing); } .state-mark.보류 { color: var(--hold); }
+.detail { padding: 16px; display: grid; gap: 10px; }
+.kv { display: grid; grid-template-columns: 90px 1fr; gap: 6px 12px; font-size: .9rem; margin: 0; }
+.kv dt { color: var(--muted); font-size: .82rem; }
+.kv dd { margin: 0; min-width: 0; }
+.kv ul { margin: 0; padding-left: 18px; }
+.glossary { padding: 6px 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
+.glossary div { padding: 9px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 96px 1fr; gap: 10px; font-size: .9rem; min-width: 0; }
+.glossary b { font-weight: 600; }
+.links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: .9rem; }
+.links a { display: inline-flex; align-items: center; gap: 6px; }
+
+/* 실행 */
+.summary { display: grid; grid-template-columns: minmax(200px, 260px) 1fr; gap: 12px; }
+.total { padding: 16px; display: grid; gap: 6px; align-content: center; }
+.total .big { font-family: var(--font-num); font-size: 2.1rem; line-height: 1; }
+.meter { height: 8px; background: var(--sunk); border-radius: 99px; overflow: hidden; display: flex; }
+.meter i { display: block; height: 100%; background: var(--accent); }
+.meter i.doing { background: var(--doing); opacity: .55; }
+.meter i.naver { background: var(--naver); } .meter i.meta { background: var(--meta); } .meter i.google { background: var(--google); }
+.tracks { padding: 12px 16px; display: grid; gap: 10px; }
+.trow { display: grid; grid-template-columns: 110px 1fr 96px; gap: 12px; align-items: center; font-size: .88rem; }
+.trow .lab { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.next .panel { padding: 12px 14px; display: grid; gap: 8px; border-left: 4px solid var(--c); align-content: start; }
+.next .stateseg { justify-self: start; }
+.next .k { font-size: .78rem; color: var(--muted); font-weight: 600; display: flex; gap: 6px; align-items: center; }
+.tasklist { display: grid; }
+.trow2 { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; padding: 14px 16px; border-bottom: 1px solid var(--line); align-items: start; }
+.trow2:last-child { border-bottom: 0; }
+.trow2 .info { display: grid; gap: 6px; min-width: 0; }
+.trow2 .head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.trow2 .head .tid { font-family: var(--font-num); font-size: .78rem; color: var(--muted); }
+.trow2 .title { font-weight: 600; }
+.trow2.is-done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+/* 완료 기준 — 볼트 태스크 노트의 체크 칸 그대로. 누르면 노트에 체크된다 */
+.crit { display: grid; gap: 2px; }
+.crit button { display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: start; text-align: left; border: 0; background: transparent; padding: 5px 4px; border-radius: 6px; font-size: .88rem; min-height: 34px; }
+.crit button:hover { background: var(--sunk); }
+.crit .box { width: 18px; height: 18px; margin-top: 2px; border: 1.5px solid var(--muted); border-radius: 4px; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.crit button[aria-pressed="true"] .box { background: var(--ok); border-color: var(--ok); color: var(--on-color); }
+.crit button[aria-pressed="true"] .ct { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+.crit .pend .box { border-style: dashed; }
+.logs { display: grid; gap: 2px; font-size: .8rem; color: var(--muted); }
+.logs .p { color: var(--doing); }
+.addlog { display: flex; gap: 6px; }
+.note { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 6px; padding: 6px 8px; font: inherit; font-size: .88rem; }
+.addlog button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 6px 12px; font-size: .85rem; font-weight: 600; }
+.metrics { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .88rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+th { font-size: .78rem; color: var(--muted); font-weight: 600; background: var(--sunk); }
+td.r, th.r { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+.empty { padding: 18px 16px; color: var(--muted); font-size: .9rem; }
+.status-line { font-size: .82rem; color: var(--muted); }
+.warn { color: var(--doing); }
+
+@media (max-width: 920px) { .boards, .next { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .principles, .glossary, .summary { grid-template-columns: 1fr; }
+  .glossary div { grid-template-columns: 84px 1fr; }
+  /* 폰: 커리큘럼 표를 주차별 세로 목록으로 */
+  .grid-scroll { overflow: visible; }
+  .plan { grid-template-columns: 1fr; min-width: 0; }
+  .plan > div { border-left: 0; }
+  .plan .colh, .plan .cell-empty { display: none; }
+  .plan .wk { background: var(--sunk); }
+  .plan .wk b { display: inline; margin-right: 6px; }
+  .tcard .trk { display: inline-flex; align-items: center; gap: 5px; }
+}
+@media (max-width: 640px) {
+  .trow2 { grid-template-columns: 1fr; }
+  .seg button { min-height: 44px; padding: 8px 12px; }
+  .crit button { min-height: 44px; }
+  .note { font-size: 16px; padding: 10px; }
+  .addlog button { min-height: 44px; }
+  .views a { padding: 12px 18px; }
+  .links a { min-height: 44px; }
+  .trow { grid-template-columns: 96px 1fr 84px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1 id="app-title">광고 실습</h1>
+      <p class="sub"><span id="app-sub"></span> <span id="updated"></span></p>
+      <p class="links"><a href="../home/">← Brainy 홈</a> · <button type="button" class="out" data-brainy="out">로그아웃</button></p>
+    </div>
+    <nav class="views" aria-label="화면 전환">
+      <a href="#run" id="tab-run">실행</a>
+      <a href="#learn" id="tab-learn">학습 전략</a>
+    </nav>
+  </header>
+
+  <main id="view-run" class="view" hidden>
+    <section>
+      <div class="sec-head">
+        <h2>진행 현황</h2>
+        <span class="status-line" id="sync" role="status">볼트 태스크 읽는 중…</span>
+      </div>
+      <div class="summary">
+        <div class="panel total">
+          <span class="muted small">전체 태스크 완료</span>
+          <span class="big" id="total-num">0 / 0</span>
+          <div class="meter"><i id="total-bar" style="width:0%"></i><i class="doing" id="total-doing" style="width:0%"></i></div>
+          <span class="small muted" id="total-doing-text"></span>
+        </div>
+        <div class="panel tracks" id="track-progress"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>트랙별 다음 할 일</h2>
+        <span class="muted small">공통 기반을 끝낸 뒤에는 세 트랙이 서로 기다리지 않는다. 각 트랙에서 아직 안 끝난 첫 태스크</span>
+      </div>
+      <div class="next" id="next"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2 id="week-title">주차별 할 일</h2>
+        <div class="seg" id="week-seg" role="group" aria-label="주차 고르기"></div>
+      </div>
+      <p class="muted small">상태 버튼·완료 기준 체크·기록 한 줄은 볼트 태스크 노트에 들어가요 (맥 동기화가 몇 초 안에). 옵시디언에서 고친 것도 여기에 그대로 보여요.</p>
+      <div class="panel tasklist" id="tasklist"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>채널별 숫자</h2>
+        <span class="muted small">매주 통합 리뷰 때 Brainy가 채운다. 기준은 실제 주문·계약</span>
+      </div>
+      <div class="panel metrics" id="metrics"></div>
+    </section>
+  </main>
+
+  <main id="view-learn" class="view" hidden>
+    <section>
+      <h2>공통 원칙</h2>
+      <div class="principles" id="principles"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>예산 비중</h2>
+        <span class="muted small" id="budget-note"></span>
+      </div>
+      <div class="budget" id="budget"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>플랫폼 전략판</h2>
+        <div class="seg" id="prod-seg" role="group" aria-label="상품 고르기">
+          <button type="button" id="prod-both" data-p="both">둘 다</button>
+          <button type="button" id="prod-goat" data-p="goat">염소</button>
+          <button type="button" id="prod-event" data-p="event">이벤트랩</button>
+        </div>
+      </div>
+      <div class="boards" id="boards"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>학습·집행 커리큘럼</h2>
+        <span class="muted small">카드를 누르면 배우는 것과 완료 기준이 열린다</span>
+      </div>
+      <div class="grid-scroll"><div class="plan" id="plan"></div></div>
+      <div class="panel detail" id="detail" hidden></div>
+    </section>
+
+    <section>
+      <h2>용어 풀이</h2>
+      <div class="panel glossary" id="glossary"></div>
+    </section>
+
+    <section>
+      <h2>함께 볼 공식 교육</h2>
+      <div class="links" id="links"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* 광고 실습 — 볼트 3_Action 태스크와 같이 움직이는 광고 학습·집행판 (2026-11-24 동욱 「볼트의 액션과 연동되서 움직이도록」).
+   읽는 것: ad.data/main = {plan, tasks} — 맥 동기화(볼트 .claude/scripts/ad_app.py)가 올린다.
+     plan  = 볼트 4_Outputs/광고 실습 앱/광고 실습 계획.json (원칙·전략판·주차·용어·숫자 칸). 내용은 거기만 고친다.
+     tasks = 계획의 태스크 목록 + 그 이름의 태스크 노트(상태·예상·담당·배우는 것·완료 기준·최근 로그). 상태의 정본은 노트다.
+   쓰는 것: taskwork/ad-<번호> 하나뿐 {task, from, status, steps{본문 체크칸 번호: 참/거짓}, log[{at,text}], synced:false, updatedAt}
+     → 맥의 task_sync.py 가 노트의 status·체크·로그(허브·데일리 노트·실행 로그까지)에 넣고 synced=true 로 바꾼다.
+     넣기 전까지는 누른 값을 「볼트에 넣는 중」으로 보여 주고, 넣은 뒤엔 노트에서 다시 읽은 값을 보여 준다. */
+(function () {
+  "use strict";
+  var PLAN = null, TASKS = [], CH = [], DB = null, DATA_AT = "";
+  var TW = {};       // 이 앱의 작업실 문서 (taskwork/ad-<번호>)
+  var ui = { week: 1, prod: "both", open: null };
+  var queue = {};    // 문서 하나에 한 번씩 저장, 저장 중 바뀐 마지막 값까지
+  var STATES = ["할일", "진행", "완료", "보류"];
+
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function $(id) { return document.getElementById(id); }
+  function name(t) { return t.title.replace(/^T-/, ""); }
+  function taskBy(id) { return TASKS.filter(function (t) { return t.id === id; })[0]; }
+  function prodChip(p) { return '<span class="chip ' + p + '">' + esc(PLAN.products[p].name) + "</span>"; }
+  function isCh(c) { return CH.indexOf(c) >= 0; }
+  function color(c) { return isCh(c) ? "var(--" + c + ")" : "var(--accent)"; }
+  function dot(c) { return '<span class="dot ' + (isCh(c) ? c : "") + '"></span>'; }
+  function track(id) { return PLAN.tracks.filter(function (t) { return t.id === id; })[0] || { name: id }; }
+
+  /* ---------- 상태 — 노트 값, 넣기 전이면 누른 값 ---------- */
+  function tw(id) { return TW["ad-" + id]; }
+  function pending(id) { var d = tw(id); return d && d.synced === false ? d : null; }
+  function stateOf(id) {
+    var p = pending(id), t = taskBy(id);
+    if (p && STATES.indexOf(p.status) >= 0) return p.status;
+    return t && STATES.indexOf(t.status) >= 0 ? t.status : "할일";
+  }
+  function statePending(id) { var p = pending(id), t = taskBy(id); return !!(p && p.status && t && p.status !== t.status); }
+  function critDone(id, k) { var p = pending(id); return p && p.steps && typeof p.steps[k.box] === "boolean" ? p.steps[k.box] : !!k.done; }
+  function critPending(id, k) { var p = pending(id); return !!(p && p.steps && typeof p.steps[k.box] === "boolean" && p.steps[k.box] !== !!k.done); }
+  function firstOpenCrit(t) { return (t.crit || []).filter(function (k) { return !critDone(t.id, k); })[0]; }
+  function canWrite(t) { return !!(DB && t && t.exists); }
+
+  /* ---------- 화면 전환 ---------- */
+  function route() {
+    var v = location.hash === "#learn" ? "learn" : "run";
+    $("view-run").hidden = v !== "run";
+    $("view-learn").hidden = v !== "learn";
+    $("tab-run").setAttribute("aria-current", v === "run" ? "page" : "false");
+    $("tab-learn").setAttribute("aria-current", v === "learn" ? "page" : "false");
+  }
+  window.addEventListener("hashchange", route);
+
+  /* ---------- 학습 전략 ---------- */
+  function renderLearn() {
+    $("principles").innerHTML = PLAN.principles.map(function (x) {
+      return "<div><b>" + esc(x.label) + "</b><p>" + esc(x.value) + "</p></div>";
+    }).join("");
+    $("budget-note").textContent = PLAN.budgetShare.note;
+    $("budget").innerHTML = Object.keys(PLAN.products).map(function (pk) {
+      var s = PLAN.budgetShare[pk] || {}, pr = PLAN.products[pk];
+      var on = CH.filter(function (c) { return s[c] > 0; });
+      var off = CH.filter(function (c) { return !s[c]; }).map(function (c) { return PLAN.channels[c].short; });
+      return '<div class="panel"><div class="sec-head"><h3>' + esc(pr.full) + '</h3><span class="muted small">목표 ' + esc(pr.goal) + " · 판단 " + esc(pr.metric) + "</span></div>" +
+        '<div class="bar">' + on.map(function (c) { return '<span class="' + c + '" style="width:' + s[c] + '%">' + esc(PLAN.channels[c].short) + " " + s[c] + "%</span>"; }).join("") + "</div>" +
+        (off.length ? '<p class="muted small">' + esc(off.join("·")) + " 집행 안 함</p>" : "") + "</div>";
+    }).join("");
+
+    ["both", "goat", "event"].forEach(function (k) { $("prod-" + k).setAttribute("aria-pressed", String(ui.prod === k)); });
+    $("boards").innerHTML = PLAN.boards.map(function (b) {
+      var ch = PLAN.channels[b.channel];
+      var prods = Object.keys(PLAN.products).filter(function (pk) { return ui.prod === "both" || ui.prod === pk; });
+      var rows = b.rows.map(function (r) {
+        var lines = prods.filter(function (pk) { return r[pk] && r[pk] !== "—"; }).map(function (pk) {
+          return '<div class="line">' + prodChip(pk) + "<span>" + esc(r[pk]) + "</span></div>";
+        });
+        return lines.length ? "<div><dt>" + esc(r.label) + "</dt><dd>" + lines.join("") + "</dd></div>" : "";
+      }).join("");
+      return '<article class="panel board" style="--c:' + color(b.channel) + '"><div class="board-head"><h3>' + esc(ch.name) + "</h3><p>" + esc(ch.role) + "</p></div>" +
+        (rows ? "<dl>" + rows + "</dl>" : '<p class="none">이 상품은 이 채널에서 집행하지 않는다.</p>') + "</article>";
+    }).join("");
+
+    var html = '<div class="colh wk">주차</div>' + PLAN.tracks.map(function (t) {
+      return '<div class="colh"><span class="n">' + dot(t.id) + esc(t.name) + "</span>" + (t.note ? "<small>" + esc(t.note) + "</small>" : "") + "</div>";
+    }).join("");
+    PLAN.weeks.forEach(function (wk) {
+      html += '<div class="wk"><b>' + wk.week + "주</b>" + esc(wk.label) + "</div>";
+      PLAN.tracks.forEach(function (t) {
+        var cell = TASKS.filter(function (x) { return x.track === t.id && x.week === wk.week; });
+        html += '<div class="' + (cell.length ? "" : "cell-empty") + '">' + cell.map(cardHtml).join("") + "</div>";
+      });
+    });
+    $("plan").innerHTML = html;
+    renderDetail();
+    // 폰: 상세를 누른 카드 바로 밑에 연다. 넓은 화면: 표 아래에 둔다.
+    var det = $("detail"), opened = ui.open && document.querySelector('.tcard[data-card="' + ui.open + '"]');
+    if (opened && window.matchMedia("(max-width: 760px)").matches) opened.insertAdjacentElement("afterend", det);
+    else if (det.previousElementSibling !== document.querySelector(".grid-scroll")) document.querySelector(".grid-scroll").insertAdjacentElement("afterend", det);
+
+    $("glossary").innerHTML = (PLAN.glossary || []).map(function (g) {
+      return "<div><b>" + esc(g.term) + '</b><span class="muted">' + esc(g.desc) + "</span></div>";
+    }).join("");
+    $("links").innerHTML = (PLAN.learningLinks || []).map(function (l) {
+      var safe = /^https:\/\//.test(l.url) ? l.url : "#";
+      return '<a href="' + esc(safe) + '" target="_blank" rel="noopener">' + dot(l.channel) + esc(l.name) + "</a>";
+    }).join("");
+  }
+
+  function cardHtml(t) {
+    var st = stateOf(t.id);
+    var mark = st !== "할일" ? '<span class="state-mark ' + st + '">' + st + "</span>" : "";
+    return '<button type="button" class="tcard" data-card="' + esc(t.id) + '" aria-expanded="' + (ui.open === t.id) + '">' +
+      '<span class="tid"><span>' + esc(t.id) + (t.estimate ? " · " + esc(t.estimate) : "") + (t.recurring ? " · 매주" : "") + "</span>" + mark + "</span>" +
+      '<span class="trk small muted">' + dot(t.track) + esc(track(t.track).name) + "</span>" +
+      '<span class="tt">' + esc(name(t)) + "</span>" +
+      '<span class="chips">' + t.products.map(prodChip).join("") + "</span></button>";
+  }
+
+  function renderDetail() {
+    var box = $("detail"), t = taskBy(ui.open);
+    if (!t) { box.hidden = true; return; }
+    box.hidden = false;
+    var learn = (t.learn || []).length ? "<ul>" + t.learn.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : '<span class="muted">노트에 적힌 것 없음</span>';
+    var crit = (t.crit || []).length ? "<ul>" + t.crit.map(function (k) { return "<li>" + (critDone(t.id, k) ? "☑ " : "☐ ") + esc(k.t) + "</li>"; }).join("") + "</ul>" : '<span class="muted">노트에 완료 기준 칸이 없음</span>';
+    box.innerHTML = '<div class="sec-head"><h3>' + esc(t.id) + " " + esc(name(t)) + '</h3><span class="muted small">' + esc(track(t.track).name) + " · " + t.week + "주차" + (t.recurring ? "부터 매주" : "") + "</span></div>" +
+      (t.exists ? "" : '<p class="warn small">볼트에 이 이름의 태스크 노트가 없어요 (' + esc(t.title) + ").</p>") +
+      '<dl class="kv"><dt>상품</dt><dd>' + t.products.map(prodChip).join(" ") + "</dd>" +
+      "<dt>상태</dt><dd>" + esc(stateOf(t.id)) + (t.archived ? " · 보관됨" : "") + "</dd>" +
+      "<dt>배우는 것</dt><dd>" + learn + "</dd>" +
+      "<dt>완료 기준</dt><dd>" + crit + "</dd>" +
+      "<dt>담당</dt><dd>" + esc(t.owner || t.worker || "") + "</dd>" +
+      '<dt>예상</dt><dd class="num">' + esc(t.estimate || "") + "</dd></dl>" +
+      '<p class="small muted">상태·체크는 「실행」 화면에서 바꿔요. 내용의 정본은 볼트 노트 ' + esc(t.title) + "</p>";
+  }
+
+  /* ---------- 실행: 요약 (입력칸 없음, 언제든 다시 그림) ---------- */
+  function renderSummary() {
+    var n = TASKS.length || 1;
+    var done = TASKS.filter(function (t) { return stateOf(t.id) === "완료"; }).length;
+    var doing = TASKS.filter(function (t) { return stateOf(t.id) === "진행"; }).length;
+    $("total-num").textContent = done + " / " + TASKS.length;
+    $("total-bar").style.width = (done / n * 100) + "%";
+    $("total-doing").style.width = (doing / n * 100) + "%";
+    $("total-doing-text").textContent = doing ? "진행 중 " + doing + "개" : "";
+
+    $("track-progress").innerHTML = PLAN.tracks.map(function (tr) {
+      var list = TASKS.filter(function (t) { return t.track === tr.id; });
+      var d = list.filter(function (t) { return stateOf(t.id) === "완료"; }).length;
+      var g = list.filter(function (t) { return stateOf(t.id) === "진행"; }).length;
+      var m = list.length || 1;
+      return '<div class="trow"><span class="lab">' + dot(tr.id) + esc(tr.name) + '</span><div class="meter"><i class="' + tr.id + '" style="width:' + (d / m * 100) + '%"></i><i class="doing" style="width:' + (g / m * 100) + '%"></i></div>' +
+        '<span class="num small muted">' + d + "/" + list.length + (g ? " · 진행 " + g : "") + "</span></div>";
+    }).join("");
+
+    var commonLeft = TASKS.filter(function (t) { return t.track === "common" && stateOf(t.id) !== "완료"; });
+    $("next").innerHTML = CH.map(function (c) {
+      var first = TASKS.filter(function (t) { return t.track === c && stateOf(t.id) !== "완료"; })[0];
+      var k = first && firstOpenCrit(first);
+      var body = !first ? '<p class="small">이 트랙 태스크를 모두 끝냈어요.</p>' :
+        '<p class="small num muted">' + esc(first.id) + " · " + first.week + "주차" + (first.estimate ? " · " + esc(first.estimate) : "") + "</p>" +
+        "<p><b>" + esc(name(first)) + "</b></p>" + (k ? '<p class="small muted">다음 칸: ' + esc(k.t) + "</p>" : "") +
+        (commonLeft.length ? '<p class="small warn">공통 기반이 ' + commonLeft.length + "개 남았어요: " + esc(commonLeft.slice(0, 2).map(name).join(", ")) + (commonLeft.length > 2 ? " 외 " + (commonLeft.length - 2) + "개" : "") + "</p>" : "") +
+        stateSeg(first);
+      return '<div class="panel" style="--c:' + color(c) + '"><span class="k">' + dot(c) + esc(PLAN.channels[c].name) + "</span>" + body + "</div>";
+    }).join("");
+  }
+
+  function stateSeg(t) {
+    var st = stateOf(t.id), off = canWrite(t) ? "" : " disabled";
+    return '<div class="seg stateseg" data-task="' + esc(t.id) + '" role="group" aria-label="' + esc(t.id) + ' 상태">' +
+      STATES.map(function (v) { return '<button type="button" data-v="' + v + '" aria-pressed="' + (st === v) + '"' + off + ">" + v + "</button>"; }).join("") + "</div>";
+  }
+
+  /* ---------- 실행: 주차 목록 (주차를 바꾸거나 노트 모양이 바뀔 때만 새로 만듦) ---------- */
+  function weekTasks() { return TASKS.filter(function (t) { return t.week === ui.week || (t.recurring && t.week < ui.week); }); }
+  var builtSig = "";
+  function buildWeek(force) {
+    var list = weekTasks();
+    // 체크 칸 수·이름이 그대로면 다시 만들지 않는다 (쓰던 기록 칸이 사라지지 않게) — 값은 syncRows 가 맞춘다
+    var sig = ui.week + "|" + list.map(function (t) { return t.id + ":" + t.exists + ":" + (t.crit || []).map(function (k) { return k.box + k.t; }).join(",") + ":" + (t.log || []).join("¶"); }).join("|");
+    if (!force && sig === builtSig) { syncRows(); return; }
+    var typing = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute("data-note");
+    if (typing && !force) { syncRows(); return; }
+    builtSig = sig;
+    $("week-seg").innerHTML = PLAN.weeks.map(function (wk) {
+      return '<button type="button" data-week="' + wk.week + '" aria-pressed="' + (ui.week === wk.week) + '">' + wk.week + "주</button>";
+    }).join("");
+    var info = PLAN.weeks.filter(function (x) { return x.week === ui.week; })[0] || { label: "" };
+    $("week-title").textContent = ui.week + "주차 할 일 · " + info.label;
+    var keep = {};
+    Array.prototype.forEach.call(document.querySelectorAll(".note"), function (inp) { if (inp.value) keep[inp.getAttribute("data-note")] = inp.value; });
+    $("tasklist").innerHTML = list.length ? list.map(function (t) {
+      var trackChip = isCh(t.track) ? '<span class="chip ' + t.track + '">' + esc(PLAN.channels[t.track].short) + "</span>" : '<span class="chip plain">' + esc(track(t.track).name) + "</span>";
+      var off = canWrite(t) ? "" : " disabled";
+      var crit = (t.crit || []).map(function (k) {
+        return '<button type="button" data-crit="' + esc(t.id) + '" data-box="' + k.box + '" aria-pressed="false"' + off + '><span class="box" aria-hidden="true"></span><span class="ct">' + esc(k.t) + "</span></button>";
+      }).join("");
+      return '<div class="trow2" data-row="' + esc(t.id) + '"><div class="info"><div class="head"><span class="tid">' + esc(t.id) + "</span>" + trackChip + t.products.map(prodChip).join("") +
+        '<span class="small muted num">' + esc(t.estimate || "") + (t.owner ? " · " + esc(t.owner) : "") + '</span><span class="chip pend" data-pend="' + esc(t.id) + '" hidden>볼트에 넣는 중</span></div>' +
+        '<span class="title">' + esc(name(t)) + "</span>" +
+        (t.exists ? "" : '<span class="small warn">볼트에 이 태스크 노트가 없어요 — 상태를 바꿀 수 없어요</span>') +
+        (crit ? '<div class="crit" role="group" aria-label="' + esc(t.id) + ' 완료 기준">' + crit + "</div>" : "") +
+        '<div class="logs" data-logs="' + esc(t.id) + '"></div>' +
+        '<div class="addlog"><input class="note" data-note="' + esc(t.id) + '" placeholder="기록 한 줄 (막힌 점, 결과 숫자) → 노트 로그에" maxlength="300" autocomplete="off"' + off + '>' +
+        '<button type="button" data-addlog="' + esc(t.id) + '"' + off + ">남기기</button></div></div>" +
+        stateSeg(t) + "</div>";
+    }).join("") : '<p class="empty">이 주차에는 태스크가 없어요.</p>';
+    Object.keys(keep).forEach(function (id) { var inp = document.querySelector('.note[data-note="' + id + '"]'); if (inp) inp.value = keep[id]; });
+    syncRows();
+  }
+
+  // 목록을 다시 만들지 않고 값만 맞춘다: 누르던 버튼·쓰던 칸이 사라지지 않게.
+  function syncRows() {
+    Array.prototype.forEach.call(document.querySelectorAll(".stateseg"), function (seg) {
+      var id = seg.getAttribute("data-task"), st = stateOf(id), t = taskBy(id);
+      Array.prototype.forEach.call(seg.querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-v") === st)); b.disabled = !canWrite(t); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".trow2"), function (row) {
+      var id = row.getAttribute("data-row"), t = taskBy(id); if (!t) return;
+      row.classList.toggle("is-done", stateOf(id) === "완료");
+      var anyPend = statePending(id) || (t.crit || []).some(function (k) { return critPending(id, k); }) || pendLogs(id).length > 0;
+      var pc = row.querySelector("[data-pend]"); if (pc) pc.hidden = !anyPend;
+      Array.prototype.forEach.call(row.querySelectorAll("[data-crit]"), function (b) {
+        var k = (t.crit || []).filter(function (x) { return String(x.box) === b.getAttribute("data-box"); })[0];
+        if (!k) return;
+        b.setAttribute("aria-pressed", String(critDone(id, k)));
+        b.classList.toggle("pend", critPending(id, k));
+        b.querySelector(".box").textContent = critDone(id, k) ? "✓" : "";
+        b.disabled = !canWrite(t);
+      });
+      var lg = row.querySelector("[data-logs]");
+      if (lg) lg.innerHTML = (t.log || []).map(function (l) { return "<span>" + esc(l) + "</span>"; }).join("") +
+        pendLogs(id).map(function (l) { return '<span class="p">넣는 중 · ' + esc(l.text) + "</span>"; }).join("");
+      Array.prototype.forEach.call(row.querySelectorAll(".note,[data-addlog]"), function (el) { el.disabled = !canWrite(t); });
+    });
+  }
+  // 아직 노트에 안 들어간 기록 — 노트의 최근 로그에 같은 글이 보이면 들어간 것
+  function pendLogs(id) {
+    var d = tw(id), t = taskBy(id); if (!d || !d.log) return [];
+    var seen = (t && t.log || []).join("\n");
+    return d.log.filter(function (l) { return d.synced === false && seen.indexOf(l.text) < 0; });
+  }
+
+  function fmt(n) { return typeof n === "number" && isFinite(n) ? n.toLocaleString("ko-KR") : "—"; }
+  function renderMetrics() {
+    var M = PLAN.metrics || {};
+    if (!PLAN.metricSlots.some(function (s) { return M[s.id]; })) {
+      $("metrics").innerHTML = '<p class="empty">아직 숫자가 없어요. 집행을 시작하고 첫 주간 통합 리뷰를 하면 Brainy가 볼트 계획 파일에 상품·채널별 광고비, 클릭, 주문·문의, 결과당 비용을 채우고 여기에 보여요.</p>';
+      return;
+    }
+    var rows = PLAN.metricSlots.map(function (s) {
+      var m = M[s.id] || {}, pr = PLAN.products[s.product];
+      var result = m[pr.resultField];
+      var per = typeof m.spend === "number" && typeof result === "number" && result > 0 ? Math.round(m.spend / result) : null;
+      return "<tr><td>" + prodChip(s.product) + '</td><td><span class="chip ' + s.channel + '">' + esc(PLAN.channels[s.channel].short) + "</span></td>" +
+        '<td class="r num">' + fmt(m.spend) + '</td><td class="r num">' + fmt(m.clicks) + '</td><td class="r num">' + fmt(result) + " " + esc(pr.resultLabel) +
+        '</td><td class="r num">' + (pr.hasContracts ? fmt(m.contracts) : "—") + '</td><td class="r num">' + fmt(per) +
+        '</td><td class="small muted">' + esc(m.period || "") + "</td></tr>";
+    }).join("");
+    $("metrics").innerHTML = '<table><thead><tr><th>상품</th><th>채널</th><th class="r">광고비(원)</th><th class="r">클릭</th><th class="r">주문·문의</th><th class="r">계약</th><th class="r">결과당 비용(원)</th><th>기간</th></tr></thead><tbody>' + rows + "</tbody></table>";
+  }
+
+  function syncLine() {
+    var n = TASKS.filter(function (t) { var p = pending(t.id); return p; }).length;
+    var at = DATA_AT ? new Date(DATA_AT) : null;
+    var when = at && !isNaN(at) ? at.toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+    $("sync").textContent = n ? "볼트에 넣는 중 " + n + "개 — 맥 동기화가 켜져 있으면 몇 초 안에 들어가요" : "볼트 태스크와 맞춰짐" + (when ? " · " + when : "");
+  }
+  function refresh() { renderSummary(); buildWeek(); renderLearn(); renderMetrics(); syncLine(); }
+
+  /* ---------- 쓰기 — taskwork/ad-<번호> 한 문서 ---------- */
+  function twChange(id, mutate) {
+    var t = taskBy(id);
+    if (!canWrite(t)) { $("sync").textContent = DB ? "볼트에 이 태스크 노트가 없어 바꿀 수 없어요." : "로그인하지 않아 바꿀 수 없어요."; return; }
+    var cur = JSON.parse(JSON.stringify(tw(id) || {}));
+    if (cur.synced !== false) { cur.steps = {}; cur.status = ""; }   // 지난번 것은 이미 노트에 들어감 — 새로 시작
+    cur.task = name(t); cur.from = "광고 실습"; cur.steps = cur.steps || {}; cur.log = cur.log || [];
+    mutate(cur, t);
+    if (cur.status === t.status) cur.status = "";   // 노트와 같아지면 보낼 것 없음
+    cur.synced = false; cur.updatedAt = new Date().toISOString();
+    TW["ad-" + id] = cur;
+    save("ad-" + id);
+    renderSummary(); syncRows(); renderLearn(); syncLine();
+  }
+  function save(docId) {
+    var q = queue[docId] || (queue[docId] = {});
+    if (q.busy) { q.again = true; return; }
+    q.busy = true; q.again = false;
+    DB.collection("taskwork").doc(docId).set(JSON.parse(JSON.stringify(TW[docId]))).then(null, function (err) {
+      $("sync").textContent = "저장하지 못했어요 (" + ((err && (err.code || err.message)) || "오류") + "). 인터넷 연결을 확인하고 다시 눌러 주세요.";
+    }).then(function () { q.busy = false; if (q.again) save(docId); });
+  }
+  function addLog(id) {
+    var inp = document.querySelector('.note[data-note="' + id + '"]'); if (!inp) return;
+    var tx = inp.value.trim().slice(0, 300); if (!tx) { inp.focus(); return; }
+    inp.value = "";
+    twChange(id, function (cur) { cur.log = cur.log.concat([{ at: new Date().toISOString(), text: tx }]).slice(-20); });
+  }
+
+  document.addEventListener("click", function (e) {
+    var wb = e.target.closest("[data-week]");
+    if (wb) { ui.week = +wb.getAttribute("data-week"); store("ad.week", String(ui.week)); buildWeek(true); return; }
+    var pb = e.target.closest("[data-p]");
+    if (pb) { ui.prod = pb.getAttribute("data-p"); store("ad.prod", ui.prod); renderLearn(); return; }
+    var card = e.target.closest(".tcard");
+    if (card) {
+      var id = card.getAttribute("data-card");
+      ui.open = ui.open === id ? null : id;
+      renderLearn();
+      if (ui.open) $("detail").scrollIntoView({ block: "nearest" });
+      return;
+    }
+    var sb = e.target.closest(".stateseg button");
+    if (sb) { var v = sb.getAttribute("data-v"); twChange(sb.parentNode.getAttribute("data-task"), function (cur) { cur.status = v; }); return; }
+    var cb = e.target.closest("[data-crit]");
+    if (cb) {
+      var tid = cb.getAttribute("data-crit"), box = +cb.getAttribute("data-box");
+      twChange(tid, function (cur, t) {
+        var k = (t.crit || []).filter(function (x) { return x.box === box; })[0]; if (!k) return;
+        var want = !critDone(tid, k);
+        if (want === !!k.done) delete cur.steps[box]; else cur.steps[box] = want;   // 노트와 같아지면 보낼 것 없음
+      });
+      return;
+    }
+    var lb = e.target.closest("[data-addlog]");
+    if (lb) addLog(lb.getAttribute("data-addlog"));
+  });
+  document.addEventListener("keydown", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-note");
+    if (id && e.key === "Enter" && !e.isComposing) { e.preventDefault(); addLog(id); }
+  });
+  document.addEventListener("focusout", function (e) { if (e.target.getAttribute && e.target.getAttribute("data-note")) setTimeout(function () { if (PLAN) buildWeek(); }, 0); });
+
+  /* ---------- 시작 ---------- */
+  route();
+  function apply(v) {
+    if (!v || !v.plan || !Array.isArray(v.tasks)) return false;
+    var first = !PLAN;
+    PLAN = v.plan; TASKS = v.tasks; CH = Object.keys(PLAN.channels); DATA_AT = v.updatedAt || "";
+    if (first) {
+      var w = parseInt(store("ad.week"), 10); ui.week = w >= 1 && w <= PLAN.weeks.length ? w : 1;
+      var p = store("ad.prod"); ui.prod = p === "both" || PLAN.products[p] ? p : "both";
+      document.title = PLAN.title || "광고 실습"; $("app-title").textContent = PLAN.title || "광고 실습"; $("app-sub").textContent = PLAN.subtitle || "";
+    }
+    refresh();
+    return true;
+  }
+  var timer = setTimeout(function () { if (!PLAN) $("sync").textContent = "볼트 태스크를 아직 못 받았어요. 맥 동기화가 꺼져 있을 수 있어요 — ↻ 를 눌러 다시 받아 보세요."; }, 10000);
+  if (window.claude && window.claude.use) {
+    window.claude.use("db").then(function (db) {
+      if (!db) { clearTimeout(timer); $("sync").textContent = "로그인하지 않아 볼트 태스크를 읽을 수 없어요."; return; }
+      DB = db;
+      db.doc("ad.data/main").onSnapshot(function (s) {
+        var v = s.exists ? s.data() : null;
+        if (apply(v)) clearTimeout(timer);
+        else if (!PLAN) { $("view-run").hidden = false; $("tasklist").innerHTML = '<p class="empty">볼트에서 광고 실습 계획을 아직 못 받았어요. 맥 동기화가 켜지면 몇 초 안에 채워져요.</p>'; }
+      }, function (err) { clearTimeout(timer); $("sync").textContent = "볼트 태스크를 읽지 못했어요 (" + ((err && err.code) || "오류") + ")"; });
+      db.collection("taskwork").onSnapshot(function (q) {
+        var o = {};
+        q.docs.forEach(function (d) { if (d.id.indexOf("ad-") === 0) o[d.id] = d.data(); });
+        // 저장 중이거나 이 화면에서 더 나중에 고친 것은 이 화면 값을 지킨다
+        Object.keys(TW).forEach(function (k) { var qq = queue[k]; if ((qq && qq.busy) || (o[k] && (o[k].updatedAt || "") < (TW[k].updatedAt || "")) || !o[k]) o[k] = TW[k]; });
+        TW = o;
+        if (PLAN) { renderSummary(); syncRows(); renderLearn(); syncLine(); }
+      }, function () {});
+    });
+  } else {
+    clearTimeout(timer);
+    $("sync").textContent = "로그인 받침을 못 불러왔어요. 새로고침해 주세요.";
+  }
+})();
+</script>

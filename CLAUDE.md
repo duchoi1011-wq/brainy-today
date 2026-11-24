@@ -1,6 +1,6 @@
 # Brainy 홈 저장소
 
-다섯 앱(Brainy 홈 · 맥 단축키 · 체화 단어장 · 강의 실습 · 콘텐츠 기획)의 웹앱 저장소. 공개 저장소다 — 실명·연락처·키·볼트 노트 내용은 넣지 않는다 (원본에도 "동욱" 으로만).
+여섯 앱(Brainy 홈 · 맥 단축키 · 체화 단어장 · 강의 실습 · 광고 실습 · 콘텐츠 기획)의 웹앱 저장소. 공개 저장소다 — 실명·연락처·키·볼트 노트 내용은 넣지 않는다 (원본에도 "동욱" 으로만).
 
 ## 구조 — 어디를 고치나
 
@@ -13,6 +13,7 @@
   - 강의 실습(`src/course.html` + `course-now.js` 지금 · `course-map.js` 지도 · `course-detail.js` 칸 자세히 · `course-notes.js` 배운 것 · `course-memo.js` 내 메모 · `course-brainy.js`, 2026-11-24): 볼트 `3_Action/33_카드/C-<강의> 수강·실습 분류.md` · `C-<강의> 실습 학습 노트.md` · 그 지도를 잇는 `32_태스크` → 맥 동기화(`course_app.py`) → `cr.data/main`. 앱이 쓰는 건 `cr.memo/<강의 id>-<칸 번호표>`(칸마다 메모 문서 하나 — 스냅숏이 저장을 부르면 안 됨)뿐 — ✅ 는 앱이 안 바꾼다(course-practice 스킬이 볼트 카드에). 「Brainy와 이 칸 하기」= `BRAINY_CHAT.fill` 로 대화창을 채움, 대화는 맥에서(`where: mac`).
   - 맥의 동기화(볼트 `.claude/scripts/app_data.py`)가 몇 초 안에 올린다. 「앱 고치기」(GitHub)처럼 볼트에 손이 안 닿으면 코드에 내용을 박지 말고 요약에 「볼트에도 반영할 것: …」을 적는다.
   - 맥 단축키의 클로드 코드 목록은 앱을 점검·고칠 때마다 지금 클로드 코드와 맞춘다 — 볼트 데이터와 위키 「맥 핵심 단축키」 5-1의 「클로드 코드 최신화 날짜」를 같이 고친다 (2026-11-09 동욱).
+  - 광고 실습(`src/ad.html` → `ad/`, 2026-11-24 claude.ai 아티팩트에서 옮김): 볼트 `4_Outputs/광고 실습 앱/광고 실습 계획.json`(원칙·전략판·주차·용어·숫자 칸 + 태스크 번호·이름) + 그 이름의 `32_태스크` 노트 → 맥 동기화(`ad_app.py`) → `ad.data/main`. 앱이 쓰는 건 `taskwork/ad-<번호>`(status · steps · log)뿐 — 맥의 `task_sync.py` 가 노트 status·체크·로그와 허브·데일리 노트·실행 로그에 넣는다. 상태의 정본은 태스크 노트.
   - 콘텐츠 기획(`src/content.html` + `content-kw.js` 점수·후보 · `content-ref.js` 레퍼런스·채널 · `content-plan.js` 추천·대본·📚 소재와 출처(`소재.json` → `.source`, 「소재 찾기」 = cmd kind source → content-source 스킬) · `content-brandrefs.js` 브랜드 레퍼런스 채널(브랜드 탭 아래 — 2026-11-16 참고 탭은 없앰, 잘된 영상·가져온 구성은 대본에 붙는다) · `content-claude.js` ⚙ Claude 모드(앱 대화 위치·일마다 모델 — 정본 볼트 `Claude 모드.json`, 고른 값 `ct.set/_claude`, 맥 cmd_runner·ai_runner 가 읽음) · `content-mixer.js` 판정 믹서 — 조절값 정의·템플릿은 볼트 `믹서.json` → `ct.data/mixer.def`, 점수 비중을 코드에 적지 않는다): 볼트 `4_Outputs/콘텐츠 기획 앱/<브랜드>/*.json` → `ct.data/<브랜드>[.kw·.trend·.ref·.live·.chan·.rec·.script]`. 앱이 쓰는 것은 `ct.set/<브랜드>`(비율·고정·고른 추천)와 `cmd`(`from: "content"` — 맥의 Claude가 콘텐츠 스킬 셋을 돌림)뿐. 점수 식을 바꾸면 `content-kw.js` 머리말과 화면의 「점수 계산」 글을 같이 고친다.
 - 표시·진도·기록은 Supabase `docs` 표 (로그인한 주인만, RLS). 표 구조·RLS·`supabase/`·`.github/` 는 부탁 없이 바꾸지 않는다.
 
