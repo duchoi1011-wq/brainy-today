@@ -29,7 +29,7 @@ function allTerms(){
     const o = { ...t, src: `${c.tag ? c.tag + " · " : ""}${ch.title}`, cid: c.id, chid: ch.id };
     by[k] = o; out.push(o); if (t.ref) refd.add(t.ref);
   })));
-  ALL.filter(x => x.dom !== "외국어 단어장" && !refd.has(x.id)).forEach(x => {
+  ALL.filter(x => x.dom !== "외국어 단어장" && !x.mine && !refd.has(x.id)).forEach(x => {
     const o = { t: x.term, d: String(x.def || "").replace(/`/g, ""), ref: x.id, f: CAT2F[x.cat] || x.cat, src: "용어 사전 · " + x.cat };
     const k = lecKey(o); if (by[k]) return; by[k] = o; out.push(o);
   });
