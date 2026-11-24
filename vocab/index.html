@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "b495e7a8de"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=b495e7a8de"></script>
+<script>window.BRAINY_VERSION = "145cf89642"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=145cf89642"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -190,6 +190,11 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .stagecap{font-size:12px;color:var(--muted);margin-top:6px}
 .stagecap b{color:var(--ink);font-weight:600}
 .scene{font-size:16px;line-height:1.7;padding:14px 16px;border-radius:12px;background:var(--surface-2);border-left:3px solid var(--accent)}
+/* 오류·중복 수정 요청 — 맥 단축키 앱의 같은 칸과 같은 생김새 */
+.rq{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border-left:3px solid var(--accent);font-size:14px}
+.rq .lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted)}
+.rq textarea{min-height:64px;background:var(--surface)}
+.rq-t{white-space:pre-wrap;overflow-wrap:anywhere}
 .scene .lbl,.ly .lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);margin-bottom:4px}
 .layers{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
 .ly{padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
@@ -329,7 +334,7 @@ let mode = "loading";   // loading | db | local
 let note = "";
 let db = null, sample = null, sampleChecked = false;
 let pendingRender = false;
-const S = { scen: 0, listCat: "all", listQ: "", detail: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null, fieldCat: "", fieldMode: "" };
+const S = { scen: 0, listCat: "all", listQ: "", detail: null, reqEdit: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null, fieldCat: "", fieldMode: "" };
 
 const lv = id => prog[id]?.level || 1;
 const isCore = id => (typeof prog[id]?.core === "boolean") ? prog[id].core : CORE.has(id);
@@ -338,6 +343,19 @@ const goalOf = id => isCore(id) ? 4 : 3;
 /* 고칠 단어 (2026-11-22 동욱) — 펼친 카드의 「이 단어는 고쳐요」로 progress/<id>.fix 를 켜고 끈다. 전체 탭의 「고칠 단어」 칩에 모든 단어장 것이 모인다 */
 const isFix = id => !!prog[id]?.fix;
 const fixList = () => ALL.filter(t => isFix(t.id));
+/* 오류·중복 수정 요청 (2026-11-24 동욱) — 펼친 카드에 짧은 글을 적어 progress/<id>.req 에 둔다. 전체 탭의 「수정 요청」 칩에 모든 단어장 것이 모인다. 맥 단축키 앱에도 같은 칸이 있다 */
+const reqOf = id => String(prog[id]?.req || "");
+const reqList = () => ALL.filter(t => reqOf(t.id));
+const reqPill = `<span class="pill" style="color:var(--accent);border-color:var(--accent)">수정 요청</span>`;
+function reqHtml(t){
+  const r = reqOf(t.id);
+  if (S.reqEdit === t.id) return `<div class="rq"><span class="lbl">오류·중복 수정 요청</span>
+    <textarea class="rq-in" id="rq-${t.id}" maxlength="300" placeholder="예: 뜻이 틀림 / 다른 단어와 중복 / 설명이 너무 기본적임" aria-label="${esc(t.term)} 수정 요청">${esc(r)}</textarea>
+    <div class="btns"><button class="btn primary" data-act="rqsave" data-id="${t.id}">저장</button><button class="btn ghost" data-act="rqcancel" data-id="${t.id}">취소</button>${r ? `<button class="btn ghost" data-act="rqdel" data-id="${t.id}">지우기</button>` : ""}</div></div>`;
+  if (r) return `<div class="rq"><span class="lbl">오류·중복 수정 요청${prog[t.id]?.reqAt ? " · " + esc(String(prog[t.id].reqAt).slice(0, 10)) : ""}</span><span class="rq-t">${esc(r)}</span>
+    <div class="btns"><button class="btn ghost" data-act="rqedit" data-id="${t.id}">고치기</button><button class="btn ghost" data-act="rqdel" data-id="${t.id}">지우기</button></div></div>`;
+  return `<button class="btn ghost" data-act="rqedit" data-id="${t.id}">✎ 오류·중복 수정 요청 적기</button>`;
+}
 const view = () => (location.hash || "#home").slice(1);
 
 function loadLocal(){ try { prog = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch(e) { prog = {}; } }
@@ -387,6 +405,7 @@ function renderHome(){
       ${[1, 2, 3].map(L => `<a class="row" href="#stage" data-stage="${L}" style="text-decoration:none"><div class="t"><b>${LV[L]} → ${LV[L + 1]} ${all[L]}개</b><span>${STAGE_TEST[L]}</span></div><span class="why">단계별 →</span></a>`).join("")}
       <a class="row" href="#new" style="text-decoration:none"><div class="t"><b>새 개념 ${fresh}개</b><span>최근 2주 안에 위키에 새로 정리된 개념·새로 들어온 단어</span></div><span class="why">새 개념 →</span></a>
       ${fixList().length ? `<a class="row" href="#list" data-listcat="fix" style="text-decoration:none"><div class="t"><b>고칠 단어 ${fixList().length}개</b><span>「이 단어는 고쳐요」로 표시해 둔 단어 — 모든 단어장</span></div><span class="why">모아 보기 →</span></a>` : ""}
+      ${reqList().length ? `<a class="row" href="#list" data-listcat="req" style="text-decoration:none"><div class="t"><b>수정 요청 ${reqList().length}개</b><span>오류·중복 수정 요청을 적어 둔 단어 — 모든 단어장</span></div><span class="why">모아 보기 →</span></a>` : ""}
     </div>
   </section>
   <section class="card">
@@ -524,24 +543,25 @@ function renderDomField(){
     ${pickList(list, 200)}</section>`;
 }
 function renderList(){
-  const nf = fixList().length;
-  const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}${nf || S.listCat === "fix" ? `<button class="chip ${S.listCat==="fix"?"on":""}" data-listcat="fix" style="${S.listCat==="fix"?"":"color:var(--accent);border-color:var(--accent)"}">고칠 단어 <span>${nf}</span></button>` : ""}</div>
-  ${S.listCat === "fix" ? `<p class="small muted">모든 단어장에서 「이 단어는 고쳐요」로 표시한 단어예요. 펼쳐서 버튼을 다시 누르면 표시가 풀려요.</p>` : ""}`;
+  const nf = fixList().length, nr = reqList().length;
+  const chips = `<div class="chips">${["all", ...CATS].map(c => `<button class="chip ${S.listCat===c?"on":""}" data-listcat="${esc(c)}">${c==="all"?"전체":esc(c)}</button>`).join("")}${nf || S.listCat === "fix" ? `<button class="chip ${S.listCat==="fix"?"on":""}" data-listcat="fix" style="${S.listCat==="fix"?"":"color:var(--accent);border-color:var(--accent)"}">고칠 단어 <span>${nf}</span></button>` : ""}${nr || S.listCat === "req" ? `<button class="chip ${S.listCat==="req"?"on":""}" data-listcat="req" style="${S.listCat==="req"?"":"color:var(--accent);border-color:var(--accent)"}">수정 요청 <span>${nr}</span></button>` : ""}</div>
+  ${S.listCat === "fix" ? `<p class="small muted">모든 단어장에서 「이 단어는 고쳐요」로 표시한 단어예요. 펼쳐서 버튼을 다시 누르면 표시가 풀려요.</p>` : ""}
+  ${S.listCat === "req" ? `<p class="small muted">모든 단어장에서 오류·중복 수정 요청을 적어 둔 단어예요. 펼쳐서 글을 고치거나 지울 수 있어요.</p>` : ""}`;
   return `<input type="search" id="listQ" placeholder="단어나 뜻으로 찾기" value="${esc(S.listQ)}" aria-label="단어 찾기">
   ${chips}
   ${S.detail && BYID[S.detail] && !listItems().slice(0, 300).some(t => t.id === S.detail) ? detailHtml(BYID[S.detail]) : ""}
   <section class="card" id="listOut">${listRows()}</section>`;
 }
-const listItems = () => { const q = S.listQ.trim().toLowerCase(), fx = S.listCat === "fix"; return (fx ? ALL : TERMS).filter(t => (fx ? isFix(t.id) : (S.listCat === "all" || t.cat === S.listCat)) && (!q || (t.term + " " + t.def).toLowerCase().includes(q))); };
+const listItems = () => { const q = S.listQ.trim().toLowerCase(), fx = S.listCat === "fix", rq = S.listCat === "req"; return (fx || rq ? ALL : TERMS).filter(t => (fx ? isFix(t.id) : rq ? !!reqOf(t.id) : (S.listCat === "all" || t.cat === S.listCat)) && (!q || (t.term + " " + t.def + " " + reqOf(t.id)).toLowerCase().includes(q))); };
 function listRows(){
   const items = listItems();
-  if (!items.length) return `<p class="empty">${S.listCat === "fix" ? "고칠 단어로 표시한 단어가 없어요.<br>단어를 펼쳐 「이 단어는 고쳐요」를 누르면 여기에 모여요." : TERMS.length ? "찾는 단어가 없어요." : esc(S.domain) + "에는 아직 단어가 없어요."}</p>`;
+  if (!items.length) return `<p class="empty">${S.listCat === "fix" ? "고칠 단어로 표시한 단어가 없어요.<br>단어를 펼쳐 「이 단어는 고쳐요」를 누르면 여기에 모여요." : S.listCat === "req" ? "수정 요청을 적은 단어가 없어요.<br>단어를 펼쳐 「오류·중복 수정 요청 적기」를 누르면 여기에 모여요." : TERMS.length ? "찾는 단어가 없어요." : esc(S.domain) + "에는 아직 단어가 없어요."}</p>`;
   return pickList(items, 300);
 }
 function detailHtml(t){
   const p = prog[t.id] || {};
   return `<section class="card stack" id="detail">
-    <div class="meta"><span class="tc">${esc(t.cat)} · ${epOf(t)}</span><span>${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)">고칠 단어</span> ` : ""}${pill(lv(t.id))}</span></div>
+    <div class="meta"><span class="tc">${esc(t.cat)} · ${epOf(t)}</span><span>${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)">고칠 단어</span> ` : ""}${reqOf(t.id) ? reqPill + " " : ""}${pill(lv(t.id))}</span></div>
     <h3>${esc(t.term)}</h3>
     ${stageHtml(t)}
     ${ctxOk(t.id) ? `<div class="scene"><span class="lbl">장면</span>${esc(CTX[t.id].scene)}</div>` : ""}
@@ -553,12 +573,13 @@ function detailHtml(t){
     ${lv(t.id) < 4 ? `<div class="btns"><button class="btn primary" data-onetest="${t.id}">▶ 이 단어 시험 — ${ro(LV[lv(t.id) + 1])}</button></div>` : ""}
     <button class="btn ghost" data-act="core" data-id="${t.id}">${isCore(t.id) ? "소통용으로 바꾸기 (소화까지만)" : "체화할 단어로 바꾸기 (실행까지)"}</button>
     <button class="btn ${isFix(t.id) ? "primary" : "ghost"}" data-act="fix" data-id="${t.id}" aria-pressed="${isFix(t.id)}">${isFix(t.id) ? "✓ 고칠 단어로 표시됨 — 눌러서 풀기" : "이 단어는 고쳐요"}</button>
+    ${reqHtml(t)}
   </section>`;
 }
 
 function render(){
   const ae = document.activeElement;
-  if (ae && (ae.id === "rvTxt" || ae.classList?.contains("bt-in"))) { pendingRender = true; return; }
+  if (ae && (ae.id === "rvTxt" || ae.classList?.contains("bt-in") || ae.classList?.contains("rq-in"))) { pendingRender = true; return; }
   pendingRender = false;
   const v = view();
   document.querySelectorAll("#nav a, #tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v));
@@ -601,6 +622,13 @@ document.addEventListener("click", e => {
   if (d.act === "regen") { ensureCtx(d.id, true); render(); return; }
   if (d.act === "core") { const id = d.id; save(id, { core: !isCore(id) }, "체화/소통용 변경"); return; }
   if (d.act === "fix") { const id = d.id, on = !isFix(id); save(id, { fix: on, fixAt: on ? nowIso() : null }, "고칠 단어 표시"); return; }
+  if (d.act === "rqedit") { S.reqEdit = d.id; document.activeElement?.blur?.(); render(); document.getElementById("rq-" + d.id)?.focus(); return; }
+  if (d.act === "rqcancel") { S.reqEdit = null; document.activeElement?.blur?.(); render(); return; }
+  if (d.act === "rqsave" || d.act === "rqdel") {
+    const id = d.id, txt = d.act === "rqsave" ? (document.getElementById("rq-" + id)?.value || "").trim().slice(0, 300) : "";
+    S.reqEdit = null; document.activeElement?.blur?.();
+    save(id, { req: txt || null, reqAt: txt ? nowIso() : null }, "수정 요청"); return;
+  }
   if (d.listcat) { S.listCat = d.listcat; render(); return; }
   if (d.detail) {
     /* 목록 줄을 누르면 그 줄 바로 밑에 펼치고(다시 누르면 접음), 단어 줄이 머리말 바로 밑에 오게 올린다 — 스크롤 안 내려도 보이게 (2026-11-22 동욱) */
@@ -900,7 +928,7 @@ function stageStart(ids, from){
 const PICK_MAX = 30;
 function pickRow(t){
   return `<div class="pick${S.detail === t.id ? " open" : ""}"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
-    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)">고칠</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
+    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)">고칠</span>` : ""}${reqOf(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)" title="${esc(reqOf(t.id))}">요청</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
 }
 function pickList(list, max = 80){
   if (!list.length) return "";
@@ -1244,6 +1272,7 @@ init();
         "- ③·④: " + by[3].concat(by[4]).slice(0, 40).join(", "),
         "- 오늘 복습할 단어(" + due.length + "): " + due.slice(0, 40).join(", "),
         "- 고칠 단어(동욱이 「이 단어는 고쳐요」로 표시, progress/<id>.fix): " + fixList().map(function (t) { return t.term; }).slice(0, 40).join(", "),
+        "- 오류·중복 수정 요청(동욱이 단어 카드에 적은 글, progress/<id>.req): " + reqList().slice(0, 30).map(function (t) { return t.term + " — " + reqOf(t.id).slice(0, 80); }).join(" / "),
         "- 단어장: " + Object.keys(DOMAINS).map(function (d) { return d + " " + ALL.filter(function (t) { return t.dom === d; }).length; }).join(" · "),
         "- 단어를 새로 넣거나 정리할 때 규칙: 맥 단축키 앱과 겹치는 내용은 한쪽에만 둔다(단축키는 단축키 앱, 개념 설명은 단어장) · 동욱이 이미 알 만한 기본 단어는 넣지 않는다 · 브랜드·상품 페이지 단어와 스킬·MCP 설명은 각자 단어장(dom)으로 따로 둔다",
         "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록) · vo.marks/lec(강의 탭 표시) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");
