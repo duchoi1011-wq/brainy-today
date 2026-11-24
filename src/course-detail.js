@@ -30,7 +30,7 @@ function renderCell(c, x){
     ${easyBox(c, x)}
     ${sec("지도 카드에 적힌 것", x.desc && x.desc.replace(x.remain || "", "").replace(/[🔁⏳✅·\s]|(빠진|남은) 것\s*[:：]/g, "") ? `<p>${inline(x.desc)}</p>` : "")}
     ${sec(`요구 — 교안이 정한 완료 기준 ${nReq}개 · 한 것은 눌러 체크`, checkList(c, x, "req"))}
-    ${sec(`확인 질문 ${nChk}개 — 답할 수 있으면 체크`, checkList(c, x, "chk"))}
+    ${sec(nChk ? `확인 질문 ${nChk}개 — 답할 수 있으면 체크` : "확인 질문 — 이 칸은 따로 없어요", checkList(c, x, "chk"))}
     ${sec("이 실습이 만드는 것", list(x.out))}
     ${sec("📎 쓸 재료 — 동욱의 실제 파일·자료", x.mat ? `<p>${inline(x.mat)}</p>` : "")}
     ${sec("🔑 계정·열쇠 필요 — 로그인·열쇠는 동욱이 직접 넣어요", x.need ? `<p>${inline(x.need)}</p>` : "")}
