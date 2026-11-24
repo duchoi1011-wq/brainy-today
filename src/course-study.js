@@ -1,7 +1,7 @@
 /* ── 「공부」 탭 — 강의 내용 쉬운 설명 + 그 Part 의 칸 (build.py 가 course.html 에 끼움 · 2026-11-24 동욱 「공부하면서 실습도」) ──
    본문 정본: 볼트 위키 요약 2_LLMWiki/wiki/<영역>/요약 - <지도 카드 study:>*.md → 맥 동기화 → Supabase cr.study/<강의 id>
    = { name, pages: [{ title, part, path, tldr, secs: [{h, body}] }] }. 목차(c.study)는 cr.data/main 에 같이 온다.
-   본문은 무거워서(강의마다 15~45KB) 이 탭이나 「쉬운 설명」을 열 때만 그 강의 것 하나를 받는다 (전송량 — 앱 검증 지침 F17).
+   본문(강의마다 15~45KB)은 cr.data/main 과 따로 둔다 — 위키가 바뀔 때만 다시 오고, 지도·체크가 바뀔 때는 안 온다 (전송량 — 앱 검증 지침 F17).
    칸마다 맞는 차시 한 줄은 cell.easy = { t, code, page } — 칸 자세히에 보인다. */
 const STUDY = {};          // 강의 id -> cr.study 문서 (받은 것)
 const studyOn = {};        // 강의 id -> 받기 시작함

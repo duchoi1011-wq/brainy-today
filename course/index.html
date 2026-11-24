@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "252279a7ed"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "bchat"]};</script>
-<script src="../shim.js?v=252279a7ed"></script>
+<script>window.BRAINY_VERSION = "8ceade7526"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "cr.study", "cr.tog", "bchat"]};</script>
+<script src="../shim.js?v=8ceade7526"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -620,7 +620,7 @@ document.addEventListener("click", e => {
 /* ── 「공부」 탭 — 강의 내용 쉬운 설명 + 그 Part 의 칸 (build.py 가 course.html 에 끼움 · 2026-11-24 동욱 「공부하면서 실습도」) ──
    본문 정본: 볼트 위키 요약 2_LLMWiki/wiki/<영역>/요약 - <지도 카드 study:>*.md → 맥 동기화 → Supabase cr.study/<강의 id>
    = { name, pages: [{ title, part, path, tldr, secs: [{h, body}] }] }. 목차(c.study)는 cr.data/main 에 같이 온다.
-   본문은 무거워서(강의마다 15~45KB) 이 탭이나 「쉬운 설명」을 열 때만 그 강의 것 하나를 받는다 (전송량 — 앱 검증 지침 F17).
+   본문(강의마다 15~45KB)은 cr.data/main 과 따로 둔다 — 위키가 바뀔 때만 다시 오고, 지도·체크가 바뀔 때는 안 온다 (전송량 — 앱 검증 지침 F17).
    칸마다 맞는 차시 한 줄은 cell.easy = { t, code, page } — 칸 자세히에 보인다. */
 const STUDY = {};          // 강의 id -> cr.study 문서 (받은 것)
 const studyOn = {};        // 강의 id -> 받기 시작함
