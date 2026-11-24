@@ -9,6 +9,7 @@
       ALL.filter(function (t) { return norm(t.term).indexOf(n) >= 0 || n.indexOf(norm(t.term)) >= 0; })[0] || null;
   }
   window.BRAINY_HOOK = {
+    modelPick: true,   // 창 위에 답할 모델 고르기 줄 (Brainy 홈 상자 · set_model 과 같은 값)
     chips: ["오늘 복습할 단어 뭐야?", "헷갈리는 단어 3개 골라서 쉽게 설명해 줘", "이 앱에서 ○○ 고쳐 줘"],
     ctx: function () {
       var day = kday(), by = { 1: [], 2: [], 3: [], 4: [] }, due = [];
