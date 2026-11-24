@@ -30,9 +30,9 @@ function baseBarHtml(){
   var o = baseSet(), auto = baseKwAuto(), list = baseKw(), topic = baseTopic();
   var offAuto = auto.filter(function(k){ return o.off[k] });
   return "<section class=\"card base-bar\"><div class=\"card-h\"><h3>기준 키워드 · 영상 주제</h3><span class=\"n\">" + list.length + "개</span></div>" +
-    "<p class=\"lead\">구축 문서 · 참고 페이지 · 대본을 만들 때 맥의 Claude가 이 키워드와 주제를 기준으로 써요. 잘 나온 키워드가 기본으로 들어가고, ✕로 빼고 아래에서 넣어요.</p>" +
+    "<p class=\"lead\">구축 문서 · 참고 페이지 · 대본을 만들 때 맥의 Claude가 이 키워드와 주제를 기준으로 써요. 🚀 자동 진행이 고른 키워드(없으면 점수 높은 순 5개)가 기본으로 들어가고, ✕로 빼고 아래에서 넣어요. 키워드 탭의 ★는 콘텐츠 검색용이라 여기 저절로 안 들어와요.</p>" +
     "<div class=\"chips\">" + (list.map(function(k){ var mine = o.add.indexOf(k) >= 0;
-      return "<span class=\"chip on base-kw\">" + (mine ? "" : "<i class=\"dot i\" title=\"잘 나온 키워드 — 기본\"></i>") + esc(k) + "<button class=\"x0\" data-act=\"basekwdel\" data-kw=\"" + esc(k) + "\" aria-label=\"" + esc(k) + " 빼기\">✕</button></span>" }).join("") ||
+      return "<span class=\"chip on base-kw\">" + (mine ? "" : "<i class=\"dot i\" title=\"기본 — 자동 진행이 고른 키워드 또는 점수 높은 순\"></i>") + esc(k) + "<button class=\"x0\" data-act=\"basekwdel\" data-kw=\"" + esc(k) + "\" aria-label=\"" + esc(k) + " 빼기\">✕</button></span>" }).join("") ||
       "<span class=\"lead\" style=\"margin:0\">아직 없어요 — 아래에서 넣으세요.</span>") + "</div>" +
     (offAuto.length ? "<div class=\"chips\" style=\"margin-top:6px\"><span class=\"lead\" style=\"margin:0 4px 0 0\">뺀 기본 키워드 (눌러 되돌리기)</span>" + offAuto.map(function(k){ return "<button class=\"chip dash\" data-act=\"basekwback\" data-kw=\"" + esc(k) + "\">↺ " + esc(k) + "</button>" }).join("") + "</div>" : "") +
     "<div class=\"row2\" style=\"margin-top:8px\"><input type=\"text\" id=\"base-kw-in\" data-basekw=\"1\" maxlength=\"30\" placeholder=\"기준 키워드 넣기\" value=\"" + esc(ui.baseDraft || "") + "\"><button class=\"btn sm primary\" data-act=\"basekwadd\">넣기</button>" +
