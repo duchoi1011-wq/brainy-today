@@ -17,9 +17,9 @@ function planHtml(rd, s){
   var rows = rd.items.filter(function(x){ return s.plan[x.id] || s.pick[x.id] }).sort(function(a, b){ return (s.plan[a.id] || "9").localeCompare(s.plan[b.id] || "9") });
   var nPick = rd.items.filter(function(x){ return s.pick[x.id] && !s.plan[x.id] }).length, nSet = rd.items.filter(function(x){ return s.plan[x.id] }).length;
   return "<section class=\"card\"><div class=\"card-h\"><h3>발행 달력</h3><span class=\"n\">주 " + s.perWeek + "편 · " + nSet + "개 잡힘</span></div>" +
-    (rows.length ? "<div class=\"list\">" + rows.map(function(x){ var has = s.plan[x.id], dt = new Date((has || "") + "T12:00:00");
+    (rows.length ? "<div class=\"list\">" + rows.map(function(x){ var has = s.plan[x.id], pd = (ui.planDraft || {})[x.id], dt = new Date((has || "") + "T12:00:00");
         return "<div class=\"it\"><span class=\"num" + (has ? "" : " muted") + "\">" + (has ? esc(has.slice(5)) + " " + days[dt.getDay()] : "날짜 없음") + "</span><div class=\"it-m\"><div><span class=\"tag fill\">" + esc(roleKo(x.role)) + "</span> " + stageTag(x) + " " + txt(x.title) + "</div></div>" +
-          "<input type=\"date\" data-plan=\"" + esc(x.id) + "\" min=\"" + ymd(new Date()) + "\" value=\"" + esc(has || "") + "\" aria-label=\"올릴 날\"></div>" }).join("") + "</div>"
+          "<input type=\"date\" id=\"plan-" + esc(x.id) + "\" data-plan=\"" + esc(x.id) + "\" min=\"" + ymd(new Date()) + "\" value=\"" + esc(pd != null ? pd : (has || "")) + "\" aria-label=\"올릴 날\"></div>" }).join("") + "</div>"
       : "<p class=\"lead\">아래에서 ＋로 추천을 고르면 여기에 뜨고, 「자동 배치」를 누르면 날짜 없는 편만 내일부터 주 " + s.perWeek + "편으로 잡아 줘요. 날짜는 하나씩 바꿀 수 있어요.</p>") +
     "<div class=\"acts\"><button class=\"btn sm\" data-act=\"autoplan\"" + (nPick ? "" : " disabled") + ">날짜 없는 " + nPick + "개 자동 배치</button>" +
     (nSet ? "<button class=\"btn sm\" data-act=\"clearplan\">날짜 모두 비우기</button>" : "") + "<span class=\"lead\" style=\"margin:0\">계획표예요 — 실제 예약 게시는 하지 않아요.</span></div></section>";
@@ -33,9 +33,9 @@ var ORIG_COLS = ["주제 (우리 적용)", "기준 레퍼런스 → 내 주제",
 function refBasisCell(x, r, key){
   var n = ((x.refNotes || {})[String(key)]) || {}, an = r.vid ? anaOf(r.vid) : null;
   var topic = n.topic || r.refLine || (an && an.topic) || r.title || "", took = n.took || r.apply || "";
-  return "<td class=\"o-basis\"><div class=\"small muted\">레퍼런스 주제</div><div>" + esc(topic) + "</div>" +
+  return "<td class=\"o-basis\"><div class=\"small muted\">레퍼런스 주제</div><div>" + txt(topic) + "</div>" +
     "<div class=\"small muted\" style=\"margin-top:6px\">→ 내 주제</div><div><b>" + txt(x.title) + "</b></div>" +
-    (took ? "<div class=\"small muted\" style=\"margin-top:6px\">가져온 것</div><div class=\"small\">" + esc(took) + "</div>" : "") + "</td>";
+    (took ? "<div class=\"small muted\" style=\"margin-top:6px\">가져온 것</div><div class=\"small\">" + txt(took) + "</div>" : "") + "</td>";
 }
 /* 댓글 — 좋아요 많은 순 5개 (2026-11-17 동욱 "댓글을 자세히 읽게 하는 칸 · 가져오는 모든 댓글은 좋아요 순 5개").
    볼트 <브랜드>/댓글.json(ct.data .cmts, content_app.py cmts — 공식 API 100개 중 좋아요 순) > 영상 분석 댓글 > 조사 시트 요약 글 */
@@ -48,12 +48,12 @@ function cmtsOf(vid){
     .slice(0, anaOpt().nCmt), at: an.at };
   return c ? { list: [], error: c.error || "댓글 없음" } : null;
 }
-function cmtCell(r){
+function cmtCell(r, recId){
   var c = cmtsOf(r.vid);
-  if(!c || !c.list.length) return "<td>" + esc(c && c.error ? c.error : (r.comments || "아직 안 받음")) + "</td>";
+  if(!c || !c.list.length) return "<td>" + (c && c.error ? esc(c.error) : txt(r.comments || "아직 안 받음")) + "</td>";
   var top = c.list[0];
   return "<td class=\"o-cmt\"><div><span class=\"num\">👍 " + fmt(top.likes || 0) + "</span> " + esc(String(top.text || "").slice(0, 70)) + (String(top.text || "").length > 70 ? "…" : "") + "</div>" +
-    "<details style=\"margin-top:4px\"><summary>댓글 " + c.list.length + "개 자세히</summary><ol class=\"cmts\">" +
+    "<details style=\"margin-top:4px\"" + fold("f:cmt:" + recId + ":" + r.vid) + "><summary>댓글 " + c.list.length + "개 자세히</summary><ol class=\"cmts\">" +
     c.list.map(function(m){ return "<li><div>" + esc(m.text || "") + "</div><div class=\"it-d\">👍 " + fmt(m.likes || 0) + (m.replies ? " · 답글 " + m.replies : "") + (m.at ? " · " + esc(m.at) : "") + "</div></li>" }).join("") + "</ol></details></td>";
 }
 var VT_GRADE = /^(Great|Good|Normal|Bad|Worst)$/;
@@ -83,11 +83,11 @@ function orderText(rd){
 function topicCell(x, s){
   var sc = scriptOf(x.id);
   return "<div class=\"o-top\"><span class=\"num muted\">" + esc(recNo(x.id)) + "</span> " + stageTag(x) + "<button class=\"mk\" data-pick=\"" + esc(x.id) + "\" aria-pressed=\"" + !!s.pick[x.id] + "\" title=\"대본 만들 추천으로 고르기\" aria-label=\"대본 만들 추천으로 고르기\">＋</button>" + delBtn("rec", x.id, recNo(x.id) + " " + x.title) + impBtn("rec", x.title, x.title, recNo(x.id) + (x.date ? " · " + x.date : "")) + "</div>" +
-    (function(f){ return "<div class=\"small\" style=\"margin:2px 0 4px\"><span class=\"tag" + (f.k === "fav" ? " ok" : "") + "\">" + esc(f.t) + "</span>" + (f.ref ? " <span class=\"muted\">「" + esc(f.ref) + "」</span>" : "") + "</div>" })(recFrom(x)) +
+    (function(f){ return "<div class=\"small\" style=\"margin:2px 0 4px\"><span class=\"tag" + (f.k === "fav" ? " ok" : "") + "\">" + esc(f.t) + "</span>" + (f.ref ? " <span class=\"muted\">「" + txt(f.ref) + "」</span>" : "") + "</div>" })(recFrom(x)) +
     "<b>" + ([x.product, x.format].filter(Boolean).length ? "[" + [x.product, x.format].filter(Boolean).map(esc).join(" · ") + "] " : "") + txt(x.title) + "</b>" +
     (x.structure ? "<div class=\"apply\">" + txt(x.structure) + "</div>" : "") +
     "<div class=\"it-d\">" + [sc ? "<span class=\"tag ok\">대본 " + esc(sc.status || "있음") + "</span>" : "", s.plan[x.id] ? "<span class=\"tag\">" + esc(s.plan[x.id].slice(5)) + " 발행</span>" : ""].filter(Boolean).join(" ") + "</div>" +
-    "<details><summary>왜 추천했나 · 다음 연결</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+    "<details" + fold("f:why:" + x.id) + "><summary>왜 추천했나 · 다음 연결</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
     (x.scene ? "<dt>찍을 장면</dt><dd>" + txt(x.scene) + "</dd>" : "") + "<dt>근거</dt><dd>" + txt(x.basis) + "</dd>" +
     (x.next ? "<dt>다음 연결</dt><dd>" + txt(x.next) + "</dd>" : "") + (x.cards ? "<dt>이어 쓸 카드</dt><dd>" + md(x.cards) + "</dd>" : "") + (x.bank ? "<dt>포맷</dt><dd>" + txt(x.bank) + "</dd>" : "") + "</dl></details>";
 }
@@ -97,7 +97,7 @@ function refCells(r, x, key){
   return refBasisCell(x, r, key) + "<td>" + (r.vid ? "<a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(r.vid) + "/mqdefault.jpg\"></a>" : "") + "</td>" +
     "<td>" + esc(r.thumbText || "확인 못 함") + "</td>" +
     "<td><a href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\">" + txt(r.title) + "</a></td>" +
-    "<td>" + esc(ch.join(" · ")) + "</td><td>" + esc(r.structure || "") + "</td><td>" + esc(r.wave || "") + "</td>" + cmtCell(r);
+    "<td>" + esc(ch.join(" · ")) + "</td><td>" + txt(r.structure || "") + "</td><td>" + txt(r.wave || "") + "</td>" + cmtCell(r, x.id);
 }
 function origRows(x, s){
   var keys = (x.refs || []).filter(function(k){ return refByRow(k) }), refs = keys.map(refByRow), n = Math.max(1, refs.length);
@@ -112,7 +112,7 @@ function viewRec(){
   var rd0 = r.rounds[r.rounds.length - 1], rdAll = rd0.items.filter(isLongRec), rd = Object.assign({}, rd0, { items: rdAll.filter(function(x){ return !isGone("rec", x.id) }) }), nShort = rd0.items.length - rdAll.length, picked = Object.keys(s.pick).filter(function(id){ return rd.items.some(function(x){ return x.id === id }) });
   var need = picked.filter(function(id){ return !scriptOf(id) });
   h += recCritHtml(rd) + "<section class=\"card\"><div class=\"card-h\"><h3>추천 " + esc(rd.date) + "</h3><span class=\"n\">" + rd.items.length + "개</span></div>" +
-    "<p>" + txt(rd.summary) + "</p>" + (nShort ? "<p class=\"lead\" style=\"margin-top:8px\">미드폼·롱폼만 보여요 — 이 회차의 숏폼 추천 " + nShort + "개는 뺐어요.</p>" : "") + (rd.order ? "<details style=\"margin-top:8px\"><summary>찍는 순서 (" + rd.items.length + "편)</summary><p class=\"lead\" style=\"margin-top:6px\">" + orderText(rd) + "</p></details>" : "") +
+    "<p>" + txt(rd.summary) + "</p>" + (nShort ? "<p class=\"lead\" style=\"margin-top:8px\">미드폼·롱폼만 보여요 — 이 회차의 숏폼 추천 " + nShort + "개는 뺐어요.</p>" : "") + (rd.order ? "<details style=\"margin-top:8px\"" + fold("f:recorder") + "><summary>찍는 순서 (" + rd.items.length + "편)</summary><p class=\"lead\" style=\"margin-top:6px\">" + orderText(rd) + "</p></details>" : "") +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"script\"" + (!need.length || openCmd("script") ? " disabled" : "") + ">고른 " + need.length + "개 대본 초안 만들기</button>" +
     "<button class=\"btn\" data-act=\"source\"" + (!picked.length || openCmd("source") ? " disabled" : "") + ">고른 " + picked.length + "개 소재 찾기</button>" +
     cmtBtnHtml() +
@@ -138,13 +138,13 @@ function sourceOf(id){ var p = part("source"); return p && p.items ? p.items.fil
 function sourceHtml(id){
   var x = sourceOf(id), busy = openCmd("source");
   var btn = "<button class=\"btn sm\" data-act=\"source\" data-id=\"" + esc(id || "") + "\"" + (busy || !id ? " disabled" : "") + ">" + (x ? "소재 다시 찾기" : "소재 찾기") + "</button>";
-  if(!x) return "<details><summary>📚 소재와 출처 <span class=\"num muted\">아직</span></summary><p class=\"lead\" style=\"margin-top:6px\">대본 탭 「참고 페이지」의 소재 채널을 돌며 사례·숫자·연구·현장 목소리와 출처를 찾아요.</p><div class=\"acts\">" + btn + "</div></details>";
+  if(!x) return "<details" + fold("f:src:" + id) + "><summary>📚 소재와 출처 <span class=\"num muted\">아직</span></summary><p class=\"lead\" style=\"margin-top:6px\">대본 탭 「참고 페이지」의 소재 채널을 돌며 사례·숫자·연구·현장 목소리와 출처를 찾아요.</p><div class=\"acts\">" + btn + "</div></details>";
   var ok = x.items.filter(function(i){ return i.check === "✅" }).length;
-  return "<details><summary>📚 소재와 출처 <span class=\"num muted\">" + x.items.length + "개 · ✅ " + ok + " · " + esc(x.date || "") + "</span></summary><div class=\"list\" style=\"margin-top:6px\">" +
+  return "<details" + fold("f:src:" + id) + "><summary>📚 소재와 출처 <span class=\"num muted\">" + x.items.length + "개 · ✅ " + ok + " · " + esc(x.date || "") + "</span></summary><div class=\"list\" style=\"margin-top:6px\">" +
     x.items.map(function(i){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag " + (i.group === "판매 상품" ? "p" : "i") + "\">" + esc(i.kind || "") + "</span> " + txt(i.claim) + "</div>" +
-      "<div class=\"it-d\"><a href=\"" + esc(i.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(i.cite || i.channel) + "</a> · " + esc(i.useIn || "") + " · " + esc(i.check || "") + (i.outside ? " <span class=\"tag p\">카드 밖</span>" : "") + "</div></div></div>" }).join("") + "</div>" +
-    ((x.gaps || []).length ? "<p class=\"small\" style=\"margin-top:6px\"><b>못 찾은 것</b> " + x.gaps.map(esc).join(" / ") + "</p>" : "") +
-    ((x.suggest || []).length ? "<p class=\"small\"><b>카드 보강 후보</b> " + x.suggest.map(esc).join(" / ") + "</p>" : "") +
+      "<div class=\"it-d\"><a href=\"" + esc(i.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(i.cite || i.channel) + "</a> · " + txt(i.useIn || "") + " · " + esc(i.check || "") + (i.outside ? " <span class=\"tag p\">카드 밖</span>" : "") + "</div></div></div>" }).join("") + "</div>" +
+    ((x.gaps || []).length ? "<p class=\"small\" style=\"margin-top:6px\"><b>못 찾은 것</b> " + x.gaps.map(function(g){ return txt(g) }).join(" / ") + "</p>" : "") +
+    ((x.suggest || []).length ? "<p class=\"small\"><b>카드 보강 후보</b> " + x.suggest.map(function(g){ return txt(g) }).join(" / ") + "</p>" : "") +
     "<div class=\"acts\">" + btn + "</div></details>";
 }
 function viewScript(){
@@ -160,11 +160,11 @@ function viewScript(){
     h += "<section class=\"card\"><div class=\"card-h\"><h3>" + txt(x.title) + "</h3><span class=\"n\">" + esc(recNo(x.rec || "")) + " · " + esc(x.status || "") + " " + impBtn("script", x.title, x.title, recNo(x.rec || "")) + "</span></div>" +
       (x.meta ? "<p class=\"lead\">" + md(x.meta) + "</p>" : "") +
       (x.summary ? "<h4>스크립트 요약</h4><div class=\"pre\">" + md(x.summary) + "</div>" : "") +
-      (x.shoot ? "<details><summary>촬영 요약</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.shoot) + "</div></details>" : "") +
-      (x.script ? "<details open><summary>대본 뼈대</summary><div class=\"pre\" id=\"sc-" + i + "\" style=\"margin-top:6px\">" + md(x.script) + "</div></details>" : "") +
+      (x.shoot ? "<details" + fold("f:shoot:" + sid(x)) + "><summary>촬영 요약</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.shoot) + "</div></details>" : "") +
+      (x.script ? "<details" + fold("f:sc:" + sid(x), true) + "><summary>대본 뼈대</summary><div class=\"pre\" id=\"sc-" + i + "\" style=\"margin-top:6px\">" + md(x.script) + "</div></details>" : "") +
       sourceHtml(x.rec) +
-      "<details class=\"prbar\"" + (prDraft("script:" + x.rec) ? " open" : "") + "><summary>✍️ 이 대본 고치기 · 첨삭</summary>" + promptBoxHtml("script:" + x.rec, "무엇을 고칠까요?", "예: 도입 3초를 시청자에게 던지는 질문으로 바꾸고, 두 번째 소주제를 실제 사례로 바꿔 줘", "scriptedit") + "</details>" +
-      (x.todo ? "<details><summary>아직 정해야 할 것</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.todo) + "</div></details>" : "") +
+      "<details class=\"prbar\"" + prFold("script:" + x.rec) + "><summary>✍️ 이 대본 고치기 · 첨삭</summary>" + promptBoxHtml("script:" + x.rec, "무엇을 고칠까요?", "예: 도입 3초를 시청자에게 던지는 질문으로 바꾸고, 두 번째 소주제를 실제 사례로 바꿔 줘", "scriptedit") + "</details>" +
+      (x.todo ? "<details" + fold("f:todo:" + sid(x)) + "><summary>아직 정해야 할 것</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.todo) + "</div></details>" : "") +
       "<div class=\"acts\">" + (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + delBtn("script", sid(x), x.title, "btn sm") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
   });
   var goneSc = goneListHtml("script", sc.items, sid, function(x){ return x.title });   // 🗑 로 지운 대본 — 되돌리기
@@ -172,7 +172,11 @@ function viewScript(){
   return h;
 }
 /* 추천 근거 영상 댓글 다시 받기 — ct.set cmtReq {at} → 맥 동기화가 content_app.py cmts (Claude 없이, 1분 안팎). 추천을 새로 받으면 맥이 알아서 받는다 */
+function cmtState(){   /* 받는 중 — 요청한 지 STALE_MS(10분)가 넘도록 댓글 자료가 안 바뀌면 「응답이 없어요」로 풀어 다시 누르게 한다 */
+  var r = (SETS[cur] || {}).cmtReq, d = part("cmts"), busy = !!(r && (!d || Date.parse(d.updatedAt) < Date.parse(r.at) - 5000)), stale = busy && Date.now() - (Date.parse(r.at) || 0) > STALE_MS;
+  return { busy: busy && !stale, stale: stale };
+}
 function cmtBtnHtml(){
-  var r = (SETS[cur] || {}).cmtReq, d = part("cmts"), busy = !!(r && (!d || Date.parse(d.updatedAt) < Date.parse(r.at) - 5000));
-  return "<button class=\"btn\" data-act=\"cmtreq\"" + (busy ? " disabled" : "") + ">" + (busy ? "맥이 댓글 받는 중…" : "레퍼런스 댓글 다시 받기 (좋아요 순 5개)") + "</button>";
+  var st = cmtState();
+  return "<button class=\"btn\" data-act=\"cmtreq\"" + (st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 댓글 받는 중…" : st.stale ? "응답이 없어요 — 레퍼런스 댓글 다시 받기" : "레퍼런스 댓글 다시 받기 (좋아요 순 5개)") + "</button>";
 }

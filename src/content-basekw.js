@@ -75,7 +75,7 @@ function delBtn(list, id, label, cls){   // 🗑 지우기 — cls 가 있으면
 function goneListHtml(list, items, idOf, labelOf){   // 목록 끝 — 지운 것 다시 보기 · 되돌리기
   var g = goneMap(), dead = items.filter(function(x){ return g[list + ":" + idOf(x)] });
   if(!dead.length) return "";
-  return "<details class=\"gone\"><summary>지운 것 " + dead.length + "개 — 되돌리기</summary><div class=\"list\">" + dead.map(function(x){
+  return "<details class=\"gone\"" + fold("f:gone:" + list) + "><summary>지운 것 " + dead.length + "개 — 되돌리기</summary><div class=\"list\">" + dead.map(function(x){
     return "<div class=\"it off\"><div class=\"it-m\"><div>" + txt(labelOf(x)) + "</div></div><button class=\"btn sm\" data-act=\"ungone\" data-key=\"" + esc(list + ":" + idOf(x)) + "\">↺ 되돌리기</button></div>" }).join("") + "</div></details>";
 }
 function undoToastHtml(){

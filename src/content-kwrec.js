@@ -13,8 +13,8 @@ function kwRecBarHtml(){
   var d = part("kwrec"), busy = openCmd("kwrec"), sd = seedsOf(), picks = kwRecPicks(), st = searchState();
   if(!sd.length) return "";
   /* 평소엔 접어 두고 한 줄만 — 폰에서 씨앗 연관 검색어 목록이 첫 화면에 오게 (2026-11-18 검증 F14). 맥이 고르는 중이거나 추천이 막 왔으면 펼친다 */
-  return "<section class=\"card\" id=\"kwrec\"><details" + (busy ? " open" : "") + "><summary>🤖 Claude 키워드 추천 · 🚀 자동 진행 <span class=\"num muted\">" + (busy ? "맥이 고르는 중" : picks.length ? "추천 " + picks.length + "개" : d ? "지난 추천 있음" : "아직 안 받음") + " — 펴서 쓰기</span></summary>" +
-    "<details class=\"help\"><summary>이 추천은 어떻게 고르나요?</summary><p class=\"lead\">맥의 Claude가 브랜드 정보(타깃 · 구매자 욕구 · 상품 · 콘텐츠 축 · 필러), ★ 키워드, ☆ 영상, 영상 분석과 아이디어를 다 읽고 씨앗 단어마다 콘텐츠로 찍을 만한 키워드를 골라요. 고른 키워드로 바로 콘텐츠 검색까지 이어져요.</p></details>" +
+  return "<section class=\"card\" id=\"kwrec\"><details" + fold("f:kwrec", !!busy) + "><summary>🤖 Claude 키워드 추천 · 🚀 자동 진행 <span class=\"num muted\">" + (busy ? "맥이 고르는 중" : picks.length ? "추천 " + picks.length + "개" : d ? "지난 추천 있음" : "아직 안 받음") + " — 펴서 쓰기</span></summary>" +
+    "<details class=\"help\"" + fold("f:kwrechelp") + "><summary>이 추천은 어떻게 고르나요?</summary><p class=\"lead\">맥의 Claude가 브랜드 정보(타깃 · 구매자 욕구 · 상품 · 콘텐츠 축 · 필러), ★ 키워드, ☆ 영상, 영상 분석과 아이디어를 다 읽고 씨앗 단어마다 콘텐츠로 찍을 만한 키워드를 골라요. 고른 키워드로 바로 콘텐츠 검색까지 이어져요.</p></details>" +
     "<div class=\"acts\"><button class=\"btn" + (picks.length ? "" : " primary") + "\" data-act=\"kwrec\"" + (busy ? " disabled" : "") + ">" + (busy ? "맥이 키워드 고르는 중…" : d ? "씨앗마다 다시 추천받기" : "씨앗마다 키워드 추천받기") + "</button>" +
     (picks.length ? "<button class=\"btn primary\" data-act=\"kwrecgo\"" + (st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 검색하는 중…" : "추천 " + Math.min(picks.length, 10) + "개 ★하고 콘텐츠 검색 →") + "</button>" : "") + "</div>" +
     autoPilotHtml("kw") +
@@ -26,8 +26,8 @@ function kwRecBarHtml(){
 function kwRecSeedHtml(word){
   var rs = kwRecs(word), s = S(); if(!rs.length) return "";
   var first = rs.filter(function(x){ return x.pick })[0];   // 접어 두고 한 줄만 — 폰에서 연관 검색어 목록이 첫 화면에 오게 (2026-11-18 검증)
-  return "<details class=\"wbox\"><summary><b><span class=\"tag p\">Claude 추천</span> " + rs.length + "개</b><span class=\"wsum\">" + (first ? "먼저 「" + esc(first.kw) + "」" : "") + "</span></summary><div class=\"wrec wbody\"><div class=\"it-d\"><span class=\"tag p\">Claude 추천</span> 「" + esc(word) + "」에서 고른 키워드 — 진한 칸이 먼저 찍자는 것</div><div class=\"list\">" +
-    rs.map(function(x){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b>" + (x.pick ? " <span class=\"tag p\">먼저</span>" : "") + (x.role ? " <span class=\"tag\">" + esc(x.role) + "</span>" : "") + (x.volume ? " <span class=\"num muted\">월 " + fmt(x.volume) + "</span>" : "") + "</div><div class=\"it-d\">" + esc(x.why || "") + "</div></div>" +
+  return "<details class=\"wbox\"" + fold("f:kwrecseed:" + word) + "><summary><b><span class=\"tag p\">Claude 추천</span> " + rs.length + "개</b><span class=\"wsum\">" + (first ? "먼저 「" + esc(first.kw) + "」" : "") + "</span></summary><div class=\"wrec wbody\"><div class=\"it-d\"><span class=\"tag p\">Claude 추천</span> 「" + esc(word) + "」에서 고른 키워드 — 진한 칸이 먼저 찍자는 것</div><div class=\"list\">" +
+    rs.map(function(x){ return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.kw) + "</b>" + (x.pick ? " <span class=\"tag p\">먼저</span>" : "") + (x.role ? " <span class=\"tag\">" + esc(x.role) + "</span>" : "") + (x.volume ? " <span class=\"num muted\">월 " + fmt(x.volume) + "</span>" : "") + "</div><div class=\"it-d\">" + txt(x.why || "") + "</div></div>" +
       "<button class=\"mk\" data-pin=\"" + esc(x.kw) + "\" aria-pressed=\"" + !!s.pin[x.kw] + "\" title=\"즐겨찾기 — 콘텐츠 검색에 씀\" aria-label=\"즐겨찾기\">★</button></div>" }).join("") + "</div></div></details>";
 }
 function kwRecParams(){

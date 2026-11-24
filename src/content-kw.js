@@ -16,9 +16,17 @@ function seedsOf(){ return ((SETS[cur] || {}).seeds || (B() && B().seeds) || [])
 function seedSrc(){ return (SETS[cur] || {}).seedSrc || (B() && B().seedSrc) || "naver" }
 function isFar(x, word){ return (x.far || []).indexOf(word) >= 0 }   // 씨앗이 안 든 말 — 구글 관련 검색어로만 들어온 것
 /* 씨앗 하나의 연관 검색어 — 「씨앗과 가까움」은 그 씨앗으로 다시 재서 점수를 매기고 점수 순 (순위 기준 kwCrit) */
+/* 한 번 그리는 동안(render — SCORE_ON)은 scored() 와 씨앗마다의 seedItems() 를 한 번만 센다 (2026-11-21: 브랜드 탭 한 번 그리는 데 scored() 가 60번 넘게 돌았다).
+   그리기 전·후와 설정(setS)·자료가 바뀔 때 scoreReset() 으로 비운다. 돌려받은 목록은 같이 쓰는 것이니 고치지 말고 filter·map·slice 로만 쓴다 */
+var SCORE_ON = 0, SCORE_C = null, SEED_C = {};
+function scoreReset(){ SCORE_C = null; SEED_C = {} }
 function seedItems(word, far){
+  var all = (SCORE_ON && SEED_C["$" + word]) || seedItemsNow(word); if(SCORE_ON) SEED_C["$" + word] = all;
+  return far == null ? all : all.filter(function(x){ return isFar(x, word) === far });
+}
+function seedItemsNow(word){
   var w = kwWeights();
-  return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 && (far == null || isFar(x, word) === far) }).map(function(x){
+  return scored().filter(function(x){ return (x.seed || []).indexOf(word) >= 0 }).map(function(x){
     var rel = relTo(word, x.kw); return Object.assign({}, x, { rel: rel, score: Math.round(wsum([[w.rel, rel], [w.vol, x.sc.vol], [w.ctr, x.sc.ctr], [w.rise, x.sc.rise], [w.comp, x.sc.comp]])) });
   }).sort(function(a, b){ return b.score - a.score || b.total - a.total });
 }
@@ -78,14 +86,14 @@ function wordRecHtml(name, n){
         (x.volume ? " <span class=\"num muted\">월 " + fmt(x.volume) + "</span>" : "") + "</button>";
     }).join("") + "</div>" +
     (rec.length ? "<div class=\"acts\" style=\"margin-top:6px\"><button class=\"btn sm\" data-act=\"wordrecall\" data-key=\"상품:" + esc(name) + "\" data-ws=\"" + esc(rec.map(function(x){ return String(x.word).replace(/\s+/g, "") }).join(",")) + "\">추천 " + rec.length + "개 전부 넣기</button></div>" : "") +
-    "<details style=\"margin-top:6px\"><summary>추천 이유</summary><div class=\"list\">" + rs.map(function(x){
+    "<details style=\"margin-top:6px\"" + fold("f:wrwhy:" + name) + "><summary>추천 이유</summary><div class=\"list\">" + rs.map(function(x){
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(x.word) + "</b>" + (x.recommend ? " <span class=\"tag p\">추천</span>" : "") + "</div><div class=\"it-d\">" +
-        [x.volume ? "월 " + fmt(x.volume) : "", x.comp ? "경쟁 " + esc(x.comp) : "", x.via ? esc(x.via) : "", esc(x.why || "")].filter(Boolean).join(" · ") + "</div></div></div>" }).join("") + "</div></details></div>";
+        [x.volume ? "월 " + fmt(x.volume) : "", x.comp ? "경쟁 " + esc(x.comp) : "", x.via ? esc(x.via) : "", txt(x.why || "")].filter(Boolean).join(" · ") + "</div></div></div>" }).join("") + "</div></details></div>";
 }
 /* 키워드 탭 맨 위 — 씨앗을 고르면 그 씨앗의 연관 검색어. 단어 고치기는 브랜드 탭 한 곳에서 */
 function seedsHtml(){
-  var sd = seedsOf(), s = S(), src = SEED_SRC.filter(function(o){ return o[0] === seedSrc() })[0];
-  var help = "<details class=\"help\"><summary>씨앗 단어 · 기준</summary><p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요. 씨앗 단어는 브랜드 탭에서 고쳐요.</p>" + dsLine("word") + dsLine("kw") + "</details>";
+  var sd = seedsOf(), s = S();
+  var help = "<details class=\"help\"" + fold("f:kwhelp") + "><summary>씨앗 단어 · 기준</summary><p class=\"lead\">브랜드 정체성 단어와 상품 판매 단어마다 받은 연관 검색어예요. 쓸 검색어에 ★을 누르면 「검증한 키워드」가 되고, 다음 단계(조사·추천·대본)는 ★한 것 위주로 가요. 씨앗 단어는 브랜드 탭에서 고쳐요.</p>" + dsLine("word") + dsLine("kw") + "</details>";
   var h = sd.length ? "" : "<section class=\"card\"><p class=\"note\">아직 씨앗 단어가 없어요. <button class=\"btn sm\" data-go=\"brand\">브랜드 탭에서 넣기 →</button></p></section>";
   var pickW = ui.seed && sd.some(function(x){ return x.word === ui.seed }) ? ui.seed : (sd[0] || {}).word;
   if(pickW){
@@ -98,7 +106,7 @@ function seedsHtml(){
       (tab0 !== "naver" && seedSrc() === "naver" ? "<p class=\"note\" style=\"margin-top:8px\">지금은 네이버에서만 받아요. 구글 트렌드도 보려면 ⚙ 설정 › 단계별 기준 「1 단어」에서 「둘 다」로 바꾸세요.</p>" : "") +
       "<div class=\"list\" style=\"margin-top:6px\">" + (near.slice(0, more).map(function(x){ return kwRow(x, s, true) }).join("") || "<p class=\"empty\">" + (tab0 === "both" ? "네이버와 구글 둘 다에서 나온 말이 아직 없어요." : "이 칸에 나온 연관 검색어가 없어요.") + "</p>") + "</div>" +
       (near.length > more ? "<div class=\"acts\"><button class=\"btn sm\" data-ui=\"seedMore=" + (more + 25) + "\">더 보기 (" + (near.length - more) + "개 남음)</button></div>" : "") +
-      (far.length ? "<details style=\"margin-top:12px\"><summary>「" + esc(pickW) + "」 글자가 안 든 말 " + far.length + "개 — 네이버·구글이 같이 찾은 관련 검색어</summary><div class=\"list\" style=\"margin-top:6px\">" +
+      (far.length ? "<details style=\"margin-top:12px\"" + fold("f:far:" + pickW) + "><summary>「" + esc(pickW) + "」 글자가 안 든 말 " + far.length + "개 — 네이버·구글이 같이 찾은 관련 검색어</summary><div class=\"list\" style=\"margin-top:6px\">" +
         far.map(function(x){ return kwRow(x, s, true) }).join("") + "</div></details>" : "") + "</section>";
   }
   return h + kwRecBarHtml();
@@ -118,7 +126,9 @@ function srcTabsHtml(key, items, word){
 }
 /* 단어 후보 찾기 — 넓은 단어 하나로 네이버 · 구글 연관 검색어를 받아, 정체성 단어나 상품 판매 단어로 넣을 후보를 고른다 (2026-11-17 동욱: "키워드 검색으로 정체성과 상품 단어 등의 후보군을 올리는 칸").
    요청은 ct.set wordReq {at, word, src} — 맥 동기화가 content_app.py words 로 받아 단어 후보.json(ct.data .wordcand)에 쓴다 (Claude 없이, 1분 안팎) */
-function wordState(){ var r = (SETS[cur] || {}).wordReq, d = part("wordcand"); return { req: r, data: d, busy: !!(r && (!d || d.reqAt !== r.at || d.busy)) } }
+function wordState(){ var r = (SETS[cur] || {}).wordReq, d = part("wordcand"), busy = !!(r && (!d || d.reqAt !== r.at || d.busy)), stale = busy && reqStale(r, d); return { req: r, data: d, busy: busy && !stale, stale: stale } }
+/* 맥이 요청을 받고 STALE_MS(10분) 넘게 소식이 없을 때 — 「받는 중」에 갇히지 않게 알리고 같은 요청을 다시 보내게 한다 (content.html reqStale · act reqagain) */
+function staleNoteHtml(key, what){ return "<p class=\"note\" style=\"margin-top:10px\">응답이 없어요 — " + what + " " + Math.round(STALE_MS / 60000) + "분 넘게 소식이 없어요. 맥이 켜져 있는지 확인해 주세요. <button class=\"btn sm\" data-act=\"reqagain\" data-k=\"" + key + "\">다시 보내기</button></p>" }
 function wordFindHtml(){
   var st = wordState(), d = st.data, runs = (d && d.runs) || [], src = ui.wSrc || "both", sd = seedsOf();
   var run = runs.filter(function(r){ return r.word === ui.wRun })[0] || runs[0];
@@ -127,6 +137,7 @@ function wordFindHtml(){
     "<div class=\"row2\"><input type=\"text\" id=\"word-in\" data-wordin=\"1\" maxlength=\"20\" placeholder=\"찾을 단어" + ((seedsOf()[0] || {}).word ? " (예: " + esc(seedsOf()[0].word) + ")" : "") + "\" value=\"" + esc(ui.wDraft || "") + "\"><button class=\"btn primary\" data-act=\"wordfind\"" + (st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 받는 중…" : "후보 찾기") + "</button></div>" +
     "<div class=\"chips\" style=\"margin-top:6px\">" + SEED_SRC.map(function(o){ return "<button class=\"chip" + (src === o[0] ? " on" : "") + "\" data-ui=\"wSrc=" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div>";
   if(st.busy) h += "<p class=\"note\" style=\"margin-top:10px\">맥이 「" + esc((st.req || {}).word || "") + "」 연관 검색어를 받는 중이에요 — 1~2분 걸려요 (맥이 켜져 있어야 해요). 다 받으면 여기에 저절로 떠요.</p>";
+  if(st.stale) h += staleNoteHtml("wordReq", "「" + esc((st.req || {}).word || "") + "」 연관 검색어를 받아 달라고 한 지");
   if(!run || st.busy) return h + "</section>";
   var t = ui.wTab || "naver", hitOnly = ui.wHit === true, items = run.items.filter(function(x){ return !hitOnly || x.hit }).slice().sort(function(a, c){ return (c.hit ? 1 : 0) - (a.hit ? 1 : 0) });   // 기본은 다 보이고, 찾은 단어가 든 말이 위로 (2026-11-17 「행사부스」처럼 그대로 든 말이 없으면 다 숨던 문제)
   var list = items.filter(function(x){ return inTab(x.via || [], t) }), more = ui.wMore || 8;   // 처음엔 8개만 — 더 보기로 늘린다 (2026-11-18 「너무 난잡하게 여러 개」)
@@ -147,7 +158,7 @@ function wordFindHtml(){
 }
 /* 선별한 키워드로 콘텐츠 검색 — ★(즐겨찾기)한 키워드 중 고른 것으로 맥이 유튜브를 검색해 미드폼·롱폼 영상을 읽어 온다 (Claude 없이, content_app.py search).
    요청은 ct.set searchReq {at, kws} 하나 — 맥 동기화가 보고 검색해 검색.json(ct.data .search)에 쓴다. 결과는 콘텐츠 탭 「키워드로 찾은 콘텐츠」. */
-function searchState(){ var r = (SETS[cur] || {}).searchReq, d = part("search"); return { req: r, data: d, busy: !!(r && (!d || d.reqAt !== r.at || d.busy)) } }
+function searchState(){ var r = (SETS[cur] || {}).searchReq, d = part("search"), busy = !!(r && (!d || d.reqAt !== r.at || d.busy)), stale = busy && reqStale(r, d); return { req: r, data: d, busy: busy && !stale, stale: stale } }
 function searchBoxHtml(){
   var s = S(), pins = scored().filter(function(x){ return s.pin[x.kw] && !s.ex[x.kw] }), off = ui.sOff || {}, use = pins.filter(function(x){ return !off[x.kw] }), st = searchState(), d = st.data;
   var done = {}; ((d && d.runs) || []).forEach(function(r){ done[r.kw] = r });
@@ -156,6 +167,7 @@ function searchBoxHtml(){
     (pins.length ? "<div class=\"chips\">" + pins.map(function(x){ var r = done[x.kw]; return "<button class=\"chip" + (off[x.kw] ? "" : " on") + "\" data-act=\"stoggle\" data-kw=\"" + esc(x.kw) + "\">" + esc(x.kw) + (r ? "<span>" + (r.error ? "!" : r.n) + "</span>" : "") + "</button>" }).join("") + "</div>" +
       "<div class=\"acts\"><button class=\"btn primary\" data-act=\"search\"" + (!use.length || st.busy ? " disabled" : "") + ">" + (st.busy ? "맥이 검색하는 중…" : "★ " + use.length + "개로 콘텐츠 검색") + "</button>" +
       (d && d.items && d.items.length ? "<button class=\"btn\" data-go=\"ref|refView=search\">찾은 콘텐츠 " + d.items.length + "개 보기 →</button>" : "") + "</div>" +
+      (st.stale ? staleNoteHtml("searchReq", "콘텐츠 검색을 보낸 지") : "") +
       (st.busy ? "<p class=\"lead\" style=\"margin-top:8px\">키워드 하나에 30초쯤 걸려요. 맥이 켜져 있어야 해요.</p>" : d && d.updatedAt ? "<p class=\"lead\" style=\"margin-top:8px\">마지막 검색 " + esc(day(d.updatedAt)) + " " + esc(String(d.updatedAt).slice(11, 16)) + "</p>" : "")
       : "<p class=\"note\">아직 ★한 키워드가 없어요. 위 씨앗 단어별 연관 검색어에서 좋은 키워드에 ★을 누르세요.</p>") + "</section>";
 }
@@ -173,11 +185,12 @@ function coveredText(){
 }
 function riseOf(kw){ var t = part("trend"); var x = t && t.items && t.items[kw]; return x ? x : null }
 function scored(){
+  if(SCORE_ON && SCORE_C) return SCORE_C;
   var k = part("kw"); if(!k || !k.items) return [];
   var max = { "상품": 0, "정체성": 0 };
   k.items.forEach(function(x){ if(x.total > (max[x.kind] || 0)) max[x.kind] = x.total });
   var cov = coveredText(), w = kwWeights();
-  return k.items.map(function(x){
+  var out = k.items.map(function(x){
     var tr = riseOf(x.kw), rise = tr ? tr.rise : null;
     var vol = max[x.kind] ? Math.log10(x.total + 1) / Math.log10(max[x.kind] + 1) * 100 : 0;
     var ctr = Math.min(x.ctr || 0, 10) * 10 * Math.min(1, x.total / 200);
@@ -187,6 +200,8 @@ function scored(){
     return Object.assign({}, x, { rel: rel, sc: { vol: vol, ctr: ctr, rise: up, comp: easy }, rise: rise, w: tr ? tr.w : null, score: Math.round(score), buy: /^구매/.test(x.intent || "") && !/경쟁사 이름/.test(x.intent || ""), diff: diffOf(x), cluster: clusterOf(x.kw) });
   }).map(function(x){ return Object.assign(x, { gap: x.kind === "상품" && x.buy && !x.surveyed && x.total >= 10 && cov.indexOf(x.kw) < 0 });
   }).sort(function(a, b){ return b.score - a.score || b.total - a.total });
+  if(SCORE_ON) SCORE_C = out;
+  return out;
 }
 /* 비율 → 몇 개씩: 상품 nP · 정체성 nI, 상품 안에서는 상품 비중대로 (나머지는 큰 쪽부터) */
 function split(s){
@@ -237,11 +252,9 @@ function viewKw(){
   var b = B(), k = part("kw"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   if(!k) return seedsHtml() + "<section class=\"card\"><div class=\"card-h\"><h3>첫 조사</h3></div><p class=\"lead\">이 브랜드는 아직 키워드 자료가 없어요. 첫 조사를 누르면 맥의 Claude가 채널 기획안으로 조사 프로필 초안부터 만들고, 기획안에 없는 칸(키워드 힌트 등)은 지어내지 않고 되물어요. 답한 뒤 다시 누르면 조사가 돌아요.</p>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"discover\"" + (openCmd("discover") ? " disabled" : "") + ">첫 조사 시작하기</button></div></section>";
-  var s = S(), all = scored(), c = candidates(s), sp = split(s), t = part("trend");
-  var h0 = seedsHtml();
-  var nP = c.filter(function(x){ return x.kind === "상품" }).length;
-  if(tab === "kw") return h0 + searchBoxHtml();   // 키워드 › 씨앗별 검색어 (전체 키워드 · 주제 묶음 · 깊게 조사는 「전체 키워드」 칸 — 2026-11-18 동욱 "늘어지는 건 새 탭으로")
-  var h = "<section class=\"card\"><details><summary>깊게 조사 — 경쟁사·레퍼런스 20개·시트·카드까지 (맥의 Claude) · 후보 " + c.length + "개</summary>" +
+  if(tab === "kw") return seedsHtml() + searchBoxHtml();   // 키워드 › 씨앗별 검색어 (전체 키워드 · 주제 묶음 · 깊게 조사는 「전체 키워드」 칸 — 2026-11-18 동욱 "늘어지는 건 새 탭으로")
+  var s = S(), all = scored(), c = candidates(s), t = part("trend");   /* 「전체 키워드」 칸에서만 쓰는 계산은 위 줄(씨앗별 검색어 칸) 뒤에 */
+  var h = "<section class=\"card\"><details" + fold("f:kwdeep") + "><summary>깊게 조사 — 경쟁사·레퍼런스 20개·시트·카드까지 (맥의 Claude) · 후보 " + c.length + "개</summary>" +
     "<p class=\"lead\" style=\"margin-top:8px\">상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " 비율로 뽑되, ★한 검증 키워드를 먼저 다 넣고 남은 자리만 점수순으로 채워요. 「★만 조사」를 켜면 ★한 것만 조사해요. ✕는 빼기 — 뺀 것은 아래 「뺀 것」 칩에서 되살려요." +
     (c.length < s.count ? " 조건에 맞는 키워드가 " + (s.count - c.length) + "개 모자라요 — 아래 조건을 풀거나 조사를 돌려 새 키워드를 받으세요." : "") + "</p>" +
     "<div class=\"chips\" style=\"margin-bottom:6px\"><button class=\"chip" + (s.pinOnly ? " on" : "") + "\" data-set=\"pinOnly=" + !s.pinOnly + "\">★만 조사</button><button class=\"chip" + (s.buyOnly ? " on" : "") + "\" data-set=\"buyOnly=" + !s.buyOnly + "\">상품은 구매 결만</button>" +
@@ -255,13 +268,13 @@ function viewKw(){
   var KF = { all: function(){ return true }, "상품": function(x){ return x.kind === "상품" }, "정체성": function(x){ return x.kind === "정체성" }, up: isUp, gap: function(x){ return x.gap },
              pin: function(x){ return s.pin[x.kw] }, ex: function(x){ return s.ex[x.kw] } };
   var list = pool.filter(KF[ui.kwKind] || KF.all);
-  h += "<section class=\"card\" id=\"kw-list\"><div class=\"card-h\"><h3>" + (ui.kwCluster ? esc(ui.kwCluster) + " 묶음" : "전체 키워드") + "</h3><span class=\"n\">" + list.length + "개</span></div><div class=\"chips\">" +
+  h += "<section class=\"card\" id=\"kw-list\"><div class=\"card-h\"><h3>" + (ui.kwCluster ? esc(ui.kwCluster) + " 묶음" : "전체 키워드") + "</h3><span class=\"n\">" + list.length + "개</span></div><div class=\"chips seedchips\">" +
     (ui.kwCluster ? "<button class=\"chip on\" data-ui=\"kwCluster=\">" + esc(ui.kwCluster) + " ✕</button>" : "") +
     [["all", "전체"], ["상품", "상품"], ["정체성", "정체성"], ["up", "▲ 오르는 중"], ["gap", "빈 곳"], ["pin", "★ 즐겨찾기"], ["ex", "✕ 뺀 것"]]
       .map(function(f){ return "<button class=\"chip" + (ui.kwKind === f[0] ? " on" : "") + "\" data-ui=\"kwKind=" + f[0] + "\">" + f[1] + "<span>" + pool.filter(KF[f[0]]).length + "</span></button>" }).join("") + "</div>" +
     "<div class=\"list\" style=\"margin-top:6px\">" + list.slice(0, ui.kwMore).map(function(x){ return kwRow(x, s, true) }).join("") + "</div>" +
     ((list.length > ui.kwMore || ui.kwMore > 60) ? "<div class=\"acts\">" + (list.length > ui.kwMore ? "<button class=\"btn sm\" data-ui=\"kwMore=" + (ui.kwMore + 100) + "\">더 보기 (" + (list.length - ui.kwMore) + "개 남음)</button>" : "") + (ui.kwMore > 60 ? "<button class=\"btn sm\" data-ui=\"kwMore=60\">60개로 접기</button>" : "") + "</div>" : "") + "</section>";
-  h += "<section class=\"card\"><details><summary>점수 계산 · 자료 출처</summary><div class=\"small\" style=\"margin-top:8px;display:grid;gap:6px\">" +
+  h += "<section class=\"card\"><details" + fold("f:kwscore") + "><summary>점수 계산 · 자료 출처</summary><div class=\"small\" style=\"margin-top:8px;display:grid;gap:6px\">" +
     "<p>점수 = " + kwCrit().order.filter(function(id){ return kwWeights()[id] }).map(function(id){ return KWCRIT.filter(function(q){ return q.id === id })[0].name + " " + kwWeights()[id] }).join(" : ") + " 비중. 클릭률은 월 검색 200 미만이면 그만큼 덜 믿어요. <button class=\"chip\" data-go=\"design|dsOpen=kw\">설정에서 바꾸기 →</button></p>" +
     "<p>검색량·클릭률: " + esc(k.source || "") + " · " + day(k.updatedAt) + "</p>" +
     "<p>상승세(최근 4주 ÷ 그 앞 8주): " + (t ? esc(t.source || "") + " · " + day(t.updatedAt) + " · " + Object.keys(t.items || {}).length + "개 키워드" : "아직 받지 않음") + ". 검색이 적은 키워드는 구글이 값을 0으로 줘서 「값 적음」으로 두고 점수에서는 중간값으로 봐요.</p>" +
@@ -276,7 +289,7 @@ function clustersHtml(all){
     c.n++; c.total += x.total; if(x.buy) c.buy++; if(x.surveyed) c.done++; if(x.gap) c.gap++; if(c.top.length < 3) c.top.push(x.kw) });
   if(order.length < 2) return "";
   order.sort(function(a, b){ return b.total - a.total });
-  return "<section class=\"card\"><details" + (ui.kwCluster ? " open" : "") + "><summary>주제 묶음 " + order.length + "개 — 키워드 하나가 아니라 주제의 크기로 보기</summary><div class=\"list\" style=\"margin-top:6px\">" +
+  return "<section class=\"card\"><details" + fold("f:kwclusters", !!ui.kwCluster) + "><summary>주제 묶음 " + order.length + "개 — 키워드 하나가 아니라 주제의 크기로 보기</summary><div class=\"list\" style=\"margin-top:6px\">" +
     order.map(function(c){
       return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(c.name) + "</b> <span class=\"num muted\">월 " + fmt(c.total) + "</span></div>" +
         "<div class=\"it-d\">키워드 " + c.n + " · 살 사람이 찾는 말 " + c.buy + " · 조사함 " + c.done + (c.gap ? " · <span class=\"up\">빈 곳 " + c.gap + "</span>" : "") + " · " + esc(c.top.join(" · ")) + "</div></div>" +

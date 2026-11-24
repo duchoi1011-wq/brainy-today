@@ -38,10 +38,10 @@ function recCritPanel(rd){   // ⚙ 설정 › 단계별 기준 「추천」 칸
   var use = "<div class=\"chips\">" + REC_USE.map(function(u){ var n = u[0] === "fav" ? favIds.length : u[0] === "pin" ? pins.length : u[0] === "seed" ? seedsOf().length : (part("ref") ? part("ref").items.length : 0);
       return chip(c.use[u[0]], "use:" + u[0], u[1] + " <span>" + n + "</span>") }).join("") + chip(c.favFirst, "favFirst", "☆ 영상을 맨 먼저") + "</div>" +
     (cnt ? "<div class=\"it-d\">지난 추천은 ☆ " + cnt.fav + " · ★ " + cnt.pin + " · 씨앗 단어 " + cnt.seed + (cnt.ref ? " · 조사 " + cnt.ref : "") + "개에서 나왔어요." + (fresh.length ? " <b>그 뒤에 ☆한 " + fresh.length + "개는 아직 안 들어갔어요.</b>" : "") + "</div>" : "") +
-    (favIds.length ? "<details><summary>☆ 즐겨찾기 영상 " + favIds.length + "개</summary><div class=\"list\" style=\"margin-top:6px\">" + favIds.map(function(v){ var x = f[v];
+    (favIds.length ? "<details" + fold("f:rcfav") + "><summary>☆ 즐겨찾기 영상 " + favIds.length + "개</summary><div class=\"list\" style=\"margin-top:6px\">" + favIds.map(function(v){ var x = f[v];
         return "<div class=\"it\"><div class=\"it-m\"><a href=\"https://www.youtube.com/watch?v=" + esc(v) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title || v) + "</a><div class=\"it-d\">" + esc(x.channel || "") + (x.kw ? " · 키워드 " + esc(x.kw) : "") + (fresh.indexOf(v) >= 0 && r ? " · <b>아직 추천 전</b>" : "") + "</div></div></div>" }).join("") + "</div></details>"
       : "<div class=\"it-d\">아직 ☆한 영상이 없어요. <button class=\"btn sm\" data-go=\"ref|refView=search\">콘텐츠 칸에서 ☆ 누르기 →</button></div>") +
-    (pins.length ? "<details><summary>★ 키워드 " + pins.length + "개</summary><div class=\"chips\" style=\"margin-top:6px\">" + pins.map(function(k){ return "<span class=\"tag\">" + esc(k) + "</span>" }).join("") + "</div></details>" : "");
+    (pins.length ? "<details" + fold("f:rcpin") + "><summary>★ 키워드 " + pins.length + "개</summary><div class=\"chips\" style=\"margin-top:6px\">" + pins.map(function(k){ return "<span class=\"tag\">" + esc(k) + "</span>" }).join("") + "</div></details>" : "");
   var ratio = "<div class=\"it-d\">조회수가 아니라 「구독자 수보다 몇 배 더 봤나」로 걸러요. 이보다 못한 영상은 근거로 쓰지 않아요.</div><div class=\"chips\">" +
     [[0, "따지지 않음"], [1, "1배 이상"], [3, "3배 이상"], [10, "10배 이상"]].map(function(o){ return chip(c.minRatio === o[0], "minRatio:" + o[0], o[1]) }).join("") + "</div>";
   var rank = 0, pri = "<div class=\"it-d\">위에 있을수록 크게 봐요. 끈 것은 안 봐요. 콘텐츠 칸의 종합 점수도 이 순서를 따라요." + (c.set ? "" : " (지금은 기본 순서예요.)") + "</div><div class=\"list\">" + c.order.map(function(id, i){

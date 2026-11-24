@@ -16,6 +16,8 @@ var PROMPT_TABS = {
 };
 function prId(key){ return "pr-" + String(key).replace(/[^\w-]/g, "_") }
 function prDraft(key){ return (ui.prDraft || {})[key] || "" }
+/* ✍️ 접는 칸 — 쓰던 글이 있거나 손으로 펴 뒀으면 다시 그려도 펴진 채 (2026-11-21: 맥 자료가 오면 펴 둔 칸이 닫혔다) */
+function prFold(key){ var k = "f:pr:" + key; return " data-wbox=\"" + esc(k) + "\"" + (prDraft(key) || (ui.wOpen || {})[k] ? " open" : "") }
 function promptBoxHtml(key, title, ph, kind){
   var busy = openCmd(kind || "prompt");
   return "<div class=\"prbox\"><div class=\"prbox-h\">✍️ " + esc(title) + "</div>" +
@@ -30,7 +32,7 @@ function promptWhereHtml(key){
 }
 function promptBarHtml(){
   var t = PROMPT_TABS[tab]; if(!t || !B()) return "";
-  return "<details class=\"prbar\"" + (prDraft("tab:" + tab) ? " open" : "") + "><summary>✍️ 내 말로 끼어들기</summary>" + promptBoxHtml("tab:" + tab, "무엇을 할까요?", t[3]) + "</details>";
+  return "<details class=\"prbar\"" + prFold("tab:" + tab) + "><summary>✍️ 내 말로 끼어들기</summary>" + promptBoxHtml("tab:" + tab, "무엇을 할까요?", t[3]) + "</details>";
 }
 /* 지금 이 자리의 맥락 — 맥이 무엇을 기준으로 할지 알게 넘긴다 */
 function promptContext(key){
@@ -51,4 +53,5 @@ function promptSend(key, kind){
   if(kind === "scriptedit") send("scriptedit", "대본 고치기 — " + c.target.id + " · " + p.slice(0, 40), { rec: c.target.id, prompt: p });
   else send("prompt", "✍️ " + c.where + (c.target ? " " + c.target.id : "") + " — " + p.slice(0, 50), { where: c.where, prompt: p, target: c.target || null, context: c });
   ui.prDraft = Object.assign({}, ui.prDraft); ui.prDraft[key] = "";
+  ui.wOpen = Object.assign({}, ui.wOpen); ui.wOpen["f:pr:" + key] = false;   /* 보낸 뒤에는 예전처럼 접는다 */
 }

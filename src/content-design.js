@@ -34,7 +34,7 @@ function viewDesign(){
     "<div class=\"row2\"><input type=\"text\" id=\"ds-ask\" data-dsask=\"1\" placeholder=\"예: 추천은 좋아요 많은 댓글을 제일 먼저 보고, 구독자보다 3배 이상 본 영상만\" value=\"" + esc(ui.dsDraft || "") + "\"><button class=\"btn primary\" data-act=\"dsask\">바꿔 줘</button></div>" +
     "<p class=\"it-d\" style=\"margin-top:4px\">✦ Brainy 대화가 열려 지금 기준을 읽고 바꿔요. 무엇을 어떻게 바꿨는지 대화에 남아요.</p></section>";
   DS.forEach(function(st, i){
-    var open = ui.dsOpen === st.id || (ui.wOpen || {})["ds:" + st.id];   // 손으로 편 「바꾸기」도 다시 그려도 펼친 채 (2026-11-18 검증: 누를 때마다 접힘)
+    var open = (ui.wOpen || {})["ds:" + st.id];   /* 「설정에서 바꾸기 →」로 온 칸(ui.dsOpen)은 render 가 한 번만 여기 값으로 옮겨 편다 — 그 뒤엔 손으로 접힌다 */   // 손으로 편 「바꾸기」도 다시 그려도 펼친 채 (2026-11-18 검증: 누를 때마다 접힘)
     h += "<section class=\"card ds\" id=\"ds-" + st.id + "\"><div class=\"card-h\"><h3><span class=\"num muted\">" + (i + 1) + "</span> " + esc(st.name) + "</h3><span class=\"n\">" + (dsChanged(st) ? "바꿈" : "기본") + "</span></div>" +
       "<p class=\"lead\">" + esc(st.what) + "</p><p class=\"dsnow\"><b>지금</b> " + esc(st.sum()) + "</p>" +
       "<details class=\"wbox\" data-wbox=\"ds:" + st.id + "\"" + (open ? " open" : "") + "><summary><b>바꾸기</b>" + (dsChanged(st) ? "<span class=\"wsum\">기본값으로 되돌리기는 맨 아래</span>" : "") + "</summary><div class=\"wbody\">" + st.body() +
@@ -45,7 +45,7 @@ function viewDesign(){
 }
 /* 템플릿 — 설계 한 벌(단계 칸 값 전부)을 이름 붙여 저장하고 다른 브랜드에 적용. 앱 전체에 한 목록 ct.set/_tpl {list:[{id, name, from, at, values}]} */
 function tplList(){ return ((SETS._tpl || {}).list || []).slice() }
-function tplSave(list){ SETS._tpl = { list: list, updatedAt: new Date().toISOString() }; saveSet("_tpl"); render() }
+function tplSave(list){ SETS._tpl = { list: list, updatedAt: new Date().toISOString() }; saveSet("_tpl"); render() }   /* 부르는 쪽은 whenLive 안에서 — 서버 목록을 받기 전의 옛 목록으로 덮지 않게 */
 function viewTpl(){
   if(!B()) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var list = tplList(), c = SETS[cur] || {};
@@ -67,13 +67,15 @@ function designAct(name, el){
     ui.dsDraft = ""; if(window.BRAINY_CHAT){ ui.set = null; window.BRAINY_CHAT.ask("[설계] " + q) } else alert("Brainy 대화를 열 수 없어요 — 로그인을 확인해 주세요."); render(); return true }   // 「[설계] …」를 어떻게 바꿀지는 대화 규칙(content-brainy.js rules)에 — 대화창엔 동욱 말만 보이게
   /* 템플릿 저장 — Enter(한글 조합 끝)로 눌러도 쓰던 이름(ui.tplDraft)으로 */
   if(name === "tplsave"){ var ni = document.getElementById("tpl-name"), nm = ((ni && ni.value) || ui.tplDraft || "").trim(); if(!nm){ alert("템플릿 이름을 적어 주세요."); if(ni) ni.focus(); return true }
-    var c = SETS[cur] || {}, vals = {}; DS_KEYS.forEach(function(k){ if(c[k] != null) vals[k] = JSON.parse(JSON.stringify(c[k])) });
-    var list = tplList().filter(function(t){ return t.name !== nm }); list.unshift({ id: "t" + Date.now().toString(36), name: nm, from: B().name, at: new Date().toISOString(), values: vals });
-    ui.tplDraft = ""; tplSave(list); toast("「" + nm + "」 템플릿을 저장했어요"); return true }
+    var c = SETS[cur] || {}, vals = {}, fromB = B().name; DS_KEYS.forEach(function(k){ if(c[k] != null) vals[k] = JSON.parse(JSON.stringify(c[k])) });
+    ui.tplDraft = "";
+    if(!whenLive(function(){ var list = tplList().filter(function(t){ return t.name !== nm }); list.unshift({ id: "t" + Date.now().toString(36), name: nm, from: fromB, at: new Date().toISOString(), values: vals });
+      tplSave(list); toast("「" + nm + "」 템플릿을 저장했어요") })) render();
+    return true }
   if(name === "tplapply"){ var t = tplList().filter(function(x){ return x.id === v })[0]; if(!t) return true;
     if(!confirm("「" + t.name + "」을 " + B().name + "에 적용할까요? 지금 단계별 기준은 이 템플릿 값으로 바뀌어요.")) return true;
     var p3 = {}; DS_KEYS.forEach(function(k){ p3[k] = t.values[k] != null ? JSON.parse(JSON.stringify(t.values[k])) : null }); setS(p3); toast("「" + t.name + "」을 적용했어요"); return true }
-  if(name === "tpldel"){ var t2 = tplList().filter(function(x){ return x.id === v })[0]; if(t2 && confirm("「" + t2.name + "」 템플릿을 지울까요?")) tplSave(tplList().filter(function(x){ return x.id !== v })); return true }
+  if(name === "tpldel"){ var t2 = tplList().filter(function(x){ return x.id === v })[0]; if(t2 && confirm("「" + t2.name + "」 템플릿을 지울까요?")) whenLive(function(){ tplSave(tplList().filter(function(x){ return x.id !== v })) }); return true }
   return false;
 }
 /* 설계 대화가 읽을 지금 값과 바꿀 수 있는 칸 (content-brainy.js 의 ctx · set_design) */

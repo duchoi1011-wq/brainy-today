@@ -15,7 +15,7 @@ function refGroupHtml(g, list, chan){
       (top ? "<div class=\"it-d\">" + (isNew(top) ? "새 영상" : "최근 영상") + " · <a href=\"https://www.youtube.com/watch?v=" + esc(top.id) + "\" target=\"_blank\" rel=\"noopener\">" + esc(top.title) + "</a> · " + esc(top.when) +
         (top.views != null ? " · 조회 " + fmt(top.views) : "") + (top.ratio != null ? " · 조회÷구독 " + top.ratio + "배" : "") + "</div>" : "") + "</div></div>";
   }).join("");
-  return "<details style=\"margin-top:10px\"><summary>" + esc(g) + " " + list.length + "곳" + (nNew ? " · 새 영상 " + nNew : "") + "</summary><div class=\"list\" style=\"margin-top:4px\">" + rows + "</div></details>";
+  return "<details style=\"margin-top:10px\"" + fold("f:rg:" + g) + "><summary>" + esc(g) + " " + list.length + "곳" + (nNew ? " · 새 영상 " + nNew : "") + "</summary><div class=\"list\" style=\"margin-top:4px\">" + rows + "</div></details>";
 }
 function brandRefsHtml(b){
   var chan = part("chan"), t = b.tone, groups = {}, order = [];
@@ -25,13 +25,13 @@ function brandRefsHtml(b){
     "<p class=\"lead\">대본을 쓸 때 이 채널들에서 같은 주제 영상을 찾아 구성을 가져와요. 볼트의 레퍼런스 카드를 고치면 몇 초 안에 여기가 바뀌고, 채널 새 영상은 하루 한 번 저절로 최신화돼요. 카드 맞춘 때 " +
     (b.refsAt ? esc(day(b.refsAt)) + " " + esc(String(b.refsAt).slice(11, 16)) : "—") + " · 새 영상 읽은 때 " + (chan ? esc(day(chan.updatedAt)) : "아직") + "</p>";
   if((b.refOrder || []).length) h += "<h4>쓰는 순서</h4><div class=\"list\">" + b.refOrder.map(function(r, i){ return "<div class=\"it\"><span class=\"num muted\">" + (i + 1) + "</span><div class=\"it-m\">" + esc(r) + "</div></div>" }).join("") + "</div>";
-  if(t) h += "<details style=\"margin-top:10px\"><summary>이 채널의 결 — 말하는 방식</summary><div class=\"list\" style=\"margin-top:4px\">" + (t.rules || []).map(function(r){ return "<div class=\"it\"><div class=\"it-m\">" + esc(r) + "</div></div>" }).join("") + "</div>" +
+  if(t) h += "<details style=\"margin-top:10px\"" + fold("f:rtone") + "><summary>이 채널의 결 — 말하는 방식</summary><div class=\"list\" style=\"margin-top:4px\">" + (t.rules || []).map(function(r){ return "<div class=\"it\"><div class=\"it-m\">" + esc(r) + "</div></div>" }).join("") + "</div>" +
     "<dl class=\"kv small\" style=\"margin-top:8px\">" + [["쓰는 말", t.words], ["화면", t.screen], ["하지 않는 것", t.avoid]].filter(function(r){ return r[1] }).map(function(r){ return "<dt>" + r[0] + "</dt><dd>" + esc(r[1]) + "</dd>" }).join("") + "</dl>" +
     (t.todo ? "<p class=\"note\" style=\"margin-top:8px\">" + esc(t.todo) + "</p>" : "") + "</details>";
   order.forEach(function(g){ h += refGroupHtml(g, groups[g], chan) });
-  if((b.formats || []).length) h += "<details style=\"margin-top:10px\"><summary>콘텐츠 포맷 " + b.formats.length + "종</summary><div class=\"list\" style=\"margin-top:4px\">" + b.formats.map(function(f){
+  if((b.formats || []).length) h += "<details style=\"margin-top:10px\"" + fold("f:rfmt") + "><summary>콘텐츠 포맷 " + b.formats.length + "종</summary><div class=\"list\" style=\"margin-top:4px\">" + b.formats.map(function(f){
     return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><b>" + esc(f.name) + "</b> <span class=\"num muted\">" + esc(f.len) + "</span> <span class=\"tag\">" + esc(f.goal) + "</span></div><div class=\"it-d\">" + txt(f.structure) + "</div></div></div>" }).join("") + "</div></details>";
-  if(b.refFields || (b.refNotes || []).length) h += "<details style=\"margin-top:10px\"><summary>영상 분석 칸 · 주의</summary><p class=\"small\" style=\"margin-top:6px\">" + esc(b.refFields || "") + "</p>" +
+  if(b.refFields || (b.refNotes || []).length) h += "<details style=\"margin-top:10px\"" + fold("f:rnote") + "><summary>영상 분석 칸 · 주의</summary><p class=\"small\" style=\"margin-top:6px\">" + esc(b.refFields || "") + "</p>" +
     (b.refNotes || []).map(function(n){ return "<p class=\"small muted\" style=\"margin-top:4px\">· " + esc(n) + "</p>" }).join("") + "</details>";
   var src = b.refCards ? Object.keys(b.refCards).map(function(k){ return String(b.refCards[k]).split("/").pop().replace(/\.md$/, "") }).join(" · ") : "";
   return h + (src ? "<p class=\"lead\" style=\"margin-top:10px\">정본 카드 · " + esc(src) + "</p>" : "") + "</section>";
@@ -67,10 +67,10 @@ function rpRow(c, cand){
   return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\">" + (c.url ? "<a href=\"" + esc(c.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(c.name) + "</b></a>" : "<b>" + esc(c.name) + "</b>") +
       (c.seed ? " <span class=\"tag " + (c.side === "상품" ? "p" : "i") + "\">" + esc(c.seed) + "</span>" : "") + (c.kind ? " <span class=\"tag\">" + esc(c.kind) + "</span>" : "") + (c.lang ? " <span class=\"tag\">" + esc(c.lang) + "</span>" : "") +
       (c.grade && c.grade !== "—" ? " <span class=\"tag\" title=\"이 브랜드에 얼마나 맞나 — A+ 매번 볼 곳 · A 자주 · A-·B+ 가끔 · B 참고\">맞음 " + esc(c.grade) + "</span>" : "") + " " + amountTag(c.amount) + (cand && rpRec(c) ? " <span class=\"tag fill\" title=\"" + esc(rpRecWhy(c)) + "\">Claude 추천</span>" : "") + "</div>" +
-    "<div class=\"it-d\">" + esc(c.take || "") + "</div>" +
-    "<details><summary>자세히</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
-      (cand && rpRec(c) ? "<dt>추천 이유</dt><dd>" + esc(rpRecWhy(c)) + "</dd>" : "") + (c.amountProof ? "<dt>소재가 많나</dt><dd>" + txt(c.amountProof) + "</dd>" : "") + (c.direction ? "<dt>연출 참고</dt><dd>" + txt(c.direction) + "</dd>" : "") +
-      (c.example ? "<dt>대본 적용 예</dt><dd>" + txt(c.example) + "</dd>" : "") + ((c.proof || c.why) ? "<dt>확인한 것</dt><dd>" + esc([c.proof, c.why].filter(Boolean).join(" · ")) + "</dd>" : "") +
+    "<div class=\"it-d\">" + txt(c.take || "") + "</div>" +
+    "<details" + fold("f:rp:" + (cand ? "c:" : "h:") + (c.id || c.name)) + "><summary>자세히</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+      (cand && rpRec(c) ? "<dt>추천 이유</dt><dd>" + txt(rpRecWhy(c)) + "</dd>" : "") + (c.amountProof ? "<dt>소재가 많나</dt><dd>" + txt(c.amountProof) + "</dd>" : "") + (c.direction ? "<dt>연출 참고</dt><dd>" + txt(c.direction) + "</dd>" : "") +
+      (c.example ? "<dt>대본 적용 예</dt><dd>" + txt(c.example) + "</dd>" : "") + ((c.proof || c.why) ? "<dt>확인한 것</dt><dd>" + txt([c.proof, c.why].filter(Boolean).join(" · ")) + "</dd>" : "") +
       (c.pillar && c.pillar !== "—" ? "<dt>필러</dt><dd>" + esc(c.pillar) + "</dd>" : "") + "</dl></details>" +
     (cand ? "<div class=\"acts\"><button class=\"btn sm" + (on ? "" : " primary") + "\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"" + (on ? "" : "add") + "\">" + (on ? "넣는 중 — 취소" : "참고 페이지에 넣기") + "</button>" +
       "<button class=\"btn sm\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"skip\">빼기</button></div>" : "") + "</div></div>";
@@ -79,7 +79,7 @@ function rpRow(c, cand){
 function rpSkippedHtml(cd, pick){
   var sk = ((cd && cd.items) || []).filter(function(x){ return !x.added && pick[x.id] === "skip" });
   if(!sk.length) return "";
-  return "<details class=\"gone\"><summary>뺀 후보 " + sk.length + "곳 — 되돌리기</summary><div class=\"list\">" + sk.map(function(c){
+  return "<details class=\"gone\"" + fold("f:rpskip") + "><summary>뺀 후보 " + sk.length + "곳 — 되돌리기</summary><div class=\"list\">" + sk.map(function(c){
     return "<div class=\"it off\"><div class=\"it-m\"><div>" + esc(c.name) + (c.seed ? " <span class=\"num muted\">" + esc(c.seed) + "</span>" : "") + "</div></div><button class=\"btn sm\" data-act=\"chanpick\" data-id=\"" + esc(c.id) + "\" data-v=\"\">↺ 되돌리기</button></div>" }).join("") + "</div></details>";
 }
 /* 참고 페이지 찾는 범위 — ⚙ 설정 › 단계별 기준 「참고 페이지」 칸 (content-design.js) */
@@ -111,7 +111,7 @@ function viewRefPage(){
     h += "<section class=\"card\"><div class=\"card-h\"><h3>" + sd0.name + "</h3><span class=\"n\">넣은 곳 " + have.length + " · 후보 " + cl.length + "</span></div><p class=\"lead\">" + sd0.what + " · 기획 레퍼런스 카드 " + sd0.card + "</p>" +
       (cl.length ? "<h4>찾은 후보 <span class=\"num muted\">추천 " + cl.filter(rpRec).length + " / " + cl.length + "</span></h4><div class=\"acts\" style=\"margin-top:0\">" + rpRecBtn(cl, "이 칸 추천") + "</div>" +
         "<div class=\"list\">" + cl.slice().sort(function(a, c){ return (rpRec(c) ? 1 : 0) - (rpRec(a) ? 1 : 0) }).map(function(c){ return rpRow(c, true) }).join("") + "</div>" : "") +
-      (have.length ? "<details" + (cl.length ? "" : " open") + " style=\"margin-top:10px\"><summary>넣은 곳 " + have.length + "</summary><div class=\"list\" style=\"margin-top:4px\">" + have.map(function(c){ return rpRow(c, false) }).join("") + "</div></details>"
+      (have.length ? "<details" + fold("f:rphave:" + sd0.id, !cl.length) + " style=\"margin-top:10px\"><summary>넣은 곳 " + have.length + "</summary><div class=\"list\" style=\"margin-top:4px\">" + have.map(function(c){ return rpRow(c, false) }).join("") + "</div></details>"
         : (cl.length ? "" : "<p class=\"lead\">아직 없어요. 위에서 「참고 페이지 채우기」를 누르세요.</p>")) + "</section>";
   });
   var picks = pickedIds(S()).filter(function(id){ return !scriptOf(id) });   // 다음 단계 — 넣은 참고 페이지로 대본

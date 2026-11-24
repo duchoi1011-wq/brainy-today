@@ -59,9 +59,9 @@ function nbAct(name){
     return true;
   }
   if(name === "nbcopy"){ var t = nbSummaryText(); try{ navigator.clipboard.writeText(t).then(function(){ toast("정리 글을 복사했어요") }, function(){ alert(t) }) }catch(e){ alert(t) } return true }   // 복사가 안 되면 글을 띄운다
-  if(name === "nbclear"){ if(confirm("답한 것과 붙인 기획서를 모두 지우고 새로 시작할까요?")){ ui.nbDraft = {}; ui.nbDocDraft = null; SETS._newbrand = { answers: {}, updatedAt: new Date().toISOString() }; saveSet("_newbrand"); render() } return true }
+  if(name === "nbclear"){ if(confirm("답한 것과 붙인 기획서를 모두 지우고 새로 시작할까요?")){ ui.nbDraft = {}; ui.nbDocDraft = null; whenLive(function(){ SETS._newbrand = { answers: {}, updatedAt: new Date().toISOString() }; saveSet("_newbrand"); render() }) } return true }
   return false;
 }
 /* 쓰는 중엔 화면 값(ui.nbDraft)만, 칸을 떠날 때(change) 저장 — 다시 그려도 쓰던 글이 남는다 */
 function nbInput(el){ ui.nbDraft = Object.assign({}, ui.nbDraft); ui.nbDraft[el.dataset.nbq] = el.value }
-function nbChange(el){ var a = Object.assign({}, nbState().answers); var v = el.value.trim(); if(v) a[el.dataset.nbq] = el.value; else delete a[el.dataset.nbq]; setTimeout(function(){ nbSave({ answers: a }); render() }, 0) }   // 저장도 그리기도 다음 칸으로 커서가 옮겨 간 뒤 — 저장 알림이 바로 다시 그려 Tab 이 갈 칸을 잃었다(2026-11-18 검증) — 칸마다 id(nbq-…)가 있어 render 가 그 칸에 커서를 돌려준다 (2026-11-18 검증: Tab 뒤 친 글이 사라짐)
+function nbChange(el){ var id = el.dataset.nbq, raw = el.value, v = raw.trim(); setTimeout(function(){ whenLive(function(){ var a = Object.assign({}, nbState().answers); if(v) a[id] = raw; else delete a[id]; nbSave({ answers: a }); render() }) }, 0) }   /* 답 묶음은 저장하는 그때의 값 위에 이 칸만 얹는다 — 서버 값을 받기 전이면 받은 뒤에 (whenLive) */   // 저장도 그리기도 다음 칸으로 커서가 옮겨 간 뒤 — 저장 알림이 바로 다시 그려 Tab 이 갈 칸을 잃었다(2026-11-18 검증) — 칸마다 id(nbq-…)가 있어 render 가 그 칸에 커서를 돌려준다 (2026-11-18 검증: Tab 뒤 친 글이 사라짐)

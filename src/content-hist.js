@@ -48,22 +48,23 @@ function impToggle(el){
 }
 /* 과거 기록 열기 — 본문을 받아 그 단계 탭을 그때 결과로 */
 function histOpen(id, stay){
-  var x = histItems().filter(function(y){ return y.id === id })[0];
+  var x = histItems().filter(function(y){ return y.id === id })[0], b0 = cur;   /* 누른 때의 브랜드 — 본문을 받는 사이 브랜드를 바꾸면 A 의 기록이 B 에 걸리던 것 (2026-11-21) */
   if(!x){ toast("그 기록이 목록에 없어요"); return }
-  function show(data){ ui.set = null; PAST = { brand: cur, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; if(!stay){ tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab) } if(HIST_VIEW[x.part]){ var kv = HIST_VIEW[x.part].split("="); ui[kv[0]] = kv[1] }
+  function show(data){ ui.set = null; PAST = { brand: b0, id: x.id, part: x.part, label: x.label, at: x.at, data: data }; if(!stay){ tab = HIST_TAB[x.part] || "sum"; save("ct.tab", tab) } if(HIST_VIEW[x.part]){ var kv = HIST_VIEW[x.part].split("="); ui[kv[0]] = kv[1] }
     window.scrollTo(0, 0); render();
     var spot = HIST_SPOT[x.part], el = spot && document.querySelector(spot); if(!el) return;
     var hd = document.querySelector("header"), top = (hd ? hd.getBoundingClientRect().bottom : 0) + 12;   // 위에 붙는 머리 칸만큼 비켜서
     window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - top);
     var box = el.closest(".orig"); if(box) box.scrollLeft = Math.max(0, el.getBoundingClientRect().left - box.getBoundingClientRect().left + box.scrollLeft - 8) }   // 폰에서 옆으로 미는 표면 그 칸이 보이게 (2026-11-18 검증)
-  if(HCACHE[cur + "." + id]) return show(HCACHE[cur + "." + id]);
+  if(HCACHE[b0 + "." + id]) return show(HCACHE[b0 + "." + id]);
   if(!x.cloud && !impOf("run", id)){ toast("오래된 기록이라 볼트에만 있어요 — 🔖 하면 맥이 30초 안에 다시 올려요"); return }
   if(!window.BRAINY || !BRAINY.fetch){ toast("이 화면에서는 기록을 받을 수 없어요"); return }
   ui.histLoading = id; render();
-  BRAINY.fetch("ct.hist/" + cur + "." + id).then(function(data){
+  BRAINY.fetch("ct.hist/" + b0 + "." + id).then(function(data){
     ui.histLoading = null;
+    if(cur !== b0){ if(data) HCACHE[b0 + "." + id] = data; render(); return }   /* 그새 다른 브랜드로 갔다 — 받아만 두고 열지 않는다 */
     if(!data){ toast(x.cloud ? "기록 본문을 못 받았어요 — 잠시 뒤 다시" : "맥이 아직 안 올렸어요 — 30초 뒤 다시 눌러 주세요"); render(); return }
-    HCACHE[cur + "." + id] = data; show(data);
+    HCACHE[b0 + "." + id] = data; show(data);
   }, function(){ ui.histLoading = null; toast("기록을 못 받았어요 — 인터넷을 확인하세요"); render() });
 }
 function histClose(){ PAST = null; window.scrollTo(0, 0); render() }   // 보던 탭 그대로 지금 자료로 (2026-11-18 검증: 기록 탭으로 튀었다)

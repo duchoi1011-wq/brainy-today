@@ -43,13 +43,13 @@ function refCard(x){
     "<div><span class=\"tag fill\">" + esc(roleKo(x.role)) + "</span> " + stageTag(x) + " <span class=\"tag\" style=\"border-color:var(--accent);color:var(--accent)\">점수 " + refScore(x) + "</span> <span class=\"tag p\">" + esc(x.product) + "</span> <span class=\"tag\">" + esc(x.form) + "</span> " +
     "<span class=\"tag " + bd[1] + "\">" + (x.ratio != null ? "조회÷구독 " + x.ratio + "배 · " : "") + bd[0] + "</span> " +
     (o != null ? "<span class=\"tag " + (o >= 3 ? "ok" : "") + "\">채널 평소의 " + o + "배</span> " : "") + (dv ? "<span class=\"tag " + (dv > 0 ? "ok" : "") + "\">하루 +" + fmt(dv) + "</span> " : "") +
-    (x.buyer ? "<span class=\"tag " + (x.buyer === "✓" ? "ok" : "") + "\">구매자 " + x.buyer + "</span> " : "") +
+    (x.buyer ? "<span class=\"tag " + (x.buyer === "✓" ? "ok" : "") + "\">구매자 " + esc(x.buyer) + "</span> " : "") +
     (/Great|Good/.test(x.vtPerf) ? "<span class=\"tag ok\">뷰트랩 영상 성과 " + esc(VT_KO[x.vtPerf]) + "</span> " : "") +
     (x.ad ? "<span class=\"tag\">광고 추정</span> " : "") + (proof ? "" : "<span class=\"tag\">성과 근거 ✕</span>") + "</div>" +
-    (x.apply ? "<div class=\"apply\"><b>적용</b> " + esc(x.apply) + "</div>" : "") +
-    "<details><summary>구성 · 다시 본 구간 · 댓글</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
+    (x.apply ? "<div class=\"apply\"><b>적용</b> " + txt(x.apply) + "</div>" : "") +
+    "<details" + fold("f:ref:" + (x.vid || x.row)) + "><summary>구성 · 다시 본 구간 · 댓글</summary><dl class=\"kv small\" style=\"margin-top:6px\">" +
     "<dt>레퍼런스</dt><dd>" + txt(x.refLine) + "</dd><dt>구성</dt><dd>" + txt(x.structure) + "</dd><dt>파동</dt><dd>" + txt(x.wave) + "</dd><dt>댓글</dt><dd>" + txt(x.comments) + "</dd>" +
-    "<dt>살 사람의 말인가</dt><dd>" + txt(x.buyerNote) + "</dd><dt>검색어</dt><dd>" + esc(x.query) + " · " + x.round + "회차 " + esc(x.date) + " · 조사 시트 " + x.row + "번째 줄</dd></dl></details></div></div>";
+    "<dt>살 사람의 말인가</dt><dd>" + txt(x.buyerNote) + "</dd><dt>검색어</dt><dd>" + esc(x.query) + " · " + esc(x.round) + "회차 " + esc(x.date) + " · 조사 시트 " + esc(x.row) + "번째 줄</dd></dl></details></div></div>";
 }
 function viewRef(){
   var b = B(), r = part("ref"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
@@ -109,7 +109,7 @@ function chansHtml(b, chan){
         return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><a href=\"" + esc(c.url) + "\" target=\"_blank\" rel=\"noopener\"><b>" + esc(c.name) + "</b></a>" +
           (c.grade && c.grade !== "—" ? " <span class=\"tag\">" + esc(c.grade) + "</span>" : "") + (now && now.subs ? " <span class=\"num muted\">구독 " + fmt(now.subs) + "</span>" : "") + "</div>" +
           "<div class=\"it-d\">" + txt(c.take) + "</div>" +
-          (now ? "<details><summary>새 영상 " + now.videos.length + "개 · " + esc(now.at) + "</summary><div class=\"list\">" + now.videos.map(function(v){
+          (now ? "<details" + fold("f:chan:" + c.name) + "><summary>새 영상 " + now.videos.length + "개 · " + esc(now.at) + "</summary><div class=\"list\">" + now.videos.map(function(v){
               return "<div class=\"it\"><div class=\"it-m\"><a href=\"https://www.youtube.com/watch?v=" + esc(v.id) + "\" target=\"_blank\" rel=\"noopener\">" + txt(v.title) + "</a>" +
                 "<div class=\"it-d\">조회 " + fmt(v.views) + " · " + esc(v.when) + " · " + esc(v.len) + (v.ratio != null ? " · <span class=\"" + (v.ratio >= 1 ? "up" : "muted") + "\">조회÷구독 " + v.ratio + "배</span>" : "") + "</div></div></div>" }).join("") + "</div></details>"
             : "<div class=\"it-d\">" + (/youtube\.com\/(@|channel\/)/.test(c.url) ? "아직 최신화 전" : "유튜브 채널이 아니라 자동으로 못 읽어요 — 링크로 직접 보기") + "</div>") +
@@ -193,12 +193,12 @@ function anaBarHtml(words){
 }
 /* 카드 「자세히」 안의 분석 칸 — 조절에서 켠 것만 */
 function anaHtml(x){
-  var a = anaOf(x.vid), o = anaOpt(), url = "https://www.youtube.com/watch?v=" + x.vid;
+  var a = anaOf(x.vid), o = anaOpt(), url = "https://www.youtube.com/watch?v=" + encodeURIComponent(x.vid);
   if(!a) return "<dt>분석</dt><dd class=\"muted\">아직 안 함 — 위 「🔍 영상 분석」에서 분석하면 파동 대사·댓글·주제·구매 욕구가 채워져요</dd>";
   var h = "";
   if(o.topic && a.topic) h += "<dt>영상 주제</dt><dd>" + txt(a.topic) + "</dd>";
-  if(o.wave) h += "<dt>파동 대사</dt><dd>" + ((a.wave || []).length ? a.wave.map(function(w){ return "<div><a href=\"" + url + "&t=" + secs(w.at) + "\" target=\"_blank\" rel=\"noopener\">" + esc(w.at) + "</a> “" + esc(w.line || "못 읽음") + "”" + (w.note ? " <span class=\"muted\">— " + txt(w.note) + "</span>" : "") + "</div>" }).join("") : "<span class=\"muted\">" + esc(a.waveNote || "다시 본 구간 없음") + "</span>") + "</dd>";
-  if(o.comments) h += "<dt>좋아요 많은 댓글</dt><dd>" + ((a.comments || []).length ? a.comments.slice().sort(function(p, q){ return (q.likes || 0) - (p.likes || 0) }).slice(0, o.nCmt).map(function(c){ return "<div>“" + txt(c.text) + "” <span class=\"muted\">· 좋아요 " + esc(c.likes != null ? fmt(c.likes) : "?") + "</span></div>" }).join("") : "<span class=\"muted\">" + esc(a.commentNote || "못 읽음") + "</span>") + "</dd>";
+  if(o.wave) h += "<dt>파동 대사</dt><dd>" + ((a.wave || []).length ? a.wave.map(function(w){ return "<div><a href=\"" + url + "&t=" + secs(w.at) + "\" target=\"_blank\" rel=\"noopener\">" + esc(w.at) + "</a> “" + esc(w.line || "못 읽음") + "”" + (w.note ? " <span class=\"muted\">— " + txt(w.note) + "</span>" : "") + "</div>" }).join("") : "<span class=\"muted\">" + txt(a.waveNote || "다시 본 구간 없음") + "</span>") + "</dd>";
+  if(o.comments) h += "<dt>좋아요 많은 댓글</dt><dd>" + ((a.comments || []).length ? a.comments.slice().sort(function(p, q){ return (q.likes || 0) - (p.likes || 0) }).slice(0, o.nCmt).map(function(c){ return "<div>“" + txt(c.text) + "” <span class=\"muted\">· 좋아요 " + esc(c.likes != null ? fmt(c.likes) : "?") + "</span></div>" }).join("") : "<span class=\"muted\">" + txt(a.commentNote || "못 읽음") + "</span>") + "</dd>";
   if(o.fit && a.fit) h += "<dt>구매 욕구 검증</dt><dd>" + buildFit((buildDef().sections.reduce(function(r, sc){ return r.concat(sc.fields) }, []).filter(function(f){ return f.type === "fit" })[0]) || { rows: [{ id: "viewer", label: "시청자 욕구" }, { id: "buyer", label: "구매 욕구" }, { id: "verdict", label: "같은가" }, { id: "basis", label: "근거" }, { id: "fix", label: "다르면" }] }, a.fit) + "</dd>";
   return h + "<dt>분석한 때</dt><dd class=\"muted\">" + esc(day(a.at)) + "</dd>";
 }
@@ -206,16 +206,16 @@ var SR_SORT = [["mix", "우리 기준 종합순"], ["fit", "구매 욕구 맞는
 function secs(t){ return String(t).split(":").reduce(function(a, v){ return a * 60 + (+v || 0) }, 0) }
 /* 카드 한 장 — 접힌 상태에서는 제목·점수·주제·댓글·파동만, 「자세히」를 펴면 맞은 말·다시 본 구간(그 시각으로 열림)·구독 대비 조회 */
 function searchCard(x, words){
-  var url = "https://www.youtube.com/watch?v=" + x.vid, bd = band(x.ratio), hits = topicHits(x, words), n = cmtN(x);
+  var url = "https://www.youtube.com/watch?v=" + encodeURIComponent(x.vid), bd = band(x.ratio), hits = topicHits(x, words), n = cmtN(x);
   return "<div class=\"ref\"><a href=\"" + url + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(x.vid) + "/mqdefault.jpg\"></a>" +
     "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"" + url + "\" target=\"_blank\" rel=\"noopener\">" + txt(x.title) + "</a>" + favBtn(x.vid) + impBtn("vid", x.vid, x.title, x.channel, url) + "</div>" +
     "<div class=\"it-d\">" + esc(x.channel) + " · 조회 " + fmt(x.views) + " · " + esc(x.date) + "</div>" +
-    (anaOpt().topic && anaOf(x.vid) && anaOf(x.vid).topic ? "<div class=\"small\"><b>주제</b> " + esc(anaOf(x.vid).topic) + "</div>" : "") +
+    (anaOpt().topic && anaOf(x.vid) && anaOf(x.vid).topic ? "<div class=\"small\"><b>주제</b> " + txt(anaOf(x.vid).topic) + "</div>" : "") +
     "<div><span class=\"tag\" style=\"border-color:var(--accent);color:var(--accent)\">점수 " + srScore(x, words) + "</span> " + (anaOpt().fit ? fitTag(x) : "") +
       "<span class=\"tag" + (hits.length ? " ok" : "") + "\">주제 " + (hits.length ? hits.length + "개 맞음" : "안 맞음") + "</span> " +
       "<span class=\"tag" + (n >= 100 ? " ok" : "") + "\">댓글 " + (x.comments != null ? fmt(n) : "확인 못 함") + "</span> " +
       "<span class=\"tag" + (hasWave(x) ? " ok" : "") + "\">파동 " + (hasWave(x) ? "있음" : "없음") + "</span></div>" +
-    "<details><summary>자세히</summary><dl class=\"kv small\" style=\"margin-top:6px\">" + anaHtml(x) +
+    "<details" + fold("f:sr:" + x.kw + "|" + x.vid) + "><summary>자세히</summary><dl class=\"kv small\" style=\"margin-top:6px\">" + anaHtml(x) +
       "<dt>주제에 맞은 말</dt><dd>" + (hits.length ? hits.map(esc).join(" · ") : "브랜드 탭의 정체성·축·상품 말이 제목에 없어요") + "</dd>" +
       "<dt>다시 본 구간</dt><dd>" + (hasWave(x) ? "" + x.replayed.map(function(t){ return "<a href=\"" + url + "&t=" + secs(t) + "\" target=\"_blank\" rel=\"noopener\">" + esc(t) + "</a>" }).join(" · ") : esc(typeof x.replayed === "string" ? x.replayed : "없음")) + "</dd>" +
       "<dt>댓글 수</dt><dd>" + (x.comments != null ? fmt(n) + "개" : "확인 못 함") + "</dd>" +
@@ -225,7 +225,7 @@ function searchCard(x, words){
 }
 function searchResultsHtml(){
   var d = part("search"), st = searchState();
-  if(!d || !d.items || !d.items.length) return "<section class=\"card\"><p class=\"empty\">" + (st.busy ? "맥이 검색하는 중이에요…" : "아직 검색한 콘텐츠가 없어요.") + "</p><div class=\"acts\"><button class=\"btn\" data-go=\"kw\">키워드 탭에서 ★ 키워드로 검색 →</button></div></section>";
+  if(!d || !d.items || !d.items.length) return "<section class=\"card\"><p class=\"empty\">" + (st.busy ? "맥이 검색하는 중이에요…" : "아직 검색한 콘텐츠가 없어요.") + "</p>" + (st.stale ? staleNoteHtml("searchReq", "콘텐츠 검색을 보낸 지") : "") + "<div class=\"acts\"><button class=\"btn\" data-go=\"kw\">키워드 탭에서 ★ 키워드로 검색 →</button></div></section>";
   var kws = [], by = {}, words = topicWords(), sort = ui.srSort || "mix";
   d.items.forEach(function(x){ if(!by[x.kw]){ by[x.kw] = []; kws.push(x.kw) } by[x.kw].push(x) });
   var cmp = { mix: function(a, c){ return srScore(c, words) - srScore(a, words) }, fit: function(a, c){ return (fitV(c) == null ? -1 : fitV(c)) - (fitV(a) == null ? -1 : fitV(a)) || srScore(c, words) - srScore(a, words) }, topic: function(a, c){ return topicHits(c, words).length - topicHits(a, words).length || srScore(c, words) - srScore(a, words) },
@@ -234,19 +234,19 @@ function searchResultsHtml(){
   function keep(x){ return (!ui.srFit || fitV(x) >= 60) && (!ui.srTopic || topicHits(x, words).length) && (!ui.srCmt || cmtN(x) > 0) && (!ui.srWave || hasWave(x)) }
   function tog(key, label){ return "<button class=\"chip" + (ui[key] ? " on" : "") + "\" data-ui=\"" + key + "=" + !ui[key] + "\">" + label + "</button>" }
   return "<section class=\"card\"><div class=\"card-h\"><h3>키워드로 찾은 콘텐츠</h3><span class=\"n\">" + d.items.length + "개 · " + esc(day(d.updatedAt)) + "</span></div>" +
-    "<details class=\"help\"><summary>이 목록은 뭔가요?</summary><p class=\"lead\">★ 키워드마다 유튜브 검색 상위의 미드폼·롱폼이에요. 점수는 브랜드 탭에 정해 둔 주제(정체성·축·상품)와 댓글·파동·구독 대비 조회로 매겨요. 좋은 콘텐츠는 ☆로 즐겨찾기 하면 추천에 쓰여요." + (st.busy ? " 지금 새로 검색하는 중이에요." : "") + "</p></details>" +
-    "<details style=\"margin-top:6px\"><summary>정렬 · 거르기 <span class=\"num muted\">" + SR_SORT.filter(function(o){ return o[0] === sort })[0][1] + (["srFit","srTopic","srCmt","srWave"].some(function(k){ return ui[k] }) ? " · 거르는 중" : "") + " — 펴서 바꾸기</span></summary>" +
+    "<details class=\"help\"" + fold("f:srhelp") + "><summary>이 목록은 뭔가요?</summary><p class=\"lead\">★ 키워드마다 유튜브 검색 상위의 미드폼·롱폼이에요. 점수는 브랜드 탭에 정해 둔 주제(정체성·축·상품)와 댓글·파동·구독 대비 조회로 매겨요. 좋은 콘텐츠는 ☆로 즐겨찾기 하면 추천에 쓰여요." + (st.busy ? " 지금 새로 검색하는 중이에요." : "") + "</p></details>" + (st.stale ? staleNoteHtml("searchReq", "새 콘텐츠 검색을 보낸 지") : "") +
+    "<details style=\"margin-top:6px\"" + fold("f:srsort") + "><summary>정렬 · 거르기 <span class=\"num muted\">" + SR_SORT.filter(function(o){ return o[0] === sort })[0][1] + (["srFit","srTopic","srCmt","srWave"].some(function(k){ return ui[k] }) ? " · 거르는 중" : "") + " — 펴서 바꾸기</span></summary>" +
     "<div class=\"chips\">" + SR_SORT.map(function(o){ return "<button class=\"chip" + (sort === o[0] ? " on" : "") + "\" data-ui=\"srSort=" + o[0] + "\">" + o[1] + "</button>" }).join("") + "</div>" +
     "<div class=\"chips\" style=\"margin-top:6px\">" + tog("srFit", "구매 욕구 같음·비슷만") + tog("srTopic", "주제 맞는 것만") + tog("srCmt", "댓글 있는 것만") + tog("srWave", "파동 있는 것만") + "</div>" + "</details>" +
-    "<details style=\"margin-top:8px\"><summary>점수는 어떻게 매기나 · 주제로 보는 말 " + words.length + "개</summary><p class=\"lead\" style=\"margin-top:6px\">주제로 보는 말: " + (words.map(esc).join(" · ") || "없음 — 브랜드 탭에서 정체성 단어·콘텐츠 축·상품을 넣으세요") + "</p>" +
+    "<details style=\"margin-top:8px\"" + fold("f:srscore") + "><summary>점수는 어떻게 매기나 · 주제로 보는 말 " + words.length + "개</summary><p class=\"lead\" style=\"margin-top:6px\">주제로 보는 말: " + (words.map(esc).join(" · ") || "없음 — 브랜드 탭에서 정체성 단어·콘텐츠 축·상품을 넣으세요") + "</p>" +
       "<p class=\"lead\">비중: " + CRIT.map(function(k){ return esc(k.name) + " " + critWeights()[k.id] }).join(" · ") + " — 추천 칸 「추천 기준」의 우선순위를 따라요. <button class=\"btn sm\" data-go=\"rec\">바꾸기 →</button></p></details>" +
     anaBarHtml(words) + ideaBarHtml() + "</section>" +
     kws.map(function(k){
       var l = by[k].filter(keep).sort(cmp);
       var near = l.filter(function(x){ return srRel(x) > 0 }), far = l.filter(function(x){ return srRel(x) === 0 });
-      return "<section class=\"card\"><details open><summary style=\"font-size:16px;color:var(--ink)\">" + esc(k) + " <span class=\"num muted\">맞는 영상 " + near.length + "개" + (by[k].length > l.length ? " · 거른 것 " + (by[k].length - l.length) + "개" : "") + "</span></summary>" +
+      return "<section class=\"card\"><details" + fold("f:srk:" + k, true) + "><summary style=\"font-size:16px;color:var(--ink)\">" + esc(k) + " <span class=\"num muted\">맞는 영상 " + near.length + "개" + (by[k].length > l.length ? " · 거른 것 " + (by[k].length - l.length) + "개" : "") + "</span></summary>" +
         (near.map(function(x){ return searchCard(x, words) }).join("") || "<p class=\"lead\">조건에 맞는 영상이 없어요. 거르기를 풀거나 💡 아이디어·다른 키워드로 다시 검색해 보세요.</p>") +
-        (far.length ? "<details style=\"margin-top:8px\"><summary>키워드와 먼 영상 " + far.length + "개 — 유튜브가 함께 보여 준 것</summary>" + far.map(function(x){ return searchCard(x, words) }).join("") + "</details>" : "") + "</details></section>";
+        (far.length ? "<details style=\"margin-top:8px\"" + fold("f:srfar:" + k) + "><summary>키워드와 먼 영상 " + far.length + "개 — 유튜브가 함께 보여 준 것</summary>" + far.map(function(x){ return searchCard(x, words) }).join("") + "</details>" : "") + "</details></section>";
     }).join("") + (function(){   // 다음 단계 — 찾은 영상을 분석하고 · 아이디어를 뽑고 · 추천으로
       var todo = anaTargets(words).filter(function(x){ return !anaOf(x.vid) }).length, nPick = Object.keys(ideaPicks()).length;
       return "<section class=\"card\">" + nextBar("찾은 영상으로", [
@@ -261,7 +261,7 @@ function favListHtml(){
   if(!ids.length) return "<section class=\"card\"><p class=\"empty\">아직 즐겨찾기 한 콘텐츠가 없어요. 콘텐츠 옆 ☆를 누르세요.</p></section>";
   return "<section class=\"card\"><div class=\"card-h\"><h3>☆ 즐겨찾기 콘텐츠</h3><span class=\"n\">" + ids.length + "개</span></div><div class=\"list\">" + ids.map(function(vid){ var x = f[vid];
     return "<div class=\"ref\"><a href=\"https://www.youtube.com/watch?v=" + esc(vid) + "\" target=\"_blank\" rel=\"noopener\"><img loading=\"lazy\" alt=\"\" src=\"https://i.ytimg.com/vi/" + esc(vid) + "/mqdefault.jpg\"></a>" +
-      "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"https://www.youtube.com/watch?v=" + esc(vid) + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.title || vid) + "</a>" + favBtn(vid) + impBtn("vid", vid, x.title || vid, x.channel, "https://www.youtube.com/watch?v=" + vid) + "</div>" +
+      "<div class=\"ref-m\"><div class=\"ref-t\"><a class=\"t\" href=\"https://www.youtube.com/watch?v=" + esc(vid) + "\" target=\"_blank\" rel=\"noopener\">" + txt(x.title || vid) + "</a>" + favBtn(vid) + impBtn("vid", vid, x.title || vid, x.channel, "https://www.youtube.com/watch?v=" + vid) + "</div>" +
       "<div class=\"it-d\">" + esc(x.channel || "") + (x.kw ? " · 키워드 " + esc(x.kw) : "") + " · " + esc(day(x.at)) + "</div></div></div>" }).join("") + "</div></section>";
 }
 
@@ -274,7 +274,7 @@ function ideaPicks(){ return (SETS[cur] || {}).ideaPick || {} }
 function ideaPickBtn(vid){ var on = !!ideaPicks()[vid]; return "<button class=\"btn sm" + (on ? " primary" : "") + "\" data-act=\"ideapick\" data-vid=\"" + esc(vid) + "\">" + (on ? "💡 담음" : "💡 담기") + "</button>" }
 function ideaBarHtml(){
   var n = Object.keys(ideaPicks()).length, busy = openCmd("ideas");
-  return "<details style=\"margin:8px 0\"><summary>💡 아이디어 뽑기란?</summary><div class=\"note\" style=\"margin-top:6px\">영상마다 「💡 담기」를 누른 뒤 아래 버튼을 누르면, 맥의 Claude가 그 영상들의 <b>인기 댓글</b>과 <b>많이 다시 본 구간의 대사</b>를 읽어 이 브랜드가 찍을 아이디어를 뽑아요. 아이디어로 다시 검색하거나 바로 원고를 짤 수 있어요.</div></details>" +
+  return "<details style=\"margin:8px 0\"" + fold("f:ideahelp") + "><summary>💡 아이디어 뽑기란?</summary><div class=\"note\" style=\"margin-top:6px\">영상마다 「💡 담기」를 누른 뒤 아래 버튼을 누르면, 맥의 Claude가 그 영상들의 <b>인기 댓글</b>과 <b>많이 다시 본 구간의 대사</b>를 읽어 이 브랜드가 찍을 아이디어를 뽑아요. 아이디어로 다시 검색하거나 바로 원고를 짤 수 있어요.</div></details>" +
     "<div class=\"acts\" style=\"margin-bottom:8px\"><button class=\"btn primary\" data-act=\"ideas\"" + (!n || busy ? " disabled" : "") + ">" + (busy ? "맥이 댓글·파동 읽는 중…" : "담은 " + n + "개에서 💡 아이디어 뽑기") + "</button>" +
     (n ? "<button class=\"btn sm\" data-act=\"ideaclear\">담은 것 비우기</button>" : "") + "</div>";
 }
@@ -285,8 +285,8 @@ function ideasHtml(){
     "<p class=\"lead\">「이 말로 다시 검색」은 아이디어의 키워드로 콘텐츠를 다시 찾고, 「바로 원고 짜기」는 이 아이디어로 대본 초안을 써요 (대본 탭).</p></section>" +
     items.map(function(x){
       var sc = scriptOf(x.id), busyS = openCmd("script"), busyQ = searchState().busy;
-      return "<section class=\"card\"><div class=\"card-h\"><h3>" + esc(x.title || x.idea) + "</h3><span class=\"n\">" + esc(x.from || "") + (x.at ? " " + esc(x.at) : "") + "</span></div>" +
-        "<p>" + esc(x.idea || "") + "</p>" +
+      return "<section class=\"card\"><div class=\"card-h\"><h3>" + txt(x.title || x.idea) + "</h3><span class=\"n\">" + esc(x.from || "") + (x.at ? " " + esc(x.at) : "") + "</span></div>" +
+        "<p>" + txt(x.idea || "") + "</p>" +
         (x.quote ? "<div class=\"apply\" style=\"margin-top:8px\"><b>" + (x.from === "댓글" ? "댓글" : "그 구간 대사") + "</b> “" + esc(x.quote) + "”" + (x.likes ? " <span class=\"muted\">· 좋아요 " + esc(x.likes) + "</span>" : "") + "</div>" : "") +
         "<div class=\"it-d\" style=\"margin-top:6px\">" + (x.vid ? "<a href=\"https://www.youtube.com/watch?v=" + esc(x.vid) + (x.at ? "&t=" + esc(String(x.at).split(":").reduce(function(a, v){ return a * 60 + (+v || 0) }, 0)) : "") + "\" target=\"_blank\" rel=\"noopener\">" + esc(x.videoTitle || "영상") + "</a>" : "") +
           (x.kw ? " · 찾은 키워드 " + esc(x.kw) : "") + (x.angle ? " · " + txt(x.angle) : "") + (x.buyer ? " <span class=\"tag ok\">살 사람의 말</span>" : "") + "</div>" +

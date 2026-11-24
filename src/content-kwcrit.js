@@ -65,7 +65,7 @@ function kwCritHtml(){
 /* 지금 기준으로 1~5위 — 씨앗마다 바뀐 결과를 바로 본다 */
 function kwCritSampleHtml(){
   var sd = seedsOf(); if(!sd.length || !part("kw")) return "";
-  return "<details class=\"wbox\"><summary><b>지금 기준으로 씨앗마다 1~5위</b></summary><div class=\"wbody\"><div class=\"list\">" + sd.map(function(x){
+  return "<details class=\"wbox\"" + fold("f:kcsample") + "><summary><b>지금 기준으로 씨앗마다 1~5위</b></summary><div class=\"wbody\"><div class=\"list\">" + sd.map(function(x){
     var it = seedItems(x.word).filter(function(y){ return kwShown(y, x.word) }).slice(0, 5);
     return "<div class=\"it\"><div class=\"it-m\"><div class=\"it-h\"><i class=\"dot " + (x.kind === "상품" ? "p" : "i") + "\" style=\"display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--" + (x.kind === "상품" ? "prod" : "iden") + ")\"></i><b>" + esc(x.word) + "</b></div>" +
       "<div class=\"it-d\">" + (it.map(function(y){ return esc(y.kw) + " <span class=\"num\">" + y.score + "점</span>" }).join(" · ") || "보이는 말이 없어요") + "</div></div>" +

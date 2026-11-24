@@ -27,8 +27,9 @@ function viewClaude(){
 }
 function claudeAct(name, el){
   var v = el.dataset.v;
-  if(name === "clwhere"){ claudeSave({ where: v }); return true }
-  if(name === "clmodel"){ var p = v.split(":"), ms = Object.assign({}, claudeSet().models || {}); ms[p[0]] = p[1]; claudeSave({ models: ms }); return true }
-  if(name === "clpreset"){ var pr = claudeDef().presets.filter(function(x){ return x.id === v })[0]; if(pr) claudeSave({ models: Object.assign({}, pr.values) }); return true }
+  /* 저장은 서버 값을 받은 뒤에(whenLive) — 그때의 값 위에 고른 것만 얹는다 (이 기기에 남은 옛 사본으로 덮지 않게, 2026-11-21) */
+  if(name === "clwhere"){ whenLive(function(){ claudeSave({ where: v }) }); return true }
+  if(name === "clmodel"){ var p = v.split(":"); whenLive(function(){ var ms = Object.assign({}, claudeSet().models || {}); ms[p[0]] = p[1]; claudeSave({ models: ms }) }); return true }
+  if(name === "clpreset"){ var pr = claudeDef().presets.filter(function(x){ return x.id === v })[0]; if(pr) whenLive(function(){ claudeSave({ models: Object.assign({}, pr.values) }) }); return true }
   return false;
 }

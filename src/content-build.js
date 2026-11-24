@@ -20,7 +20,7 @@ function buildFit(f, v){
   var cls = { "같음": "v-same", "비슷": "v-near", "다름": "v-diff" }[String(v.verdict || "").split(" ")[0]] || "";
   return "<table class=\"bd-fit\">" + (f.rows || []).map(function(r){
     var val = v[r.id];
-    return "<tr><th>" + esc(r.label) + "</th><td" + (r.id === "verdict" ? " class=\"" + cls + "\"" : "") + ">" + (val ? esc(val) : "<span class=\"bd-empty\">비어 있음</span>") + "</td></tr>" }).join("") + "</table>";
+    return "<tr><th>" + esc(r.label) + "</th><td" + (r.id === "verdict" ? " class=\"" + cls + "\"" : "") + ">" + (val ? txt(val) : "<span class=\"bd-empty\">비어 있음</span>") + "</td></tr>" }).join("") + "</table>";
 }
 function buildVal(f, v){
   if(f.type === "fit") return buildFit(f, v);
@@ -35,11 +35,11 @@ function buildFilled(doc){
 function buildDocHtml(doc){
   var vals = doc.values || {}, secs = bSecs(doc), fl = buildFilled(doc), sc = scriptOf(doc.id), tpl = ((buildDef().templates || {})[doc.role]) || "";
   var head = "<div class=\"bd-head\"><div><span class=\"tag fill\">" + esc(roleKo(doc.role)) + "</span> " + stageTag(doc) + " <span class=\"tag p\">" + esc(doc.item || "") + "</span> <span class=\"tag\">" + esc(doc.status || "") + "</span> <span class=\"tag\">" + fl[0] + " / " + fl[1] + "칸</span></div>" +
-    "<h2>" + esc(doc.id) + " · " + txt(doc.title) + "</h2>" + (doc.from ? "<p class=\"lead\">" + esc(doc.from) + "</p>" : "") +
+    "<h2>" + esc(recNo(doc.id)) + " · " + txt(doc.title) + "</h2>" + (doc.from ? "<p class=\"lead\">" + txt(doc.from) + "</p>" : "") +
     (tpl ? "<p class=\"lead\"><b>틀: " + esc(doc.role) + "</b> — " + esc(tpl) + "</p>" : "") +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"buildscript\" data-id=\"" + esc(doc.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">" + (openCmd("script") ? "맥이 대본 쓰는 중…" : sc ? "📝 이 문서로 대본 다시 만들기" : "📝 이 문서로 대본 만들기") + "</button>" +
     (sc ? "<button class=\"btn\" data-tab=\"script\">대본 보기 →</button>" : "") + delBtn("build", doc.id, doc.id + " " + doc.title, "btn sm") + "</div>" +
-    "<details class=\"prbar\"" + (prDraft("build:" + doc.id) ? " open" : "") + "><summary>✍️ 이 문서 고치기 · 다른 버전 만들기</summary>" + promptBoxHtml("build:" + doc.id, "무엇을 고칠까요?", "예: 도입부를 시청자가 겪는 장면으로 시작하게 다시 쓰고, 썸네일 문구 후보 3개 더 줘") + "</details></div>";
+    "<details class=\"prbar\"" + prFold("build:" + doc.id) + "><summary>✍️ 이 문서 고치기 · 다른 버전 만들기</summary>" + promptBoxHtml("build:" + doc.id, "무엇을 고칠까요?", "예: 도입부를 시청자가 겪는 장면으로 시작하게 다시 쓰고, 썸네일 문구 후보 3개 더 줘") + "</details></div>";
   if(ui.bdView === "sheet"){
     return head + "<div class=\"orig bd-sheet\"><table><thead><tr><th>구분</th><th>칸</th><th>내용</th></tr></thead><tbody>" +
       secs.map(function(s){ return s.fields.map(function(f, i){
@@ -64,17 +64,17 @@ function buildListHtml(docs, sel){
   return order.map(function(k){
     return "<div class=\"bd-item\"><b>" + esc(k) + "</b>" + groups[k].sort(function(a, c){ return (rank[a.role] || 0) - (rank[c.role] || 0) }).map(function(d){
       var fl = buildFilled(d);
-      return "<button class=\"bd-doc" + (d.id === sel ? " on" : "") + "\" data-ui=\"bdDoc=" + esc(d.id) + "\"><span class=\"tag fill\">" + esc(d.role === "키" ? "상품 파는 영상" : d.role === "풀링" ? "사람 모으는 영상" : d.role) + "</span> " + esc(d.id) +
+      return "<button class=\"bd-doc" + (d.id === sel ? " on" : "") + "\" data-ui=\"bdDoc=" + esc(d.id) + "\"><span class=\"tag fill\">" + esc(d.role === "키" ? "상품 파는 영상" : d.role === "풀링" ? "사람 모으는 영상" : d.role) + "</span> " + esc(recNo(d.id)) +
         "<span class=\"clip\">" + txt(d.title) + "</span><span class=\"muted small\">" + esc(d.stage || "") + " · " + fl[1] + "칸 중 " + fl[0] + "칸 채움</span></button>" }).join("") + "</div>";
   }).join("") || "<p class=\"empty\">아직 구축 문서가 없어요.</p>";
 }
 function buildIdeasHtml(){
   var b = part("build"), all = (b && b.ideas) || [], ideas = all.filter(function(x){ return !isGone("idea", x.id) });
-  return "<h3>다시 착안한 추천</h3><p class=\"lead\">" + esc((b && b.ideasNote) || "레퍼런스 댓글·파동에서 다시 뽑은 주제예요.") + "</p>" +
+  return "<h3>다시 착안한 추천</h3><p class=\"lead\">" + txt((b && b.ideasNote) || "레퍼런스 댓글·파동에서 다시 뽑은 주제예요.") + "</p>" +
     (ideas.map(function(x){
       return "<div class=\"bd-idea\"><div><span class=\"tag fill\">" + esc(roleKo(x.role)) + "</span> " + stageTag(x) + (x.product ? " <span class=\"tag p\">" + esc(x.product) + "</span>" : "") + " <span class=\"tag\">" + esc(x.from || "") + "</span></div>" +
-        "<b>" + txt(x.title) + "</b><div class=\"it-d\">" + esc(x.basis || "") + "</div>" +
-        ((x.refs || []).length ? "<details><summary>근거 레퍼런스 " + x.refs.length + "개</summary>" + x.refs.map(buildRefCell).join("") + "</details>" : "") +
+        "<b>" + txt(x.title) + "</b><div class=\"it-d\">" + txt(x.basis || "") + "</div>" +
+        ((x.refs || []).length ? "<details" + fold("f:bir:" + x.id) + "><summary>근거 레퍼런스 " + x.refs.length + "개</summary>" + x.refs.map(buildRefCell).join("") + "</details>" : "") +
         "<div class=\"acts\"><button class=\"btn sm primary\" data-act=\"buildidea\" data-id=\"" + esc(x.id) + "\"" + (openCmd("build") ? " disabled" : "") + ">" + (openCmd("build") ? "맥이 만드는 중…" : "이걸로 구축 문서 만들기") + "</button>" +
         "<button class=\"btn sm\" data-act=\"buildideascript\" data-id=\"" + esc(x.id) + "\"" + (openCmd("script") ? " disabled" : "") + ">바로 대본</button>" + delBtn("idea", x.id, x.title, "btn sm") + "</div></div>";
     }).join("") || "<p class=\"empty\">아직 없어요.</p>") + goneListHtml("idea", all, function(x){ return x.id }, function(x){ return x.title });
@@ -86,7 +86,7 @@ function viewBuild(){
     "<button class=\"chip" + (ui.bdView === "sheet" ? " on" : "") + "\" data-ui=\"bdView=sheet\">시트</button></div>" +
     "<button class=\"btn sm\" data-act=\"buildpdf\"" + (sel ? "" : " disabled") + ">PDF로 보기</button>" +
     "<span class=\"lead\" style=\"margin:0\">원문 [구축 - 콘텐츠] 칸 그대로예요. 문서는 맥의 Claude(추천 스킬)가 채워요.</span></div>";
-  return bar + "<div class=\"bd\"><aside class=\"bd-left\"><h3>영상이 이어지는 순서</h3><p class=\"lead\">" + esc((buildDef().funnel || []).join(" → ")) + "</p>" + buildListHtml(docs, sel && sel.id) + goneListHtml("build", all, function(d){ return d.id }, function(d){ return d.id + " · " + d.title }) + "</aside>" +
-    "<div class=\"bd-main\" id=\"bd-print\">" + (sel ? buildDocHtml(sel) : "<p class=\"empty\">왼쪽에서 문서를 고르세요.</p>") + "</div>" +
+  return bar + "<div class=\"bd\"><aside class=\"bd-left\"><h3>영상이 이어지는 순서</h3><p class=\"lead\">" + (buildDef().funnel || []).map(function(n){ return txt(roleKo(n)) }).join(" → ") + "</p>" + buildListHtml(docs, sel && sel.id) + goneListHtml("build", all, function(d){ return d.id }, function(d){ return d.id + " · " + d.title }) + "</aside>" +
+    "<div class=\"bd-main\">" + (sel ? buildDocHtml(sel) : "<p class=\"empty\">왼쪽에서 문서를 고르세요.</p>") + "</div>" +
     "<aside class=\"bd-right\">" + buildIdeasHtml() + "</aside></div>";
 }

@@ -126,12 +126,9 @@ textarea{min-height:150px;resize:vertical;line-height:1.5}
 details>summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);list-style:none}details>summary::-webkit-details-marker{display:none}
 details>summary::after{content:" ▾"}details[open]>summary::after{content:" ▴"}
 .pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.65}
-/* 비율 */
-input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
-.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+/* 편 수 −/+ */
 .step{display:inline-flex;align-items:center;gap:6px}
 .step button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
-.step b{min-width:26px;text-align:center;font-family:var(--f-mono)}
 .step .nbox{width:58px;height:36px;text-align:center;font:inherit;font-family:var(--f-mono);font-weight:600;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0 4px;-moz-appearance:textfield}.step .nbox::-webkit-inner-spin-button,.step .nbox::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .step button:disabled{opacity:.4;cursor:default}
 .row2{display:flex;gap:8px;align-items:center}.row2>input,.row2>select{flex:1;min-width:0}
@@ -144,7 +141,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .pw-h{display:flex;align-items:center;font-size:13px;font-weight:650;color:var(--prod);margin-top:10px}.pw-h .num{margin-left:6px;color:var(--muted)}.pw-h i.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--prod)}
 .pwords .it{padding:8px 0 8px 12px;border-top:0;border-left:3px solid var(--prod-bg);margin-top:6px}.pwords .it-h b{font-size:14.5px}
 .pbox .wrec{background:var(--bg);border-radius:10px;padding:10px 12px}
-.prow{display:flex;gap:6px;align-items:center;margin-top:6px}.prow input{min-width:0}.prow input[data-pf=name]{flex:0 0 32%}.prow input[data-pf=what]{flex:1}
+.prow{display:flex;gap:6px;align-items:center;margin-top:6px}.prow input{min-width:0}.prow input[data-pfin$=":name"]{flex:0 0 32%}.prow input[data-pfin$=":what"]{flex:1}
 .ref-t{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}.ref-t .mk{width:34px;height:34px;flex:none}.mk.fav[aria-pressed=true]{background:#F5B700;border-color:#F5B700;color:#fff}
 .x0{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0 0 0 4px}
 .card.next{border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
@@ -153,7 +150,6 @@ input[type=range]{width:100%;height:30px;accent-color:var(--ink);margin:8px 0 0}
 .stepbox b{font-size:13.5px}.stepbox .big{font-family:var(--f-mono);font-size:20px;font-weight:600;line-height:1.3}.stepbox .it-d{font-size:12px;overflow-wrap:anywhere}
 .stepbox:hover{border-color:var(--accent)}
 @media (min-width:640px){.flow{grid-template-columns:repeat(6,1fr)}}
-.rows{display:grid;gap:8px;margin-top:6px}.rows>div{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
 /* 맥에 보낸 명령 상태 */
 .run{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:12px 14px;border-radius:14px;background:var(--blue-bg);line-height:1.5}
 .run.done{background:var(--ok-bg)}.run.bad{background:var(--warn-bg)}
@@ -236,6 +232,16 @@ details.gone{margin-top:12px}details.gone .it{padding:8px 0}
   .ref img{width:96px;height:54px}
 }
 @media (prefers-reduced-motion:no-preference){main>.card{animation:fade .18s ease-out}@keyframes fade{from{opacity:.5}to{opacity:1}}}
+/* 폰 첫 화면에 목록이 먼저 (2026-11-21) — 단추가 둘 넘게 붙은 줄(키워드 ＋ ★ 🔖 ✕ 등)은 단추를 글 아래 한 줄로 내려 글이 폭을 다 쓰고,
+   칸 줄·✍️ 칸은 낮게(위 38줄의 .prbar 값은 뒤에 오는 기본 규칙에 덮여 안 먹었다), 브랜드 탭의 고르는 법 설명 카드는 브랜드 카드 아래로 */
+@media (max-width:560px){
+  .list>.it{flex-wrap:wrap}
+  .list>.it>.it-m:first-child:nth-last-child(n+3){flex-basis:100%}
+  .list>.it>.it-m:first-child:nth-last-child(n+3)+*{margin-left:auto}
+  .subnav{margin-bottom:0}
+  .prbar{padding:0 12px;margin-bottom:0}.prbar[open]{padding-bottom:10px}
+  #view>.brand-how+.card{order:1}#view>.brand-how{order:2}#view>.brand-how~*{order:3}
+}
 </style>
 
 <div class="wrap">
@@ -260,9 +266,15 @@ var RAW = {};                       // ct.data 문서 id → data
 var SETS = {};                      // 브랜드 id → 설정
 var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부터)
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드
-var WANT = cur; if(new URLSearchParams(location.search).get("b")) save("ct.brand", cur);   // 열려고 한 브랜드 — 자료가 덜 들어온 순간 다른 브랜드로 바뀌어도, 들어오면 되돌린다 (2026-11-18 검증) — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
+var WANT = cur; if(new URLSearchParams(location.search).get("b")) save("ct.brand", cur);
+/* 주소의 ?b= 를 지금 브랜드에 맞춘다 — 다른 값(?x=…)과 # 뒤는 그대로 둔다 */
+function brandUrl(){ try{ var u = new URL(location.href); if(u.searchParams.get("b") === (cur || null)) return; if(cur) u.searchParams.set("b", cur); else u.searchParams.delete("b"); history.replaceState(null, "", u.pathname + u.search + u.hash) }catch(e){} }
+/* 처음 열 때 ?b= 없이 열었거나(주소·기억에 브랜드가 없음) 없는 브랜드(?b=없는것)로 열었으면, 서버 자료로 브랜드가 정해진 뒤 주소 · 기억(ct.brand) · WANT 를 그 브랜드에 맞춘다 (2026-11-21) */
+function brandSettle(){ if(!cur || WANT === cur && new URLSearchParams(location.search).get("b") === cur) return; WANT = cur; save("ct.brand", cur); brandUrl() }   // 열려고 한 브랜드 — 자료가 덜 들어온 순간 다른 브랜드로 바뀌어도, 들어오면 되돌린다 (2026-11-18 검증) — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "sum"); if(["design", "tpl", "claude", "hist", "imp"].indexOf(tab) >= 0) tab = "sum";   // 설계 · 기록 칸은 ⚙ 설정 창으로 옮김 (content-settings.js)
-var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
+var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", hide: load("ct.hide", {}) };
+/* data-ui="칸=값" 으로 바꾸는 ui 칸 중 숫자 · 참거짓인 것 — 나머지는 글 그대로 (씨앗 단어 · 묶음 이름 · 문서 번호가 「123」·「true」여도 골라지게, 2026-11-21) */
+var UI_NUM = { kwMore: 1, seedMore: 1, wMore: 1, refMore: 1, pullMore: 1, histMore: 1 }, UI_BOOL = { refBuyer: 1, wHit: 1, srFit: 1, srTopic: 1, srCmt: 1, srWave: 1 };
 /* 탭은 넷 — 한 탭 안을 칸(subs)으로 나눈다 (2026-11-17 동욱: "한눈에·브랜드는 한 탭 안에 나누고, 키워드는 따로, 콘텐츠·추천 한 탭, 구축·대본 한 탭").
    tab 변수는 칸 id(sum·brand·kw·ref·rec·build·refpage·script) 그대로 — 위 탭을 누르면 그 탭에서 마지막으로 본 칸이 열린다 */
 var TABS = [
@@ -287,8 +299,9 @@ function brands(){ return Object.keys(RAW).filter(function(id){ return id.indexO
 function pickBrand(id){
   cur = id; WANT = id; save("ct.brand", cur);
   // 쓰던 글·되돌리기는 브랜드를 따라가지 않는다 (A 에서 쓰던 이름이 B 에 저장되던 것)
-  ui.pedit = ""; ui.pdraft = {}; ui.topicDraft = null; ui.baseDraft = ""; ui.seedDraft = {}; ui.prDraft = {}; ui.undo = null; ui.kwSeed = ""; ui.sOff = {}; ui.bdDoc = "";
-  try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){}
+  ui.pedit = ""; ui.pdraft = {}; ui.topicDraft = null; ui.baseDraft = ""; ui.seedDraft = {}; ui.prDraft = {}; ui.undo = null; ui.kwSeed = ""; ui.sOff = {}; ui.bdDoc = ""; ui.autoNDraft = null; clearTimeout(planApply.t); ui.planDraft = {};
+  var wo = {}; Object.keys(ui.wOpen || {}).forEach(function(k){ if(k.indexOf("f:") !== 0) wo[k] = ui.wOpen[k] }); ui.wOpen = wo;   /* 항목마다 펴 둔 접기(f:…)는 브랜드를 따라가지 않는다 — 번호가 같은 다른 브랜드 항목이 펴진 채 열리지 않게 */
+  brandUrl();
   render();
 }
 /* 브랜드 키트(브랜드.json kit) → 화면 강조색. 색을 바꾸려면 볼트의 그 브랜드 파일을 고친다 */
@@ -344,7 +357,7 @@ function ladderHtml(items, cell){
 function setS(patch){
   if(pastOn() && Object.keys(patch).some(function(k){ return k !== "imp" })){ toast(PAST_BLOCK); return }   // 옛 기록 화면에서 고른 것·지운 것이 지금 자료의 같은 번호에 적히던 것 — 🔖 중요만 받는다 (2026-11-21)   // 🕘 그때 결과로 일을 돌리면 지금 자료와 섞인다
   var s = Object.assign({}, SETS[cur] || {}, patch, { updatedAt: new Date().toISOString() });
-  SETS[cur] = s;
+  SETS[cur] = s; scoreReset();
   if(!pastOn()) s.cand = candidates(S()).map(function(k){ return { kw: k.kw, score: k.score } });   // 그때 조사 후보 — 맥이 설정.json 으로 받아 기록 PDF 에 쓴다 (옛 기록을 보는 중엔 옛 자료로 다시 세지 않고 그대로 — 2026-11-18 검증)
   if(SETS_LIVE) saveSet(cur); else SET_Q[cur] = Object.assign(SET_Q[cur] || {}, patch);   // 서버 값을 받기 전(이 기기에 남은 옛 사본)이면 바꾼 칸만 모아 뒀다가 받은 뒤에 얹는다
   render();
@@ -352,6 +365,10 @@ function setS(patch){
 /* 2026-11-17: 이 기기에 남은 옛 사본으로 화면을 먼저 띄운 사이에 누르면, 옛 사본 전체가 저장돼 다른 칸(☆ 즐겨찾기)이 지워졌다.
    그래서 서버에서 진짜 값을 받기(SETS_LIVE) 전에는 저장하지 않고, 바꾼 칸(SET_Q)만 받은 값 위에 얹어 저장한다 */
 var SETS_LIVE = false, SET_Q = {};
+/* 브랜드 설정이 아닌 한 벌짜리 설정(_claude · _tpl · _newbrand)도 같다 — 서버 값을 받기 전에는 저장하지 않고 할 일(LIVE_Q)로 모아 뒀다가, 받은 값 위에서 한다 (2026-11-21).
+   fn 은 그때의 SETS 를 읽어 저장해야 한다(누를 때의 옛 사본으로 만든 값을 넘기지 않는다). 바로 했으면 true, 미뤘으면 false */
+var LIVE_Q = [];
+function whenLive(fn){ if(SETS_LIVE || !DB){ fn(); return true } LIVE_Q.push(fn); toast("저장된 값을 받는 중이에요 — 받는 대로 반영할게요"); return false }
 /* 설정 저장은 브랜드마다 한 줄로 — 연달아 누르면 저장 요청이 겹쳐 먼저 보낸 옛 값이 나중에 도착해 덮던 문제 (2026-11-17).
    보내는 중에 또 바뀌면 끝난 뒤 그때의 최신 값을 한 번 더 보낸다 */
 var SAVING = {};
@@ -371,21 +388,44 @@ function recParams(){   // 콘텐츠 추천 cmd 파라미터 — 추천 버튼�
     favContents: rc.use.fav ? Object.keys((SETS[cur] || {}).favc || {}).map(function(v){ return Object.assign({ vid: v }, SETS[cur].favc[v]) }) : [] };
 }
 function isOpen(c){ return /보내는 중|맥 대기|처리 중/.test(c.status || "") }
-function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && (c.brand === cur || kind === "brief") && isOpen(c) })[0] }   // 새 브랜드 만들기(brief)는 어느 브랜드에서 보냈든 하나 — 브랜드를 바꿔 두 번 보내지 않게
+/* 맥이 멈춰 「…하는 중」에 걸린 것 (2026-11-21) — 명령은 상태·진행이 마지막으로 바뀐 때(이 화면이 본 때, 못 봤으면 보낸 때)부터,
+   ct.set 요청(콘텐츠 검색 · 단어 후보 · 댓글)은 요청한 때(맥이 받는 중이라고 적었으면 그 자료가 바뀐 때)부터 센다.
+   STALE_MS 가 지나면 「응답이 없어요」와 「다시 보내기」를 보이고, 명령은 DEAD_MS 가 지나면 없는 셈 쳐서 그 일의 단추가 다시 눌린다 */
+var STALE_MS = 10 * 60000, DEAD_MS = 30 * 60000, CMD_SEEN = {};
+function cmdSig(c){ return (c.status || "") + "|" + JSON.stringify(c.steps || "") }
+function cmdSee(){ CMDS.forEach(function(c){ var s = CMD_SEEN[c.id], g = cmdSig(c); if(!s) CMD_SEEN[c.id] = { sig: g, at: 0 }; else if(s.sig !== g){ s.sig = g; s.at = Date.now() } }) }
+function cmdQuiet(c){ return Date.now() - Math.max(Date.parse(c.sentAt || c.createdAt) || 0, (CMD_SEEN[c.id] || {}).at || 0) }
+function cmdStale(c){ return isOpen(c) && cmdQuiet(c) > STALE_MS }
+function reqStale(r, d){ var t = Date.parse(r && r.at) || 0; if(d && r && d.reqAt === r.at) t = Math.max(t, Date.parse(d.updatedAt) || 0); return Date.now() - t > STALE_MS }
+function openCmd(kind){ return CMDS.filter(function(c){ return c.kind === kind && (c.brand === cur || kind === "brief") && isOpen(c) && cmdQuiet(c) < DEAD_MS })[0] }   // 새 브랜드 만들기(brief)는 어느 브랜드에서 보냈든 하나 — 브랜드를 바꿔 두 번 보내지 않게
 function send(kind, text, params){
   if(!DB || openCmd(kind)) return false;
   if(pastOn()){ toast(PAST_BLOCK); return false }
-  var id = "c" + Date.now().toString(36), at = new Date().toISOString(), b = B();
+  var b = B();
   if(BASE_KINDS[kind] && b){ params = Object.assign(baseParams(), params || {}); text += baseText() }   // 구축·참고 페이지·대본 일에는 기준 키워드 · 영상 주제를 같이 (content-basekw.js)
-  var data = { text: "🎬 콘텐츠 기획 — " + (b ? b.name : (params && params.name) || "") + " " + text, from: "content", app: "content", kind: kind,
-    brand: cur || "", params: params || {}, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
-  CMDS.unshift(Object.assign({ id: id }, data));
+  return sendDoc(kind, "🎬 콘텐츠 기획 — " + (b ? b.name : (params && params.name) || "") + " " + text, params || {}, cur || "");
+}
+/* 「다시 보내기」 — 소식 없는 명령과 같은 일(kind) · 같은 글 · 같은 params 로 새 명령을 보낸다. 앞 명령은 건드리지 않는다 */
+function resend(id){
+  var c = CMDS.filter(function(x){ return x.id === id })[0]; if(!c || !DB) return false;
+  if(pastOn()){ toast(PAST_BLOCK); return false }
+  if(!cmdStale(c) || CMDS.some(function(x){ return x !== c && x.kind === c.kind && x.brand === c.brand && isOpen(x) && !cmdStale(x) })) return false;   // 그새 맥이 움직였거나 이미 다시 보냈으면 두 번 보내지 않는다
+  return sendDoc(c.kind, c.text, c.params || {}, c.brand || "");
+}
+function sendDoc(kind, text, params, brand){
+  var id = "c" + Date.now().toString(36), at = new Date().toISOString();
+  var data = { text: text, from: "content", app: "content", kind: kind,
+    brand: brand, params: params, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
+  CMDS.unshift(Object.assign({ id: id }, data)); cmdSee();
   DB.doc("cmd/" + id).set(data).catch(function(){ var c = CMDS.filter(function(x){ return x.id === id })[0]; if(c){ c.status = "못 보냄"; c.result = "못 보냈어요 — 인터넷을 확인하고 다시 눌러 주세요" } toast("맥에 보내지 못했어요 — 인터넷을 확인하고 다시 눌러 주세요"); render() });
   render();
   toast("맥에 보냈어요 — " + (KIND[kind] || kind) + " · 진행은 화면 맨 위 줄에 떠요"); return true;   // 화면을 맨 위로 끌어올리지 않는다 (2026-11-18 동욱 "버튼 누르면 위로 올라가는 잘못된 것")
 }
 /* 단어 상자·접는 칸을 펴고 접은 것을 기억 — 다시 그려도 그대로 */
 document.addEventListener("toggle", function(e){ var d = e.target; if(!d.dataset || !d.dataset.wbox) return; if(d.dataset.wbox === "_pull"){ ui.pullOpen = d.open; return } ui.wOpen = Object.assign({}, ui.wOpen); ui.wOpen[d.dataset.wbox] = d.open }, true);
+/* 접는 칸(<details>)에 붙이는 속성 — 열쇠(key)로 펴고 접은 것을 기억해, 화면이 바뀌어 다시 그려도 그대로다 (2026-11-21: 단추나 긴 글이 든 접기는 모두 이걸로).
+   key 는 「f:<어느 칸>:<항목 id>」처럼 다시 그려도 같은 값. def = 아직 손대지 않았을 때 펴 둘지 */
+function fold(key, def){ var o = (ui.wOpen || {})[key]; return " data-wbox=\"" + esc(key) + "\"" + ((o == null ? !!def : o) ? " open" : "") }
 /* 다음 단계 막대 — 자동 추천·결과가 나온 자리 끝에서 바로 다음 일로 (2026-11-18 동욱 "자동 추천 받은 것을 다시 다음 단계로 돌리는 버튼이 없으니 버튼을 눌러서 다음 단계로")
    btns = [[label, 속성 문자열(data-act=… 또는 data-go=…), 비활성?]] — 모든 단계가 같은 모양 */
 function nextBar(title, btns){
@@ -404,15 +444,16 @@ function runHtml(kinds){
     if(!c || ui.hide[c.id]) return;
     var open = isOpen(c), bad = /멈춤|못 보냄/.test(c.status || "");
     if(!open && Date.now() - Date.parse(c.doneAt || c.createdAt) > 3 * 86400000) return;
-    var step = c.steps ? " · " + c.steps.n + "/" + c.steps.total + " " + esc(c.steps.now || "") : "";
-    out += "<div class=\"run" + (open ? "" : bad ? " bad" : " done") + "\"><b>" + (open ? "⏳" : bad ? "⚠" : "✓") + " " + KIND[k] + "</b><span>" +
-      (open ? esc(c.status) + step + " · 보낸 지 " + ago(c.createdAt).replace(" 전", "") + (c.status === "처리 중" ? " — 맥의 Claude가 하고 있어요. 몇 분에서 수십 분 걸려요." : " — 맥이 켜져 있으면 곧 받아서 시작해요.")
+    var step = c.steps ? " · " + esc(c.steps.n) + "/" + esc(c.steps.total) + " " + txt(c.steps.now || "") : "", stale = cmdStale(c);
+    out += "<div class=\"run" + (stale ? " bad" : open ? "" : bad ? " bad" : " done") + "\"><b>" + (stale ? "⚠" : open ? "⏳" : bad ? "⚠" : "✓") + " " + KIND[k] + "</b><span>" +
+      (stale ? "응답이 없어요 — " + esc(c.status) + step + " 에서 " + Math.round(STALE_MS / 60000) + "분 넘게 소식이 없어요. 맥이 켜져 있는지 확인해 주세요. <button class=\"btn sm\" data-act=\"resend\" data-id=\"" + esc(c.id) + "\">다시 보내기</button> <span class=\"muted\">(맥이 꺼져 있었다면 켜진 뒤 앞서 보낸 것도 같이 돌 수 있어요)</span>"
+       : open ? esc(c.status) + step + " · 보낸 지 " + ago(c.createdAt).replace(" 전", "") + (c.status === "처리 중" ? " — 맥의 Claude가 하고 있어요. 몇 분에서 수십 분 걸려요." : " — 맥이 켜져 있으면 곧 받아서 시작해요.")
             : plainWords(esc(String(c.result || c.status || "").split("\n").map(function(l){ return l.trim() }).filter(Boolean).slice(0, 4).join(" · ").replace(/(\s*·\s*){2,}/g, " · "))) + " <span class=\"muted\">(" + ago(c.doneAt || c.createdAt) + ")</span>") +
-      "</span>" + (open ? "" : "<button class=\"x\" data-hide=\"" + c.id + "\" aria-label=\"닫기\">✕</button>") + "</div>";
+      "</span>" + (open ? "" : "<button class=\"x\" data-hide=\"" + esc(c.id) + "\" aria-label=\"닫기\">✕</button>") + "</div>";
     if(!open){ done.push({ h: out.slice(out.lastIndexOf("<div class=\"run")), t: KIND[k], bad: bad }); out = out.slice(0, out.lastIndexOf("<div class=\"run")) }
   });
   /* 끝난 맥 작업은 접어 둔다 — 본 목록이 첫 화면에 보이게 (2026-11-17 검증: 상태 카드 5개가 첫 화면을 다 차지) */
-  if(done.length) out += "<details class=\"runs\"><summary>맥이 끝낸 일 " + done.length + "개 <span class=\"num muted\">" + done.map(function(d){ return (d.bad ? "⚠ " : "✓ ") + d.t }).join(" · ") + "</span></summary>" + done.map(function(d){ return d.h }).join("") + "</details>";
+  if(done.length) out += "<details class=\"runs\"" + fold("f:runs") + "><summary>맥이 끝낸 일 " + done.length + "개 <span class=\"num muted\">" + done.map(function(d){ return (d.bad ? "⚠ " : "✓ ") + d.t }).join(" · ") + "</span></summary>" + done.map(function(d){ return d.h }).join("") + "</details>";
   return out;
 }
 
@@ -440,7 +481,7 @@ function runHtml(kinds){
 /* ── 브랜드 탭 ── */
 function viewBrand(){
   var b = B(), h = "";
-  h += "<section class=\"card\"><div class=\"card-h\"><h3>브랜드</h3><span class=\"n\">" + brands().length + "개</span></div>" +
+  h += "<section class=\"card brand-how\"><div class=\"card-h\"><h3>브랜드</h3><span class=\"n\">" + brands().length + "개</span></div>" +
     "<p class=\"lead\">맨 위에서 브랜드를 고르면 그 브랜드의 자료·색으로 열려요. 주소 끝에 <span class=\"mono\">?b=" + esc(cur) + "</span> 가 붙어 있어서, 이 주소를 즐겨찾기나 바로가기로 두면 이 브랜드로 바로 열려요.</p>" +
     "<div class=\"chips\"><button class=\"chip dash\" data-go=\"newbrand\">＋ 새 브랜드 — 질문에 답하며 만들기</button></div>";
   h += "</section>";
@@ -458,7 +499,7 @@ function viewBrand(){
     wordRecBarHtml() + productsHtml() + "</section>";
   var id = b.identity || {};
   h += "<section class=\"card\"><div class=\"card-h\"><h3><span class=\"tag i\">정체성</span> 채널 정체성</h3></div>" + identityBoxesHtml() + plistHtml("identity.axes") + plistHtml("identity.pillars") + plistHtml("identity.needs") + ptextHtml("hook", "훅 규칙", true) +
-    ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
+    ((b.topicBank || []).length ? "<details style=\"margin-top:12px\"" + fold("f:bank") + "><summary>주제 은행 " + b.topicBank.length + "개</summary><div class=\"list\">" +
       b.topicBank.map(function(t){ return "<div class=\"it\"><span class=\"num muted\">" + esc(t.n) + "</span><div class=\"it-m\"><div>" + esc(t.topic) + "</div><div class=\"it-d\">필러 " + esc(t.pillar) + " · " + esc(t.product) + "</div></div></div>" }).join("") + "</div></details>" : "") +
     "</section>";
   h += "<section class=\"card\"><div class=\"card-h\"><h3>역할 · 단계</h3></div><p class=\"lead\">추천이 콘텐츠를 나누는 기준이에요. 역할(풀링·키 …)과 시청자 단계를 고치고 더하세요.</p>" + plistHtml("roles") + plistHtml("stages") + "</section>";
@@ -487,30 +528,41 @@ document.addEventListener("input", function(){ lastInput = Date.now() }, true);
 function typing(){ var a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && !/^(range|checkbox|file|date)$/.test(a.type) && (document.getElementById("view").contains(a) || (document.getElementById("setm") || document.body).contains(a) && !!ui.set) && (composing || Date.now() - lastInput < 2000)) }
 function renderSoft(){ if(typing()){ if(!ui.later){ ui.later = true; (function wait(){ setTimeout(function(){ if(!ui.later) return; if(typing()) return wait(); ui.later = false; render() }, 800) })() } return } render() }
 document.addEventListener("focusout", function(){ if(ui.later) setTimeout(function(){ if(ui.later && !typing()){ ui.later = false; render() } }, 0) });
-function render(){
+/* 옆으로(또는 안에서) 미는 칸 — 다시 그려도 밀어 둔 자리를 지킨다. 같은 탭 · 같은 브랜드일 때만, 같은 종류 칸의 같은 차례끼리 */
+var KEEP_SCROLL = ".orig,.bd-left,.bd-right,.rung-i,.seedchips";
+function scrollKeep(root){ var m = []; [].forEach.call(root.querySelectorAll(KEEP_SCROLL), function(el, i){ if(el.scrollLeft || el.scrollTop) m.push([i, el.className, el.scrollLeft, el.scrollTop]) }); return m }
+function scrollBack(root, m){ if(!m.length) return; var els = root.querySelectorAll(KEEP_SCROLL); m.forEach(function(x){ var el = els[x[0]]; if(el && el.className === x[1]){ el.scrollLeft = x[2]; el.scrollTop = x[3] } }) }
+function keepHtml(el, html, memo){ if(html === render[memo] && el.firstChild) return; var l = el.scrollLeft; el.innerHTML = html; render[memo] = html; el.scrollLeft = l }   /* 머리 줄의 브랜드 · 탭 줄 — 바뀐 게 없으면 그대로, 바뀌어도 옆으로 민 자리는 그대로 */
+/* 한 번 그리는 동안은 키워드 점수(scored · seedItems)를 한 번만 센다 — 그리기 전·후에 비운다 (content-kw.js) */
+function render(){ scoreReset(); SCORE_ON++; try{ renderNow() } finally{ SCORE_ON--; scoreReset() } }
+function renderNow(){
+  if(ui.dsOpen){ ui.wOpen = Object.assign({}, ui.wOpen); ui.wOpen["ds:" + ui.dsOpen] = true; ui.dsOpen = null }   /* 「설정에서 바꾸기 →」· 대화가 편 단계 칸 — 한 번만 펴 주고 그 뒤로는 손으로 접을 수 있다 (2026-11-21: 다시 그릴 때마다 도로 펴졌다) */
   var b = B();
   autoPinApply();   // ⚡ 한 번에 — 맥이 고른 최고 키워드를 처음 볼 때 한 번 ★
   applyKit();
   document.title = (b ? b.name + " · " : "") + "콘텐츠 기획";
-  document.getElementById("brands").innerHTML = brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join("");
+  keepHtml(document.getElementById("brands"), brands().map(function(x){ return "<button role=\"tab\" class=\"" + (x.id === cur ? "on" : "") + "\" data-brand=\"" + esc(x.id) + "\"><i style=\"background:" + ((x.kit || {}).accent ? "linear-gradient(135deg," + esc(x.kit.accent) + "," + esc(x.kit.accent2 || x.kit.accent) + ")" : "var(--muted)") + "\"></i>" + esc(x.name) + "</button>" }).join(""), "lastB");
   var grp = tabGroup(tab), last = load("ct.sub", {}); last[grp.name] = tab; save("ct.sub", last);
-  document.getElementById("nav").innerHTML = TABS.map(function(g, i){ var to = last[g.name] && g.subs.some(function(x){ return x[0] === last[g.name] }) ? last[g.name] : g.subs[0][0];
-    return "<button role=\"tab\" class=\"" + (g === grp ? "on" : "") + "\" data-tab=\"" + to + "\"><span>" + (i + 1) + "</span>" + g.name + "</button>" }).join("");
+  keepHtml(document.getElementById("nav"), TABS.map(function(g, i){ var to = last[g.name] && g.subs.some(function(x){ return x[0] === last[g.name] }) ? last[g.name] : g.subs[0][0];
+    return "<button role=\"tab\" class=\"" + (g === grp ? "on" : "") + "\" data-tab=\"" + to + "\"><span>" + (i + 1) + "</span>" + g.name + "</button>" }).join(""), "lastN");
   var sub = grp.subs.length > 1 ? "<div class=\"subnav\" role=\"tablist\">" + grp.subs.map(function(x){ return "<button role=\"tab\" class=\"" + (tab === x[0] ? "on" : "") + "\" data-tab=\"" + x[0] + "\">" + x[1] + "</button>" }).join("") + histPickHtml() + "</div>" : histPickHtml() ? "<div class=\"subnav\">" + histPickHtml() + "</div>" : "";
   var v0 = { sum: viewSum, brand: viewBrand, kw: viewKw, kwall: viewKw, ref: viewRef, rec: viewRec, build: viewBuild, refpage: viewRefPage, script: viewScript, newbrand: viewNewBrand }[tab] || viewSum;
   ui.later = false;
   /* 초점 돌려주기는 앱 화면(#view) 안 칸만 — 구석 Brainy 대화창(#bc-text)에 쓰는 중에 맥 자료가 와서 다시 그리면, 그 칸의 커서를 다시 놓다가 한글 조합이 끊겨 글이 깨졌다 (2026-11-18 동욱: "대화창을 쓰면 글이 깨진다") */
   var act0 = document.activeElement, sm0 = document.getElementById("setm"); if(act0 && !document.getElementById("view").contains(act0) && !(sm0 && sm0.contains(act0))) act0 = null;   // ⚙ 설정 창 안 입력칸도
-  var key = act0 && (act0.tagName === "SUMMARY" && act0.parentNode.dataset && act0.parentNode.dataset.wbox ? "[data-wbox=\"" + CSS.escape(act0.parentNode.dataset.wbox) + "\"]>summary" : act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + act0.id : "");
+  var key = act0 && (act0.tagName === "SUMMARY" && act0.parentNode.dataset && act0.parentNode.dataset.wbox ? "[data-wbox=\"" + CSS.escape(act0.parentNode.dataset.wbox) + "\"]>summary" : act0.dataset.addseed != null ? "[data-addseed=\"" + CSS.escape(act0.dataset.addseed) + "\"]" : act0.dataset.pfin != null ? "[data-pfin=\"" + CSS.escape(act0.dataset.pfin) + "\"]" : act0.id ? "#" + CSS.escape(act0.id) : "");
+  var keyOne = false; if(act0 && !key && /^(BUTTON|INPUT|SELECT|TEXTAREA)$/.test(act0.tagName)){ var ds0 = Object.keys(act0.dataset); if(ds0.length){ keyOne = true; key = act0.tagName.toLowerCase() + ds0.map(function(k){ return "[data-" + k.replace(/[A-Z]/g, function(c){ return "-" + c.toLowerCase() }) + "=\"" + CSS.escape(act0.dataset[k]) + "\"]" }).join("") } }   /* id 없는 단추(＋ − · 자동 배치 …)는 data-* 로 찾는다 — 다시 그린 뒤 꼭 하나일 때만 초점을 돌려준다 (Tab 으로 옮겨 간 단추에서 초점이 사라지던 것, 2026-11-21) */
   var v = function(){ return ({ build: 1, refpage: 1, script: 1 }[tab] && B() ? baseBarHtml() : "") + v0() + ({ brand: 1, kw: 1, rec: 1 }[tab] && B() ? nextHtml() : "") + undoToastHtml() };   // 대본 탭 세 칸 맨 위에 기준 키워드 · 영상 주제   // 브랜드·키워드·추천 탭 맨 아래에도 「다음 할 일」
   var selA = null, selB = null; try{ if(act0 && /^(INPUT|TEXTAREA)$/.test(act0.tagName)){ selA = act0.selectionStart; selB = act0.selectionEnd } }catch(e){}   // 커서 위치도 지킨다 (2026-11-18 검증: 다시 그리면 커서가 맨 앞으로 가서 이어 쓴 글이 앞에 붙음)
   var html = sub + pastBarHtml() + runHtml(Object.keys(KIND)) + promptBarHtml() + v(), vw = document.getElementById("view");
-  if(html !== render.last || !vw.firstChild){ vw.innerHTML = html; render.last = html }   // 바뀐 게 없으면 그대로 둔다 — 자료가 올 때마다 펴 둔 접기가 닫히고 옆 스크롤이 처음으로 가던 것 (2026-11-21)
+  var where = tab + "|" + cur + "|" + (PAST ? PAST.id : "");
+  if(html !== render.last || !vw.firstChild){ var keep = where === render.where ? scrollKeep(vw) : []; vw.innerHTML = html; render.last = html; scrollBack(vw, keep) }
+  render.where = where;   // 바뀐 게 없으면 그대로 둔다 — 자료가 올 때마다 펴 둔 접기가 닫히고 옆 스크롤이 처음으로 가던 것 (2026-11-21)
   var hd = document.querySelector("header"); if(hd) document.documentElement.style.setProperty("--hdr", Math.round(hd.getBoundingClientRect().height) + "px");   // 구축 옆 칸이 머리 줄 밑으로 들어가지 않게   // ✍️ 탭마다 내 말로 끼어들기
   var sm = document.getElementById("setm"); if(!sm){ sm = document.createElement("div"); sm.id = "setm"; document.body.appendChild(sm) }
   var keepTop = (document.getElementById("setm-c") || {}).scrollTop || 0; sm.innerHTML = settingsHtml(); var smc = document.getElementById("setm-c"); if(smc) smc.scrollTop = keepTop;   // ⚙ 설정 창 — 다시 그려도 보던 자리 그대로
   document.documentElement.classList.toggle("setm-open", !!ui.set);
-  if(key){ var back = document.querySelector(key); if(back){ back.focus({ preventScroll: true }); try{ if(selA != null && back.setSelectionRange) back.setSelectionRange(selA, selB) }catch(e){} } }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
+  if(key){ var backs = keyOne ? document.querySelectorAll(key) : null, back = keyOne ? (backs.length === 1 ? backs[0] : null) : document.querySelector(key); if(back && back !== document.activeElement){ back.focus({ preventScroll: true }); try{ if(selA != null && back.setSelectionRange) back.setSelectionRange(selA, selB) }catch(e){} } }   // 다시 그려도 쓰던 슬라이더·입력칸에 초점을 돌려준다 (키보드로 이어서 움직이게)
 }
 
 document.addEventListener("click", function(e){
@@ -518,15 +570,16 @@ document.addEventListener("click", function(e){
   if(!t) return;
   var d = t.dataset;
   if(d.setclose){ setClose(); return }   // ⚙ 설정 창 닫기 (✕ · 바깥)
-  if(d.setgo){ ui.set = d.setgo; save("ct.set.last", ui.set); render(); var sc0 = document.getElementById("setm-c"); if(sc0) sc0.scrollTop = 0; return }   // 설정 창 왼쪽 목록
-  if(d.go){ var gp = d.go.split("|"); if(gp[1]){ var gk = gp[1].split("="); ui[gk[0]] = gk[1] }
-    if(isSet(gp[0])){ setOpen(gp[0]); var sc = document.getElementById("setm-c"), dz = gp[0] === "design" && ui.dsOpen && document.getElementById("ds-" + ui.dsOpen); if(sc){ sc.scrollTop = dz ? dz.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 12 : 0 } return }   // 「설계에서 바꾸기 →」는 설정 창의 그 단계 칸으로
+  if(d.setgo){ ui.set = d.setgo; render(); var sc0 = document.getElementById("setm-c"); if(sc0) sc0.scrollTop = 0; return }   // 설정 창 왼쪽 목록
+  if(d.go){ var gbar = d.go.indexOf("|"), gp = gbar < 0 ? [d.go, ""] : [d.go.slice(0, gbar), d.go.slice(gbar + 1)], geq = gp[1].indexOf("="), dso = "";   /* 「탭|칸=값」 — 값(씨앗 단어 등)에 | 나 = 가 들어 있어도 처음 것에서만 자른다 */
+    if(geq > 0){ ui[gp[1].slice(0, geq)] = gp[1].slice(geq + 1); if(gp[1].slice(0, geq) === "dsOpen") dso = gp[1].slice(geq + 1) }
+    if(isSet(gp[0])){ setOpen(gp[0]); var sc = document.getElementById("setm-c"), dz = gp[0] === "design" && dso && document.getElementById("ds-" + dso); if(sc){ sc.scrollTop = dz ? dz.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 12 : 0 } return }   // 「설계에서 바꾸기 →」는 설정 창의 그 단계 칸으로
     ui.set = null; tab = gp[0]; save("ct.tab", tab); window.scrollTo(0, 0); render();
     return }   // 한눈에 → 그 탭 (필요하면 그 탭의 보기도 맞춘다)
   if(d.tab){ tab = d.tab; save("ct.tab", tab); window.scrollTo(0, 0); render(); return }
   if(d.brand){ pickBrand(d.brand); return }
   if(d.hide){ ui.hide[d.hide] = 1; save("ct.hide", ui.hide); render(); return }
-  if(d.ui){ var kv = d.ui.split("="); ui[kv[0]] = kv[1] === "true" ? true : kv[1] === "false" ? false : (kv[1] === "" || isNaN(+kv[1])) ? kv[1] : +kv[1]; render();
+  if(d.ui){ var ueq = d.ui.indexOf("="), kv = [d.ui.slice(0, ueq), d.ui.slice(ueq + 1)]; ui[kv[0]] = UI_BOOL[kv[0]] ? kv[1] === "true" : UI_NUM[kv[0]] ? (+kv[1] || 0) : kv[1]; render();   /* 숫자 · 참거짓으로 바꾸는 것은 UI_NUM · UI_BOOL 에 적힌 칸만 */
     if(kv[0] === "bdView") save("ct.bdView", kv[1]);   // 구축 보드 세로/시트는 기기마다 기억
     if(kv[0] === "kwCluster" && kv[1]){ var kl = document.getElementById("kw-list"); if(kl) window.scrollTo(0, kl.getBoundingClientRect().top + window.scrollY - 150) }   // 고른 묶음의 목록은 아래 카드에 생긴다
     return }
@@ -543,6 +596,7 @@ document.addEventListener("input", function(e){
   if(e.target.dataset.pfin != null){ ui.pdraft = Object.assign({}, ui.pdraft); ui.pdraft[e.target.dataset.pfin] = e.target.value }
   if(e.target.dataset.addseed != null){ ui.seedDraft = Object.assign({}, ui.seedDraft); ui.seedDraft[e.target.dataset.addseed] = e.target.value }
   if(e.target.dataset.wordin != null) ui.wDraft = e.target.value;
+  if(e.target.id === "auto-n") ui.autoNDraft = e.target.value;   /* 편 수 — 치는 중에 맥 자료가 와 다시 그려도 친 숫자를 지킨다 */
   if(e.target.dataset.dsask != null) ui.dsDraft = e.target.value;   // 설계 「말로 바꾸기」 · 템플릿 이름 — 다시 그려도 쓰던 글을 지킨다
   if(e.target.dataset.tplin != null) ui.tplDraft = e.target.value;
   if(e.target.dataset.nbq != null) nbInput(e.target);
@@ -553,6 +607,12 @@ document.addEventListener("input", function(e){
   if(e.target.id === "base-topic") ui.topicDraft = e.target.value;   // 영상 주제 한 줄 — 저장 전 쓰던 글
   if(e.target.dataset.prin != null){ ui.prDraft = Object.assign({}, ui.prDraft); ui.prDraft[e.target.dataset.prin] = e.target.value }   // ✍️ 내 말로 끼어들기 — 쓰던 글 지키기   // 단어 후보 찾기 칸 — 다시 그려도 쓰던 글을 지킨다
 });
+/* 올릴 날 — 고른 날짜(ui.planDraft)를 한꺼번에 저장한다. 그리기는 초점이 다음 칸으로 간 뒤라 Tab 이 갈 곳을 잃지 않는다 */
+function planApply(){
+  clearTimeout(planApply.t); var d = ui.planDraft || {}, ks = Object.keys(d); if(!ks.length) return;
+  var pl = Object.assign({}, S().plan); ks.forEach(function(k){ if(d[k]) pl[k] = d[k]; else delete pl[k] }); ui.planDraft = {}; setS({ plan: pl });
+}
+document.addEventListener("focusout", function(e){ if(e.target && e.target.dataset && e.target.dataset.plan && Object.keys(ui.planDraft || {}).length){ clearTimeout(planApply.t); planApply.t = setTimeout(planApply, 0) } });
 function enterAct(t){   // Enter 로 넣기·저장 — 칸마다 할 일
   if(t.id === "auto-n"){ t.blur(); return true }   // 편 수 — 칸에서 나가며 저장(change)
   if(t.dataset.basekw != null){ act("basekwadd", t); return true }   // 기준 키워드 넣기
@@ -583,13 +643,14 @@ document.addEventListener("keyup", function(e){
 document.addEventListener("keydown", function(e){ if(e.key === "Escape" && ui.set){ setClose() } });   // ⚙ 설정 창 — Esc 로 닫기
 document.addEventListener("change", function(e){
   if(e.target.dataset.nbq != null){ nbChange(e.target); return }   // 칸을 떠나면 저장
-  if(e.target.id === "nb-doc"){ var dv = e.target.value.slice(0, 60000); setTimeout(function(){ nbSave({ doc: dv }); ui.nbDocDraft = null; render() }, 0); return }
+  if(e.target.id === "nb-doc"){ var dv = e.target.value.slice(0, 60000); setTimeout(function(){ whenLive(function(){ nbSave({ doc: dv }); ui.nbDocDraft = null; render() }) }, 0); return }
   if(e.target.id === "hsel"){ if(e.target.value) histOpen(e.target.value, true); else histClose(); return }   // 🕘 이 탭 결과 기록 고르기
-  if(e.target.id === "auto-n"){ var ao6 = autoOpt(); ao6.n = autoN(e.target.value); e.target.value = ao6.n; setS({ autoOpt: ao6 }) }   // 🚀 자동으로 — 편 수 직접 넣기 (1편 아래로는 1편)
-  if(e.target.dataset.plan){ var pl = Object.assign({}, S().plan); if(e.target.value) pl[e.target.dataset.plan] = e.target.value; else delete pl[e.target.dataset.plan]; setS({ plan: pl }) }
+  /* 편 수 · 올릴 날 — 저장도 그리기도 다음 칸으로 초점이 옮겨 간 뒤에 (nbChange 와 같은 까닭: 바로 그리면 Tab 이 갈 칸이 사라져 초점이 화면 밖으로 떨어졌다, 2026-11-21) */
+  if(e.target.id === "auto-n"){ var an6 = autoN(e.target.value); e.target.value = an6; ui.autoNDraft = null; setTimeout(function(){ var ao6 = autoOpt(); if(ao6.n !== an6){ ao6.n = an6; setS({ autoOpt: ao6 }) } else render() }, 0); return }   // 🚀 자동으로 — 편 수 직접 넣기 (1편 아래로는 1편)
+  if(e.target.dataset.plan){ ui.planDraft = Object.assign({}, ui.planDraft); ui.planDraft[e.target.dataset.plan] = e.target.value; clearTimeout(planApply.t); planApply.t = setTimeout(planApply, document.activeElement === e.target ? 1500 : 0); return }   /* 날짜 칸에 초점이 있는 동안(자판으로 연·월·일을 이어 치는 중)은 잠깐 기다렸다가, 칸을 떠나면 바로 (아래 focusout) */
   if(e.target.id === "nb-file" && e.target.files[0]){
     var f = e.target.files[0], rd = new FileReader();
-    rd.onload = function(){ ui.nbDocDraft = null; nbSave({ doc: String(rd.result).slice(0, 60000) }); ui.wOpen = Object.assign({}, ui.wOpen, { "nb:doc": true }); render(); toast("「" + f.name + "」을 붙였어요") };   // ＋ 새 브랜드 — 기획서 파일
+    rd.onload = function(){ var fdoc = String(rd.result).slice(0, 60000); ui.nbDocDraft = fdoc; ui.wOpen = Object.assign({}, ui.wOpen, { "nb:doc": true }); if(whenLive(function(){ ui.nbDocDraft = null; nbSave({ doc: fdoc }); render() })) toast("「" + f.name + "」을 붙였어요"); else render() };   // ＋ 새 브랜드 — 기획서 파일
     rd.readAsText(f);
   }
 });
@@ -602,6 +663,9 @@ function act(name, el){
   if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)
   if(baseAct(name, el)) return;   // 기준 키워드 · 영상 주제 · 지우기/되돌리기 · 찾는 나라 (content-basekw.js)
   var s = S();
+  if(name === "resend"){ resend(el.dataset.id); return }   // 소식 없는 맥 명령 — 같은 일을 새로 보낸다
+  if(name === "reqagain"){ var rqk = el.dataset.k, rq0 = (SETS[cur] || {})[rqk]; if(!rq0 || !{ searchReq: 1, wordReq: 1 }[rqk]) return;   // 소식 없는 콘텐츠 검색 · 단어 후보 요청 — 같은 내용으로 때(at)만 새로
+    var rq1 = {}; rq1[rqk] = Object.assign({}, rq0, { at: new Date().toISOString() }); setS(rq1); if(!pastOn()) toast("맥에 다시 보냈어요"); return }
   if(name === "buildpdf"){ window.print(); return }   // 구축 문서 PDF — 인쇄 창에서 「PDF로 저장」 (인쇄할 땐 가운데 문서만 남는다)
   if(name === "discover"){ var c = candidates(s); send("discover", "키워드·레퍼런스 조사 (상품 " + s.ratio + " : 정체성 " + (100 - s.ratio) + " · " + c.length + "개)",
     { ratio: s.ratio, count: s.count, share: s.share, mid: s.mid, keywords: c.map(function(k){ return { kw: k.kw, kind: k.kind, product: k.product } }) }); return }
@@ -688,7 +752,7 @@ function act(name, el){
     send("script", "대본 초안 — 구축 문서 " + bd.id + " " + bd.title, { ids: [bd.id], build: bd.id }); return }
   if(name === "cmtreq"){ setS({ cmtReq: { at: new Date().toISOString() } }); return }   // 추천 근거 영상 댓글 — 좋아요 순 5개
   if(name === "autostart"){ autoStart(); return }   // 🚀 자동 진행 — 키워드 → 추천 → 구축 → 대본 → 보고
-  if(name === "autoopt"){ var ao5 = autoOpt(); ao5[el.dataset.k] = el.dataset.k === "n" ? autoN(el.dataset.v) : el.dataset.v; setS({ autoOpt: ao5 }); return }
+  if(name === "autoopt"){ ui.autoNDraft = null; var ao5 = autoOpt(); ao5[el.dataset.k] = el.dataset.k === "n" ? autoN(el.dataset.v) : el.dataset.v; setS({ autoOpt: ao5 }); return }
   if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
     send("script", "대본 초안 — " + ids.join(" · "), { ids: ids }); tab = "script"; save("ct.tab", tab); render(); return }
   if(name === "source"){ var sids = el.dataset.id ? [el.dataset.id] : pickedIds(s); if(!sids.length) return;
@@ -705,7 +769,8 @@ function act(name, el){
       RAW = {}; q.docs.forEach(function(x){ RAW[x.id] = x.data() });
       if(WANT && RAW[WANT] && RAW[WANT].name) cur = WANT;
       else if(!RAW[cur] || !RAW[cur].name){ var first = brands().filter(function(x){ return RAW[x.id + ".kw"] })[0] || brands()[0]; cur = first ? first.id : ""; }
-      if(cur && cur === WANT && new URLSearchParams(location.search).get("b") !== cur){ try{ history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(cur) + location.hash) }catch(e){} }   // 주소가 늘 지금 브랜드를 가리키게 (없는 브랜드로 열었을 때도)
+      scoreReset();
+      if(!(q.metadata && q.metadata.fromCache)) brandSettle(); else if(cur && cur === WANT) brandUrl();   // 주소가 늘 지금 브랜드를 가리키게 — 서버 자료를 받았으면 처음 열 때(?b= 없음)와 없는 브랜드로 열었을 때도
       renderSoft();
     }, function(){});
     DB.collection("ct.set").onSnapshot(function(q){
@@ -713,14 +778,17 @@ function act(name, el){
       q.docs.forEach(function(x){ var d = x.data(), l = SETS[x.id];
         if(!first && ((SAVING[x.id] || {}).busy || (l && l.updatedAt && d.updatedAt && d.updatedAt < l.updatedAt))) return;   // 내가 저장 중이거나 더 옛 값이면 화면 값을 지킨다
         SETS[x.id] = d });
-      if(first){ SETS_LIVE = true; Object.keys(SET_Q).forEach(function(id){ SETS[id] = Object.assign({}, SETS[id] || {}, SET_Q[id], { updatedAt: new Date().toISOString() }); saveSet(id) }); SET_Q = {} }
-      renderSoft() }, function(){});
+      if(first){ SETS_LIVE = true; Object.keys(SET_Q).forEach(function(id){ SETS[id] = Object.assign({}, SETS[id] || {}, SET_Q[id], { updatedAt: new Date().toISOString() }); saveSet(id) }); SET_Q = {};
+        LIVE_Q.splice(0).forEach(function(fn){ try{ fn() }catch(e){ console.error(e) } }) }
+      scoreReset(); renderSoft() }, function(){});
     DB.collection("cmd").onSnapshot(function(q){
       CMDS = q.docs.map(function(x){ return Object.assign({ id: x.id }, x.data()) }).filter(function(c){ return c.from === "content" })
         .sort(function(a, b){ return String(b.createdAt).localeCompare(String(a.createdAt)) });
-      renderSoft();
+      cmdSee(); renderSoft();
     }, function(){});
   }, function(){ render() });
 })();
+/* 「…하는 중」이 떠 있는 동안은 1분마다 다시 본다 — 맥에서 아무 소식이 없어도 「응답이 없어요」로 바뀌게 (바뀐 게 없으면 화면은 그대로 둔다) */
+setInterval(function(){ if(document.hidden) return; if(CMDS.some(function(c){ return isOpen(c) && cmdQuiet(c) < DEAD_MS + 120000 }) || searchState().busy || wordState().busy || cmtState().busy || autoState().waiting) renderSoft() }, 60000);
 render();
 </script>

@@ -33,14 +33,14 @@ function autoPilotHtml(where){
   var h = "<div class=\"auto-card\"><div class=\"card-h\"><h3>🚀 자동으로 — " + esc(AUTO_UPTO.filter(function(x){ return x[0] === o.upto })[0][1]) + "</h3>" + (st && st.startedAt ? "<span class=\"n\">" + esc(String(st.startedAt).slice(5, 16).replace("T", " ")) + " " + esc(st.status || "") + "</span>" : "") + "</div>" +
     "<p class=\"lead\">한 번 누르면 맥의 Claude가 이어서 해요: 씨앗마다 <b>최고 키워드 ★</b> → <b>콘텐츠 추천</b> → 상품 파는 영상·사람 모으는 영상을 골라 <b>구축 문서</b> → <b>대본</b> → <b>보고</b>. 맥이 켜져 있어야 해요.</p>" +
     "<div class=\"chips\">" + AUTO_UPTO.map(function(x){ return "<button class=\"chip" + (o.upto === x[0] ? " on" : "") + "\" data-act=\"autoopt\" data-k=\"upto\" data-v=\"" + x[0] + "\"" + (a.running ? " disabled" : "") + ">" + x[1] + "</button>" }).join("") +
-    (o.upto !== "rec" ? "<span class=\"lead\" style=\"margin:0 4px 0 10px\">편 수</span><span class=\"step\"><button data-act=\"autoopt\" data-k=\"n\" data-v=\"" + (o.n - 1) + "\" aria-label=\"한 편 줄이기\"" + (a.running || o.n <= 1 ? " disabled" : "") + ">−</button>" +
-      "<input type=\"number\" id=\"auto-n\" class=\"nbox\" min=\"1\" max=\"" + AUTO_N_MAX + "\" inputmode=\"numeric\" value=\"" + o.n + "\" aria-label=\"편 수\"" + (a.running ? " disabled" : "") + ">" +
-      "<button data-act=\"autoopt\" data-k=\"n\" data-v=\"" + (o.n + 1) + "\" aria-label=\"한 편 늘리기\"" + (a.running || o.n >= AUTO_N_MAX ? " disabled" : "") + ">+</button></span>" : "") + "</div>" +
+    (o.upto !== "rec" ? "<span class=\"lead\" style=\"margin:0 4px 0 10px\">편 수</span><span class=\"step\"><button id=\"auto-n-dec\" data-act=\"autoopt\" data-k=\"n\" data-v=\"" + (o.n - 1) + "\" aria-label=\"한 편 줄이기\"" + (a.running || o.n <= 1 ? " disabled" : "") + ">−</button>" +
+      "<input type=\"number\" id=\"auto-n\" class=\"nbox\" min=\"1\" max=\"" + AUTO_N_MAX + "\" inputmode=\"numeric\" value=\"" + esc(ui.autoNDraft != null ? ui.autoNDraft : o.n) + "\" aria-label=\"편 수\"" + (a.running ? " disabled" : "") + ">" +
+      "<button id=\"auto-n-inc\" data-act=\"autoopt\" data-k=\"n\" data-v=\"" + (o.n + 1) + "\" aria-label=\"한 편 늘리기\"" + (a.running || o.n >= AUTO_N_MAX ? " disabled" : "") + ">+</button></span>" : "") + "</div>" +
     (o.upto !== "rec" ? "<p class=\"lead\" style=\"margin:6px 0 0\">" + autoSplitText(o.n) + "</p>" : "") +
-    "<div class=\"acts\"><button class=\"btn primary\" data-act=\"autostart\"" + (a.running ? " disabled" : "") + ">" + (a.waiting ? "맥이 시작하는 중…" : a.running ? "맥이 진행하는 중…" : "🚀 시작") + "</button></div>";
+    "<div class=\"acts\"><button class=\"btn primary\" id=\"auto-go\" data-act=\"autostart\"" + (a.running ? " disabled" : "") + ">" + (a.waiting ? "맥이 시작하는 중…" : a.running ? "맥이 진행하는 중…" : "🚀 시작") + "</button></div>";
   if(st && (st.stages || []).length && (a.running || Date.now() - Date.parse(st.doneAt || st.startedAt) < 3 * 86400000)){
     h += autoStepsHtml(st);
-    if(st.report) h += "<div class=\"note\" style=\"margin-top:8px;white-space:pre-wrap\"><b>보고</b>\n" + esc(st.report) + "</div>" +
+    if(st.report) h += "<div class=\"note\" style=\"margin-top:8px;white-space:pre-wrap\"><b>보고</b>\n" + txt(st.report) + "</div>" +
       "<div class=\"acts\"><button class=\"btn sm\" data-tab=\"rec\">추천 보기</button>" + (st.upto !== "rec" ? "<button class=\"btn sm\" data-tab=\"build\">구축 보기</button>" : "") + (st.upto === "script" ? "<button class=\"btn sm\" data-tab=\"script\">대본 보기</button>" : "") + "</div>";
   }
   return h + "</div>";
