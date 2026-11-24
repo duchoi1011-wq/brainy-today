@@ -282,7 +282,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .fab { position: fixed; z-index: 6; right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 13px 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
 .fab svg { width: 18px; height: 18px; }
 /* 대화창 = 서비스형 채팅 (2026-11-18 동욱 "모든 칸을 다 덮지 않고 플랫폼 서비스의 채팅 칸처럼") — 컴퓨터는 오른쪽 아래에 붙는 창, 폰은 아래에서 올라오는 창. 다른 앱의 대화창(brainy-chat.js)과 같은 모양 */
-.sheet { position: fixed; z-index: 20; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: 420px; height: min(680px, calc(100vh - 100px)); height: min(680px, calc(100dvh - 100px)); background: var(--bg); display: grid; grid-template-rows: auto 1fr auto; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 18px 50px rgba(0,0,0,.28); overflow: hidden; overscroll-behavior: contain; }
+.sheet { position: fixed; z-index: 20; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: 420px; height: min(680px, calc(100vh - 100px)); height: min(680px, calc(100dvh - 100px)); background: var(--bg); display: grid; grid-template-rows: auto auto 1fr auto; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 18px 50px rgba(0,0,0,.28); overflow: hidden; overscroll-behavior: contain; }
 .sheet[hidden] { display: none !important; }
 @media (min-width: 1000px) { html.chat-dock body { margin-right: 452px; } html.chat-dock .sheet { top: 16px; height: auto; } }   /* 컴퓨터: 창을 열면 앱을 왼쪽으로 비켜 세워 덮지 않게 */
 .sheet textarea { scrollbar-width: none; }
@@ -371,12 +371,16 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 <button class="fab" id="fab" data-act="chat" aria-label="Brainy에게 묻기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Brainy</button>
 <section class="sheet" id="sheet" hidden aria-label="Brainy 대화">
-  <div class="bar"><div><h2>브레이니</h2><p class="ctxchip" id="chat-ctx">내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요</p></div><div class="row"><select id="chat-model" class="btn quiet" aria-label="답할 Claude 모델" title="답할 Claude 모델"><option value="auto">자동</option><option value="claude-haiku-5-5">Haiku 5.5 · 빠름</option><option value="claude-sonnet-5-5">Sonnet 5.5 · 기본</option><option value="claude-opus-5-5">Opus 5.5 · 깊게</option><option value="claude-fable-5-1">Fable 5.1 · 최고</option></select><button class="btn quiet" data-act="chatnew">새 대화</button><button class="btn" data-act="chatclose">닫기</button></div></div>
+  <div class="bar"><div><h2>브레이니</h2><p class="ctxchip" id="chat-ctx">내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요</p></div><div class="row"><button class="btn quiet" data-act="chatnew">새 대화</button><button class="btn" data-act="chatclose">닫기</button></div></div>
+  <div class="bp-models" role="group" aria-label="답할 Claude 모델 — 다음 질문부터, 모든 앱에 같이"></div>
   <div class="msgs" id="msgs"><div class="in2" id="msgs-in"></div></div>
   <div class="composer2"><div class="in2"><div class="pics" id="chat-pics" hidden></div><label class="btn attach" id="chat-attach" for="chat-file" title="사진 첨부" aria-label="사진 첨부" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 15l-5-5-8 9"/></svg></label><input type="file" id="chat-file" accept="image/*" multiple hidden><textarea id="chat-input" rows="1" placeholder="무엇이든 물어보거나 시켜 보세요 — 예: 점심 해장국 먹었어 기록해줘"></textarea><button class="btn primary" id="chat-send" data-act="chatsend">보내기</button></div></div>
 </section>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script>/* Brainy 공통 부품 — 모든 앱이 같이 쓴다 (모델 버튼 줄 · 첫 안내 · 노트 쓰기 규칙 · 「고쳐요」 칸) */
+/*@include brainy-parts.js*/
+</script>
 <script>
 (function () {
   "use strict";
@@ -2333,6 +2337,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       "1. 아래 데이터" + (S.toolsOK ? "와 도구" : "") + "로 동욱의 모든 것(오늘 기록·약속·프로젝트·태스크·카드·건강·위키·메모)에 대해 답한다." + (S.toolsOK ? " 데이터에 없는 세부(프로젝트 허브·태스크 노트·카드·위키·다른 날 기록·메모)는 볼트 파일을 직접 읽어 확인한다." : "") + " 데이터에 없는 건 모른다고 말하고 지어내지 않는다.",
       S.toolsOK ? "2. 동욱이 기록·체크·메모를 부탁하거나 '했어/먹었어/샀어/썼어'처럼 사실을 알려 주면 도구(check_item, write_today, add_meal, add_spend, add_note)로 앱에 바로 적고, 무엇을 했는지 한 줄로 알린다. 부탁이나 사실 없이 추측으로 쓰지 않는다. 금액·양이 애매하면 적기 전에 한 번만 묻는다." : "2. 이 화면에서는 앱에 직접 적을 수 없다. 적어야 할 게 있으면 어느 칸에 적으면 되는지 알려 준다.",
       S.toolsOK ? "3. 동욱이 분명히 시키면 볼트에 바로 반영한다. 태스크 고치기(기한·상태·완료 기준)·노트에 넣기처럼 금방 끝나는 건 네가 직접 고치고 어디를 고쳤는지 한 줄로 알린다. 결산·🗳 결산 대기 답·아침 계획 응·/log처럼 오래 걸리거나 캘린더가 필요한 일은 run_command로 맥의 Brainy에게 보낸다(몇 분 뒤 기록 탭 '명령'에 결과). 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다." : "3. 옵시디언 볼트·Todoist·캘린더에는 여기서 직접 쓰지 않는다. 기록 탭의 '명령' 칸으로 보내면 된다고 안내한다.",
+      S.toolsOK ? BRAINY_PARTS.NOTE_RULE.replace(/^- /, "3-1. ") : "",
       "4. 말투: 한국어. 친근하지만 현실적이고 직설적. 사실 → 이유 → 다음 행동. 행동은 짚되 사람은 깎아내리지 않는다. 결정이 가치·방향에 관한 것이면 동욱에게 묻는다. 보통 10줄 이내. 마크다운 기호(#, **, 표)는 쓰지 말고 줄바꿈과 '·', '1.'만 쓴다.",
       "",
       "=== 데이터 ===",
@@ -2450,6 +2455,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var h = "";
     if (S.sampleOff || !S.sample) h += '<p class="notice">지금은 Brainy와 대화할 수 없어요. 새로고침해 보고, 그래도 안 되면 맥이 켜져 있는지 확인해 주세요.</p>';
     if (!S.chat.turns.length) {
+      /* 첫 안내 — 공통 부품 글(노트 쓰기 도구 · 앱 고치기 · 사진). 대화가 비었을 때 한 번만 */
+      h += BRAINY_PARTS.helloHtml({ what: S.chat.project ? "「" + S.chat.project + "」와 볼트 전체를 보고 답해요. 진행·다음 한 걸음·막힌 데를 물어보세요." : "볼트 전체를 보고 답하고, 기록·체크·메모를 부탁하면 앱에 바로 적어요.", pics: !!S.canImages });
       var pre = S.chat.project
         ? ["이 프로젝트 지금 어디까지 왔어?", "다음 한 걸음 뭐야?", "막힌 데가 어디야?", "카드 자료 요약해줘"]
         : ["오늘 뭐부터 해야 돼?", "이번 주 전체적으로 어때?", "점심에 해장국 먹었어, 기록해줘", "키워서보내다 매출 올리려면 이번 주에 뭘 해?"];
@@ -2738,9 +2745,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     db.collection("taskwork").onSnapshot(function (q) { var o = {}; q.docs.forEach(function (d) { o[d.id] = d.data(); }); Object.keys(S.tw).forEach(function (k) { if (o[k] && (o[k].updatedAt || "") < (S.tw[k].updatedAt || "")) o[k] = S.tw[k]; }); S.tw = o; softRender(); }, fail);
     db.collection("tasklog").orderBy("createdAt", "desc").limit(60).onSnapshot(function (q) { S.tasklog = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);
     db.collection("reports").orderBy("createdAt", "desc").limit(12).onSnapshot(function (q) { S.reports = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);
-    // 답할 Claude 모델 — 클라우드 Brainy(supabase/functions/brainy-ai)가 config/ai 의 model 을 쓴다
-    db.doc("config/ai").onSnapshot(function (s) { S.aiModel = (s.exists && s.data().model) || "auto"; var m = document.getElementById("chat-model"); if (m) m.value = S.aiModel; }, fail);
-    document.getElementById("chat-model").addEventListener("change", function (e) { S.aiModel = e.target.value; db.doc("config/ai").set({ model: S.aiModel, at: new Date().toISOString() }); });
+    // 답할 Claude 모델 — 대화창 위 버튼 줄은 공통 부품(brainy-parts.js)이 config/ai 의 model 을 읽고 쓴다 (모든 앱이 공유)
     db.doc("config/main").onSnapshot(function (s) { S.cfg = s.exists ? s.data() : {}; softRender(); }, fail);
     db.doc("sync/" + TODAY).onSnapshot(function (s) { S.vsync = s.exists ? s.data() : null; softRender(); }, fail);
     db.collection("cmd").orderBy("createdAt", "desc").limit(15).onSnapshot(function (q) { S.cmds = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);

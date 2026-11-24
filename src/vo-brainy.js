@@ -9,7 +9,6 @@
       ALL.filter(function (t) { return norm(t.term).indexOf(n) >= 0 || n.indexOf(norm(t.term)) >= 0; })[0] || null;
   }
   window.BRAINY_HOOK = {
-    modelPick: true,   // 창 위에 답할 모델 고르기 줄 (Brainy 홈 상자 · set_model 과 같은 값)
     chips: ["오늘 복습할 단어 뭐야?", "헷갈리는 단어 3개 골라서 쉽게 설명해 줘", "고칠 단어 처리해 줘", "이 앱에서 ○○ 고쳐 줘"],
     /* 고칠 단어 처리 (2026-11-24 동욱) — 뜻 고치기뿐 아니라 위키 페이지 새로 만들기·고치기까지. Brainy 는 볼트 노트 쓰기 도구(vault_write — Supabase 노트 사본에 쓰면 맥이 볼트로 받아 감)로 한다 */
     rules: function () {

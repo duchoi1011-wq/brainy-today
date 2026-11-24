@@ -50,8 +50,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "e4d2f3d847"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
-<script src="../shim.js?v=e4d2f3d847"></script>
+<script>window.BRAINY_VERSION = "4766587929"; window.BRAINY_APP = {key: "home", name: "Brainy 홈", icon: "icon.svg", sub: "볼트와 바로 이어지는 내 하루"};</script>
+<script src="../shim.js?v=4766587929"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -335,7 +335,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .fab { position: fixed; z-index: 6; right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 13px 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
 .fab svg { width: 18px; height: 18px; }
 /* 대화창 = 서비스형 채팅 (2026-11-18 동욱 "모든 칸을 다 덮지 않고 플랫폼 서비스의 채팅 칸처럼") — 컴퓨터는 오른쪽 아래에 붙는 창, 폰은 아래에서 올라오는 창. 다른 앱의 대화창(brainy-chat.js)과 같은 모양 */
-.sheet { position: fixed; z-index: 20; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: 420px; height: min(680px, calc(100vh - 100px)); height: min(680px, calc(100dvh - 100px)); background: var(--bg); display: grid; grid-template-rows: auto 1fr auto; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 18px 50px rgba(0,0,0,.28); overflow: hidden; overscroll-behavior: contain; }
+.sheet { position: fixed; z-index: 20; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: 420px; height: min(680px, calc(100vh - 100px)); height: min(680px, calc(100dvh - 100px)); background: var(--bg); display: grid; grid-template-rows: auto auto 1fr auto; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 18px 50px rgba(0,0,0,.28); overflow: hidden; overscroll-behavior: contain; }
 .sheet[hidden] { display: none !important; }
 @media (min-width: 1000px) { html.chat-dock body { margin-right: 452px; } html.chat-dock .sheet { top: 16px; height: auto; } }   /* 컴퓨터: 창을 열면 앱을 왼쪽으로 비켜 세워 덮지 않게 */
 .sheet textarea { scrollbar-width: none; }
@@ -424,12 +424,127 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 <button class="fab" id="fab" data-act="chat" aria-label="Brainy에게 묻기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Brainy</button>
 <section class="sheet" id="sheet" hidden aria-label="Brainy 대화">
-  <div class="bar"><div><h2>브레이니</h2><p class="ctxchip" id="chat-ctx">내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요</p></div><div class="row"><select id="chat-model" class="btn quiet" aria-label="답할 Claude 모델" title="답할 Claude 모델"><option value="auto">자동</option><option value="claude-haiku-5-5">Haiku 5.5 · 빠름</option><option value="claude-sonnet-5-5">Sonnet 5.5 · 기본</option><option value="claude-opus-5-5">Opus 5.5 · 깊게</option><option value="claude-fable-5-1">Fable 5.1 · 최고</option></select><button class="btn quiet" data-act="chatnew">새 대화</button><button class="btn" data-act="chatclose">닫기</button></div></div>
+  <div class="bar"><div><h2>브레이니</h2><p class="ctxchip" id="chat-ctx">내 볼트 전체를 보고 답하고, 부탁하면 앱에 적고 체크해요</p></div><div class="row"><button class="btn quiet" data-act="chatnew">새 대화</button><button class="btn" data-act="chatclose">닫기</button></div></div>
+  <div class="bp-models" role="group" aria-label="답할 Claude 모델 — 다음 질문부터, 모든 앱에 같이"></div>
   <div class="msgs" id="msgs"><div class="in2" id="msgs-in"></div></div>
   <div class="composer2"><div class="in2"><div class="pics" id="chat-pics" hidden></div><label class="btn attach" id="chat-attach" for="chat-file" title="사진 첨부" aria-label="사진 첨부" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 15l-5-5-8 9"/></svg></label><input type="file" id="chat-file" accept="image/*" multiple hidden><textarea id="chat-input" rows="1" placeholder="무엇이든 물어보거나 시켜 보세요 — 예: 점심 해장국 먹었어 기록해줘"></textarea><button class="btn primary" id="chat-send" data-act="chatsend">보내기</button></div></div>
 </section>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script>/* Brainy 공통 부품 — 모든 앱이 같이 쓴다 (모델 버튼 줄 · 첫 안내 · 노트 쓰기 규칙 · 「고쳐요」 칸) */
+/* Brainy 공통 부품 — 모든 앱(Brainy 홈 · 맥 단축키 · 체화 단어장 · 콘텐츠 기획)이 같이 쓴다. 여기 한 곳만 고치면 모든 앱이 바뀐다 (2026-11-24 동욱).
+   원본 html 의 앱 스크립트 바로 앞, 이 파일을 끼우는 include 자리에 들어간다 → 앱 코드와 대화창(brainy-chat.js)보다 먼저 선다.
+   · 답할 모델 버튼 줄 — modelRow() · 고른 값은 config/ai 의 model 하나를 모든 앱이 공유 (클라우드 Brainy 가 다음 질문부터 이 모델로, 짧은 일은 늘 Haiku)
+   · 첫 안내문 — hello() · 노트 쓰기 도구(vault_write) 규칙 — NOTE_RULE
+   · 「이 ○○는 고쳐요」 표시 + Brainy에게 맡기기 — fixHtml() · fixAsk() · ask()
+   · 위 것들의 생김새 — 앱의 색(--ink·--accent …, 없으면 --g-*)을 따른다 */
+(function () {
+  "use strict";
+  if (window.BRAINY_PARTS) return;
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  /* ── 생김새 ── */
+  var css = document.createElement("style");
+  css.textContent =
+    /* 색 — 네 앱이 같이 쓰는 이름(--ink·--muted·--line·--surface·--accent)을 먼저, 없으면 받침의 --g-* */
+    ".bp-models,.bp-hello,.bp-fix,.bp-fix-done,.bp-fix-tag,.bp-fixask{--bp-fg:var(--ink,var(--bp-fg));--bp-mut:var(--muted,var(--bp-mut));--bp-line:var(--line,var(--bp-line));" +
+    "--bp-bg:var(--bg,var(--g-bg,#fff));--bp-card:var(--surface,var(--g-card,#fff));--bp-acc:var(--accent,var(--g-acc,#2f6f5e));--bp-acc-ink:var(--accent-ink,var(--g-acc-ink,#fff))}" +
+    /* 모델 버튼 줄 */
+    ".bp-models{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--bp-line);background:var(--bp-card);min-width:0}" +
+    ".bp-m{flex:1;min-width:0;min-height:44px;padding:4px 2px;border:1px solid var(--bp-line);border-radius:12px;background:var(--bp-bg);color:var(--bp-fg);font:inherit;line-height:1.2;display:grid;place-content:center;text-align:center;cursor:pointer}" +
+    ".bp-m b{display:block;font-size:13.5px;white-space:nowrap}.bp-m small{display:block;font-size:11px;color:var(--bp-mut)}" +
+    ".bp-m:hover{border-color:var(--bp-acc)}.bp-m:disabled{opacity:.5;cursor:default}" +
+    ".bp-m[aria-pressed=true]{background:var(--bp-acc);border-color:var(--bp-acc);color:var(--bp-acc-ink)}.bp-m[aria-pressed=true] small{color:inherit;opacity:.85}" +
+    /* 첫 안내문 */
+    ".bp-hello{align-self:flex-start;justify-self:start;max-width:90%}.bp-hello b{display:block;font-size:17px;margin-bottom:4px}" +
+    ".bp-hello p{margin:0;font-size:13.5px;line-height:1.6;color:var(--bp-mut)}" +
+    /* 「이 ○○는 고쳐요」 칸 */
+    ".bp-fix{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:10px;background:var(--surface-2,var(--bp-card));border-left:3px solid var(--bp-acc);font-size:14px;color:var(--bp-fg)}" +
+    ".bp-fix-l{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--bp-mut)}" +
+    ".bp-fix textarea{width:100%;box-sizing:border-box;min-height:64px;resize:vertical;font:inherit;color:var(--bp-fg);background:var(--bp-card);border:1px solid var(--bp-line);border-radius:10px;padding:9px 11px}" +
+    ".bp-fix textarea:focus-visible{outline:2px solid var(--bp-acc);outline-offset:2px}" +
+    ".bp-fix-t{white-space:pre-wrap;overflow-wrap:anywhere}.bp-fix-t .bp-mut{color:var(--bp-mut)}" +
+    ".bp-fix-b{display:flex;gap:6px;flex-wrap:wrap}" +
+    ".bp-fix-done{margin:4px 0 0;font-size:12.5px;color:var(--bp-mut)}" +
+    ".bp-fix-tag{color:var(--bp-acc)!important;border-color:var(--bp-acc)!important}";
+  (document.head || document.documentElement).appendChild(css);
+
+  /* ── 답할 모델 — 모든 앱이 config/ai 의 model 하나를 같이 쓴다 (값: auto 또는 모델 id) ── */
+  var MODELS = [["auto", "자동", "auto"], ["claude-haiku-5-5", "빠름", "Haiku"], ["claude-sonnet-5-5", "기본", "Sonnet"], ["claude-opus-5-5", "깊게", "Opus"], ["claude-fable-5-1", "최고", "Fable"]];
+  var SHORT = { "claude-haiku-5-5": "haiku", "claude-sonnet-5-5": "sonnet", "claude-opus-5-5": "opus" };   // 맥에서 답할 때 넘기는 이름 (콘텐츠 기획 「Claude 모드」와 같은 꼴)
+  var LS = "bp.model", model = "auto", DB = null, fns = [];
+  try { model = localStorage.getItem(LS) || "auto"; } catch (e) {}
+  function valid(m) { return MODELS.some(function (x) { return x[0] === m; }) ? m : "auto"; }
+  model = valid(model);
+  function take(m) { m = valid(m); if (m === model) return; model = m; try { localStorage.setItem(LS, m); } catch (e) {} paintModels(); fns.forEach(function (f) { try { f(m); } catch (e) {} }); }
+  function modelRow(label) {
+    return '<div class="bp-models" role="group" aria-label="' + esc(label || "답할 Claude 모델 — 다음 질문부터, 모든 앱에 같이") + '">' + MODELS.map(function (m) {
+      var on = m[0] === model;
+      return '<button type="button" class="bp-m" data-bp-model="' + m[0] + '" aria-pressed="' + on + '"' + (DB ? "" : " disabled") + ' title="' + esc(m[1] + " · " + m[2] + (on ? " — 지금 이 모델로 답해요" : " — 누르면 다음 질문부터 (모든 앱)")) + '"><b>' + (on ? "✓ " : "") + m[1] + "</b><small>" + m[2] + "</small></button>";
+    }).join("") + "</div>";
+  }
+  function paintModels() { [].forEach.call(document.querySelectorAll(".bp-models"), function (el) { el.outerHTML = modelRow(el.getAttribute("aria-label")); }); }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-bp-model]"); if (!b || !DB) return;
+    take(b.getAttribute("data-bp-model"));
+    DB.doc("config/ai").set({ model: model, at: new Date().toISOString() }).catch(function () {});
+  });
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", paintModels); else paintModels();   // 앱 html 에 미리 둔 빈 줄(.bp-models)도 채운다
+  function pull() { if (DB && window.BRAINY && BRAINY.fetch) BRAINY.fetch("config/ai").then(function (d) { take((d && d.model) || "auto"); }, function () {}); }
+  if (window.claude && claude.use) claude.use("db").then(function (db) {
+    if (!db) return; DB = db; paintModels(); pull();
+    db.doc("config/ai").onSnapshot(function (s) { if (s.exists) take((s.data() || {}).model || "auto"); }, function () {});   // 홈처럼 config 를 받는 앱은 실시간으로
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") pull(); });   // 다른 앱에서 바꾼 것도 다시 볼 때 맞춘다
+  }, function () {});
+
+  /* ── 노트 쓰기 도구 — 앱 대화 규칙에 같이 넣는 한 줄 ── */
+  var NOTE_RULE = "- 볼트 노트(위키 페이지·단어 뜻·태스크 노트 등)를 쓰거나 고치라고 하면 앱 고치기(app_edit_start)가 아니라 노트 쓰기 도구 vault_write 로 바로 한다: 먼저 vault_search·vault_read 로 지금 내용을 읽고, 바꿀 곳만 patch 로 고치고, 없는 페이지는 같은 영역의 다른 페이지 형식에 맞춰 create 로 만든다. 쓴 뒤엔 어디를 고쳤는지와 맥이 켜져 있으면 몇 초 안에 옵시디언 볼트에 들어간다고 한 줄로 알린다. 시키지 않은 노트는 쓰지 않는다. 노트 쓰기는 .md 노트만 된다.";
+
+  /* ── 첫 안내문 — o: {name 앱 이름, what 첫 문장(없으면 기본), editNote 앱 고치기 설명, local 로컬 앱, pics 사진 보내기 됨} → {title, text} ── */
+  function hello(o) {
+    o = o || {};
+    if (o.local) return { title: "동욱 님, 무엇을 도와드릴까요?", text: (o.name || "이 앱") + "에 대해 묻거나 바꾸고 싶은 걸 말해 주세요. " + (o.editNote || "이 맥의 Claude가 앱 원본을 바로 고쳐요. 고친 뒤 새로고침하면 보여요.") };
+    return { title: "동욱 님, 무엇을 도와드릴까요?",
+      text: (o.what || (o.name || "이 앱") + "에 대해 묻거나 바꾸고 싶은 걸 말해 주세요.") +
+        " 위키 페이지·단어 뜻 같은 볼트 노트도 쓰거나 고쳐 달라고 하면 바로 해요 — 맥이 켜져 있으면 몇 초 안에 볼트에 들어가요." +
+        " 앱 화면을 바꿔 달라고 하면 " + (o.editNote || "고친 판이 5~15분 뒤 준비되고, 「적용해 줘」라고 해야 실제 앱에 들어가요.") +
+        (o.pics === false ? "" : " 📎로 사진(화면 캡처)도 같이 보낼 수 있어요 — 붙여 넣어도 돼요.") };
+  }
+  function helloHtml(o) { var h = hello(o); return '<div class="bp-hello"><b>' + esc(h.title) + "</b><p>" + esc(h.text) + "</p></div>"; }
+
+  /* ── 「이 ○○는 고쳐요」 칸 — 체화 단어장 고칠 단어 방식 (2026-11-24 동욱: 맥 단축키도 같은 방식으로)
+     o: {id, what "단어"·"단축키", on 표시됨, text 적은 글, at 날짜, editing 쓰는 중, done {at, note} 지난번 고친 내용, placeholder, label 글칸 이름,
+         attr(act, id) 단추 속성 — act: edit·save·cancel·del, btn {primary, ghost} 앱의 단추 class}
+     저장 = 표시 + 적은 글(글 없이 표시만도 됨) · 표시 풀기 = 둘 다 지움. 글칸은 class rq-in · id "rq-<id>" (앱이 그 값을 읽는다) ── */
+  function fixHtml(o) {
+    var id = esc(o.id), w = o.what || "항목", A = o.attr || function (a, i) { return 'data-fix="' + a + '" data-id="' + esc(i) + '"'; };
+    var P = (o.btn && o.btn.primary) || "btn primary", G = (o.btn && o.btn.ghost) || "btn ghost";
+    function bt(cls, a, label) { return '<button type="button" class="' + cls + '" ' + A(a, o.id) + ">" + label + "</button>"; }
+    if (o.editing) return '<div class="bp-fix"><span class="bp-fix-l">이 ' + esc(w) + "는 고쳐요 — 무엇이 틀렸나요?</span>" +
+      '<textarea class="rq-in" id="rq-' + id + '" maxlength="300" placeholder="' + esc(o.placeholder || "예: 틀림 / 다른 것과 중복 / 설명이 너무 기본적임") + '" aria-label="' + esc((o.label || w) + " 고칠 점") + '">' + esc(o.text || "") + "</textarea>" +
+      '<div class="bp-fix-b">' + bt(P, "save", "저장") + bt(G, "cancel", "취소") + (o.on ? bt(G, "del", "표시 풀기") : "") + "</div></div>";
+    if (o.on) return '<div class="bp-fix"><span class="bp-fix-l">✓ 고칠 ' + esc(w) + (o.at ? " · " + esc(String(o.at).slice(0, 10)) : "") + '</span><span class="bp-fix-t">' + (o.text ? esc(o.text) : '<span class="bp-mut">적은 글이 없어요</span>') + "</span>" +
+      '<div class="bp-fix-b">' + bt(G, "edit", "글 고치기") + bt(G, "del", "표시 풀기") + "</div></div>";
+    return bt((o.btn && o.btn.mark) || G, "edit", "✎ 이 " + esc(w) + "는 고쳐요 (오류·중복)") +
+      (o.done && o.done.note ? '<p class="bp-fix-done">지난번 고친 내용 · ' + esc(String(o.done.at || "").slice(0, 10)) + " · " + esc(o.done.note) + "</p>" : "");
+  }
+  /* Brainy에게 맡기기 단추 — o: {n 고칠 개수, sub 무엇까지 하는지, cls, attr} */
+  function fixAsk(o) { return o.n ? '<button type="button" class="' + (o.cls || "btn primary") + '" ' + (o.attr || 'data-bp-fixask="1"') + ">✦ Brainy에게 고치기 맡기기" + (o.sub ? " — " + esc(o.sub) : "") + "</button>" : ""; }
+  /* 대화창을 열고 그 말로 맡긴다 */
+  function ask(q) { if (window.BRAINY_CHAT) window.BRAINY_CHAT.ask(q); else alert("Brainy 대화창이 아직 준비되지 않았어요. 로그인을 확인하고 잠시 뒤 다시 눌러 주세요."); }
+
+  window.BRAINY_PARTS = {
+    esc: esc, MODELS: MODELS, NOTE_RULE: NOTE_RULE,
+    model: function () { return model; },
+    modelShort: function () { return SHORT[model] || ""; },
+    onModel: function (f) { fns.push(f); },
+    modelRow: modelRow, paintModels: paintModels,
+    hello: hello, helloHtml: helloHtml,
+    fixHtml: fixHtml, fixAsk: fixAsk, ask: ask
+  };
+})();
+
+</script>
 <script>
 (function () {
   "use strict";
@@ -2448,6 +2563,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       "1. 아래 데이터" + (S.toolsOK ? "와 도구" : "") + "로 동욱의 모든 것(오늘 기록·약속·프로젝트·태스크·카드·건강·위키·메모)에 대해 답한다." + (S.toolsOK ? " 데이터에 없는 세부(프로젝트 허브·태스크 노트·카드·위키·다른 날 기록·메모)는 볼트 파일을 직접 읽어 확인한다." : "") + " 데이터에 없는 건 모른다고 말하고 지어내지 않는다.",
       S.toolsOK ? "2. 동욱이 기록·체크·메모를 부탁하거나 '했어/먹었어/샀어/썼어'처럼 사실을 알려 주면 도구(check_item, write_today, add_meal, add_spend, add_note)로 앱에 바로 적고, 무엇을 했는지 한 줄로 알린다. 부탁이나 사실 없이 추측으로 쓰지 않는다. 금액·양이 애매하면 적기 전에 한 번만 묻는다." : "2. 이 화면에서는 앱에 직접 적을 수 없다. 적어야 할 게 있으면 어느 칸에 적으면 되는지 알려 준다.",
       S.toolsOK ? "3. 동욱이 분명히 시키면 볼트에 바로 반영한다. 태스크 고치기(기한·상태·완료 기준)·노트에 넣기처럼 금방 끝나는 건 네가 직접 고치고 어디를 고쳤는지 한 줄로 알린다. 결산·🗳 결산 대기 답·아침 계획 응·/log처럼 오래 걸리거나 캘린더가 필요한 일은 run_command로 맥의 Brainy에게 보낸다(몇 분 뒤 기록 탭 '명령'에 결과). 🗳 결산 대기 목록은 데이터의 '결산 대기'에 있다." : "3. 옵시디언 볼트·Todoist·캘린더에는 여기서 직접 쓰지 않는다. 기록 탭의 '명령' 칸으로 보내면 된다고 안내한다.",
+      S.toolsOK ? BRAINY_PARTS.NOTE_RULE.replace(/^- /, "3-1. ") : "",
       "4. 말투: 한국어. 친근하지만 현실적이고 직설적. 사실 → 이유 → 다음 행동. 행동은 짚되 사람은 깎아내리지 않는다. 결정이 가치·방향에 관한 것이면 동욱에게 묻는다. 보통 10줄 이내. 마크다운 기호(#, **, 표)는 쓰지 말고 줄바꿈과 '·', '1.'만 쓴다.",
       "",
       "=== 데이터 ===",
@@ -2565,6 +2681,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     var h = "";
     if (S.sampleOff || !S.sample) h += '<p class="notice">지금은 Brainy와 대화할 수 없어요. 새로고침해 보고, 그래도 안 되면 맥이 켜져 있는지 확인해 주세요.</p>';
     if (!S.chat.turns.length) {
+      /* 첫 안내 — 공통 부품 글(노트 쓰기 도구 · 앱 고치기 · 사진). 대화가 비었을 때 한 번만 */
+      h += BRAINY_PARTS.helloHtml({ what: S.chat.project ? "「" + S.chat.project + "」와 볼트 전체를 보고 답해요. 진행·다음 한 걸음·막힌 데를 물어보세요." : "볼트 전체를 보고 답하고, 기록·체크·메모를 부탁하면 앱에 바로 적어요.", pics: !!S.canImages });
       var pre = S.chat.project
         ? ["이 프로젝트 지금 어디까지 왔어?", "다음 한 걸음 뭐야?", "막힌 데가 어디야?", "카드 자료 요약해줘"]
         : ["오늘 뭐부터 해야 돼?", "이번 주 전체적으로 어때?", "점심에 해장국 먹었어, 기록해줘", "키워서보내다 매출 올리려면 이번 주에 뭘 해?"];
@@ -2853,9 +2971,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     db.collection("taskwork").onSnapshot(function (q) { var o = {}; q.docs.forEach(function (d) { o[d.id] = d.data(); }); Object.keys(S.tw).forEach(function (k) { if (o[k] && (o[k].updatedAt || "") < (S.tw[k].updatedAt || "")) o[k] = S.tw[k]; }); S.tw = o; softRender(); }, fail);
     db.collection("tasklog").orderBy("createdAt", "desc").limit(60).onSnapshot(function (q) { S.tasklog = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);
     db.collection("reports").orderBy("createdAt", "desc").limit(12).onSnapshot(function (q) { S.reports = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);
-    // 답할 Claude 모델 — 클라우드 Brainy(supabase/functions/brainy-ai)가 config/ai 의 model 을 쓴다
-    db.doc("config/ai").onSnapshot(function (s) { S.aiModel = (s.exists && s.data().model) || "auto"; var m = document.getElementById("chat-model"); if (m) m.value = S.aiModel; }, fail);
-    document.getElementById("chat-model").addEventListener("change", function (e) { S.aiModel = e.target.value; db.doc("config/ai").set({ model: S.aiModel, at: new Date().toISOString() }); });
+    // 답할 Claude 모델 — 대화창 위 버튼 줄은 공통 부품(brainy-parts.js)이 config/ai 의 model 을 읽고 쓴다 (모든 앱이 공유)
     db.doc("config/main").onSnapshot(function (s) { S.cfg = s.exists ? s.data() : {}; softRender(); }, fail);
     db.doc("sync/" + TODAY).onSnapshot(function (s) { S.vsync = s.exists ? s.data() : null; softRender(); }, fail);
     db.collection("cmd").orderBy("createdAt", "desc").limit(15).onSnapshot(function (q) { S.cmds = q.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); softRender(); }, fail);
