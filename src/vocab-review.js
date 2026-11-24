@@ -238,7 +238,7 @@ function stageStart(ids, from){
 const PICK_MAX = 30;
 function pickRow(t){
   return `<div class="pick${S.detail === t.id ? " open" : ""}"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
-    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)">고칠</span>` : ""}${reqOf(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)" title="${esc(reqOf(t.id))}">요청</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
+    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${S.listCat === "fix" && view() === "list" && reqOf(t.id) ? "✎ " + esc(reqOf(t.id)) : esc(t.cat) + " · " + esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)"${reqOf(t.id) ? ` title="${esc(reqOf(t.id))}"` : ""}>고칠</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
 }
 function pickList(list, max = 80){
   if (!list.length) return "";

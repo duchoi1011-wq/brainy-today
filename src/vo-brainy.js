@@ -22,8 +22,7 @@
         "- ② 만남: " + by[2].slice(0, 40).join(", "),
         "- ③·④: " + by[3].concat(by[4]).slice(0, 40).join(", "),
         "- 오늘 복습할 단어(" + due.length + "): " + due.slice(0, 40).join(", "),
-        "- 고칠 단어(동욱이 「이 단어는 고쳐요」로 표시, progress/<id>.fix): " + fixList().map(function (t) { return t.term; }).slice(0, 40).join(", "),
-        "- 오류·중복 수정 요청(동욱이 단어 카드에 적은 글, progress/<id>.req): " + reqList().slice(0, 30).map(function (t) { return t.term + " — " + reqOf(t.id).slice(0, 80); }).join(" / "),
+        "- 고칠 단어(동욱이 「이 단어는 고쳐요」로 표시하고 고칠 내용을 적은 것, progress/<id>.fix·fixNote — 예전 .req 도 포함): " + fixList().slice(0, 40).map(function (t) { var n = reqOf(t.id); return n ? t.term + " — " + n.slice(0, 80) : t.term; }).join(" / "),
         "- 단어장: " + Object.keys(DOMAINS).map(function (d) { return d + " " + ALL.filter(function (t) { return t.dom === d; }).length; }).join(" · "),
         "- 단어를 새로 넣거나 정리할 때 규칙: 맥 단축키 앱과 겹치는 내용은 한쪽에만 둔다(단축키는 단축키 앱, 개념 설명은 단어장) · 동욱이 이미 알 만한 기본 단어는 넣지 않는다 · 브랜드·상품 페이지 단어와 스킬·MCP 설명은 각자 단어장(dom)으로 따로 둔다",
         "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록) · vo.marks/lec(강의 탭 표시) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");
