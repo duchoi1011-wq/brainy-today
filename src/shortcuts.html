@@ -88,7 +88,8 @@ kbd{display:inline-block;min-width:24px;text-align:center;font-family:var(--f-mo
 .code i{color:var(--muted);font-style:normal}
 .copy{font:inherit;font-size:12px;color:var(--muted);background:none;border:1px solid var(--line);border-radius:7px;padding:4px 9px;cursor:pointer}
 .mk3{display:flex;gap:5px;align-items:flex-start}
-.mk{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:14px;cursor:pointer;padding:0;line-height:1}
+.mk{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:14px;cursor:pointer;padding:0;line-height:1;position:relative}
+.mk::before{content:"";position:absolute;inset:-5px -3.5px}   /* 보이는 크기는 그대로, 누르는 자리만 넓게 (✓·✕ 는 줄을 치워서 잘못 누르면 안 된다) — 옆 단추와 겹치지 않게 틈의 반까지 */
 .mk.fav[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .mk.pass[aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#fff}
 .mk.no[aria-pressed=true]{background:var(--no);border-color:var(--no);color:#fff}
@@ -113,9 +114,10 @@ details.card>summary::after{content:" ▾";color:var(--muted)}details.card[open]
 .card.done .card-h h3{color:var(--muted)}
 .cs-req{font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cs-req span{color:var(--muted)}.cs-req.ok{color:var(--ok)}.cs-req.bad{color:var(--accent)}
 .cs-x{padding:2px 8px}
+.cs-reqs{display:contents}
 @media (max-width:480px){
   .card{padding:14px 14px}
-  .mk3{gap:4px}.mk{width:31px;height:31px;font-size:13px}
+  .mk3{gap:5px}.mk{width:31px;height:31px;font-size:13px}   /* 31 + 틈 5 = 누르는 자리 36px */
   nav button{padding:7px 10px;font-size:13.5px}
 }
 @media (prefers-reduced-motion:no-preference){main>.card{animation:fade .18s ease-out}@keyframes fade{from{opacity:.5}to{opacity:1}}}
@@ -293,7 +295,6 @@ function refresh(){
   else render();
 }
 function repaint(){ reindex(); refresh() }
-function renderList(kind){ if(current === kind) render() }   // 옛 이름 — 강의·Brainy 가 부른다
 
 /* ── 지금: 하는 일을 적거나 고르면 그 일에 쓰는 것만 ── */
 function matchMode(text){
@@ -496,7 +497,7 @@ var capReady;   // sample·db 준비가 끝나면 resolve
     DB.collection("sc.creq").onSnapshot(function(q){ csSetReqs(q.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); })); }, function(){});
     DB.doc("sc.marks/course").onSnapshot(function(s){
       var v = s.exists ? s.data() : null;
-      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, sd: v.sd || {}, all: !!v.all, cp: v.cp || {}, cf: v.cf || {}, cn: v.cn || {}, pk: v.pk || {} }; save("sc.course", CPROG); refresh(); }
+      if(v && v.at){ CPROG = { cur: v.cur || "", at: v.at || {}, done: v.done || {}, cp: v.cp || {}, cf: v.cf || {}, cn: v.cn || {}, pk: v.pk || {} }; save("sc.course", CPROG); refresh(); }
       else if(CPROG.cur || Object.keys(CPROG.at).length) csSave();
     }, function(){});
     DB.doc("sc.marks/main").onSnapshot(function(s){

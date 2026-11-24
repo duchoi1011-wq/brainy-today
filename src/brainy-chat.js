@@ -34,11 +34,25 @@
      저장소 문서 {at, devs: {기기: {at, turns}} 기기마다 지금 대화, past: [{at, title, turns}] 지난 대화 20개, gone: [지운 지난 대화 이름표]}.
      · 지금 대화는 기기마다 따로 — 다른 기기가 쓴다고 이 기기의 지금 대화가 바뀌지 않는다(처음 여는 기기만 가장 최근 대화를 이어받는다).
      · 지난 대화 · 지운 표시는 모든 기기가 합친다. 「새 대화」는 지금 대화를 지난 대화로 옮기고, 「이어가기」는 꺼낸 것을 지난 대화에서 지운다(되살아나지 않게). */
-  var past = [], gone = [], stamp = 0, DBC = null, PATH = "bchat/" + (APP.key || "app"), showHist = false, viewPast = -1, saveT2 = 0, remote = null, DEV = "", firstOpen = false;
+  var past = [], gone = [], stamp = 0, DBC = null, PATH = "bchat/" + (APP.key || "app"), showHist = false, viewKey = null, viewOther = false, histAt = null, saveT2 = 0, remote = null, DEV = "", firstOpen = false;
   try { turns = JSON.parse(localStorage.getItem(KEY) || "[]"); past = JSON.parse(localStorage.getItem(KEY + ".past") || "[]"); stamp = +(localStorage.getItem(KEY + ".at") || 0); gone = JSON.parse(localStorage.getItem(KEY + ".gone") || "[]");
     firstOpen = !localStorage.getItem(KEY + ".at") && !clean(turns).length;   // 이 기기에서 대화를 한 번도 안 한 경우만 — ↺ 로 비운 것은 아니다 (2026-11-18 검증)
     DEV = localStorage.getItem(KEY + ".dev") || ""; if (!DEV) { DEV = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); localStorage.setItem(KEY + ".dev", DEV); } } catch (e) { DEV = DEV || "d0"; }
   function pkey(p) { return p.at + "|" + p.title; }   // 지난 대화 하나의 이름표
+  /* 보고 있는 지난 대화는 줄 번호가 아니라 이름표로 기억한다 — 보는 사이 다른 기기 기록이 합쳐져 줄이 밀려도
+     「이 대화 지우기」·「이어가기」가 다른 대화에 닿지 않게. 다른 기기의 지금 대화는 내용으로 만든 표(okey) */
+  function okey(x) { var s = x.sg || sig(x.turns), h = 0, i; for (i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return "o" + (h >>> 0).toString(36) + s.length.toString(36); }
+  function findView() {
+    if (!viewKey) return null;
+    if (!viewOther) return past.filter(function (p) { return pkey(p) === viewKey; })[0] || null;
+    var os = others(), hit = os.filter(function (x) { return okey(x) === viewKey; })[0];
+    if (!hit && viewOther.length) {   // 그 기기가 한 마디 더 했으면 표가 바뀐다 — 보던 대화로 시작하는 것을 찾는다
+      var head = JSON.stringify(viewOther).slice(0, -1);
+      hit = os.filter(function (x) { return JSON.stringify(x.turns).indexOf(head) === 0; })[0];
+      if (hit) { if (histAt === "v" + viewKey) histAt = "v" + okey(hit); viewKey = okey(hit); viewOther = hit.turns; }
+    }
+    return hit || null;
+  }
   function clean(list) { return (list || []).filter(function (t) { return t.content && !t.err; }).slice(-40).map(function (t) { var c = { role: t.role, content: t.content }; if (t.imgs) c.imgs = t.imgs; return c; }); }
   function sig(list) { return JSON.stringify(clean(list)); }
   function titleOf(list) { var u = clean(list).filter(function (t) { return t.role === "user"; })[0]; return u ? String(u.content).slice(0, 40) : ""; }
@@ -177,17 +191,20 @@
   function render() {
     var h = "";
     if (showHist) {   // 지난 대화 목록 · 한 대화 보기
-      var pv = viewPast >= 1000 ? others()[viewPast - 1000] : past[viewPast];
-      if (viewPast >= 0 && pv) {
-        h += '<div class="bc-hello"><b>' + esc(pv.title) + '</b><p>' + day(pv.at) + ' · 지난 대화</p><div class="bc-chips"><button type="button" class="bc-chip" data-bc="resume">이 대화 이어가기</button><button type="button" class="bc-chip" data-bc="hist">목록으로</button>' + (viewPast < 1000 ? '<button type="button" class="bc-chip" data-bc="delpast">이 대화 지우기</button>' : "") + '</div></div>';
+      var pv = findView(); if (!pv) { viewKey = null; viewOther = false; }   // 보던 대화가 (다른 기기에서) 지워졌으면 목록으로
+      var shown = pv ? "v" + viewKey : "list";
+      if (pv) {
+        h += '<div class="bc-hello"><b>' + esc(pv.title) + '</b><p>' + day(pv.at) + ' · 지난 대화</p><div class="bc-chips"><button type="button" class="bc-chip" data-bc="resume">이 대화 이어가기</button><button type="button" class="bc-chip" data-bc="hist">목록으로</button>' + (!viewOther ? '<button type="button" class="bc-chip" data-bc="delpast">이 대화 지우기</button>' : "") + '</div></div>';
         pv.turns.forEach(function (t) { h += '<div class="bc-b ' + (t.role === "user" ? "bc-me" : "bc-ai") + '">' + (t.imgs ? '<span class="bc-shot-n">📷 사진 ' + t.imgs + "장</span>" : "") + esc(t.content) + "</div>"; });
       } else {
         h += '<div class="bc-hello"><b>지난 대화 ' + past.length + '개</b><p>' + (past.length ? "누르면 그 대화를 보고, 이어갈 수 있어요." : "아직 없어요. ↺ 새 대화를 누르면 지금 대화가 여기로 와요.") + '</p><div class="bc-chips"><button type="button" class="bc-chip" data-bc="hist">지금 대화로</button></div></div>';
-        others().forEach(function (p, i) { h += '<button type="button" class="bc-more" data-bc-other="' + i + '">' + esc(day(p.at)) + " · 다른 기기에서 진행 중 · " + esc(p.title) + " (" + p.turns.length + ")</button>"; });
-        past.forEach(function (p, i) { if (sig(p.turns) === sig(turns)) return; h += '<button type="button" class="bc-more" data-bc-past="' + i + '">' + esc(day(p.at)) + " · " + esc(p.title) + " (" + p.turns.length + ")</button>"; });
+        others().forEach(function (p, i) { h += '<button type="button" class="bc-more" data-bc-other="' + esc(okey(p)) + '">' + esc(day(p.at)) + " · 다른 기기에서 진행 중 · " + esc(p.title) + " (" + p.turns.length + ")</button>"; });
+        past.forEach(function (p, i) { if (sig(p.turns) === sig(turns)) return; h += '<button type="button" class="bc-more" data-bc-past="' + esc(pkey(p)) + '">' + esc(day(p.at)) + " · " + esc(p.title) + " (" + p.turns.length + ")</button>"; });
       }
-      msgs.innerHTML = h; msgs.scrollTop = 0; paintFab(); return;
+      var st = shown === histAt ? msgs.scrollTop : 0; histAt = shown;   // 같은 화면을 다시 그릴 땐(다른 기기 기록이 들어옴) 읽던 자리 그대로
+      msgs.innerHTML = h; msgs.scrollTop = st; paintFab(); return;
     }
+    histAt = null;
     if (!turns.length) {
       h += '<div class="bc-hello"><b>동욱 님, 무엇을 도와드릴까요?</b><p>' + esc(NAME) + "에 대해 묻거나 바꾸고 싶은 걸 말해 주세요. " +
         (HOOK.editNote || (LOCAL ? "이 맥의 Claude가 앱 원본을 바로 고쳐요. 고친 뒤 새로고침하면 보여요." : "고친 판은 5~15분 뒤 준비되고, 「적용해 줘」라고 해야 실제 앱에 들어가요.")) +
@@ -264,17 +281,17 @@
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");
     if (up) { var k = +up.getAttribute("data-bc-unpic"), drop = pics.splice(k, 1)[0]; if (drop) URL.revokeObjectURL(drop.url); paintPics(); return; }
-    var pp = e.target.closest("[data-bc-past]"); if (pp) { viewPast = +pp.getAttribute("data-bc-past"); render(); return; }
-    var po = e.target.closest("[data-bc-other]"); if (po) { viewPast = 1000 + (+po.getAttribute("data-bc-other")); render(); return; }
+    var pp = e.target.closest("[data-bc-past]"); if (pp) { viewKey = pp.getAttribute("data-bc-past"); viewOther = false; render(); return; }
+    var po = e.target.closest("[data-bc-other]"); if (po) { viewKey = po.getAttribute("data-bc-other"); viewOther = []; var ov = findView(); viewOther = ov ? ov.turns : []; render(); return; }
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");
     if (a === "close") return close();
     if (a === "new") { if (ctl) ctl.abort(); archive(); turns = []; showHist = false; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); return; }
-    if (a === "hist") { showHist = !(showHist && viewPast < 0); viewPast = -1; render(); return; }
-    if (a === "delpast") { var dp = past[viewPast]; if (dp && confirm("이 지난 대화를 지울까요? 다른 기기에서도 지워져요.")) { gone.push(pkey(dp)); past.splice(viewPast, 1); viewPast = -1; keep(); render(); } return; }
-    if (a === "resume") { var other = viewPast >= 1000, pr = other ? others()[viewPast - 1000] : past[viewPast]; if (pr && !busy) {
-      if (!other) { gone.push(pkey(pr)); past.splice(viewPast, 1); }   // 꺼낸 지난 대화는 지운 표시 — 다른 기기 기록과 합쳐도 다시 안 생긴다
-      archive(); turns = pr.turns.slice(); showHist = false; viewPast = -1; keep(); render(); } return; }
+    if (a === "hist") { showHist = !(showHist && !viewKey); viewKey = null; viewOther = false; render(); return; }
+    if (a === "delpast") { var dp = viewOther ? null : findView(); if (dp && confirm("이 지난 대화를 지울까요? 다른 기기에서도 지워져요.")) { gone.push(pkey(dp)); past = past.filter(function (p) { return p !== dp; }); viewKey = null; keep(); render(); } return; }
+    if (a === "resume") { var other = !!viewOther, pr = findView(); if (pr && !busy) {
+      if (!other) { gone.push(pkey(pr)); past = past.filter(function (p) { return p !== pr; }); }   // 꺼낸 지난 대화는 지운 표시 — 다른 기기 기록과 합쳐도 다시 안 생긴다
+      archive(); turns = pr.turns.slice(); showHist = false; viewKey = null; viewOther = false; keep(); render(); } return; }
     if (a === "old") { openOld = !openOld; render(); return; }
     var c = b.getAttribute("data-bc-chip");
     if (c) { if (c.indexOf("○○") >= 0) { text.value = c.split("○○")[0]; text.focus(); } else go(c); }
@@ -318,7 +335,7 @@
         firstOpen = false;
         local();
         if (JSON.stringify([past, gone]) !== before && !busy) keep();   // 이 기기에만 있던 지난 대화를 저장소에도
-        if (!box.hidden && !busy) render();
+        if (!box.hidden && (!busy || showHist)) render();   // 지난 대화를 보는 중이면 자료만 바꾸고 읽던 자리는 그대로 (render 가 지킨다)
       });
     }, function () {});
   }

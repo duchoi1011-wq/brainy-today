@@ -155,7 +155,7 @@ function ensureLecCtx(t, force){
     CTX = { ...CTX, [id]: c };
     if (mode === "db" && db) db.doc("ctx/" + id).set(c).catch(() => {});
   }).catch(e => {
-    if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(e?.code)) { sample = null; sampleChecked = true; }
+    if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(e?.code)) { sample = null; }
     else lecErr[id] = e?.code === "rate_limited" ? "요청이 많아 아직 못 만들었어요." : "맥락을 만들지 못했어요 — 맥이 켜져 있는지 봐 주세요.";
   }).then(() => { lecBusy.delete(id); render(); });
 }

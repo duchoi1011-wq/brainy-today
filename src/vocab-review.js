@@ -39,6 +39,7 @@ function rvDir(t){
 }
 function rvNext(box){ return RV_GAP[Math.min(5, Math.max(0, box))]; }
 function rvPreview(t){
+  if (RV.again.has(t.id)) return { bad: "내일", mid: "내일", ok: "내일" };   // 이번 복습에서 이미 「몰랐음」 — 맞혀도 내일 다시
   const s = srsOf(t.id) || { box: -1 };
   const ok = Math.min(5, (s.box ?? -1) + 1), mid = Math.max(0, s.box ?? 0);
   return { bad: "내일", mid: (Math.max(1, Math.floor(rvNext(mid) / 2))) + "일 뒤", ok: rvNext(ok) + "일 뒤" };
@@ -47,20 +48,25 @@ function rvGrade(r){
   const id = RV.queue[RV.i], t = BYID[id]; if (!t) return;
   const now = nowIso(), today = kday();
   const wasNew = !srsOf(id);   // 볼트에서 온 복습 일정이 있는 단어는 「오늘 새 단어」로 세지 않는다
+  /* 이번 복습에서 이미 「몰랐음」 한 카드가 다시 나온 것 — 화면 규칙대로 상자 0 · 내일 그대로 두고, 단계도 올리지 않는다.
+     볼트로 보내는 기록(pending)도 카드마다 한 번(처음 답한 것)만 */
+  const redo = RV.again.has(id);
   const s0 = srsOf(id) || { box: -1 };
   const s = { box: s0.box ?? -1, n: 0, lapses: 0, log: [], pending: [], ...(prog[id]?.srs || {}) };
   if (s.box < 0) s.box = 0;
   if (wasNew && !s.first) s.first = today;
-  if (r === "ok") { s.box = Math.min(5, (s0.box ?? -1) + 1); s.due = kday(rvNext(s.box)); RV.stats.ok++; }
+  if (redo && r !== "bad") { s.box = 0; s.due = kday(1); RV.stats[r]++; }
+  else if (r === "ok") { s.box = Math.min(5, (s0.box ?? -1) + 1); s.due = kday(rvNext(s.box)); RV.stats.ok++; }
   else if (r === "mid") { s.box = Math.max(0, s0.box ?? 0); s.due = kday(Math.max(1, Math.floor(rvNext(s.box) / 2))); RV.stats.mid++; }
-  else { s.box = 0; s.due = kday(1); s.lapses = (s.lapses || 0) + 1; RV.stats.bad++; if (!RV.again.has(id)) { RV.again.add(id); RV.queue.splice(Math.min(RV.queue.length, RV.i + 4), 0, id); } }
+  else { s.box = 0; s.due = kday(1); if (!redo) s.lapses = (s.lapses || 0) + 1; RV.stats.bad++; if (!RV.again.has(id)) { RV.again.add(id); RV.queue.splice(Math.min(RV.queue.length, RV.i + 4), 0, id); } }
   s.n = (s.n || 0) + 1; s.last = now;
   s.log = [...(s.log || []), { at: now, r }].slice(-30);
-  if (t.cat === "영어 단어") s.pending = [...(s.pending || []), { at: now, r, box: s.box, due: s.due }];
+  if (t.cat === "영어 단어" && !redo) s.pending = [...(s.pending || []), { at: now, r, box: s.box, due: s.due }];
   const patch = { srs: s, lastSeen: now, seen: (prog[id]?.seen || 0) + 1 };
   const step = rvStep(id);
   let how = r === "ok" ? "복습: 떠올림" : r === "mid" ? "복습: 헷갈림" : "복습: 몰랐음";
-  if (r === "ok") {
+  if (redo && r !== "bad") how = r === "ok" ? "복습: 다시 보고 떠올림" : "복습: 헷갈림";
+  else if (r === "ok") {
     patch.fuzzy = false;   // 단계는 시험으로만 오른다
     if (step === 1) { patch.level = 2; how = "시험 통과: 뜻 보고 맞힘"; }
     else if (step === 2) { patch.level = 3; how = "시험 통과: 맥락 보고 맞힘"; }
@@ -100,7 +106,7 @@ async function rvCheck(){
     RV.res = { id, pass: !!r?.pass, good: String(r?.good || ""), fix: String(r?.fix || ""), example: String(r?.example || "") };
     if (RV.queue?.[RV.i] === id) RV.flipped = true;   // 기다리는 사이 다른 카드로 넘어갔으면 그 카드를 뒤집지 않는다
   } catch (e) {
-    if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)) { sample = null; sampleChecked = true; RV.res = { id, self: true }; RV.flipped = true; }
+    if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)) { sample = null; RV.res = { id, self: true }; RV.flipped = true; }
     else RV.err = e?.code === "rate_limited" ? "요청이 많아요. 잠시 뒤 다시 눌러 주세요." : "확인하지 못했어요. 다시 눌러 주세요.";
   }
   RV.busy = false; document.activeElement?.blur?.(); render();
@@ -130,7 +136,7 @@ function rvFront(t, dir, step){
 function rvBack(t, dir, step){
   const c = CTX[t.id] || {}, fg = t.dom === "외국어 단어장", r = RV.res?.id === t.id ? RV.res : null;
   const res = step !== 3 || !r ? "" : r.self ? `<div class="result fail"><b>예시와 비교해 보세요</b><p class="small">단어를 뜻에 맞게 넣어 ${fg ? "말이 되는 문장" : "무엇을 할지 알 수 있는 명령"}이면 「통과」예요.</p></div>`
-    : `<div class="result ${r.pass ? "pass" : "fail"}"><b>${r.pass ? "통과 · ④ 실행으로 올라가요" : "조금만 더"}</b>
+    : `<div class="result ${r.pass ? "pass" : "fail"}"><b>${r.pass ? (RV.again.has(t.id) ? "통과 · 내일 한 번 더 보고 올라가요" : "통과 · ④ 실행으로 올라가요") : "조금만 더"}</b>
       ${r.good ? `<p><span class="muted small">잘한 점</span><br>${esc(r.good)}</p>` : ""}
       ${r.fix ? `<p><span class="muted small">${r.pass ? "더하면 좋은 점" : "고칠 점"}</span><br>${esc(r.fix)}</p>` : ""}
       ${r.example ? `<p><span class="muted small">이렇게 써요</span><br>${esc(r.example)}</p>` : ""}</div>`;
@@ -206,7 +212,7 @@ function rvCard(){
 }
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-rv]"); if (!el || view() !== "review") return;
-  if (e.target.closest("details,summary,a,[data-go]") && el.dataset.rv === "flip") return;
+  if (e.target.closest("details,summary,a") && el.dataset.rv === "flip") return;
   const a = el.dataset.rv;
   const step3 = rvStep(RV.queue?.[RV.i]) >= 3;
   if (a === "flip") { if (!RV.flipped && !step3) { RV.flipped = true; render(); } return; }
@@ -238,7 +244,7 @@ function stageStart(ids, from){
 /* 체크해서 고르기 (2026-11-13 동욱) — 단계별·새 개념·분야·전체 어디서든 보이는 단어를 골라 밑 바에서 바로 시험 */
 const PICK_MAX = 30;
 function pickRow(t){
-  return `<div class="pick"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
+  return `<div class="pick"><label class="pk"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기"></label>
     <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>`;
 }
 function pickList(list, max = 80){
@@ -304,9 +310,9 @@ ${items.map((x, k) => `[${k + 1}] id: ${x.id}
 JSON 하나만 답하라. results 는 위 순서 그대로, 한국어 존댓말로 짧게:
 {"results": [{"id": "위 id 그대로", "pass": true 또는 false, "good": "잘한 점 한 문장", "fix": "고칠 점 한 문장, 없으면 빈 문자열", "example": "더 좋은 명령(영어면 예문) 한 문장"}]}`;
 }
-function batchPass(id, by){
+function batchPass(id, by, quiet){
   const B = S.batch, now = nowIso();
-  save(id, { level: 4, fuzzy: false, cmd: { text: (B.drafts[id] || "").trim(), at: now, by } }, "명령 시험 통과 (" + by + ")");
+  (quiet ? put : save)(id, { level: 4, fuzzy: false, cmd: { text: (B.drafts[id] || "").trim(), at: now, by } }, "명령 시험 통과 (" + by + ")");
 }
 async function batchCheck(){
   const B = S.batch; if (B.busy) return;
@@ -321,10 +327,11 @@ async function batchCheck(){
     (Array.isArray(r?.results) ? r.results : []).forEach((x, k) => {
       const id = items.some(it => it.id === x?.id) ? x.id : items[k]?.id; if (!id) return;
       B.res[id] = { pass: !!x.pass, good: String(x.good || ""), fix: String(x.fix || ""), example: String(x.example || "") };
-      if (x.pass) batchPass(id, "Claude 확인");
+      if (x.pass) batchPass(id, "Claude 확인", true);   /* 화면은 아래에서 한 번만 그린다 */
     });
+    flushLocal();
   } catch (e) {
-    if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)) { sample = null; sampleChecked = true; B.self = true; }
+    if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)) { sample = null; B.self = true; }
     else B.err = e?.code === "rate_limited" ? "요청이 많아요. 잠시 뒤 다시 눌러 주세요." : "채점하지 못했어요. 다시 눌러 주세요.";
   }
   B.busy = false; document.activeElement?.blur?.(); render();
@@ -333,7 +340,7 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-stage],[data-stagetest],[data-pickall],[data-pickclear],[data-picktest],[data-pickup],[data-up],[data-batchend],[data-batchcheck],[data-bself]"); if (!b) return;
   const d = b.dataset;
   if (d.up) { const L = lv(d.up); if (L < 4) save(d.up, { level: L + 1, fuzzy: false }, "바로 올림 (시험 없이)"); return; }
-  if (d.pickup) { const ids = [...S.pick].filter(id => BYID[id] && lv(id) < 4); S.pick = new Set(); ids.forEach(id => save(id, { level: lv(id) + 1, fuzzy: false }, "바로 올림 (시험 없이)")); render(); return; }
+  if (d.pickup) { const ids = [...S.pick].filter(id => BYID[id] && lv(id) < 4); S.pick = new Set(); ids.forEach(id => put(id, { level: lv(id) + 1, fuzzy: false }, "바로 올림 (시험 없이)")); flushLocal(); render(); return; }   /* 고른 만큼 기록하고 화면은 한 번만 그린다 */
   if (d.stage) { S.stage = +d.stage; S.batch = null; render(); return; }
   if (d.stagetest) { const L = +d.stagetest; stageStart(stagePool(L).slice(0, STAGE_MAX).map(t => t.id), L); return; }
   if (d.pickall) { d.pickall.split(",").filter(Boolean).forEach(id => { if (S.pick.size < PICK_MAX) S.pick.add(id); }); if (d.thentest) { pickTest(); return; } render(); return; }
