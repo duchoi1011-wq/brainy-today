@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "69985e90a6"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=69985e90a6"></script>
+<script>window.BRAINY_VERSION = "8c8ee0d88c"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=8c8ee0d88c"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -142,7 +142,7 @@ button{font:inherit}
 .seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:8px 6px;font-weight:700;font-size:14px;cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button.on{background:var(--accent);color:var(--accent-ink)}
-#dom{overflow-x:auto;scrollbar-width:none}#dom::-webkit-scrollbar{display:none}#dom button{flex:1 0 auto;white-space:nowrap;padding:8px 10px}
+#dom{overflow-x:auto;scrollbar-width:none}#dom.more-r{-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}#dom.more-l{-webkit-mask-image:linear-gradient(90deg,transparent,#000 18%);mask-image:linear-gradient(90deg,transparent,#000 18%)}#dom.more-l.more-r{-webkit-mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}#dom::-webkit-scrollbar{display:none}#dom button{flex:1 0 auto;white-space:nowrap;padding:8px 10px}
 .seg button span{font-family:var(--f-mono);font-weight:500;font-size:12px;margin-left:4px;opacity:.8}
 .flash{min-height:300px;display:flex;flex-direction:column;justify-content:space-between;gap:18px}
 .meta{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -370,8 +370,10 @@ const DOMAINS = {
 };
 const SPLIT_DOMS = ["브랜드·상품", "스킬", "MCP"];
 const domOf = cat => Object.keys(DOMAINS).find(d => DOMAINS[d].includes(cat)) || "학습 단어장";
-/* ADD = { items: 붙여 넣어 올린 단어 [{id, term, def, cat, dom, at}], move: { 단어id: 옮긴 단어장 } } — 볼트에 넣기 전까지 앱에서 바로 보이게 */
-let ADD = { items: [], move: {} };
+/* ADD = { items: 붙여 넣어 올린 단어 [{id, term, def, cat, dom, at}], move: { 단어id: 옮긴 단어장 }, cat: { 옮긴 단어id: 넣을 분야 } } — 볼트에 넣기 전까지 앱에서 바로 보이게 */
+let ADD = { items: [], move: {}, cat: {} };
+const readAdd = v => ({ items: Array.isArray(v.items) ? v.items : [], move: v.move || {}, cat: v.cat || {} });
+const withCat = t => { const c = ADD.cat?.[t.id]; return c && ADD.move?.[t.id] ? { ...t, cat: c } : t; };
 const domFor = t => {
   if (t.dom === "외국어 단어장") return t.dom;
   const mv = ADD.move?.[t.id]; if (mv && DOMAINS[mv]) return mv;
@@ -384,11 +386,11 @@ const domFor = t => {
 /* 단어장·분야는 볼트(위키)가 정한다 — 「위키 개념」(위키 영역별)과 분야 단어장(심리학·개발 용어 …)이 새로 오면 그 단어장의 분야 칩이 저절로 는다 */
 function wikiCats(){ ALL.forEach(t => { const d = DOMAINS[t.dom]; if (d && !d.includes(t.cat)) d.push(t.cat); }); }
 const addItems = () => (Array.isArray(ADD.items) ? ADD.items : []).filter(x => x && x.id && x.term);
-let ALL = DATA.terms.concat(FOREIGN, addItems()).map(t => ({ ...t, dom: domFor(t) }));
+let ALL = DATA.terms.concat(FOREIGN, addItems()).map(t => withCat({ ...t, dom: domFor(t) }));
 let BYID = Object.fromEntries(ALL.map(t => [t.id, t]));
 /* 볼트 단어·올린 단어·옮긴 단어가 바뀌면 단어장을 다시 짠다 */
 function rebuild(){
-  ALL = DATA.terms.concat(FOREIGN, addItems()).map(t => ({ ...t, dom: domFor(t) }));
+  ALL = DATA.terms.concat(FOREIGN, addItems()).map(t => withCat({ ...t, dom: domFor(t) }));
   BYID = Object.fromEntries(ALL.map(t => [t.id, t]));
   wikiCats();
   TERMS = ALL.filter(t => t.dom === S.domain);
@@ -492,11 +494,17 @@ const fixAskBtn = () => BRAINY_PARTS.fixAsk({ n: fixList().length, sub: "뜻 · 
 
 /* 브랜드·상품 · 스킬 · MCP 단어장 (2026-11-24 동욱) — 다른 단어장에서 맞는 단어를 후보로 미리 보여 주고(넣으면 그 단어장으로 옮김),
    「이름 — 설명」 줄을 붙여 넣어 한꺼번에 올린다. 둘 다 vo.marks/add 에 두고, 볼트에 넣는 것은 Brainy·맥 동기화가 한다 */
-const CAND_RE = { "브랜드·상품": /브랜드|상품|상세 ?페이지|랜딩|USP|셀링 ?포인트/i, "스킬": /스킬|skill|플러그인|plugin|슬래시 ?명령/i, "MCP": /MCP|커넥터|connector/i };
-const candOf = dom => { const re = CAND_RE[dom]; if (!re) return []; return ALL.filter(t => t.dom !== dom && t.dom !== "외국어 단어장" && re.test(t.term + " " + (t.cat || "") + " " + (t.def || ""))).sort((a, b) => re.test(b.term) - re.test(a.term)).slice(0, 40); };
+/* 후보 — 브랜드·상품은 프로그램·서비스 이름(영문이 든 이름 + 뜻이 서비스·도구·모델 …), 스킬·MCP 는 이름·뜻에 그 말 (2026-11-25 동욱) */
+const SERVICE_RE = /서비스|프로그램|플랫폼|앱|도구|모델|엔진|프레임워크|라이브러리|에디터|사이트/;
+const CAND_RE = { "브랜드·상품": { test: s => /[A-Za-z]/.test(s.split(" ")[0] || "") && !/^[`/$-]/.test(s) && SERVICE_RE.test(s) }, "스킬": /스킬|skill|플러그인|plugin|슬래시 ?명령/i, "MCP": /MCP|커넥터|connector/i };
+const candText = (dom, t) => dom === "브랜드·상품" ? t.term + " " + (t.def || "") : t.term + " " + (t.cat || "") + " " + (t.def || "");
+const candOf = dom => { const re = CAND_RE[dom]; if (!re) return []; return ALL.filter(t => t.dom !== dom && !SPLIT_DOMS.includes(t.dom) && t.dom !== "외국어 단어장" && re.test(candText(dom, t))).sort((a, b) => re.test(b.term) - re.test(a.term)).slice(0, 40); };
+/* 넣을 분야 — 분야가 나뉜 단어장(브랜드·상품)에서 붙여 넣기·후보 넣기가 어느 분야 페이지로 갈지 */
+const addCats = dom => DOMAINS[dom].filter(c => c !== dom && ALL.some(t => t.dom === dom && t.cat === c));
+const addCat = dom => { const cs = addCats(dom); return cs.includes(S.addCat) ? S.addCat : ""; };
 const isMine = id => addItems().some(x => x.id === id);
 function saveAdd(how){
-  ADD = { items: addItems(), move: { ...(ADD.move || {}) }, at: nowIso() };
+  ADD = { items: addItems(), move: { ...(ADD.move || {}) }, cat: { ...(ADD.cat || {}) }, at: nowIso() };
   rebuild();
   if (mode === "db" && db) db.doc("vo.marks/add").set(ADD).catch(() => { note = "저장하지 못했어요(" + how + "). 잠시 후 다시 해 주세요."; render(); });
   else { try { localStorage.setItem("chewha-vocab-add-v1", JSON.stringify(ADD)); } catch(e) {} }
@@ -508,14 +516,15 @@ function parsePaste(txt, dom){
   return String(txt || "").split(/\n+/).map(l => l.replace(/^\s*(?:[-•*·]|\d+[.)])\s*/, "").trim()).filter(Boolean).map(l => {
     const m = l.match(/^(.+?)\s*(?:\t| — | – | - |:\s|：)\s*(.+)$/);
     const term = (m ? m[1] : l).trim().slice(0, 80), def = (m ? m[2] : "").trim().slice(0, 400);
-    return { id: "u-" + hash(dom + "|" + term.toLowerCase()).toString(36), term, def: def || "설명을 아직 안 적었어요", cat: dom, dom, at: today(), mine: true };
+    return { id: "u-" + hash(dom + "|" + term.toLowerCase()).toString(36), term, def: def || "설명을 아직 안 적었어요", cat: addCat(dom) || dom, dom, at: today(), mine: true };
   }).filter(x => { const k = x.term.toLowerCase(); if (!x.term || seen.has(k)) return false; seen.add(k); return true; });
 }
 function splitDomHtml(){
   if (!SPLIT_DOMS.includes(S.domain)) return "";
-  const dom = S.domain, cand = candOf(dom), mine = addItems().filter(x => x.dom === dom).length;
+  const dom = S.domain, cand = candOf(dom), mine = addItems().filter(x => x.dom === dom).length, cs = addCats(dom), ac = addCat(dom);
   const ex = { "브랜드·상품": "예: 상세페이지 — 상품을 사기 전 마지막으로 읽는 긴 소개 페이지", "스킬": "예: content-source — 콘텐츠 소재와 출처를 찾아 주는 스킬", "MCP": "예: Supabase MCP — Claude가 Supabase 표를 읽고 쓰게 이어 주는 연결" }[dom];
-  return `<section class="card stack">
+  const catSel = cs.length ? `<label class="small muted" style="display:flex;gap:8px;align-items:center">넣을 분야<select id="addCat" aria-label="넣을 분야" style="flex:1;min-width:0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><option value="">분야 없이</option>${cs.map(c => `<option${c === ac ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : "";
+  return `${catSel ? `<section class="card stack"><h2>넣을 분야</h2><p class="small muted">아래에서 후보를 넣거나 붙여 넣어 올리면 이 분야 페이지로 들어가요.</p>${catSel}</section>` : ""}<section class="card stack">
     <h2>후보 ${cand.length}개 · 다른 단어장에서 찾은 ${esc(dom)} 단어</h2>
     ${cand.length ? `<div class="list">${cand.map(t => `<div class="row" style="cursor:default"><div class="t"><b>${esc(t.term)}</b><span>${esc(t.dom)} · ${esc(t.def)}</span></div><button class="btn ghost" data-act="candin" data-id="${t.id}" style="padding:6px 12px">넣기</button></div>`).join("")}</div>
       <button class="btn ghost" data-act="candall">후보 ${cand.length}개 모두 넣기</button>` : `<p class="small muted">다른 단어장에 ${esc(dom)} 후보가 없어요. 아래에 붙여 넣어 올려 보세요.</p>`}
@@ -528,10 +537,20 @@ function splitDomHtml(){
   </section>`;
 }
 const view = () => (location.hash || "#home").slice(1);
+/* 단어장 탭이 폰에서 넘치면 잘린 쪽을 흐리게 — 옆으로 더 있다는 표시 (2026-11-25 동욱). 고른 탭은 보이는 곳으로 */
+function domEdge(show){
+  const el = document.getElementById("dom"); if (!el) return;
+  const on = el.querySelector("button.on");
+  if (show && on && (on.offsetLeft < el.scrollLeft || on.offsetLeft + on.offsetWidth > el.scrollLeft + el.clientWidth)) el.scrollLeft = on.offsetLeft - 24;
+  el.classList.toggle("more-l", el.scrollLeft > 2);
+  el.classList.toggle("more-r", el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+}
+document.getElementById("dom").addEventListener("scroll", () => domEdge(false), { passive: true });
+addEventListener("resize", () => domEdge(false));
 
 function loadLocal(){
   try { prog = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch(e) { prog = {}; }
-  try { const a = JSON.parse(localStorage.getItem("chewha-vocab-add-v1") || "null"); if (a) { ADD = { items: Array.isArray(a.items) ? a.items : [], move: a.move || {} }; rebuild(); } } catch(e) {}
+  try { const a = JSON.parse(localStorage.getItem("chewha-vocab-add-v1") || "null"); if (a) { ADD = readAdd(a); rebuild(); } } catch(e) {}
 }
 function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(prog)); } catch(e) {} }
 
@@ -715,7 +734,7 @@ function renderDomField(){
   return seg + `<div class="chips" style="margin-bottom:12px">${CATS.map(c => `<button class="chip${c === cur ? " on" : ""}" data-fcat="${esc(c)}">${esc(c)} <span>${TERMS.filter(t => t.cat === c).length}</span></button>`).join("")}</div>
     <section class="card stack"><div class="meta"><h3 style="margin:0">${esc(cur)} <span class="mono muted" style="font-size:14px">${list.length}</span></h3></div>
     <div class="cats">${(() => { const c = counts(list.map(t => t.id)); return barHtml(c, list.length || 1); })()}</div>
-    ${pickList(list, 200)}</section>`;
+    ${pickList(list, 200, true)}</section>`;
 }
 function renderList(){
   if (S.listCat === "req") S.listCat = "fix";   // 예전 「수정 요청」 칩은 「고칠 단어」로 합쳐짐
@@ -762,7 +781,9 @@ function render(){
   const searchFocused = ae && ae.id === "listQ";
   if (v === "list" && searchFocused) { document.getElementById("listOut").innerHTML = listRows(); return; }
   main.innerHTML = v === "stage" ? renderStage() : v === "new" ? renderNew() : v === "lec" ? (S.domain === "학습 단어장" ? renderLec() : `<section class="card"><p class="empty">강의 용어는 학습 단어장에만 있어요.<br>${esc(S.domain)}에는 아직 강의가 없어요.</p></section>`) : v === "field" ? (S.domain === "학습 단어장" && S.fieldMode === "lec" ? `<div class="fseg"><button class="chip" data-fmode="">단어장 분야</button><button class="chip on">강의 용어 분야</button></div>` + renderField() : renderDomField()) : v === "review" ? renderReview() : v === "list" ? renderList() : renderHome();
-  document.getElementById("dom").innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
+  const domEl = document.getElementById("dom");
+  domEl.innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
+  domEdge(true);
   const pb = document.getElementById("pickbar"), pbh = pickBar(); if (pb) pb.remove(); if (pbh) document.body.insertAdjacentHTML("beforeend", pbh);
   document.getElementById("sub").textContent = `${S.domain} ${TERMS.length}개 · 목표 달성 ${TERMS.filter(t => lv(t.id) >= goalOf(t.id)).length}`;
 }
@@ -809,8 +830,8 @@ document.addEventListener("click", e => {
     else { note = "Brainy 대화창을 아직 못 불러왔어요. 잠시 뒤 다시 눌러 주세요."; render(); }
     return;
   }
-  if (d.act === "candin" || d.act === "candout") { const mv = { ...(ADD.move || {}) }; if (d.act === "candin") mv[d.id] = S.domain; else delete mv[d.id]; ADD.move = mv; if (d.act === "candout") S.detail = null; saveAdd("단어 옮기기"); return; }
-  if (d.act === "candall") { const mv = { ...(ADD.move || {}) }; candOf(S.domain).forEach(t => { mv[t.id] = S.domain; }); ADD.move = mv; saveAdd("단어 옮기기"); return; }
+  if (d.act === "candin" || d.act === "candout") { const mv = { ...(ADD.move || {}) }; const ct = { ...(ADD.cat || {}) }; if (d.act === "candin") { mv[d.id] = S.domain; if (addCat(S.domain)) ct[d.id] = addCat(S.domain); else delete ct[d.id]; } else { delete mv[d.id]; delete ct[d.id]; } ADD.move = mv; ADD.cat = ct; if (d.act === "candout") S.detail = null; saveAdd("단어 옮기기"); return; }
+  if (d.act === "candall") { const mv = { ...(ADD.move || {}) }, ct = { ...(ADD.cat || {}) }, c = addCat(S.domain); candOf(S.domain).forEach(t => { mv[t.id] = S.domain; if (c) ct[t.id] = c; else delete ct[t.id]; }); ADD.move = mv; ADD.cat = ct; saveAdd("단어 옮기기"); return; }
   if (d.act === "mydel") { ADD.items = addItems().filter(x => x.id !== d.id); S.detail = null; saveAdd("단어 지우기"); return; }
   if (d.act === "addup") {
     const box = document.getElementById("addIn"), got = parsePaste(box?.value, S.domain);
@@ -827,6 +848,7 @@ document.addEventListener("click", e => {
     S.detail = d.detail; if (view() !== "list") { S.jump = true; location.hash = "list"; } else { render(); showDetail(); } return;
   }
 });
+document.addEventListener("change", e => { if (e.target?.id === "addCat") S.addCat = e.target.value; });
 document.addEventListener("input", e => {
   if (e.target.id === "listQ") { S.listQ = e.target.value; document.getElementById("listOut").innerHTML = listRows(); }
 });
@@ -859,7 +881,7 @@ async function init(){
     rebuild();
     render();
   }, () => {});
-  db.doc("vo.marks/add").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { ADD = { items: Array.isArray(v.items) ? v.items : [], move: v.move || {} }; rebuild(); render(); } }, () => {});
+  db.doc("vo.marks/add").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { ADD = readAdd(v); rebuild(); render(); } }, () => {});
   db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = v; lsPut("vo.lec", v); if (view() === "lec") render(); } }, () => {});
   db.doc("vo.marks/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { LM = { ...v, ok: v.ok || {}, fav: v.fav || {}, pk: v.pk || {} }; lsPut("vo.lecm", LM); if (view() === "lec") render(); } }, () => {});
   db.collection("ctx").onSnapshot(snap => {
@@ -1114,14 +1136,14 @@ function stageStart(ids, from){
 }
 /* 체크해서 고르기 (2026-11-13 동욱) — 단계별·새 개념·분야·전체 어디서든 보이는 단어를 골라 밑 바에서 바로 시험 */
 const PICK_MAX = 30;
-function pickRow(t){
+function pickRow(t, noCat){
   return `<div class="pick${S.detail === t.id ? " open" : ""}"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
-    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)"${reqOf(t.id) ? ` title="${esc(reqOf(t.id))}"` : ""}>고칠</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
+    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${noCat ? "" : esc(t.cat) + " · "}${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)"${reqOf(t.id) ? ` title="${esc(reqOf(t.id))}"` : ""}>고칠</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
 }
-function pickList(list, max = 80){
+function pickList(list, max = 80, noCat = false){   // noCat: 분야 페이지 안에서는 줄마다 분야 이름을 다시 안 붙인다
   if (!list.length) return "";
   return `<div class="btns" style="gap:6px;margin:2px 0 6px"><button class="btn ghost" data-pickall="${list.slice(0, PICK_MAX).map(t => t.id).join(",")}" style="padding:6px 12px">보이는 것 고르기 (최대 ${PICK_MAX})</button>${S.pick.size ? `<button class="btn ghost" data-pickclear="1" style="padding:6px 12px">고른 것 지우기</button>` : ""}</div>
-    <div class="list">${list.slice(0, max).map(pickRow).join("")}</div>${list.length > max ? `<p class="small muted">외 ${list.length - max}개 — 분야를 골라 좁혀 보세요</p>` : ""}`;
+    <div class="list">${list.slice(0, max).map(t => pickRow(t, noCat)).join("")}</div>${list.length > max ? `<p class="small muted">외 ${list.length - max}개 — 분야를 골라 좁혀 보세요</p>` : ""}`;
 }
 function pickBar(){
   const ids = [...S.pick].filter(id => BYID[id]); if (!ids.length || view() === "review" || S.batch) return "";

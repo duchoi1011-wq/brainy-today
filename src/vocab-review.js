@@ -236,14 +236,14 @@ function stageStart(ids, from){
 }
 /* 체크해서 고르기 (2026-11-13 동욱) — 단계별·새 개념·분야·전체 어디서든 보이는 단어를 골라 밑 바에서 바로 시험 */
 const PICK_MAX = 30;
-function pickRow(t){
+function pickRow(t, noCat){
   return `<div class="pick${S.detail === t.id ? " open" : ""}"><input type="checkbox" data-pickid="${t.id}" ${S.pick.has(t.id) ? "checked" : ""} aria-label="${esc(t.term)} 고르기">
-    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${esc(t.cat)} · ${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)"${reqOf(t.id) ? ` title="${esc(reqOf(t.id))}"` : ""}>고칠</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
+    <button class="t" data-detail="${t.id}"><b>${esc(t.term)}</b><span>${noCat ? "" : esc(t.cat) + " · "}${esc(t.def)}</span></button>${isFresh(t) ? `<span class="pill p3">새로</span>` : ""}${isFix(t.id) ? `<span class="pill" style="color:var(--accent);border-color:var(--accent)"${reqOf(t.id) ? ` title="${esc(reqOf(t.id))}"` : ""}>고칠</span>` : ""}${pill(lv(t.id))}${lv(t.id) < 4 ? `<button class="upbtn" data-up="${t.id}" title="시험 없이 바로 ${LV[lv(t.id) + 1]}로" aria-label="${esc(t.term)} 바로 다음 단계로">▲</button>` : ""}</div>${S.detail === t.id ? detailHtml(t) : ""}`;
 }
-function pickList(list, max = 80){
+function pickList(list, max = 80, noCat = false){   // noCat: 분야 페이지 안에서는 줄마다 분야 이름을 다시 안 붙인다
   if (!list.length) return "";
   return `<div class="btns" style="gap:6px;margin:2px 0 6px"><button class="btn ghost" data-pickall="${list.slice(0, PICK_MAX).map(t => t.id).join(",")}" style="padding:6px 12px">보이는 것 고르기 (최대 ${PICK_MAX})</button>${S.pick.size ? `<button class="btn ghost" data-pickclear="1" style="padding:6px 12px">고른 것 지우기</button>` : ""}</div>
-    <div class="list">${list.slice(0, max).map(pickRow).join("")}</div>${list.length > max ? `<p class="small muted">외 ${list.length - max}개 — 분야를 골라 좁혀 보세요</p>` : ""}`;
+    <div class="list">${list.slice(0, max).map(t => pickRow(t, noCat)).join("")}</div>${list.length > max ? `<p class="small muted">외 ${list.length - max}개 — 분야를 골라 좁혀 보세요</p>` : ""}`;
 }
 function pickBar(){
   const ids = [...S.pick].filter(id => BYID[id]); if (!ids.length || view() === "review" || S.batch) return "";
