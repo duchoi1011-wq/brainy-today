@@ -329,11 +329,14 @@ const fixAskBtn = () => BRAINY_PARTS.fixAsk({ n: fixList().length, sub: "뜻 · 
 
 /* 브랜드·상품 · 스킬 · MCP 단어장 (2026-11-24 동욱) — 다른 단어장에서 맞는 단어를 후보로 미리 보여 주고(넣으면 그 단어장으로 옮김),
    「이름 — 설명」 줄을 붙여 넣어 한꺼번에 올린다. 둘 다 vo.marks/add 에 두고, 볼트에 넣는 것은 Brainy·맥 동기화가 한다 */
-/* 후보 — 브랜드·상품은 프로그램·서비스 이름(영문이 든 이름 + 뜻이 서비스·도구·모델 …), 스킬·MCP 는 이름·뜻에 그 말 (2026-11-25 동욱) */
-const SERVICE_RE = /서비스|프로그램|플랫폼|앱|도구|모델|엔진|프레임워크|라이브러리|에디터|사이트/;
-const CAND_RE = { "브랜드·상품": { test: s => /[A-Za-z]/.test(s.split(" ")[0] || "") && !/^[`/$-]/.test(s) && SERVICE_RE.test(s) }, "스킬": /스킬|skill|플러그인|plugin|슬래시 ?명령/i, "MCP": /MCP|커넥터|connector/i };
-const candText = (dom, t) => dom === "브랜드·상품" ? t.term + " " + (t.def || "") : t.term + " " + (t.cat || "") + " " + (t.def || "");
-const candOf = dom => { const re = CAND_RE[dom]; if (!re) return []; return ALL.filter(t => t.dom !== dom && !SPLIT_DOMS.includes(t.dom) && t.dom !== "외국어 단어장" && re.test(candText(dom, t))).sort((a, b) => re.test(b.term) - re.test(a.term)).slice(0, 40); };
+/* 후보 — 브랜드·상품은 프로그램·서비스 이름(이름 첫머리가 영문 + 뜻의 첫 마디가 「…도구·프로그램·서비스·앱·기능·모델」로 끝남 — 방식·개념 말은 거름),
+   스킬·MCP 는 이름·분야·뜻에 그 말 (2026-11-25 동욱) */
+const NAME_END = /(도구|프로그램|서비스|앱|기능|엔진|플랫폼|라이브러리|프레임워크|모델|에디터|사이트)$/;
+const CAND_RE = { "스킬": /스킬|skill|플러그인|plugin|슬래시 ?명령/i, "MCP": /MCP|커넥터|connector/i };
+const isCand = (dom, t) => dom === "브랜드·상품"
+  ? /^[A-Za-z]/.test(t.term || "") && NAME_END.test(String(t.def || "").split(/ — |\(|\.|,| · | \/ /)[0].trim())
+  : !!CAND_RE[dom] && CAND_RE[dom].test(t.term + " " + (t.cat || "") + " " + (t.def || ""));
+const candOf = dom => (dom === "브랜드·상품" || CAND_RE[dom]) ? ALL.filter(t => t.dom !== dom && !SPLIT_DOMS.includes(t.dom) && t.dom !== "외국어 단어장" && isCand(dom, t)).sort((a, b) => CAND_RE[dom] ? CAND_RE[dom].test(b.term) - CAND_RE[dom].test(a.term) : 0).slice(0, 40) : [];
 /* 넣을 분야 — 분야가 나뉜 단어장(브랜드·상품)에서 붙여 넣기·후보 넣기가 어느 분야 페이지로 갈지 */
 const addCats = dom => DOMAINS[dom].filter(c => c !== dom && ALL.some(t => t.dom === dom && t.cat === c));
 const addCat = dom => { const cs = addCats(dom); return cs.includes(S.addCat) ? S.addCat : ""; };
