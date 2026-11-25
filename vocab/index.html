@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "b8556cc14d"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=b8556cc14d"></script>
+<script>window.BRAINY_VERSION = "67165058fd"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=67165058fd"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -494,16 +494,19 @@ const fixAskBtn = () => BRAINY_PARTS.fixAsk({ n: fixList().length, sub: "뜻 · 
 
 /* 브랜드·상품 · 스킬 · MCP 단어장 (2026-11-24 동욱) — 다른 단어장에서 맞는 단어를 후보로 미리 보여 주고(넣으면 그 단어장으로 옮김),
    「이름 — 설명」 줄을 붙여 넣어 한꺼번에 올린다. 둘 다 vo.marks/add 에 두고, 볼트에 넣는 것은 Brainy·맥 동기화가 한다 */
-/* 후보 — 브랜드·상품은 프로그램·서비스 이름(이름 첫머리가 영문 + 뜻의 첫 마디가 「…도구·프로그램·서비스·앱·기능·모델」로 끝남 — 방식·개념 말은 거름),
+/* 후보 — 브랜드·상품은 프로그램·서비스 이름: 이름 첫머리가 영문 · 약어(SaaS·ERP·RLS)는 빼고 · 뜻의 첫 문장(괄호 뺀 뒤 「 — 」「. 」「 · 」「 / 」 앞)이
+   「…도구·프로그램·서비스·앱·기능·모델」로 끝나는 것 — 방식·개념 말은 거른다. 브랜드·상품은 스킬·MCP 단어를 후보로 안 받는다.
    스킬·MCP 는 이름·분야·뜻에 그 말 (2026-11-25 동욱) */
 const NAME_END = /(도구|프로그램|서비스|앱|기능|엔진|플랫폼|라이브러리|프레임워크|모델|에디터|사이트)$/;
 const CAND_RE = { "스킬": /스킬|skill|플러그인|plugin|슬래시 ?명령/i, "MCP": /MCP|커넥터|connector/i };
+const defHead = d => String(d || "").replace(/\([^()]*\)/g, "").split(/ — |\. |。| · | \/ /)[0].replace(/[.\s]+$/, "").trim();
+const isAcronym = term => { const w = String(term).split(/[\s(]/)[0]; return w.length <= 5 && (w.match(/[A-Z]/g) || []).length >= 2; };
 const isCand = (dom, t) => dom === "브랜드·상품"
-  ? /^[A-Za-z]/.test(t.term || "") && NAME_END.test(String(t.def || "").split(/ — |\(|\.|,| · | \/ /)[0].trim())
+  ? !SPLIT_DOMS.includes(t.dom) && /^[A-Za-z]/.test(t.term || "") && !isAcronym(t.term) && NAME_END.test(defHead(t.def))
   : !!CAND_RE[dom] && CAND_RE[dom].test(t.term + " " + (t.cat || "") + " " + (t.def || ""));
-const candOf = dom => (dom === "브랜드·상품" || CAND_RE[dom]) ? ALL.filter(t => t.dom !== dom && !SPLIT_DOMS.includes(t.dom) && t.dom !== "외국어 단어장" && isCand(dom, t)).sort((a, b) => CAND_RE[dom] ? CAND_RE[dom].test(b.term) - CAND_RE[dom].test(a.term) : 0).slice(0, 40) : [];
+const candOf = dom => (dom === "브랜드·상품" || CAND_RE[dom]) ? ALL.filter(t => t.dom !== dom && t.dom !== "외국어 단어장" && isCand(dom, t)).sort((a, b) => CAND_RE[dom] ? CAND_RE[dom].test(b.term) - CAND_RE[dom].test(a.term) : 0).slice(0, 40) : [];
 /* 넣을 분야 — 분야가 나뉜 단어장(브랜드·상품)에서 붙여 넣기·후보 넣기가 어느 분야 페이지로 갈지 */
-const addCats = dom => DOMAINS[dom].filter(c => c !== dom && ALL.some(t => t.dom === dom && t.cat === c));
+const addCats = dom => { const cs = DOMAINS[dom].filter(c => c !== dom && ALL.some(t => t.dom === dom && t.cat === c && !t.mine && !ADD.move?.[t.id])); return cs.length >= 2 ? cs : []; };   // 볼트가 분야를 둘 이상으로 나눈 단어장만 (MCP 의 섞인 「스킬」 한 개로는 안 켬)
 const addCat = dom => { const cs = addCats(dom); return cs.includes(S.addCat) ? S.addCat : ""; };
 const isMine = id => addItems().some(x => x.id === id);
 function saveAdd(how){
@@ -526,9 +529,9 @@ function splitDomHtml(){
   if (!SPLIT_DOMS.includes(S.domain)) return "";
   const dom = S.domain, cand = candOf(dom), mine = addItems().filter(x => x.dom === dom).length, cs = addCats(dom), ac = addCat(dom);
   const ex = { "브랜드·상품": "예: 상세페이지 — 상품을 사기 전 마지막으로 읽는 긴 소개 페이지", "스킬": "예: content-source — 콘텐츠 소재와 출처를 찾아 주는 스킬", "MCP": "예: Supabase MCP — Claude가 Supabase 표를 읽고 쓰게 이어 주는 연결" }[dom];
-  const catSel = cs.length ? `<label class="small muted" style="display:flex;gap:8px;align-items:center">넣을 분야<select id="addCat" aria-label="넣을 분야" style="flex:1;min-width:0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><option value="">분야 없이</option>${cs.map(c => `<option${c === ac ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : "";
-  return `${catSel ? `<section class="card stack"><h2>넣을 분야</h2><p class="small muted">아래에서 후보를 넣거나 붙여 넣어 올리면 이 분야 페이지로 들어가요.</p>${catSel}</section>` : ""}<section class="card stack">
-    <h2>후보 ${cand.length}개 · 다른 단어장에서 찾은 ${esc(dom)} 단어</h2>
+  const catSel = cs.length ? `<label class="small muted" style="display:flex;gap:8px;align-items:center">후보·올린 단어가 들어갈 분야<select id="addCat" aria-label="넣을 분야" style="flex:1;min-width:0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><option value="">분야 없이</option>${cs.map(c => `<option${c === ac ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : "";
+  return `<section class="card stack">
+    <h2>후보 ${cand.length}개 · 다른 단어장에서 찾은 ${esc(dom)} 단어</h2>${catSel}
     ${cand.length ? `<div class="list">${cand.map(t => `<div class="row" style="cursor:default"><div class="t"><b>${esc(t.term)}</b><span>${esc(t.dom)} · ${esc(t.def)}</span></div><button class="btn ghost" data-act="candin" data-id="${t.id}" style="padding:6px 12px">넣기</button></div>`).join("")}</div>
       <button class="btn ghost" data-act="candall">후보 ${cand.length}개 모두 넣기</button>` : `<p class="small muted">다른 단어장에 ${esc(dom)} 후보가 없어요. 아래에 붙여 넣어 올려 보세요.</p>`}
   </section>
@@ -544,7 +547,8 @@ const view = () => (location.hash || "#home").slice(1);
 function domEdge(show){
   const el = document.getElementById("dom"); if (!el) return;
   const on = el.querySelector("button.on");
-  if (show && on && (on.offsetLeft < el.scrollLeft || on.offsetLeft + on.offsetWidth > el.scrollLeft + el.clientWidth)) el.scrollLeft = on.offsetLeft - 24;
+  const fade = el.clientWidth * 0.18 + 4;   // 흐린 폭(18%)만큼 안쪽에 와야 또렷하다
+  if (show && on && el.scrollWidth > el.clientWidth && (on.offsetLeft < el.scrollLeft + fade || on.offsetLeft + on.offsetWidth > el.scrollLeft + el.clientWidth - fade)) el.scrollLeft = on.offsetLeft - (el.clientWidth - on.offsetWidth) / 2;
   el.classList.toggle("more-l", el.scrollLeft > 2);
   el.classList.toggle("more-r", el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
 }
@@ -833,7 +837,7 @@ document.addEventListener("click", e => {
     else { note = "Brainy 대화창을 아직 못 불러왔어요. 잠시 뒤 다시 눌러 주세요."; render(); }
     return;
   }
-  if (d.act === "candin" || d.act === "candout") { const mv = { ...(ADD.move || {}) }; const ct = { ...(ADD.cat || {}) }; if (d.act === "candin") { mv[d.id] = S.domain; if (addCat(S.domain)) ct[d.id] = addCat(S.domain); else delete ct[d.id]; } else { delete mv[d.id]; delete ct[d.id]; } ADD.move = mv; ADD.cat = ct; if (d.act === "candout") S.detail = null; saveAdd("단어 옮기기"); return; }
+  if (d.act === "candin" || d.act === "candout") { const mv = { ...(ADD.move || {}) }; const ct = { ...(ADD.cat || {}) }; if (d.act === "candin") { mv[d.id] = S.domain; if (addCat(S.domain)) ct[d.id] = addCat(S.domain); else delete ct[d.id]; } else { delete mv[d.id]; delete ct[d.id]; } ADD.move = mv; ADD.cat = ct; if (d.act === "candout") S.detail = null; else { const tm = BYID[d.id]; note = `「${tm ? tm.term : "단어"}」를 ${S.domain}${ct[d.id] ? " · " + ct[d.id] : ""}에 넣었어요 — 「분야」 탭에서 볼 수 있어요.`; const msg = note; setTimeout(() => { if (note === msg) { note = ""; render(); } }, 4000); } saveAdd("단어 옮기기"); return; }
   if (d.act === "candall") { const mv = { ...(ADD.move || {}) }, ct = { ...(ADD.cat || {}) }, c = addCat(S.domain); candOf(S.domain).forEach(t => { mv[t.id] = S.domain; if (c) ct[t.id] = c; else delete ct[t.id]; }); ADD.move = mv; ADD.cat = ct; saveAdd("단어 옮기기"); return; }
   if (d.act === "mydel") { ADD.items = addItems().filter(x => x.id !== d.id); S.detail = null; saveAdd("단어 지우기"); return; }
   if (d.act === "addup") {
@@ -1493,10 +1497,10 @@ init();
         "- ③·④: " + by[3].concat(by[4]).slice(0, 40).join(", "),
         "- 오늘 복습할 단어(" + due.length + "): " + due.slice(0, 40).join(", "),
         "- 고칠 단어 " + fixList().length + "개(동욱이 「이 단어는 고쳐요」로 표시하고 오류·중복을 적은 것, progress/<id>.fix·.req — 단어장 · 단어 — 적은 글): " + fixList().slice(0, 30).map(function (t) { return t.dom + " · " + t.term + " — " + (reqOf(t.id).slice(0, 120) || "(글 없음)"); }).join(" / "),
-        "- 붙여 넣어 올리거나 옮긴 단어(vo.marks/add — 아직 볼트에 없을 수 있음): " + addItems().slice(0, 30).map(function (t) { return t.dom + " · " + t.term; }).concat(Object.keys(ADD.move || {}).slice(0, 30).map(function (id) { return ADD.move[id] + " ← " + (BYID[id] ? BYID[id].term : id); })).join(", "),
+        "- 붙여 넣어 올리거나 옮긴 단어(vo.marks/add — 아직 볼트에 없을 수 있음): " + addItems().slice(0, 30).map(function (t) { return t.dom + (t.cat && t.cat !== t.dom ? " · " + t.cat : "") + " · " + t.term; }).concat(Object.keys(ADD.move || {}).slice(0, 30).map(function (id) { return ADD.move[id] + (ADD.cat && ADD.cat[id] ? " · " + ADD.cat[id] : "") + " ← " + (BYID[id] ? BYID[id].term : id); })).join(", "),
         "- 단어장: " + Object.keys(DOMAINS).map(function (d) { return d + " " + ALL.filter(function (t) { return t.dom === d; }).length; }).join(" · "),
         "- 단어를 새로 넣거나 정리할 때 규칙: 맥 단축키 앱과 겹치는 내용은 한쪽에만 둔다(단축키는 단축키 앱, 개념 설명은 단어장) · 동욱이 이미 알 만한 기본 단어는 넣지 않는다 · 브랜드·상품 단어, 스킬 설명, MCP 설명은 각자 단어장(dom: 브랜드·상품 · 스킬 · MCP)으로 따로 둔다",
-        "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록 · fix/req 고칠 단어 · fixDone 고친 기록) · vo.marks/lec(강의 탭 표시) · vo.marks/add(items 붙여 넣어 올린 단어 · move 옮긴 후보) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");
+        "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록 · fix/req 고칠 단어 · fixDone 고친 기록) · vo.marks/lec(강의 탭 표시) · vo.marks/add(items 붙여 넣어 올린 단어 — cat 이 넣을 분야 · move 옮긴 후보 · cat 옮긴 후보의 넣을 분야 — 볼트에 넣을 때 그 단어장 페이지의 그 「## 분야」 표로) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");
     },
     tools: [
       { name: "vocab_fix_done", description: "고칠 단어 하나를 다 고쳤을 때 「이 단어는 고쳐요」 표시와 적은 글을 풀고, 무엇을 고쳤는지 한 줄 남긴다 (예: 뜻 고침 · 위키 페이지 새로 만듦). 볼트를 실제로 고친 뒤에만.",

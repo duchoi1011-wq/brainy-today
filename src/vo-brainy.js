@@ -31,10 +31,10 @@
         "- ③·④: " + by[3].concat(by[4]).slice(0, 40).join(", "),
         "- 오늘 복습할 단어(" + due.length + "): " + due.slice(0, 40).join(", "),
         "- 고칠 단어 " + fixList().length + "개(동욱이 「이 단어는 고쳐요」로 표시하고 오류·중복을 적은 것, progress/<id>.fix·.req — 단어장 · 단어 — 적은 글): " + fixList().slice(0, 30).map(function (t) { return t.dom + " · " + t.term + " — " + (reqOf(t.id).slice(0, 120) || "(글 없음)"); }).join(" / "),
-        "- 붙여 넣어 올리거나 옮긴 단어(vo.marks/add — 아직 볼트에 없을 수 있음): " + addItems().slice(0, 30).map(function (t) { return t.dom + " · " + t.term; }).concat(Object.keys(ADD.move || {}).slice(0, 30).map(function (id) { return ADD.move[id] + " ← " + (BYID[id] ? BYID[id].term : id); })).join(", "),
+        "- 붙여 넣어 올리거나 옮긴 단어(vo.marks/add — 아직 볼트에 없을 수 있음): " + addItems().slice(0, 30).map(function (t) { return t.dom + (t.cat && t.cat !== t.dom ? " · " + t.cat : "") + " · " + t.term; }).concat(Object.keys(ADD.move || {}).slice(0, 30).map(function (id) { return ADD.move[id] + (ADD.cat && ADD.cat[id] ? " · " + ADD.cat[id] : "") + " ← " + (BYID[id] ? BYID[id].term : id); })).join(", "),
         "- 단어장: " + Object.keys(DOMAINS).map(function (d) { return d + " " + ALL.filter(function (t) { return t.dom === d; }).length; }).join(" · "),
         "- 단어를 새로 넣거나 정리할 때 규칙: 맥 단축키 앱과 겹치는 내용은 한쪽에만 둔다(단축키는 단축키 앱, 개념 설명은 단어장) · 동욱이 이미 알 만한 기본 단어는 넣지 않는다 · 브랜드·상품 단어, 스킬 설명, MCP 설명은 각자 단어장(dom: 브랜드·상품 · 스킬 · MCP)으로 따로 둔다",
-        "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록 · fix/req 고칠 단어 · fixDone 고친 기록) · vo.marks/lec(강의 탭 표시) · vo.marks/add(items 붙여 넣어 올린 단어 · move 옮긴 후보) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");
+        "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록 · fix/req 고칠 단어 · fixDone 고친 기록) · vo.marks/lec(강의 탭 표시) · vo.marks/add(items 붙여 넣어 올린 단어 — cat 이 넣을 분야 · move 옮긴 후보 · cat 옮긴 후보의 넣을 분야 — 볼트에 넣을 때 그 단어장 페이지의 그 「## 분야」 표로) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");
     },
     tools: [
       { name: "vocab_fix_done", description: "고칠 단어 하나를 다 고쳤을 때 「이 단어는 고쳐요」 표시와 적은 글을 풀고, 무엇을 고쳤는지 한 줄 남긴다 (예: 뜻 고침 · 위키 페이지 새로 만듦). 볼트를 실제로 고친 뒤에만.",
