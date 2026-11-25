@@ -367,8 +367,8 @@ function splitDomHtml(){
   const dom = S.domain, cand = candOf(dom), mine = addItems().filter(x => x.dom === dom).length, cs = addCats(dom), ac = addCat(dom);
   const ex = { "브랜드·상품": "예: 상세페이지 — 상품을 사기 전 마지막으로 읽는 긴 소개 페이지", "스킬": "예: content-source — 콘텐츠 소재와 출처를 찾아 주는 스킬", "MCP": "예: Supabase MCP — Claude가 Supabase 표를 읽고 쓰게 이어 주는 연결" }[dom];
   const catSel = cs.length ? `<label class="small muted" style="display:flex;gap:8px;align-items:center">후보·올린 단어가 들어갈 분야<select id="addCat" aria-label="넣을 분야" style="flex:1;min-width:0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><option value="">분야 없이</option>${cs.map(c => `<option${c === ac ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : "";
-  return `<section class="card stack">
-    <details id="candBox"${S.candOpen ? " open" : ""}><summary style="cursor:pointer"><h2 style="display:inline">후보 ${cand.length}개 · 다른 단어장에서 찾은 ${esc(dom)} 단어</h2> <span class="small muted">${S.candOpen ? "접기" : "펼치기"}</span></summary><div class="stack" style="margin-top:12px">${catSel}
+  return `${catSel ? `<section class="card stack">${catSel}</section>` : ""}<section class="card stack">
+    <details id="candBox"${S.candOpen ? " open" : ""}><summary style="cursor:pointer"><h2 style="display:inline">후보 ${cand.length}개 · 다른 단어장에서 찾은 ${esc(dom)} 단어</h2> <span class="small muted" style="white-space:nowrap">${S.candOpen ? "접기" : "펼치기"}</span></summary><div class="stack" style="margin-top:12px">
     ${cand.length ? `<div class="list">${cand.map(t => `<div class="row" style="cursor:default"><div class="t"><b>${esc(t.term)}</b><span>${esc(t.dom)} · ${esc(t.def)}</span></div><button class="btn ghost" data-act="candin" data-id="${t.id}" style="padding:6px 12px">넣기</button></div>`).join("")}</div>
       <button class="btn ghost" data-act="candall">후보 ${cand.length}개 모두 넣기</button>` : `<p class="small muted">다른 단어장에 ${esc(dom)} 후보가 없어요. 아래에 붙여 넣어 올려 보세요.</p>`}
     </div></details>
@@ -689,7 +689,7 @@ document.addEventListener("click", e => {
     document.activeElement?.blur?.();
     if (!got.length) { S.addTxt = box?.value || ""; note = "올릴 새 단어가 없어요. 한 줄에 「이름 — 설명」으로 붙여 넣어 주세요."; render(); return; }
     note = ""; S.addTxt = ""; ADD.items = addItems().concat(got); saveAdd("올린 단어");
-    const msg = note = `${got.length}개를 ${S.domain} 단어장에 올렸어요.`; render();
+    const msg = note = `${got.length}개를 ${S.domain}${addCat(S.domain) ? " · " + addCat(S.domain) : ""} 단어장에 올렸어요.`; render();
     setTimeout(() => { if (note === msg) { note = ""; render(); } }, 4000); return;
   }
   if (d.listcat) { S.listCat = d.listcat; render(); return; }
