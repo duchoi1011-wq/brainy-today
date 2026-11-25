@@ -232,6 +232,7 @@ function rebuild(){
   CATS = DOMAINS[S.domain].filter(c => TERMS.some(t => t.cat === c));
 }
 const DOMKEY = "chewha-vocab-domain";
+const ADDCATKEY = "chewha-vocab-addcat";   // 고른 「넣을 분야」 — 이 기기에만 기억
 let TERMS = ALL, CATS = [];
 function setDomain(d){
   d = { "브랜드·상품 페이지": "브랜드·상품", "스킬·MCP": "스킬" }[d] || d;
@@ -304,7 +305,8 @@ let mode = "loading";   // loading | db | local
 let note = "";
 let db = null, sample = null, sampleChecked = false;
 let pendingRender = false;
-const S = { scen: 0, listCat: "all", listQ: "", detail: null, reqEdit: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null, fieldCat: "", fieldMode: "" };
+const S = { scen: 0, listCat: "all", listQ: "", detail: null, reqEdit: null, domain: "학습 단어장", stage: 1, pick: new Set(), batch: null, fieldCat: "", fieldMode: "", addCat: "", candOpen: false };
+try { S.addCat = localStorage.getItem(ADDCATKEY) || ""; } catch(e) {}
 
 const lv = id => prog[id]?.level || 1;
 const isCore = id => (typeof prog[id]?.core === "boolean") ? prog[id].core : CORE.has(id);
@@ -366,9 +368,10 @@ function splitDomHtml(){
   const ex = { "브랜드·상품": "예: 상세페이지 — 상품을 사기 전 마지막으로 읽는 긴 소개 페이지", "스킬": "예: content-source — 콘텐츠 소재와 출처를 찾아 주는 스킬", "MCP": "예: Supabase MCP — Claude가 Supabase 표를 읽고 쓰게 이어 주는 연결" }[dom];
   const catSel = cs.length ? `<label class="small muted" style="display:flex;gap:8px;align-items:center">후보·올린 단어가 들어갈 분야<select id="addCat" aria-label="넣을 분야" style="flex:1;min-width:0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><option value="">분야 없이</option>${cs.map(c => `<option${c === ac ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : "";
   return `<section class="card stack">
-    <h2>후보 ${cand.length}개 · 다른 단어장에서 찾은 ${esc(dom)} 단어</h2>${catSel}
+    <details id="candBox"${S.candOpen ? " open" : ""}><summary style="cursor:pointer"><h2 style="display:inline">후보 ${cand.length}개 · 다른 단어장에서 찾은 ${esc(dom)} 단어</h2> <span class="small muted">${S.candOpen ? "접기" : "펼치기"}</span></summary><div class="stack" style="margin-top:12px">${catSel}
     ${cand.length ? `<div class="list">${cand.map(t => `<div class="row" style="cursor:default"><div class="t"><b>${esc(t.term)}</b><span>${esc(t.dom)} · ${esc(t.def)}</span></div><button class="btn ghost" data-act="candin" data-id="${t.id}" style="padding:6px 12px">넣기</button></div>`).join("")}</div>
       <button class="btn ghost" data-act="candall">후보 ${cand.length}개 모두 넣기</button>` : `<p class="small muted">다른 단어장에 ${esc(dom)} 후보가 없어요. 아래에 붙여 넣어 올려 보세요.</p>`}
+    </div></details>
   </section>
   <section class="card stack">
     <h2>붙여 넣어 올리기</h2>
@@ -440,7 +443,6 @@ function renderHome(){
   ${S.domain === "브랜드·상품" ? `<p class="note">프로그램·서비스·상품 이름을 모은 단어장이에요. 지금은 ${TERMS.length}개이고, 「분야」 탭에서 분야마다 따로 볼 수 있어요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "스킬" ? `<p class="note">내가 모아 둔 스킬을 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "MCP" ? `<p class="note">내가 연결한 MCP(Claude와 바깥 도구를 잇는 연결)를 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
-  ${splitDomHtml()}
   <section class="card stack">
     <h2>오늘 할 일</h2>
     <div class="list">
@@ -450,6 +452,7 @@ function renderHome(){
       ${fixList().length ? `<a class="row" href="#list" data-listcat="fix" style="text-decoration:none"><div class="t"><b>고칠 단어 ${fixList().length}개</b><span>「이 단어는 고쳐요」로 표시하고 오류·중복을 적어 둔 단어 — 모든 단어장</span></div><span class="why">모아 보기 →</span></a>` : ""}
     </div>
   </section>
+  ${splitDomHtml()}
   <section class="card">
     <h2>이해도 지도</h2>
     ${barHtml(all, TERMS.length)}
@@ -696,7 +699,8 @@ document.addEventListener("click", e => {
     S.detail = d.detail; if (view() !== "list") { S.jump = true; location.hash = "list"; } else { render(); showDetail(); } return;
   }
 });
-document.addEventListener("change", e => { if (e.target?.id === "addCat") S.addCat = e.target.value; });
+document.addEventListener("change", e => { if (e.target?.id === "addCat") { S.addCat = e.target.value; try { localStorage.setItem(ADDCATKEY, S.addCat); } catch(err) {} } });
+document.addEventListener("toggle", e => { if (e.target?.id === "candBox") { S.candOpen = e.target.open; const m = e.target.querySelector("summary .muted"); if (m) m.textContent = S.candOpen ? "접기" : "펼치기"; } }, true);
 document.addEventListener("input", e => {
   if (e.target.id === "listQ") { S.listQ = e.target.value; document.getElementById("listOut").innerHTML = listRows(); }
 });
