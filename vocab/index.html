@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "67165058fd"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=67165058fd"></script>
+<script>window.BRAINY_VERSION = "d6784fa77a"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=d6784fa77a"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -543,6 +543,12 @@ function splitDomHtml(){
   </section>`;
 }
 const view = () => (location.hash || "#home").slice(1);
+/* 누른 자리가 화면 아래쪽이어도 보이는 알림 — 밑 탭 바 바로 위에 4초 */
+function toast(msg){
+  let el = document.getElementById("toast");
+  if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); el.style.cssText = "position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;padding:10px 14px;border-radius:10px;background:var(--ink);color:var(--bg);font-size:14px;z-index:60;box-shadow:0 4px 14px rgba(0,0,0,.18)"; document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 4000);
+}
 /* 단어장 탭이 폰에서 넘치면 잘린 쪽을 흐리게 — 옆으로 더 있다는 표시 (2026-11-25 동욱). 고른 탭은 보이는 곳으로 */
 function domEdge(show){
   const el = document.getElementById("dom"); if (!el) return;
@@ -837,7 +843,7 @@ document.addEventListener("click", e => {
     else { note = "Brainy 대화창을 아직 못 불러왔어요. 잠시 뒤 다시 눌러 주세요."; render(); }
     return;
   }
-  if (d.act === "candin" || d.act === "candout") { const mv = { ...(ADD.move || {}) }; const ct = { ...(ADD.cat || {}) }; if (d.act === "candin") { mv[d.id] = S.domain; if (addCat(S.domain)) ct[d.id] = addCat(S.domain); else delete ct[d.id]; } else { delete mv[d.id]; delete ct[d.id]; } ADD.move = mv; ADD.cat = ct; if (d.act === "candout") S.detail = null; else { const tm = BYID[d.id]; note = `「${tm ? tm.term : "단어"}」를 ${S.domain}${ct[d.id] ? " · " + ct[d.id] : ""}에 넣었어요 — 「분야」 탭에서 볼 수 있어요.`; const msg = note; setTimeout(() => { if (note === msg) { note = ""; render(); } }, 4000); } saveAdd("단어 옮기기"); return; }
+  if (d.act === "candin" || d.act === "candout") { const mv = { ...(ADD.move || {}) }; const ct = { ...(ADD.cat || {}) }; if (d.act === "candin") { mv[d.id] = S.domain; if (addCat(S.domain)) ct[d.id] = addCat(S.domain); else delete ct[d.id]; } else { delete mv[d.id]; delete ct[d.id]; } ADD.move = mv; ADD.cat = ct; if (d.act === "candout") S.detail = null; else { const tm = BYID[d.id]; toast(`「${tm ? tm.term : "단어"}」를 ${S.domain}${ct[d.id] ? " · " + ct[d.id] : ""}에 넣었어요 — 「분야」 탭에서 볼 수 있어요.`); } saveAdd("단어 옮기기"); return; }
   if (d.act === "candall") { const mv = { ...(ADD.move || {}) }, ct = { ...(ADD.cat || {}) }, c = addCat(S.domain); candOf(S.domain).forEach(t => { mv[t.id] = S.domain; if (c) ct[t.id] = c; else delete ct[t.id]; }); ADD.move = mv; ADD.cat = ct; saveAdd("단어 옮기기"); return; }
   if (d.act === "mydel") { ADD.items = addItems().filter(x => x.id !== d.id); S.detail = null; saveAdd("단어 지우기"); return; }
   if (d.act === "addup") {
