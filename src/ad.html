@@ -173,9 +173,69 @@ tr:last-child td { border-bottom: 0; }
 .status-line { font-size: .82rem; color: var(--muted); }
 .warn { color: var(--doing); }
 
+.trow2 .head .book-link { font-size: .8rem; text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; }
+
+/* 교과서 — 노트의 「한눈에·외울 것·더보기·확인 문제」를 요약집처럼 (2026-11-27 동욱 「고등학교 교과서 요약집처럼, 더보기로 교과서 내용, 바로 Brainy한테 질문」) */
+.book { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: start; }
+.toc { padding: 6px 0; position: sticky; top: calc(12px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 24px); overflow: auto; }
+.toc summary { list-style: none; padding: 10px 14px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; min-height: 44px; align-items: center; }
+.toc summary::-webkit-details-marker { display: none; }
+.toc .wkh { padding: 10px 14px 4px; font-size: .76rem; font-weight: 600; color: var(--muted); letter-spacing: .03em; }
+.toc a { display: grid; grid-template-columns: 30px 1fr auto; gap: 6px; align-items: center; padding: 7px 14px; text-decoration: none; color: var(--ink); font-size: .86rem; line-height: 1.35; min-height: 40px; border-left: 3px solid transparent; }
+.toc a:hover { background: var(--sunk); }
+.toc a[aria-current="page"] { background: var(--sunk); border-left-color: var(--accent); font-weight: 600; }
+.toc a .tid { font-family: var(--font-num); font-size: .74rem; color: var(--muted); }
+.toc a .nob { color: var(--muted); }
+.toc a.memo-link { font-weight: 600; color: var(--accent); grid-template-columns: 30px 1fr; }
+.lesson { display: grid; gap: 14px; min-width: 0; }
+.lesson .lhead { display: grid; gap: 6px; }
+.lesson .lhead .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.lesson .lhead .tid { font-family: var(--font-num); font-size: .8rem; color: var(--muted); }
+.lesson h2 { font-size: 1.3rem; }
+.lesson .box2 { padding: 14px 16px; display: grid; gap: 10px; }
+.lesson .box2 > h3 { font-size: .82rem; color: var(--muted); letter-spacing: .04em; }
+.prose { display: grid; gap: 8px; font-size: .93rem; min-width: 0; }
+.prose h4 { margin: 10px 0 0; font-size: .95rem; padding-left: 8px; border-left: 3px solid var(--accent); }
+.prose h4:first-child { margin-top: 0; }
+.prose ul, .prose ol { margin: 0; padding-left: 22px; display: grid; gap: 3px; }
+.prose ul ul { margin-top: 3px; }
+.prose .lab { font-weight: 600; margin-top: 4px; }
+.prose table.kvt { min-width: 0; width: 100%; border: 1px solid var(--line); border-radius: 8px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+.prose table.kvt th { width: 96px; background: var(--sunk); color: var(--ink); font-size: .84rem; vertical-align: top; }
+.prose table.kvt th, .prose table.kvt td { padding: 8px 12px; }
+.star { color: var(--doing); font-weight: 700; }
+.memo-box { background: color-mix(in srgb, var(--doing) 9%, var(--surface)); border-color: color-mix(in srgb, var(--doing) 40%, var(--line)); }
+.memo-box ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-weight: 600; }
+details.more { padding: 0; }
+details.more > summary, .quiz summary { cursor: pointer; padding: 12px 16px; font-weight: 600; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+details.more > summary { color: var(--accent); }
+details.more > .prose { padding: 0 16px 16px; }
+.quiz { display: grid; gap: 0; }
+.quiz details { border-top: 1px solid var(--line); }
+.quiz details:first-of-type { border-top: 0; }
+.quiz summary { font-weight: 500; }
+.quiz .ans { padding: 0 16px 12px 40px; color: var(--ink); font-size: .92rem; }
+.quiz .ans b { color: var(--ok); }
+.ask { padding: 14px 16px; display: grid; gap: 10px; border-left: 4px solid var(--accent); }
+.ask .chips2 { display: flex; flex-wrap: wrap; gap: 6px; }
+.ask .chips2 button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 6px 12px; font-size: .84rem; min-height: 36px; }
+.ask .chips2 button:hover { border-color: var(--accent); }
+.ask form { display: flex; gap: 6px; }
+.ask form button { border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 6px 14px; font-weight: 600; font-size: .88rem; }
+.lnav { display: flex; justify-content: space-between; gap: 10px; }
+.lnav a { display: inline-flex; align-items: center; min-height: 44px; font-size: .88rem; text-decoration: none; }
+.memo-all { display: grid; gap: 12px; }
+.memo-all .panel { padding: 12px 16px; display: grid; gap: 6px; }
+.memo-all .panel a { font-weight: 600; text-decoration: none; }
+.memo-all ul { margin: 0; padding-left: 20px; display: grid; gap: 3px; }
+.quiz .qh { padding: 12px 16px 0; font-size: .82rem; color: var(--muted); letter-spacing: .04em; }
+.lstate { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.glossary.flat { padding: 0; border: 0; }
+
 @media (max-width: 920px) { .boards, .next { grid-template-columns: 1fr; } }
 @media (max-width: 760px) {
-  .principles, .glossary, .summary { grid-template-columns: 1fr; }
+  .principles, .glossary, .summary, .book { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
   .glossary div { grid-template-columns: 84px 1fr; }
   /* 폰: 커리큘럼 표를 주차별 세로 목록으로 */
   .grid-scroll { overflow: visible; }
@@ -194,6 +254,8 @@ tr:last-child td { border-bottom: 0; }
   .addlog button { min-height: 44px; }
   .views a { padding: 12px 18px; }
   .links a { min-height: 44px; }
+  .ask form button, .ask .chips2 button { min-height: 44px; }
+  .prose table.kvt th { width: 76px; }
   .trow { grid-template-columns: 96px 1fr 84px; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
@@ -208,6 +270,7 @@ tr:last-child td { border-bottom: 0; }
     </div>
     <nav class="views" aria-label="화면 전환">
       <a href="#run" id="tab-run">실행</a>
+      <a href="#book" id="tab-book">교과서</a>
       <a href="#learn" id="tab-learn">학습 전략</a>
     </nav>
   </header>
@@ -253,6 +316,13 @@ tr:last-child td { border-bottom: 0; }
       </div>
       <div class="panel metrics" id="metrics"></div>
     </section>
+  </main>
+
+  <main id="view-book" class="view" hidden>
+    <div class="book">
+      <details class="toc panel" id="toc-box" open><summary><span id="toc-sum">목차</span><span class="muted small" aria-hidden="true">▾</span></summary><nav id="toc" aria-label="교과서 목차"></nav></details>
+      <article class="lesson" id="lesson"><p class="empty">볼트 태스크 읽는 중…</p></article>
+    </div>
   </main>
 
   <main id="view-learn" class="view" hidden>
@@ -303,7 +373,9 @@ tr:last-child td { border-bottom: 0; }
 /* 광고 실습 — 볼트 3_Action 태스크와 같이 움직이는 광고 학습·집행판 (2026-11-24 동욱 「볼트의 액션과 연동되서 움직이도록」).
    읽는 것: ad.data/main = {plan, tasks} — 맥 동기화(볼트 .claude/scripts/ad_app.py)가 올린다.
      plan  = 볼트 4_Outputs/광고 실습 앱/광고 실습 계획.json (원칙·전략판·주차·용어·숫자 칸). 내용은 거기만 고친다.
-     tasks = 계획의 태스크 목록 + 그 이름의 태스크 노트(상태·예상·담당·배우는 것·완료 기준·최근 로그). 상태의 정본은 노트다.
+     tasks = 계획의 태스크 목록 + 그 이름의 태스크 노트(상태·예상·담당·완료 기준·최근 로그·교과서 칸 book). 상태의 정본은 노트다.
+     book = {glance 「## 한눈에」, memo 「## 외울 것」 줄들, more 「## 더보기」, quiz [{q, a}] 「## 확인 문제」} — 교과서 화면(#book/<번호>)이 요약집처럼 보여 준다.
+     교과서의 「Brainy에게 묻기」는 공통 대화창(brainy-chat.js)으로 바로 보낸다 — 지금 과의 내용은 ad-brainy.js 의 ctx() 가 같이 보낸다.
    쓰는 것: taskwork/ad-<번호> 하나뿐 {task, from, status, steps{본문 체크칸 번호: 참/거짓}, log[{at,text}], synced:false, updatedAt}
      → 맥의 task_sync.py 가 노트의 status·체크·로그(허브·데일리 노트·실행 로그까지)에 넣고 synced=true 로 바꾼다.
      넣기 전까지는 누른 값을 「볼트에 넣는 중」으로 보여 주고, 넣은 뒤엔 노트에서 다시 읽은 값을 보여 준다. */
@@ -311,7 +383,7 @@ tr:last-child td { border-bottom: 0; }
   "use strict";
   var PLAN = null, TASKS = [], CH = [], DB = null, DATA_AT = "";
   var TW = {};       // 이 앱의 작업실 문서 (taskwork/ad-<번호>)
-  var ui = { week: 1, prod: "both", open: null };
+  var ui = { week: 1, prod: "both", open: null, lesson: "" };
   var queue = {};    // 문서 하나에 한 번씩 저장, 저장 중 바뀐 마지막 값까지
   var STATES = ["할일", "진행", "완료", "보류"];
 
@@ -344,14 +416,131 @@ tr:last-child td { border-bottom: 0; }
   function canWrite(t) { return !!(DB && t && t.exists); }
 
   /* ---------- 화면 전환 ---------- */
+  function view() { var h = location.hash; return h.indexOf("#book") === 0 ? "book" : h === "#learn" ? "learn" : "run"; }
   function route() {
-    var v = location.hash === "#learn" ? "learn" : "run";
-    $("view-run").hidden = v !== "run";
-    $("view-learn").hidden = v !== "learn";
-    $("tab-run").setAttribute("aria-current", v === "run" ? "page" : "false");
-    $("tab-learn").setAttribute("aria-current", v === "learn" ? "page" : "false");
+    var v = view();
+    ["run", "book", "learn"].forEach(function (k) { $("view-" + k).hidden = v !== k; $("tab-" + k).setAttribute("aria-current", v === k ? "page" : "false"); });
+    if (v === "book") {
+      var id = decodeURIComponent(location.hash.split("/")[1] || "");
+      ui.lesson = id || store("ad.lesson") || "";
+      if (ui.lesson) store("ad.lesson", ui.lesson);
+      $("tab-book").setAttribute("href", "#book" + (ui.lesson ? "/" + ui.lesson : ""));
+    }
   }
-  window.addEventListener("hashchange", route);
+  window.addEventListener("hashchange", function () {
+    var was = ui.lesson; route();
+    if (PLAN && view() === "book") {
+      renderBook();
+      if (was !== ui.lesson) { window.scrollTo(0, 0); if (window.matchMedia("(max-width: 760px)").matches) $("toc-box").open = false; }
+    }
+  });
+
+  /* ---------- 교과서 — 노트 마크다운을 요약집 모양으로 (표 · 번호/점 목록 · ### 소제목 · ★) ---------- */
+  function inl(x) { return md(x).replace(/★/g, '<span class="star">★</span>'); }
+  function mdBlock(src) {
+    var L = String(src || "").split("\n"), out = [], i = 0, LI = /^(\s*)(\d+\.|[-*])\s+(.*)$/;
+    while (i < L.length) {
+      var l = L[i];
+      if (!l.trim()) { i++; continue; }
+      var h = l.match(/^#{3,6}\s+(.*)$/);
+      if (h) { out.push("<h4>" + inl(h[1]) + "</h4>"); i++; continue; }
+      if (/^\s*\|/.test(l)) {
+        var rows = [];
+        for (; i < L.length && /^\s*\|/.test(L[i]); i++) {
+          if (/^\s*\|[\s:|-]+\|?\s*$/.test(L[i])) continue;
+          rows.push(L[i].trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(function (c) { return c.trim(); }));
+        }
+        out.push('<table class="kvt">' + rows.map(function (r) { return "<tr><th>" + inl(r[0]) + "</th><td>" + inl(r.slice(1).join(" · ")) + "</td></tr>"; }).join("") + "</table>");
+        continue;
+      }
+      if (LI.test(l)) {
+        var ord = /^\d+\./.test(l.trim()), items = [];
+        for (; i < L.length && LI.test(L[i]); i++) {
+          var m = L[i].match(LI);
+          if (m[1].length >= 2 && items.length) items[items.length - 1].sub.push(m[3]); else items.push({ t: m[3], sub: [] });
+        }
+        var tag = ord ? "ol" : "ul";
+        out.push("<" + tag + ">" + items.map(function (it) { return "<li>" + inl(it.t) + (it.sub.length ? "<ul>" + it.sub.map(function (x) { return "<li>" + inl(x) + "</li>"; }).join("") + "</ul>" : "") + "</li>"; }).join("") + "</" + tag + ">");
+        continue;
+      }
+      var para = [];
+      for (; i < L.length && L[i].trim() && !LI.test(L[i]) && !/^\s*\|/.test(L[i]) && !/^#{3,6}\s/.test(L[i]); i++) para.push(L[i].trim());
+      var one = para.join(" ");
+      out.push(/^\*\*[^*]+\*\*$/.test(one) ? '<p class="lab">' + inl(one.replace(/^\*\*|\*\*$/g, "")) + "</p>" : "<p>" + inl(one) + "</p>");
+    }
+    return '<div class="prose">' + out.join("") + "</div>";
+  }
+  function hasBook(t) { var b = t && t.book; return !!(b && (b.glance || b.more || (b.memo || []).length)); }
+  function lessonList() {   // 주차 → 트랙 순서 (커리큘럼 표와 같은 순서)
+    var o = [];
+    PLAN.weeks.forEach(function (wk) { PLAN.tracks.forEach(function (tr) { TASKS.forEach(function (t) { if (t.week === wk.week && t.track === tr.id) o.push(t); }); }); });
+    return o;
+  }
+  function curLesson() { if (ui.lesson === "memo") return null; return taskBy(ui.lesson) || lessonList()[0] || null; }
+  var bookSig = "";
+  function renderBook() {
+    if (!PLAN) return;
+    var list = lessonList(), cur = curLesson(), isMemo = ui.lesson === "memo";
+    var toc = '<a href="#book/memo" class="memo-link"' + (isMemo ? ' aria-current="page"' : "") + '><span>★</span><span>외울 것 모음 (부록)</span></a>';
+    PLAN.weeks.forEach(function (wk) {
+      var w = list.filter(function (t) { return t.week === wk.week; }); if (!w.length) return;
+      toc += '<div class="wkh">' + wk.week + "주 · " + esc(wk.label) + "</div>" + w.map(function (t) {
+        var st = stateOf(t.id);
+        return '<a href="#book/' + esc(t.id) + '"' + (!isMemo && cur && cur.id === t.id ? ' aria-current="page"' : "") + '><span class="tid">' + esc(t.id) + "</span><span" + (hasBook(t) ? "" : ' class="nob"') + ">" + esc(name(t)) + "</span>" +
+          (st !== "할일" ? '<span class="state-mark ' + st + '">' + st + "</span>" : "<span></span>") + "</a>";
+      }).join("");
+    });
+    $("toc").innerHTML = toc;
+    $("toc-sum").textContent = isMemo ? "목차 · 외울 것 모음" : cur ? "목차 · " + cur.id + " " + name(cur) : "목차";
+    // 본문은 내용이 바뀔 때만 새로 그린다 — 펼친 더보기·확인 문제 답, 쓰던 질문이 사라지지 않게. 체크·상태 값은 syncRows 가 맞춘다
+    var sig = isMemo ? "memo|" + JSON.stringify(list.map(function (t) { return [t.id, (t.book || {}).memo]; })) + JSON.stringify(PLAN.glossary) :
+      cur ? cur.id + "|" + JSON.stringify(cur.book || {}) + "|" + (cur.crit || []).map(function (k) { return k.box + k.t; }).join(",") + "|" + cur.exists + "|" + !!window.BRAINY_CHAT : "none";
+    if (sig !== bookSig) { bookSig = sig; $("lesson").innerHTML = isMemo ? memoHtml(list) : cur ? lessonHtml(cur, list) : '<p class="empty">아직 과가 없어요.</p>'; }
+    syncRows();
+  }
+  function lessonHtml(t, list) {
+    var b = t.book || {}, k = list.indexOf(t), prev = list[k - 1], next = list[k + 1];
+    var trackChip = isCh(t.track) ? '<span class="chip ' + t.track + '">' + esc(PLAN.channels[t.track].short) + "</span>" : '<span class="chip plain">' + esc(track(t.track).name) + "</span>";
+    var off = canWrite(t) ? "" : " disabled";
+    var crit = (t.crit || []).map(function (c) {
+      return '<button type="button" data-crit="' + esc(t.id) + '" data-box="' + c.box + '" aria-pressed="false"' + off + '><span class="box" aria-hidden="true"></span><span class="ct">' + md(c.t) + "</span></button>";
+    }).join("");
+    var h = '<header class="lhead"><div class="meta"><span class="tid">' + esc(t.id) + " · " + t.week + "주차" + (t.estimate ? " · " + esc(t.estimate) : "") + "</span>" + trackChip + t.products.map(prodChip).join("") + "</div><h2>" + esc(name(t)) + "</h2></header>";
+    if (!hasBook(t)) h += '<p class="panel empty">이 과는 아직 교과서 원고가 없어요. 아래에서 Brainy에게 바로 물어볼 수 있어요.</p>';
+    if (b.glance) h += '<section class="panel box2"><h3>한눈에</h3>' + mdBlock(b.glance) + "</section>";
+    if ((b.memo || []).length) h += '<section class="panel box2 memo-box"><h3>★ 외울 것</h3><ul>' + b.memo.map(function (x) { return "<li>" + inl(x) + "</li>"; }).join("") + "</ul></section>";
+    if (b.more) h += '<details class="panel more"><summary>더보기 — 교과서 본문 (왜 하나 · 개념 풀이 · 따라 하기 · 자주 하는 실수)</summary>' + mdBlock(b.more) + "</details>";
+    if ((b.quiz || []).length) h += '<section class="panel quiz"><h3 class="qh">확인 문제 — 눌러서 답 보기</h3>' +
+      b.quiz.map(function (q, n) { return "<details><summary>Q" + (n + 1) + ". " + inl(q.q) + '</summary><p class="ans"><b>A.</b> ' + inl(q.a || "노트에 답이 없어요") + "</p></details>"; }).join("") + "</section>";
+    h += '<section class="panel ask"><h3>Brainy에게 묻기</h3>' + (window.BRAINY_CHAT ?
+      '<div class="chips2">' + ["이 과를 더 쉽게 설명해 줘", "우리 숫자로 예를 들어 줘", "따라 하기 1단계부터 같이 하자", "확인 문제 하나 더 내 줘"].map(function (q) { return '<button type="button" data-ask="' + esc(q) + '">' + esc(q) + "</button>"; }).join("") + "</div>" +
+      '<form data-askform><input class="note" name="q" placeholder="이 과에서 궁금한 것 (예: 품질지수는 어떻게 올려?)" maxlength="500" autocomplete="off" enterkeyhint="send" aria-label="Brainy에게 물을 것"><button type="submit">묻기</button></form>' +
+      '<p class="small muted">지금 보는 과의 내용이 같이 가서 이 과 기준으로 답해요. 대화창은 오른쪽 아래(폰은 아래)에 열려요.</p>' :
+      '<p class="small muted">Brainy 대화창을 못 불러왔어요. 새로고침해 주세요.</p>') + "</section>";
+    h += '<section class="panel box2" data-row="' + esc(t.id) + '"><h3>완료 기준 — 누르면 볼트 노트에 체크돼요</h3>' +
+      (t.exists ? "" : '<p class="small warn">볼트에 「' + esc(t.title) + '」 노트가 없어 체크할 수 없어요.</p>') +
+      (crit ? '<div class="crit" role="group" aria-label="' + esc(t.id) + ' 완료 기준">' + crit + "</div>" : '<p class="small muted">노트에 완료 기준 칸이 없어요.</p>') +
+      '<div class="lstate"><span class="small muted">상태</span>' + stateSeg(t) + '<span class="chip pend" data-pend="' + esc(t.id) + '" hidden>볼트에 넣는 중</span></div></section>';
+    h += '<nav class="lnav" aria-label="앞뒤 과">' + (prev ? '<a href="#book/' + esc(prev.id) + '">← ' + esc(prev.id) + " " + esc(name(prev)) + "</a>" : "<span></span>") +
+      (next ? '<a href="#book/' + esc(next.id) + '">' + esc(next.id) + " " + esc(name(next)) + " →</a>" : "<span></span>") + "</nav>";
+    return h;
+  }
+  function memoHtml(list) {
+    var withMemo = list.filter(function (t) { return ((t.book || {}).memo || []).length; });
+    return '<header class="lhead"><h2>★ 외울 것 모음</h2><p class="muted small">과마다 「외울 것」을 한데 모았어요. 과 이름을 누르면 그 과로 가요. 원칙 전체는 학습 전략 화면에 있어요.</p></header>' +
+      '<div class="memo-all">' + (withMemo.length ? withMemo.map(function (t) {
+        return '<div class="panel"><a href="#book/' + esc(t.id) + '">' + esc(t.id) + " " + esc(name(t)) + "</a><ul>" + t.book.memo.map(function (x) { return "<li>" + inl(x) + "</li>"; }).join("") + "</ul></div>";
+      }).join("") : '<p class="panel empty">아직 「외울 것」이 적힌 과가 없어요.</p>') + "</div>" +
+      ((PLAN.glossary || []).length ? '<section class="panel box2"><h3>용어</h3><div class="glossary flat">' + PLAN.glossary.map(function (g) { return "<div><b>" + esc(g.term) + '</b><span class="muted">' + esc(g.desc) + "</span></div>"; }).join("") + "</div></section>" : "");
+  }
+  function askBrainy(q) {
+    var t = curLesson(); if (!window.BRAINY_CHAT || !q) return;
+    window.BRAINY_CHAT.ask((t ? "(" + t.id + " " + name(t) + ") " : "") + q);
+  }
+  window.AD_APP = {   // ad-brainy.js 가 읽는 것 — 지금 화면·과
+    view: view, lesson: function () { return view() === "book" ? curLesson() : null; }, lessons: function () { return PLAN ? lessonList() : []; },
+    state: function (id) { return stateOf(id); }, open: function (id) { location.hash = "#book/" + id; }
+  };
 
   /* ---------- 학습 전략 ---------- */
   function renderLearn() {
@@ -424,13 +613,13 @@ tr:last-child td { border-bottom: 0; }
     var box = $("detail"), t = taskBy(ui.open);
     if (!t) { box.hidden = true; return; }
     box.hidden = false;
-    var learn = (t.learn || []).length ? "<ul>" + t.learn.map(function (x) { return "<li>" + md(x) + "</li>"; }).join("") + "</ul>" : '<span class="muted">노트에 적힌 것 없음</span>';
+    var memo = ((t.book || {}).memo || []).length ? "<ul>" + t.book.memo.map(function (x) { return "<li>" + inl(x) + "</li>"; }).join("") + "</ul>" : '<span class="muted">노트에 적힌 것 없음</span>';
     var crit = (t.crit || []).length ? "<ul>" + t.crit.map(function (k) { return "<li>" + (critDone(t.id, k) ? "☑ " : "☐ ") + md(k.t) + "</li>"; }).join("") + "</ul>" : '<span class="muted">노트에 완료 기준 칸이 없음</span>';
     box.innerHTML = '<div class="sec-head"><h3>' + esc(t.id) + " " + esc(name(t)) + '</h3><span class="muted small">' + esc(track(t.track).name) + " · " + t.week + "주차" + (t.recurring ? "부터 매주" : "") + "</span></div>" +
       (t.exists ? "" : '<p class="warn small">볼트에 「' + esc(t.title) + '」 노트가 없어요. Brainy에게 「/log 로 이 태스크 만들어」라고 하면 생겨요.</p>') +
       '<dl class="kv"><dt>상품</dt><dd>' + t.products.map(prodChip).join(" ") + "</dd>" +
       "<dt>상태</dt><dd>" + esc(stateOf(t.id)) + (t.archived ? " · 보관됨" : "") + "</dd>" +
-      "<dt>배우는 것</dt><dd>" + learn + "</dd>" +
+      "<dt>외울 것</dt><dd>" + memo + '<a href="#book/' + esc(t.id) + '">📖 교과서로 보기</a></dd>' +
       "<dt>완료 기준</dt><dd>" + crit + "</dd>" +
       "<dt>담당</dt><dd>" + esc(t.owner || t.worker || "") + "</dd>" +
       '<dt>예상</dt><dd class="num">' + esc(t.estimate || "") + "</dd></dl>" +
@@ -501,7 +690,7 @@ tr:last-child td { border-bottom: 0; }
         return '<button type="button" data-crit="' + esc(t.id) + '" data-box="' + k.box + '" aria-pressed="false"' + off + '><span class="box" aria-hidden="true"></span><span class="ct">' + md(k.t) + "</span></button>";
       }).join("");
       return '<div class="trow2" data-row="' + esc(t.id) + '"><div class="info"><div class="head"><span class="tid">' + esc(t.id) + "</span>" + trackChip + t.products.map(prodChip).join("") +
-        '<span class="small muted num">' + esc(t.estimate || "") + (t.owner ? " · " + esc(t.owner) : "") + '</span><span class="chip pend" data-pend="' + esc(t.id) + '" hidden>볼트에 넣는 중</span></div>' +
+        '<span class="small muted num">' + esc(t.estimate || "") + (t.owner ? " · " + esc(t.owner) : "") + '</span><a class="book-link" href="#book/' + esc(t.id) + '">📖 교과서</a><span class="chip pend" data-pend="' + esc(t.id) + '" hidden>볼트에 넣는 중</span></div>' +
         '<span class="title">' + esc(name(t)) + "</span>" +
         (t.exists ? "" : '<span class="small warn">볼트에 「' + esc(t.title) + '」 노트가 없어 상태·체크·기록을 못 해요. Brainy에게 「/log 로 이 태스크 만들어」라고 하면 열려요.</span>') +
         (crit ? '<div class="crit" role="group" aria-label="' + esc(t.id) + ' 완료 기준">' + crit + "</div>" : "") +
@@ -520,7 +709,7 @@ tr:last-child td { border-bottom: 0; }
       var id = seg.getAttribute("data-task"), st = stateOf(id), t = taskBy(id);
       Array.prototype.forEach.call(seg.querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-v") === st)); b.disabled = !canWrite(t); });
     });
-    Array.prototype.forEach.call(document.querySelectorAll(".trow2"), function (row) {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-row]"), function (row) {
       var id = row.getAttribute("data-row"), t = taskBy(id); if (!t) return;
       row.classList.toggle("is-done", stateOf(id) === "완료");
       var anyPend = statePending(id) || (t.crit || []).some(function (k) { return critPending(id, k); }) || pendLogs(id).length > 0;
@@ -572,7 +761,7 @@ tr:last-child td { border-bottom: 0; }
     var when = at && !isNaN(at) ? at.toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
     $("sync").textContent = n ? "볼트에 넣는 중 " + n + "개 — 맥 동기화가 켜져 있으면 몇 초 안에 들어가요" : "볼트 태스크와 맞춰짐" + (when ? " · " + when : "");
   }
-  function refresh() { renderSummary(); buildWeek(); renderLearn(); renderMetrics(); syncLine(); }
+  function refresh() { renderSummary(); buildWeek(); renderLearn(); renderBook(); renderMetrics(); syncLine(); }
 
   /* ---------- 쓰기 — taskwork/ad-<번호> 한 문서 ---------- */
   function twChange(id, mutate) {
@@ -586,7 +775,7 @@ tr:last-child td { border-bottom: 0; }
     cur.synced = false; cur.updatedAt = new Date().toISOString();
     TW["ad-" + id] = cur;
     save("ad-" + id);
-    renderSummary(); syncRows(); renderLearn(); syncLine();
+    renderSummary(); syncRows(); renderLearn(); renderBook(); syncLine();
   }
   function save(docId) {
     var q = queue[docId] || (queue[docId] = {});
@@ -634,7 +823,15 @@ tr:last-child td { border-bottom: 0; }
       return;
     }
     var lb = e.target.closest("[data-addlog]");
-    if (lb) addLog(lb.getAttribute("data-addlog"));
+    if (lb) { addLog(lb.getAttribute("data-addlog")); return; }
+    var ab = e.target.closest("[data-ask]");
+    if (ab) askBrainy(ab.getAttribute("data-ask"));
+  });
+  document.addEventListener("submit", function (e) {
+    var f = e.target.closest("[data-askform]"); if (!f) return;
+    e.preventDefault();
+    var q = f.q.value.trim(); if (!q) { f.q.focus(); return; }
+    f.q.value = ""; askBrainy(q);
   });
   document.addEventListener("keydown", function (e) {
     var id = e.target.getAttribute && e.target.getAttribute("data-note");
@@ -654,6 +851,7 @@ tr:last-child td { border-bottom: 0; }
   document.addEventListener("focusout", function (e) { if (e.target.getAttribute && e.target.getAttribute("data-note")) setTimeout(flushBuild, 300); });
 
   /* ---------- 시작 ---------- */
+  if (window.matchMedia("(max-width: 760px)").matches) $("toc-box").open = false;   // 폰: 목차는 접어 두고 지금 과 이름만
   route();
   function apply(v) {
     if (!v || !v.plan || !Array.isArray(v.tasks)) return false;
@@ -683,7 +881,7 @@ tr:last-child td { border-bottom: 0; }
         // 저장 중이거나 이 화면에서 더 나중에 고친 것은 이 화면 값을 지킨다
         Object.keys(TW).forEach(function (k) { var qq = queue[k]; if ((qq && qq.busy) || (o[k] && (o[k].updatedAt || "") < (TW[k].updatedAt || "")) || !o[k]) o[k] = TW[k]; });
         TW = o;
-        if (PLAN) { renderSummary(); syncRows(); renderLearn(); syncLine(); }
+        if (PLAN) { renderSummary(); syncRows(); renderLearn(); renderBook(); syncLine(); }
       }, function () {});
     });
   } else {

@@ -154,6 +154,7 @@ SC_BRAINY = "\n" + (root / "src" / "sc-brainy.js").read_text(encoding="utf-8")
 VO_BRAINY = "\n" + (root / "src" / "vo-brainy.js").read_text(encoding="utf-8")
 CT_BRAINY = "\n" + (root / "src" / "content-brainy.js").read_text(encoding="utf-8")
 CR_BRAINY = "\n" + (root / "src" / "course-brainy.js").read_text(encoding="utf-8")
+AD_BRAINY = "\n" + (root / "src" / "ad-brainy.js").read_text(encoding="utf-8")   # 광고 실습 — 교과서 과를 Brainy 에게 묻기
 
 # ═════════════════════════ 맥 단축키 ═════════════════════════
 load("shortcuts.html")
@@ -196,7 +197,7 @@ emit("ad", "광고 실습", "광고 실습", ("#f4f6f2", "#141814"),
      '<link rel="apple-touch-icon" href="ad-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="ad-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="ad-icon-64.png">',
      '{key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]}',
      '{"id":"/brainy-today/ad/","name":"광고 실습","short_name":"광고 실습","start_url":"./","scope":"./","display":"standalone","background_color":"#f4f6f2","theme_color":"#f4f6f2","icons":[{"src":"ad-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ad-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
-     "", BRAINY_CHAT)
+     "", AD_BRAINY + BRAINY_CHAT)
 
 # ═════════════════════════ 콘텐츠 기획 ═════════════════════════
 # 브랜드 → 키워드 → 콘텐츠 → 대본 (편집 믹서 바로 앞 단계). 조종판 — 실행은 맥의 Claude(콘텐츠 스킬 셋).
