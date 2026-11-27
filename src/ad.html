@@ -411,9 +411,10 @@ details.more > .prose { padding: 0 16px 16px; }
     if (p && STATES.indexOf(p.status) >= 0) return p.status;
     return t && STATES.indexOf(t.status) >= 0 ? t.status : "할일";
   }
-  function statePending(id) { var p = pending(id), t = taskBy(id); return !!(p && p.status && t && p.status !== t.status); }
+  // 「넣는 중」은 노트 사본과 비교하지 않고 보낸 값이 있는지로 정한다 — 사본(ad.data)이 늦으면 표시가 일찍 꺼진다 (11-28 검증 F9)
+  function statePending(id) { var p = pending(id); return !!(p && STATES.indexOf(p.status) >= 0); }
   function critDone(id, k) { var p = pending(id); return p && p.steps && typeof p.steps[k.box] === "boolean" ? p.steps[k.box] : !!k.done; }
-  function critPending(id, k) { var p = pending(id); return !!(p && p.steps && typeof p.steps[k.box] === "boolean" && p.steps[k.box] !== !!k.done); }
+  function critPending(id, k) { var p = pending(id); return !!(p && p.steps && typeof p.steps[k.box] === "boolean"); }
   function firstOpenCrit(t) { return (t.crit || []).filter(function (k) { return !critDone(t.id, k); })[0]; }
   function canWrite(t) { return !!(DB && t && t.exists); }
 
