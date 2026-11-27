@@ -178,6 +178,7 @@ tr:last-child td { border-bottom: 0; }
 /* 교과서 — 노트의 「한눈에·외울 것·더보기·확인 문제」를 요약집처럼 (2026-11-27 동욱 「고등학교 교과서 요약집처럼, 더보기로 교과서 내용, 바로 Brainy한테 질문」) */
 .book { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: start; }
 .toc { padding: 6px 0; position: sticky; top: calc(12px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 24px); overflow: auto; }
+@media (min-width: 761px) { .toc summary { pointer-events: none; } .toc summary > span[aria-hidden] { display: none; } }
 .toc summary { list-style: none; padding: 10px 14px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; min-height: 44px; align-items: center; }
 .toc summary::-webkit-details-marker { display: none; }
 .toc .wkh { padding: 10px 14px 4px; font-size: .76rem; font-weight: 600; color: var(--muted); letter-spacing: .03em; }
@@ -491,7 +492,9 @@ details.more > .prose { padding: 0 16px 16px; }
       }).join("");
     });
     $("toc").innerHTML = toc;
-    $("toc-sum").textContent = isMemo ? "목차 · 외울 것 모음" : cur ? "목차 · " + cur.id + " " + name(cur) : "목차";
+    // 폰에서만 접힌 목차에 지금 과를 보여 준다 — 넓은 화면은 목차가 늘 펼쳐져 있어 제목만
+    var narrow = window.matchMedia("(max-width: 760px)").matches;
+    $("toc-sum").textContent = !narrow ? "목차" : isMemo ? "목차 · 외울 것 모음" : cur ? "목차 · " + cur.id + " " + name(cur) : "목차";
     // 본문은 내용이 바뀔 때만 새로 그린다 — 펼친 더보기·확인 문제 답, 쓰던 질문이 사라지지 않게. 체크·상태 값은 syncRows 가 맞춘다
     var sig = isMemo ? "memo|" + JSON.stringify(list.map(function (t) { return [t.id, (t.book || {}).memo]; })) + JSON.stringify(PLAN.glossary) :
       cur ? cur.id + "|" + JSON.stringify(cur.book || {}) + "|" + (cur.crit || []).map(function (k) { return k.box + k.t; }).join(",") + "|" + cur.exists + "|" + !!window.BRAINY_CHAT : "none";
@@ -514,7 +517,7 @@ details.more > .prose { padding: 0 16px 16px; }
       b.quiz.map(function (q, n) { return "<details><summary>Q" + (n + 1) + ". " + inl(q.q) + '</summary><p class="ans"><b>A.</b> ' + inl(q.a || "노트에 답이 없어요") + "</p></details>"; }).join("") + "</section>";
     h += '<section class="panel ask"><h3>Brainy에게 묻기</h3>' + (window.BRAINY_CHAT ?
       '<div class="chips2">' + ["이 과를 더 쉽게 설명해 줘", "우리 숫자로 예를 들어 줘", "따라 하기 1단계부터 같이 하자", "확인 문제 하나 더 내 줘"].map(function (q) { return '<button type="button" data-ask="' + esc(q) + '">' + esc(q) + "</button>"; }).join("") + "</div>" +
-      '<form data-askform><input class="note" name="q" placeholder="이 과에서 궁금한 것 (예: 품질지수는 어떻게 올려?)" maxlength="500" autocomplete="off" enterkeyhint="send" aria-label="Brainy에게 물을 것"><button type="submit">묻기</button></form>' +
+      '<form data-askform><input class="note" name="q" placeholder="이 과에서 궁금한 것" maxlength="500" autocomplete="off" enterkeyhint="send" aria-label="Brainy에게 물을 것"><button type="submit">묻기</button></form>' +
       '<p class="small muted">지금 보는 과의 내용이 같이 가서 이 과 기준으로 답해요. 대화창은 오른쪽 아래(폰은 아래)에 열려요.</p>' :
       '<p class="small muted">Brainy 대화창을 못 불러왔어요. 새로고침해 주세요.</p>') + "</section>";
     h += '<section class="panel box2" data-row="' + esc(t.id) + '"><h3>완료 기준 — 누르면 볼트 노트에 체크돼요</h3>' +
