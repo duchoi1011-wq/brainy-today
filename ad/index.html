@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "3d82f5fc9e"; window.BRAINY_APP = {key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]};</script>
-<script src="../shim.js?v=3d82f5fc9e"></script>
+<script>window.BRAINY_VERSION = "e721293277"; window.BRAINY_APP = {key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]};</script>
+<script src="../shim.js?v=e721293277"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -228,6 +228,7 @@ tr:last-child td { border-bottom: 0; }
 .warn { color: var(--doing); }
 
 .trow2 .head .book-link { font-size: .8rem; text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; }
+@media (max-width: 760px) { .trow2 .head .book-link { min-height: 44px; padding: 0 6px; } }
 
 /* 교과서 — 노트의 「한눈에·외울 것·더보기·확인 문제」를 요약집처럼 (2026-11-27 동욱 「고등학교 교과서 요약집처럼, 더보기로 교과서 내용, 바로 Brainy한테 질문」) */
 .book { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: start; }
@@ -406,7 +407,7 @@ details.more > .prose { padding: 0 16px 16px; }
     <section>
       <div class="sec-head">
         <h2>학습·집행 커리큘럼</h2>
-        <span class="muted small">카드를 누르면 배우는 것과 완료 기준이 열린다</span>
+        <span class="muted small">카드를 누르면 외울 것과 완료 기준이 열린다</span>
       </div>
       <div class="grid-scroll"><div class="plan" id="plan"></div></div>
       <div class="panel detail" id="detail" hidden></div>
@@ -680,7 +681,7 @@ details.more > .prose { padding: 0 16px 16px; }
       "<dt>완료 기준</dt><dd>" + crit + "</dd>" +
       "<dt>담당</dt><dd>" + esc(t.owner || t.worker || "") + "</dd>" +
       '<dt>예상</dt><dd class="num">' + esc(t.estimate || "") + "</dd></dl>" +
-      '<p class="small muted">상태·체크는 <a href="#run">실행 화면</a>에서 바꿔요. 내용의 정본은 볼트 노트 ' + esc(t.title) + "</p>";
+      '<p class="small muted">상태·체크는 <a href="#run">실행 화면</a>이나 교과서에서 바꿔요. 내용의 정본은 볼트 노트 ' + esc(t.title) + "</p>";
   }
 
   /* ---------- 실행: 요약 (입력칸 없음, 언제든 다시 그림) ---------- */
@@ -828,7 +829,7 @@ details.more > .prose { padding: 0 16px 16px; }
     if (cur.synced !== false) { cur.steps = {}; cur.status = ""; cur.log = []; }   // 지난번 것은 이미 노트에 들어감 — 새로 시작 (지난 기록을 안고 가면 「넣는 중」 유령이 됨)
     cur.task = name(t); cur.from = "광고 실습"; cur.steps = cur.steps || {}; cur.log = cur.log || [];
     mutate(cur, t);
-    if (cur.status === t.status) cur.status = "";   // 노트와 같아지면 보낼 것 없음
+    // 누른 상태는 노트와 같아 보여도 보낸다 — 앱의 노트 사본(ad.data)은 맥이 방금 넣은 값을 늦게 받으므로, 「같음」으로 버리면 바로 되돌린 값이 사라진다 (11-28 검증 F2). 같은 값이면 맥이 아무것도 안 쓴다.
     cur.synced = false; cur.updatedAt = new Date().toISOString();
     TW["ad-" + id] = cur;
     save("ad-" + id);
@@ -875,7 +876,7 @@ details.more > .prose { padding: 0 16px 16px; }
       twChange(tid, function (cur, t) {
         var k = (t.crit || []).filter(function (x) { return x.box === box; })[0]; if (!k) return;
         var want = !critDone(tid, k);
-        if (want === !!k.done) delete cur.steps[box]; else cur.steps[box] = want;   // 노트와 같아지면 보낼 것 없음
+        cur.steps[box] = want;   // 노트와 같아 보여도 보낸다 (위 상태와 같은 까닭)
       });
       return;
     }
