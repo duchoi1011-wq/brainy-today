@@ -17,7 +17,7 @@ function mdHtml(src){
     if (/^\|/.test(l)) {
       const rows = [];
       while (i < L.length && /^\|/.test(L[i])) rows.push(L[i++]);
-      const cells = r => r.trim().replace(/^\||\|$/g, "").split("|").map(x => x.trim());
+      const cells = r => r.trim().replace(/^\||\|$/g, "").split(/(?<!\\)\|/).map(x => x.trim().replace(/\\\|/g, "|"));   // 칸 안의 \| (명령의 파이프)는 나누지 않는다
       const body = rows.filter((r, k) => !(k === 1 && /^\|?\s*:?-/.test(r)));
       const [head, ...rest] = body.map(cells);
       out.push(`<div class="tbl"><table><thead><tr>${head.map(x => `<th>${inline(x)}</th>`).join("")}</tr></thead><tbody>${rest.map(r => `<tr>${r.map(x => `<td>${inline(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
