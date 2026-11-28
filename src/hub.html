@@ -140,7 +140,8 @@ const LV = { high: "막힘", mid: "볼 것", low: "참고" }, ST = { ok: "문제
 function lsGet(k, d){ try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (e) { return d; } }
 function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const ago = iso => { if (!iso) return "—"; const t = new Date(iso); if (isNaN(t)) return String(iso); const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "방금" : m < 60 ? m + "분 전" : m < 1440 ? Math.round(m / 60) + "시간 전" : Math.round(m / 1440) + "일 전"; };
+const ago = iso => { if (!iso) return "—"; const t = new Date(iso); if (isNaN(t) || t.getFullYear() < 2020) return "—";   // 연도 없는 글자 등 못 읽는 시각은 숨긴다 (11-28 검증 중간 1 「9131일 전」)
+   const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "방금" : m < 60 ? m + "분 전" : m < 1440 ? Math.round(m / 60) + "시간 전" : Math.round(m / 1440) + "일 전"; };
 function toast(msg){
   let el = document.getElementById("toast");
   if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
@@ -220,8 +221,8 @@ function appCard(a){
     <p class="line">${esc(a.line || "")}</p>
     ${(a.figs || []).length ? `<div class="stats">${a.figs.map(f => `<div class="stat"><span class="k">${esc(f[0])}</span><span class="v">${esc(f[1])}</span></div>`).join("")}</div>` : ""}
     ${al.map(x => `<p class="al ${esc(x.lv)}"><i aria-hidden="true"></i><span>${esc(x.t)}</span></p>`).join("")}
-    <div class="btns">${openBtn(a)}${askBtn(`${a.name} 현황 정리해 줘 — 지금 숫자와 볼 것, 다음 한 걸음만.`, "✦ 이 앱 물어보기")}</div>
-    <p class="small muted">${a.at ? "숫자 " + esc(ago(a.at)) : ""}${a.local ? (a.at ? " · " : "") + "이 맥에서만 열려요" : ""}</p></section>`;
+    <div class="btns">${openBtn(a)}${askBtn(`${a.name} 현황 정리해 줘 — 지금 숫자와 볼 것, 다음 한 걸음만.`, "✦ Brainy에게 이 앱 묻기")}</div>
+    <p class="small muted">${a.at && ago(a.at) !== "—" ? "숫자 " + esc(ago(a.at)) : ""}${a.local ? (a.at ? " · " : "") + "이 맥에서만 열려요" : ""}</p></section>`;
 }
 function renderApps(){
   let h = "";
@@ -268,7 +269,7 @@ document.addEventListener("click", e => {
   const t = e.target.closest("[data-go],[data-ask],[data-who],[data-hb-who],[data-hb-eng]");
   if (!t) return;
   const d = t.dataset;
-  if (d.ask !== undefined) { const s = ASKS[+d.ask]; if (s) talk(s); return; }
+  if (d.ask !== undefined) { const s = ASKS[+d.ask]; if (s) talk(s, "brainy"); return; }   // 「✦ Brainy에게」·「이 앱 물어보기」는 이름대로 Brainy에게 (골라 둔 팀으로 새지 않게 — 11-28 검증 낮음)
   if (d.who) { if (S.who === d.who) { const c = chat(); if (c) c.open(); return; } return talk("", d.who); }
   if (d.hbWho) return setWho(d.hbWho);
   if (d.hbEng) return setEng(d.hbEng);

@@ -184,7 +184,7 @@
     picsBox.innerHTML = pics.map(function (p, i) { return '<span class="bc-pic"><img src="' + esc(p.url) + '" alt="보낼 사진 ' + (i + 1) + '"><button type="button" data-bc-unpic="' + i + '" aria-label="이 사진 빼기">✕</button></span>'; }).join("");
     if (att) att.disabled = pics.length >= PIC_MAX;
   }
-  function paintSub() { box.querySelector("#bc-sub").textContent = HOOK.sub ? String(HOOK.sub()) : NAME + (LOCAL ? " · 물어보거나, 말하면 바로 고쳐요" : " · 물어보거나 고쳐 달라고 하세요"); }   // HOOK.sub: 앱이 정하는 아랫글 (전체 현황 — 지금 받는 사람·엔진)
+  function paintSub() { if (HOOK.title) box.querySelector(".bc-who b").textContent = String(HOOK.title()); box.querySelector("#bc-sub").textContent = HOOK.sub ? String(HOOK.sub()) : NAME + (LOCAL ? " · 물어보거나, 말하면 바로 고쳐요" : " · 물어보거나 고쳐 달라고 하세요"); }   // HOOK.title · HOOK.sub: 앱이 정하는 제목·아랫글 (전체 현황 — 지금 받는 사람·엔진)
   paintSub();
 
   var CHIPS = (HOOK.chips || ["이 앱에서 ○○ 고쳐 줘"]).concat(LOCAL ? [] : ["맡긴 앱 고치기 어떻게 됐어?"]);

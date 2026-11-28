@@ -16,6 +16,7 @@
       if (e.id === "claude" && window.BRAINY_PARTS && window.BRAINY_PARTS.modelShort && window.BRAINY_PARTS.modelShort()) m.model = window.BRAINY_PARTS.modelShort();   // 다른 앱에서 고른 Claude 모델을 같이 쓴다
       return m;
     },
+    title: function () { var h = H(); return h ? h.who().name : "Brainy"; },   // 대화창 제목 = 지금 받는 사람
     sub: function () { var h = H(); if (!h) return "전체 현황"; var w = h.who(), e = h.engine(); return w.name + " · " + e.name + (e.note ? " (" + e.note + ")" : ""); },
     bar: function () {
       var h = H(); if (!h) return "";
