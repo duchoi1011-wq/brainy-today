@@ -8,11 +8,11 @@
    - 과거 기록 열기 = PAST 에 그 본문을 두고 part() 가 그 단계만 그 본문을 돌려준다 → 평소 화면 그대로 그때 결과가 보인다(맨 위 띠로 알림). */
 var HIST_GROUPS = [["all", "전체"], ["kw", "키워드", ["kw", "trend", "wordcand", "kwrec"]], ["ct", "콘텐츠", ["search", "analysis", "cmts", "ref", "chancand"]],
   ["rec", "추천", ["rec"]], ["sc", "대본", ["build", "source", "script"]], ["imp", "🔖 한 것"]];
-var HIST_TAB = { kw: "kwall", trend: "kw", wordcand: "brand", kwrec: "kw", search: "ref", analysis: "ref", cmts: "rec", ref: "ref", chancand: "refpage", rec: "rec", build: "build", source: "script", script: "script" };   // 그 기록을 어느 탭에서 보나
+var HIST_TAB = { kw: "kwall", trend: "kw", wordcand: "brand", kwrec: "kw", search: "ref", analysis: "ref", cmts: "cmt", ref: "ref", chancand: "refpage", rec: "rec", build: "build", source: "script", script: "script" };   // 그 기록을 어느 탭에서 보나
 var IMP_GO = { kw: "kwall", rec: "rec", script: "script" };   // 지금 자료에서 모은 것 — 그 탭으로
 var IMP_KINDS = [["run", "돌린 기록"], ["kw", "키워드"], ["vid", "영상"], ["rec", "추천"], ["script", "대본"]];
 /* 단계 탭마다 칸 줄 오른쪽 🕘 고르기 — 그 탭의 결과 기록만, 고르면 그 자리에서 그때 결과로 (2026-11-18 동욱: 맥 단축키 강의 고르기처럼 "각 키워드 콘텐츠에서 기록을 체크하면 그 기록대로 볼 수 있는 거라고") */
-var TAB_HIST = { brand: ["wordcand"], kw: ["kw", "trend", "kwrec"], kwall: ["kw", "trend", "kwrec"], ref: ["search", "analysis", "ref"], rec: ["rec", "cmts"], build: ["build"], refpage: ["chancand"], script: ["script", "source"] };
+var TAB_HIST = { brand: ["wordcand"], kw: ["kw", "trend", "kwrec"], kwall: ["kw", "trend", "kwrec"], ref: ["search", "analysis", "ref"], cmt: ["cmts", "search"], rec: ["rec", "cmts"], build: ["build"], refpage: ["chancand"], script: ["script", "source"] };
 function histPickHtml(){
   var parts = TAB_HIST[tab]; if(!parts || !B()) return "";
   var list = histItems().filter(function(x){ return parts.indexOf(x.part) >= 0 }); if(!list.length) return "";

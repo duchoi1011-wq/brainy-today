@@ -56,9 +56,8 @@ function viewRef(){
   var items = r ? r.items.filter(isLong) : [], nShort = r ? r.items.length - items.length : 0;
   var live = part("live"), chan = part("chan");
   var sr = part("search"), nFav = Object.keys((SETS[cur] || {}).favc || {}).length;
-  if(!ui.refView) ui.refView = items.length ? "videos" : likedCount() ? "liked" : sr && sr.items && sr.items.length ? "search" : "videos";   // 처음 열 때만 — 레퍼런스가 없는 브랜드는 빈 칸 대신 공감 댓글·찾은 콘텐츠부터 (2026-11-28 동욱 키우고: "안 나오는데?"). 칩을 눌러 고른 칸은 그대로
+  if(!ui.refView) ui.refView = items.length ? "videos" : sr && sr.items && sr.items.length ? "search" : "videos";   // 처음 열 때만 — 레퍼런스가 없는 브랜드는 빈 칸 대신 찾은 콘텐츠부터 (댓글은 「💬 댓글」 칸으로 옮김) (2026-11-28 동욱 키우고: "안 나오는데?"). 칩을 눌러 고른 칸은 그대로
   var h = "<div class=\"chips\"><button class=\"chip" + (ui.refView === "search" ? " on" : "") + "\" data-ui=\"refView=search\">키워드로 찾은 콘텐츠<span>" + (sr && sr.items ? sr.items.length : 0) + "</span></button>" +
-    "<button class=\"chip" + (ui.refView === "liked" ? " on" : "") + "\" data-ui=\"refView=liked\">💬 공감 댓글<span>" + likedCount() + "</span></button>" +   // 키워드로 찾은 영상의 댓글, 공감 순 (content-likes.js)
     "<button class=\"chip" + (ui.refView === "ideas" ? " on" : "") + "\" data-ui=\"refView=ideas\">💡 아이디어<span>" + (((part("ideas") || {}).items) || []).length + "</span></button>" +
     "<button class=\"chip" + (ui.refView === "fav" ? " on" : "") + "\" data-ui=\"refView=fav\">☆ 즐겨찾기<span>" + nFav + "</span></button>" +
     "<button class=\"chip" + (ui.refView === "videos" ? " on" : "") + "\" data-ui=\"refView=videos\">레퍼런스 영상<span>" + items.length + "</span></button>" +
@@ -68,7 +67,6 @@ function viewRef(){
     "<p class=\"lead\">반응 최신화 " + (live ? day(live.updatedAt) : "아직 안 함") + " · 채널 새 영상 " + (chan ? day(chan.updatedAt) : "아직 안 함") + "</p>";
   if(ui.refView === "chans") return h + chansHtml(b, chan);
   if(ui.refView === "search") return h + searchResultsHtml();
-  if(ui.refView === "liked") return h + likedHtml();
   if(ui.refView === "fav") return h + favListHtml();
   if(ui.refView === "ideas") return h + ideasHtml();
   if(!r) return h + "<p class=\"empty\">아직 레퍼런스가 없어요. 키워드 탭에서 조사를 돌리면 채워져요.</p>";
