@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "fa70fbe32b"; window.BRAINY_APP = {key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고 지표를 점검하고 바로 조율", colls: ["ah.data", "ah.req", "ad.data", "bchat"]};</script>
-<script src="../shim.js?v=fa70fbe32b"></script>
+<script>window.BRAINY_VERSION = "4fd7f44328"; window.BRAINY_APP = {key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고 지표를 점검하고 바로 조율", colls: ["ah.data", "ah.req", "ad.data", "bchat"]};</script>
+<script src="../shim.js?v=4fd7f44328"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -189,7 +189,7 @@ details.fold[open]>summary::after{content:"접기"}
 .stat{background:var(--surface-2);border-radius:10px;padding:8px 10px;min-width:0}
 .stat .k{display:block;font-size:12px;color:var(--muted);font-weight:600}
 .stat .v{display:block;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:17px;overflow-wrap:anywhere}
-.stat .s{display:block;font-size:11.5px;color:var(--muted)}
+.stat .s{display:block;font-size:12px;color:var(--muted)}
 /* 매체 줄 (지도) */
 .chrow{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
 .chrow:first-of-type{border-top:0}
@@ -204,7 +204,7 @@ details.fold[open]>summary::after{content:"접기"}
 .bars{display:flex;align-items:flex-end;gap:3px;height:64px;margin-top:10px}
 .bars i{flex:1;background:var(--accent);border-radius:3px 3px 0 0;min-height:1px;opacity:.85}
 .bars i.zero{background:var(--line)}
-.barcap{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:3px}
+.barcap{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:3px}
 .back{all:unset;cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;min-height:44px;display:inline-flex;align-items:center}
 .plain{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .plain li{padding-left:14px;position:relative}.plain li::before{content:"·";position:absolute;left:2px;color:var(--muted)}
@@ -385,7 +385,7 @@ const selBrands = () => S.bid === "all" ? brands() : brands().filter(b => b.id =
 const rules = () => (D && D.hub.rules) || {};
 const CK = () => (D && D.hub.checks) || {};
 const LIM = () => (D && D.hub.limits) || {};
-const chName = ch => ((D && D.hub.channels[ch]) || {}).name || ch;
+const chName = ch => ch === "common" ? "공통" : ((D && D.hub.channels[ch]) || {}).name || ch;
 const chOrder = () => (D && D.hub.order) || ["naver", "meta", "google"];
 const NV = () => (D && D.naver) || {};
 const PLAN = () => (D && D.plan) || {};
@@ -539,10 +539,10 @@ function checksOf(list){
     }
     /* 측정 준비 — 공통 기반 */
     const base = baseTasks(b);
-    if (base.length) { const done = base.filter(t => t.status === "완료"); add(done.length === base.length ? "ok" : "warn", b, "naver", "측정 준비", `${done.length}/${base.length} 끝`, "공통 기반 태스크 전부", done.length === base.length ? "" : "남은 것: " + base.filter(t => t.status !== "완료").map(taskName).slice(0, 3).join(" · ") + " — 이게 끝나야 어느 매체가 주문·문의를 만들었는지 가를 수 있어요.", "", { tasks: base.map(t => t.id) }); }
+    if (base.length) { const done = base.filter(t => t.status === "완료"); add(done.length === base.length ? "ok" : "warn", b, "common", "측정 준비", `${done.length}/${base.length} 끝`, `공통 기반 중 ${product(b) ? product(b).name : "이 상품"}에 걸린 태스크 전부`, done.length === base.length ? "" : "남은 것: " + base.filter(t => t.status !== "완료").map(taskName).slice(0, 3).join(" · ") + " — 이게 끝나야 어느 매체가 주문·문의를 만들었는지 가를 수 있어요.", "", { tasks: base.map(t => t.id) }); }
     chOrder().forEach(ch => {
       const st = chState(b, ch), t = nextTask(b, ch);
-      if (st.k === "prep") add("info", b, ch, `${chName(ch)} 준비`, t ? `다음 「${taskName(t)}」` : "준비 중", t ? t.status || "할일" : "", "", t ? `${chName(ch)} 광고를 켜려면 지금 뭐가 남았는지 태스크 「${taskName(t)}」 완료 기준으로 보여 주고, 내가 할 것과 네가 할 것을 나눠 줘.` : "", { task: t && t.id });
+      if (st.k === "prep") add("info", b, ch, `${chName(ch)} 준비`, t ? `다음 「${taskName(t)}」` : "준비 중", t ? `상태 ${t.status || "할일"}` : "", "", t ? `${chName(ch)} 광고를 켜려면 지금 뭐가 남았는지 태스크 「${taskName(t)}」 완료 기준으로 보여 주고, 내가 할 것과 네가 할 것을 나눠 줘.` : "", { task: t && t.id });
     });
   });
   const rank = { bad: 0, warn: 1, none: 2, ok: 3, info: 4 };
@@ -679,12 +679,12 @@ function renderMetrics(){
         ${statBox("누적 광고비", won(t.all.cost) + "원", `켜진 캠페인 ${t.on}/${t.camps}`)}
       </div>`;
     if (b.breakeven || b.breakevenNote) h += `<h2 style="margin:16px 0 6px">손익 기준</h2><div class="stats">
-        ${b.price ? statBox("판매가", won(b.price) + "원", "") : ""}${b.margin ? statBox("마진율", b.margin + "%", "손익분기 ACoS") : ""}
+        ${b.price ? statBox("판매가", won(b.price) + "원", "") : ""}${b.margin ? statBox("마진율", b.margin + "%", "= 손익분기 ACoS (광고비 ÷ 광고매출)") : ""}
         ${statBox(product(b) ? product(b).metric + " 손익분기" : "손익분기", b.breakeven ? won(b.breakeven) + "원" : "—", b.breakeven ? "" : esc(b.breakevenNote || ""))}
         ${b.cvr ? statBox("전환율", b.cvr + "%", "가정") : ""}${cap ? statBox("허용 CPC", won(cap) + "원", "손익분기 × 전환율") : ""}</div>${b.cvrNote ? `<p class="small muted" style="margin-top:6px">${esc(b.cvrNote)}</p>` : ""}`;
     h += `<h2 style="margin:16px 0 6px">매체별 결과</h2>${chTable(b)}`;
     h += shareBars(b) + trend(b);
-    if (base.length) h += `<h2 style="margin:16px 0 4px">측정 준비 · ${base.filter(x => x.status === "완료").length}/${base.length}</h2><div>${base.map(x => `<a class="row ${x.status === "완료" ? "ok" : x.status === "진행" ? "info" : "none"}" href="../ad/#book/${encodeURIComponent(x.id)}" style="text-decoration:none;color:inherit"><span class="ct"><b>${esc(taskName(x))}</b><span>광고 실습 교과서에서 열기</span></span><span class="tags"><span class="pill">${esc(x.status || "할일")}</span></span></a>`).join("")}</div>`;
+    if (base.length) h += `<h2 style="margin:16px 0 4px">측정 준비 · ${base.filter(x => x.status === "완료").length}/${base.length} <span style="font-weight:500">(공통 기반 중 ${esc(product(b) ? product(b).name : "")}에 걸린 것)</span></h2><div>${base.map(x => `<a class="row ${x.status === "완료" ? "ok" : x.status === "진행" ? "info" : "none"}" href="../ad/#book/${encodeURIComponent(x.id)}" style="text-decoration:none;color:inherit"><span class="ct"><b>${esc(taskName(x))}</b><span>광고 실습 교과서에서 열기</span></span><span class="tags"><span class="pill">${esc(x.status || "할일")}</span></span></a>`).join("")}</div>`;
     h += `</section>`;
   });
   const G = PLAN().glossary || [];
@@ -743,7 +743,8 @@ function kwRow(x, b){
 function renderControl(){
   const list = selBrands().filter(b => campsOf(b).length);
   if (!list.length) return `<section class="card"><p class="empty">고른 브랜드에 네이버 캠페인이 없어요. 메타·구글은 아직 이 앱에서 바꿀 수 없어요 — 광고 관리자에서 직접.</p></section>`;
-  let h = `<p class="small muted" style="padding:0 4px">누르면 한 줄로 확인한 뒤 요청을 남기고, 맥이 네이버에 적용해요(1분 안). 입찰은 ${won(LIM().bidMin || 70)}원~허용 CPC, 일예산은 ${won(LIM().budgetMin || 1000)}~${won(LIM().budgetMax || 0)}원 안에서만 돼요. 적용한 것은 기록 탭에서 되돌릴 수 있어요.</p>`;
+  const off = /맥 꺼짐/.test(document.body.innerText || "");   // 받침(shim.js)의 동기화 표시 글을 읽는다
+  let h = (off ? `<section class="card" style="border-color:var(--s-stop)"><p><b>지금 맥이 꺼져 있어요.</b> 요청은 남지만 맥이 켜질 때 적용돼요.</p></section>` : "") + `<p class="small muted" style="padding:0 4px">누르면 한 줄로 확인한 뒤 요청을 남기고, 맥이 네이버에 적용해요(1분 안). 입찰은 ${won(LIM().bidMin || 70)}원~허용 CPC, 일예산은 ${won(LIM().budgetMin || 1000)}~${won(LIM().budgetMax || 0)}원 안에서만 돼요. 적용한 것은 기록 탭에서 되돌릴 수 있어요.</p>`;
   list.forEach(b => {
     const C = campsOf(b), on = C.filter(c => c.on), off = C.filter(c => !c.on);
     h += on.map(c => campCard(c, b)).join("");
@@ -782,9 +783,11 @@ function renderLog(){
   h += `<section class="card"><h2>바꾼 것 · ${C.length}</h2>${C.length ? C.map(c => { const b = brands().find(x => x.id === c.brand);
       return `<div class="logline"><span class="d">${esc(c.d)}</span><div><b style="font-weight:600">${esc(c.t)}</b><p class="small muted">${esc((b ? (b.short || b.name) + " · " : "") + chName(c.ch))}${c.why ? " — " + esc(c.why) : ""}</p></div></div>`; }).join("") : `<p class="empty">이 브랜드는 아직 바꾼 기록이 없어요.</p>`}
     <p class="small muted" style="margin-top:8px">앱에서 바꾼 것은 맥이, Brainy가 바꾼 것은 Brainy가 볼트 「광고 한눈에.json」에 한 줄씩 더해요.</p></section>`;
-  if (selBrands().some(b => b.plan)) h += `<section class="card"><h2>판정 기준</h2><ul class="plain">${(R.lines || []).map(l => `<li>${esc(l)}</li>`).join("")}</ul>${R.doc ? `<p class="small muted" style="margin-top:8px">정본: 볼트 ${esc(R.doc)}</p>` : ""}</section>`;
+  const hasNv = selBrands().some(b => campsOf(b).length), hasPlan = selBrands().some(b => b.plan);
+  if (hasNv) h += `<section class="card"><details class="fold"><summary><h2>판정 기준</h2></summary><ul class="plain">${(R.lines || []).map(l => `<li>${esc(l)}</li>`).join("")}</ul>${R.doc ? `<p class="small muted" style="margin-top:8px">정본: 볼트 ${esc(R.doc)}</p>` : ""}</details></section>`;
+  if (!hasNv && !hasPlan) return h + `<section class="card"><p class="empty">광고 계획이 없는 브랜드라 받는 숫자가 없어요.</p></section>`;
   h += `<section class="card"><h2>숫자 출처</h2>
-    <div class="row ${nv.ok ? "ok" : "bad"}"><div class="ct"><b>네이버 검색광고</b><span>${nv.ok ? `${ago(nv.at)} 받음 · 캠페인 ${(nv.campaigns || []).length} · 광고그룹 ${(nv.groups || []).length} · 키워드 ${(nv.keywords || []).length}` : "못 받음 — " + esc(nv.error || "")}</span><span>맥이 30분마다 API에서 받아요(바꾼 직후엔 바로). 누적은 캠페인 켠 날부터, 최대 92일. 오래 꺼 둔 캠페인은 광고그룹·키워드를 받지 않아요.</span></div></div>
+    ${hasNv ? "" : `<p class="small muted">네이버 광고를 아직 켜지 않은 브랜드예요.</p>`}<div class="row ${nv.ok ? "ok" : "bad"}"${hasNv ? "" : " hidden"}><div class="ct"><b>네이버 검색광고</b><span>${nv.ok ? `${ago(nv.at)} 받음 · 캠페인 ${(nv.campaigns || []).length} · 광고그룹 ${(nv.groups || []).length} · 키워드 ${(nv.keywords || []).length}` : "못 받음 — " + esc(nv.error || "")}</span><span>맥이 30분마다 API에서 받아요(바꾼 직후엔 바로). 누적은 캠페인 켠 날부터, 최대 92일. 오래 꺼 둔 캠페인은 광고그룹·키워드를 받지 않아요.</span></div></div>
     ${o.none ? "" : `<div class="row ${o.ok ? "ok" : "warn"}"><div class="ct"><b>스마트스토어 주문</b><span>${o.ok ? `${ago(o.at)} 받음 · ${esc(o.period || "")} 주문 ${won(o.n)}건 · ${won(o.amount)}원` : "미연결"}</span><span>${o.ok ? o.products.slice(0, 3).map(p => esc(p.name) + " " + p.qty + "개").join(" · ") : esc(storeWhy(o.err))}</span></div></div>`}
     <div class="row ${Object.keys((D.metrics || {}).values || {}).length ? "ok" : "none"}"><div class="ct"><b>메타 · 구글 · 이벤트랩 결과</b><span>${Object.keys((D.metrics || {}).values || {}).length ? "주간 통합 리뷰 숫자" : "아직 숫자 없음 — 두 매체 모두 준비 단계"}</span><span>정본: 볼트 광고 실습 계획.json metrics (주간 통합 리뷰가 채움)</span></div></div>
     <p class="small muted" style="margin-top:8px">브랜드·기준·바꿀 수 있는 범위(limits) 정본: 볼트 4_Outputs/광고 한눈에 앱/광고 한눈에.json · 화면 갱신 ${ago(D.updatedAt)}</p></section>`;
@@ -852,6 +855,10 @@ document.addEventListener("click", e => {
     const q = Object.assign({}, RQ[+d.rq]); if (!q.kind) return;
     const inp = document.querySelector(`.bidin[data-bidin="${d.rq}"]`);
     if (inp) { const v = Math.round(Number(inp.value)); if (!isFinite(v) || v <= 0) { toast("숫자를 넣어 주세요."); return; } if (v === q.from) { toast("지금 값과 같아요."); return; } q.to = v; }
+    /* 범위 — 맥이 거절할 값은 보내기 전에 여기서 막는다 (정본 limits · 허용 CPC) */
+    const L = LIM(), b = brands().find(x => x.id === q.brand), cap = maxCpc(b);
+    if (q.kind === "bid" && (q.to < (L.bidMin || 70) || (cap && q.to > cap))) { toast(`입찰가는 ${won(L.bidMin || 70)}원~${cap ? won(cap) + "원(허용 CPC)" : ""} 안에서만 바꿀 수 있어요.`); return; }
+    if (q.kind === "budget" && (q.to < (L.budgetMin || 1000) || q.to > (L.budgetMax || 0))) { toast(`일예산은 ${won(L.budgetMin || 1000)}~${won(L.budgetMax || 0)}원 안에서만 바꿀 수 있어요. 상한은 볼트 정본 limits 에서 올려요.`); return; }
     return sendReq(q);
   }
   if (d.goctl !== undefined) return goControl(d.goctl, d.gf);

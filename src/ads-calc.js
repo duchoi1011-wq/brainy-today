@@ -7,7 +7,7 @@ const selBrands = () => S.bid === "all" ? brands() : brands().filter(b => b.id =
 const rules = () => (D && D.hub.rules) || {};
 const CK = () => (D && D.hub.checks) || {};
 const LIM = () => (D && D.hub.limits) || {};
-const chName = ch => ((D && D.hub.channels[ch]) || {}).name || ch;
+const chName = ch => ch === "common" ? "공통" : ((D && D.hub.channels[ch]) || {}).name || ch;
 const chOrder = () => (D && D.hub.order) || ["naver", "meta", "google"];
 const NV = () => (D && D.naver) || {};
 const PLAN = () => (D && D.plan) || {};
@@ -161,10 +161,10 @@ function checksOf(list){
     }
     /* 측정 준비 — 공통 기반 */
     const base = baseTasks(b);
-    if (base.length) { const done = base.filter(t => t.status === "완료"); add(done.length === base.length ? "ok" : "warn", b, "naver", "측정 준비", `${done.length}/${base.length} 끝`, "공통 기반 태스크 전부", done.length === base.length ? "" : "남은 것: " + base.filter(t => t.status !== "완료").map(taskName).slice(0, 3).join(" · ") + " — 이게 끝나야 어느 매체가 주문·문의를 만들었는지 가를 수 있어요.", "", { tasks: base.map(t => t.id) }); }
+    if (base.length) { const done = base.filter(t => t.status === "완료"); add(done.length === base.length ? "ok" : "warn", b, "common", "측정 준비", `${done.length}/${base.length} 끝`, `공통 기반 중 ${product(b) ? product(b).name : "이 상품"}에 걸린 태스크 전부`, done.length === base.length ? "" : "남은 것: " + base.filter(t => t.status !== "완료").map(taskName).slice(0, 3).join(" · ") + " — 이게 끝나야 어느 매체가 주문·문의를 만들었는지 가를 수 있어요.", "", { tasks: base.map(t => t.id) }); }
     chOrder().forEach(ch => {
       const st = chState(b, ch), t = nextTask(b, ch);
-      if (st.k === "prep") add("info", b, ch, `${chName(ch)} 준비`, t ? `다음 「${taskName(t)}」` : "준비 중", t ? t.status || "할일" : "", "", t ? `${chName(ch)} 광고를 켜려면 지금 뭐가 남았는지 태스크 「${taskName(t)}」 완료 기준으로 보여 주고, 내가 할 것과 네가 할 것을 나눠 줘.` : "", { task: t && t.id });
+      if (st.k === "prep") add("info", b, ch, `${chName(ch)} 준비`, t ? `다음 「${taskName(t)}」` : "준비 중", t ? `상태 ${t.status || "할일"}` : "", "", t ? `${chName(ch)} 광고를 켜려면 지금 뭐가 남았는지 태스크 「${taskName(t)}」 완료 기준으로 보여 주고, 내가 할 것과 네가 할 것을 나눠 줘.` : "", { task: t && t.id });
     });
   });
   const rank = { bad: 0, warn: 1, none: 2, ok: 3, info: 4 };

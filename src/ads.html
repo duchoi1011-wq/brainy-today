@@ -135,7 +135,7 @@ details.fold[open]>summary::after{content:"접기"}
 .stat{background:var(--surface-2);border-radius:10px;padding:8px 10px;min-width:0}
 .stat .k{display:block;font-size:12px;color:var(--muted);font-weight:600}
 .stat .v{display:block;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:17px;overflow-wrap:anywhere}
-.stat .s{display:block;font-size:11.5px;color:var(--muted)}
+.stat .s{display:block;font-size:12px;color:var(--muted)}
 /* 매체 줄 (지도) */
 .chrow{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
 .chrow:first-of-type{border-top:0}
@@ -150,7 +150,7 @@ details.fold[open]>summary::after{content:"접기"}
 .bars{display:flex;align-items:flex-end;gap:3px;height:64px;margin-top:10px}
 .bars i{flex:1;background:var(--accent);border-radius:3px 3px 0 0;min-height:1px;opacity:.85}
 .bars i.zero{background:var(--line)}
-.barcap{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:3px}
+.barcap{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:3px}
 .back{all:unset;cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;min-height:44px;display:inline-flex;align-items:center}
 .plain{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .plain li{padding-left:14px;position:relative}.plain li::before{content:"·";position:absolute;left:2px;color:var(--muted)}
@@ -278,6 +278,10 @@ document.addEventListener("click", e => {
     const q = Object.assign({}, RQ[+d.rq]); if (!q.kind) return;
     const inp = document.querySelector(`.bidin[data-bidin="${d.rq}"]`);
     if (inp) { const v = Math.round(Number(inp.value)); if (!isFinite(v) || v <= 0) { toast("숫자를 넣어 주세요."); return; } if (v === q.from) { toast("지금 값과 같아요."); return; } q.to = v; }
+    /* 범위 — 맥이 거절할 값은 보내기 전에 여기서 막는다 (정본 limits · 허용 CPC) */
+    const L = LIM(), b = brands().find(x => x.id === q.brand), cap = maxCpc(b);
+    if (q.kind === "bid" && (q.to < (L.bidMin || 70) || (cap && q.to > cap))) { toast(`입찰가는 ${won(L.bidMin || 70)}원~${cap ? won(cap) + "원(허용 CPC)" : ""} 안에서만 바꿀 수 있어요.`); return; }
+    if (q.kind === "budget" && (q.to < (L.budgetMin || 1000) || q.to > (L.budgetMax || 0))) { toast(`일예산은 ${won(L.budgetMin || 1000)}~${won(L.budgetMax || 0)}원 안에서만 바꿀 수 있어요. 상한은 볼트 정본 limits 에서 올려요.`); return; }
     return sendReq(q);
   }
   if (d.goctl !== undefined) return goControl(d.goctl, d.gf);

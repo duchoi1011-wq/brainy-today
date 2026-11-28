@@ -49,7 +49,8 @@ function kwRow(x, b){
 function renderControl(){
   const list = selBrands().filter(b => campsOf(b).length);
   if (!list.length) return `<section class="card"><p class="empty">고른 브랜드에 네이버 캠페인이 없어요. 메타·구글은 아직 이 앱에서 바꿀 수 없어요 — 광고 관리자에서 직접.</p></section>`;
-  let h = `<p class="small muted" style="padding:0 4px">누르면 한 줄로 확인한 뒤 요청을 남기고, 맥이 네이버에 적용해요(1분 안). 입찰은 ${won(LIM().bidMin || 70)}원~허용 CPC, 일예산은 ${won(LIM().budgetMin || 1000)}~${won(LIM().budgetMax || 0)}원 안에서만 돼요. 적용한 것은 기록 탭에서 되돌릴 수 있어요.</p>`;
+  const off = /맥 꺼짐/.test(document.body.innerText || "");   // 받침(shim.js)의 동기화 표시 글을 읽는다
+  let h = (off ? `<section class="card" style="border-color:var(--s-stop)"><p><b>지금 맥이 꺼져 있어요.</b> 요청은 남지만 맥이 켜질 때 적용돼요.</p></section>` : "") + `<p class="small muted" style="padding:0 4px">누르면 한 줄로 확인한 뒤 요청을 남기고, 맥이 네이버에 적용해요(1분 안). 입찰은 ${won(LIM().bidMin || 70)}원~허용 CPC, 일예산은 ${won(LIM().budgetMin || 1000)}~${won(LIM().budgetMax || 0)}원 안에서만 돼요. 적용한 것은 기록 탭에서 되돌릴 수 있어요.</p>`;
   list.forEach(b => {
     const C = campsOf(b), on = C.filter(c => c.on), off = C.filter(c => !c.on);
     h += on.map(c => campCard(c, b)).join("");

@@ -46,12 +46,12 @@ function renderMetrics(){
         ${statBox("누적 광고비", won(t.all.cost) + "원", `켜진 캠페인 ${t.on}/${t.camps}`)}
       </div>`;
     if (b.breakeven || b.breakevenNote) h += `<h2 style="margin:16px 0 6px">손익 기준</h2><div class="stats">
-        ${b.price ? statBox("판매가", won(b.price) + "원", "") : ""}${b.margin ? statBox("마진율", b.margin + "%", "손익분기 ACoS") : ""}
+        ${b.price ? statBox("판매가", won(b.price) + "원", "") : ""}${b.margin ? statBox("마진율", b.margin + "%", "= 손익분기 ACoS (광고비 ÷ 광고매출)") : ""}
         ${statBox(product(b) ? product(b).metric + " 손익분기" : "손익분기", b.breakeven ? won(b.breakeven) + "원" : "—", b.breakeven ? "" : esc(b.breakevenNote || ""))}
         ${b.cvr ? statBox("전환율", b.cvr + "%", "가정") : ""}${cap ? statBox("허용 CPC", won(cap) + "원", "손익분기 × 전환율") : ""}</div>${b.cvrNote ? `<p class="small muted" style="margin-top:6px">${esc(b.cvrNote)}</p>` : ""}`;
     h += `<h2 style="margin:16px 0 6px">매체별 결과</h2>${chTable(b)}`;
     h += shareBars(b) + trend(b);
-    if (base.length) h += `<h2 style="margin:16px 0 4px">측정 준비 · ${base.filter(x => x.status === "완료").length}/${base.length}</h2><div>${base.map(x => `<a class="row ${x.status === "완료" ? "ok" : x.status === "진행" ? "info" : "none"}" href="../ad/#book/${encodeURIComponent(x.id)}" style="text-decoration:none;color:inherit"><span class="ct"><b>${esc(taskName(x))}</b><span>광고 실습 교과서에서 열기</span></span><span class="tags"><span class="pill">${esc(x.status || "할일")}</span></span></a>`).join("")}</div>`;
+    if (base.length) h += `<h2 style="margin:16px 0 4px">측정 준비 · ${base.filter(x => x.status === "완료").length}/${base.length} <span style="font-weight:500">(공통 기반 중 ${esc(product(b) ? product(b).name : "")}에 걸린 것)</span></h2><div>${base.map(x => `<a class="row ${x.status === "완료" ? "ok" : x.status === "진행" ? "info" : "none"}" href="../ad/#book/${encodeURIComponent(x.id)}" style="text-decoration:none;color:inherit"><span class="ct"><b>${esc(taskName(x))}</b><span>광고 실습 교과서에서 열기</span></span><span class="tags"><span class="pill">${esc(x.status || "할일")}</span></span></a>`).join("")}</div>`;
     h += `</section>`;
   });
   const G = PLAN().glossary || [];
