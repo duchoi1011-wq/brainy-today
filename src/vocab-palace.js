@@ -52,19 +52,17 @@ function renderPalace(){
   const p = pals[PL.sel], d = plOf(p), built = d.slots.length, goal = p.goal || built;
   const noName = p.chapters.filter(c => !c.name).length, needCh = Math.max(0, Math.ceil((goal - built) / 10));
   const pct = n => Math.min(100, Math.round(n / (goal || 1) * 100));
-  const chips = `<div class="chips">${pals.map((x, i) => `<button class="chip${i === PL.sel ? " on" : ""}" data-pl="sel" data-i="${i}">${esc(x.name)} <span>${esc(x.cat || x.for)}</span></button>`).join("")}</div>`;
+  const chips = `<div class="chips">${pals.map((x, i) => `<button class="chip${i === PL.sel ? " on" : ""}" data-pl="sel" data-i="${i}">${esc(x.name.replace(/^궁전-/, ""))} <span>${esc(x.cat || x.for)}</span></button>`).join("")}</div>`;
   const sum = `<section class="card stack">
     <div class="meta"><h3 style="margin:0">${esc(p.name)}</h3><span class="small muted">${esc(p.cat || p.for)}</span></div>
     <div class="pl-sum">
-      <div><b class="mono">${d.placed}</b><span>문장 놓은 면</span></div>
+      <div><b class="mono">${d.placed}</b><span>놓은 면</span></div>
       <div><b class="mono">${d.due.length}</b><span>오늘 복습</span></div>
       <div><b class="mono">${built - d.placed}</b><span>빈 면</span></div>
-      <div><b class="mono">${built}<small>/${goal}</small></b><span>만든 면 / 목표</span></div>
+      <div><b class="mono">${built}<small>/${goal}</small></b><span>만든 면</span></div>
     </div>
     <div class="pl-bar" role="img" aria-label="목표 ${goal}면 중 만든 면 ${built} · 문장 ${d.placed}"><i class="b" style="width:${pct(built)}%"></i><i class="f" style="width:${pct(d.placed)}%"></i></div>
-    <p class="small muted">목표 ${goal}면${p.goalFrom ? " — " + esc(p.goalFrom) : ""}. 1장 = 면 10개.</p>
-    ${needCh ? `<p class="small">목표까지 장 ${needCh}개(${goal - built}면)가 더 필요해요. 만든 장이 다 차면 궁전 노트 「장 목록」에 장을 더해요.</p>` : ""}
-    ${noName ? `<p class="note">장 이름 ${noName}개가 비어 있어요 — 걷는 순서대로 동욱이 정해요 (궁전 노트 「장 목록」의 이름 칸).</p>` : ""}
+    <p class="small muted">목표 ${goal}면${p.goalFrom ? " (" + esc(p.goalFrom) + ")" : ""} · 1장 = 10면 · <span class="pl-k" style="vertical-align:1px">회색</span> 만든 면 <span class="pl-k l" style="vertical-align:1px">초록</span> 문장${needCh ? ` · 장 ${needCh}개 더 필요` : ""}${noName ? ` · <b style="color:var(--accent)">장 이름 ${noName}개 빈칸 — 궁전 노트 「장 목록」에 동욱이 정해요</b>` : ""}</p>
   </section>`;
   const today = `<section class="card stack"><h2>오늘 복습할 면 ${d.due.length}</h2>
     ${d.due.length ? `<div class="list">${d.due.map(t => `<details class="pl-q"><summary><span class="mono">${esc(faceKey(t.face) || t.face || "면 없음")}</span> ${esc(t.def)}</summary><p class="pl-s" style="margin-top:6px">${esc(t.term)}</p>${t.pic ? `<p class="small muted">${esc(t.pic)}</p>` : ""}</details>`).join("")}</div>

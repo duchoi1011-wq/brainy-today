@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "ec160f144b"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "cmd", "bchat"]};</script>
-<script src="../shim.js?v=ec160f144b"></script>
+<script>window.BRAINY_VERSION = "3ba53dc5d9"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "cmd", "bchat"]};</script>
+<script src="../shim.js?v=3ba53dc5d9"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -241,7 +241,7 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .pl-q{padding:10px 2px;border-top:1px solid var(--line)}.pl-q:first-child{border-top:0}.pl-q summary{cursor:pointer}.pl-q .mono{color:var(--accent);margin-right:6px}
 .pl-rest{border-style:dashed;background:transparent}
 .pl-k{display:inline-block;padding:0 7px;border-radius:6px;border:1px solid var(--line);font-size:11px;margin:2px 2px 0 0}.pl-k.p{border-color:var(--l2)}.pl-k.d{border-color:var(--accent);background:var(--warn-bg)}.pl-k.l{border-color:var(--l4);background:var(--ok-bg)}.pl-k.e{border-style:dashed}
-@media (max-width:420px){.pl-sum{grid-template-columns:repeat(2,1fr)}.pl-t{min-height:48px;padding:6px}}
+@media (max-width:420px){.pl-sum{gap:6px}.pl-sum div{padding:8px 6px}.pl-sum b{font-size:19px}.pl-t{min-height:48px;padding:6px}}
 </style>
 
 <div class="wrap">
@@ -1532,12 +1532,12 @@ function mnemHtml(t){
     : c.status === "못 보냄" ? `<p class="note">${esc(c.result || "못 보냈어요")}</p>`
     : !drafts.length ? `<p class="small muted">${esc(String(c.result || "초안이 없어요").split("\n")[0])}</p>` : "";
   const edit = MN.edit === t.id ? `<div class="mn-ed stack">
-      <label class="small muted">소리 고리 (한국어로 들리는 말)<input class="mn-in" id="mnH" maxlength="80" value="${esc(MN.draft.hook || "")}" placeholder="예: 올라이언"></label>
-      <label class="small muted">그림 (매개어와 뜻을 묶은 과장된 장면)<textarea class="mn-in" id="mnP" maxlength="200" rows="2" placeholder="예: 사자들이 올라와 손잡고 동맹 맺는 그림">${esc(MN.draft.pic || "")}</textarea></label>
+      <label class="small muted">소리 고리 (한국어로 들리는 말)<input class="mn-in" id="mnH" maxlength="80" value="${esc(MN.draft.hook || "")}" placeholder="원 발음을 한국어로 들리는 말로"></label>
+      <label class="small muted">그림 (매개어와 뜻을 묶은 과장된 장면)<textarea class="mn-in" id="mnP" maxlength="200" rows="2" placeholder="소리 고리와 뜻이 한 장면에 — 크게, 움직이게, 웃기게">${esc(MN.draft.pic || "")}</textarea></label>
       <div class="btns"><button class="btn primary" data-mn="save" data-id="${t.id}">이걸로 볼트에 넣기</button><button class="btn ghost" data-mn="cancel">닫기</button></div></div>` : "";
   return `<div class="mn stack">
     <div class="meta"><span class="lbl" style="margin:0">발음매개</span><span class="small muted">뜻 → 소리 고리 → 그림 → ${esc(t.cat.replace(/ ?단어$/, ""))} 발음</span></div>
-    ${t.hook ? `<p>소리 고리 <b>${esc(t.hook)}</b>${t.pic ? `<br><span class="small">${esc(t.pic)}</span>` : ""}</p>` : `<p class="small muted">아직 매개가 없어요.</p>`}
+    ${t.hook ? "" : `<p class="small muted">아직 매개가 없어요.</p>`}
     ${st}${cmdLine}
     ${drafts.length ? `<div class="mn-dr">${drafts.map((d, k) => `<div class="mn-d">
         <div class="meta"><b class="mn-h">${esc(d.hook)}</b>${d.sim ? `<span class="pill ${SIM[d.sim] || ""}">유사도 ${esc(d.sim)}</span>` : ""}</div>
@@ -1637,19 +1637,17 @@ function renderPalace(){
   const p = pals[PL.sel], d = plOf(p), built = d.slots.length, goal = p.goal || built;
   const noName = p.chapters.filter(c => !c.name).length, needCh = Math.max(0, Math.ceil((goal - built) / 10));
   const pct = n => Math.min(100, Math.round(n / (goal || 1) * 100));
-  const chips = `<div class="chips">${pals.map((x, i) => `<button class="chip${i === PL.sel ? " on" : ""}" data-pl="sel" data-i="${i}">${esc(x.name)} <span>${esc(x.cat || x.for)}</span></button>`).join("")}</div>`;
+  const chips = `<div class="chips">${pals.map((x, i) => `<button class="chip${i === PL.sel ? " on" : ""}" data-pl="sel" data-i="${i}">${esc(x.name.replace(/^궁전-/, ""))} <span>${esc(x.cat || x.for)}</span></button>`).join("")}</div>`;
   const sum = `<section class="card stack">
     <div class="meta"><h3 style="margin:0">${esc(p.name)}</h3><span class="small muted">${esc(p.cat || p.for)}</span></div>
     <div class="pl-sum">
-      <div><b class="mono">${d.placed}</b><span>문장 놓은 면</span></div>
+      <div><b class="mono">${d.placed}</b><span>놓은 면</span></div>
       <div><b class="mono">${d.due.length}</b><span>오늘 복습</span></div>
       <div><b class="mono">${built - d.placed}</b><span>빈 면</span></div>
-      <div><b class="mono">${built}<small>/${goal}</small></b><span>만든 면 / 목표</span></div>
+      <div><b class="mono">${built}<small>/${goal}</small></b><span>만든 면</span></div>
     </div>
     <div class="pl-bar" role="img" aria-label="목표 ${goal}면 중 만든 면 ${built} · 문장 ${d.placed}"><i class="b" style="width:${pct(built)}%"></i><i class="f" style="width:${pct(d.placed)}%"></i></div>
-    <p class="small muted">목표 ${goal}면${p.goalFrom ? " — " + esc(p.goalFrom) : ""}. 1장 = 면 10개.</p>
-    ${needCh ? `<p class="small">목표까지 장 ${needCh}개(${goal - built}면)가 더 필요해요. 만든 장이 다 차면 궁전 노트 「장 목록」에 장을 더해요.</p>` : ""}
-    ${noName ? `<p class="note">장 이름 ${noName}개가 비어 있어요 — 걷는 순서대로 동욱이 정해요 (궁전 노트 「장 목록」의 이름 칸).</p>` : ""}
+    <p class="small muted">목표 ${goal}면${p.goalFrom ? " (" + esc(p.goalFrom) + ")" : ""} · 1장 = 10면 · <span class="pl-k" style="vertical-align:1px">회색</span> 만든 면 <span class="pl-k l" style="vertical-align:1px">초록</span> 문장${needCh ? ` · 장 ${needCh}개 더 필요` : ""}${noName ? ` · <b style="color:var(--accent)">장 이름 ${noName}개 빈칸 — 궁전 노트 「장 목록」에 동욱이 정해요</b>` : ""}</p>
   </section>`;
   const today = `<section class="card stack"><h2>오늘 복습할 면 ${d.due.length}</h2>
     ${d.due.length ? `<div class="list">${d.due.map(t => `<details class="pl-q"><summary><span class="mono">${esc(faceKey(t.face) || t.face || "면 없음")}</span> ${esc(t.def)}</summary><p class="pl-s" style="margin-top:6px">${esc(t.term)}</p>${t.pic ? `<p class="small muted">${esc(t.pic)}</p>` : ""}</details>`).join("")}</div>

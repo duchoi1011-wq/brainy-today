@@ -26,12 +26,12 @@ function mnemHtml(t){
     : c.status === "못 보냄" ? `<p class="note">${esc(c.result || "못 보냈어요")}</p>`
     : !drafts.length ? `<p class="small muted">${esc(String(c.result || "초안이 없어요").split("\n")[0])}</p>` : "";
   const edit = MN.edit === t.id ? `<div class="mn-ed stack">
-      <label class="small muted">소리 고리 (한국어로 들리는 말)<input class="mn-in" id="mnH" maxlength="80" value="${esc(MN.draft.hook || "")}" placeholder="예: 올라이언"></label>
-      <label class="small muted">그림 (매개어와 뜻을 묶은 과장된 장면)<textarea class="mn-in" id="mnP" maxlength="200" rows="2" placeholder="예: 사자들이 올라와 손잡고 동맹 맺는 그림">${esc(MN.draft.pic || "")}</textarea></label>
+      <label class="small muted">소리 고리 (한국어로 들리는 말)<input class="mn-in" id="mnH" maxlength="80" value="${esc(MN.draft.hook || "")}" placeholder="원 발음을 한국어로 들리는 말로"></label>
+      <label class="small muted">그림 (매개어와 뜻을 묶은 과장된 장면)<textarea class="mn-in" id="mnP" maxlength="200" rows="2" placeholder="소리 고리와 뜻이 한 장면에 — 크게, 움직이게, 웃기게">${esc(MN.draft.pic || "")}</textarea></label>
       <div class="btns"><button class="btn primary" data-mn="save" data-id="${t.id}">이걸로 볼트에 넣기</button><button class="btn ghost" data-mn="cancel">닫기</button></div></div>` : "";
   return `<div class="mn stack">
     <div class="meta"><span class="lbl" style="margin:0">발음매개</span><span class="small muted">뜻 → 소리 고리 → 그림 → ${esc(t.cat.replace(/ ?단어$/, ""))} 발음</span></div>
-    ${t.hook ? `<p>소리 고리 <b>${esc(t.hook)}</b>${t.pic ? `<br><span class="small">${esc(t.pic)}</span>` : ""}</p>` : `<p class="small muted">아직 매개가 없어요.</p>`}
+    ${t.hook ? "" : `<p class="small muted">아직 매개가 없어요.</p>`}
     ${st}${cmdLine}
     ${drafts.length ? `<div class="mn-dr">${drafts.map((d, k) => `<div class="mn-d">
         <div class="meta"><b class="mn-h">${esc(d.hook)}</b>${d.sim ? `<span class="pill ${SIM[d.sim] || ""}">유사도 ${esc(d.sim)}</span>` : ""}</div>
