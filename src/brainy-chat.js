@@ -272,7 +272,10 @@
   function close() { box.hidden = true; fab.hidden = false; document.documentElement.classList.remove("bc-push"); window.dispatchEvent(new Event("resize")); paintFab(); try { localStorage.removeItem(KEY + ".open"); } catch (e) {} }
   /* 앱 안 다른 단추에서 대화를 열 때 — ask 는 바로 보내고, fill 은 입력칸만 채워 둔다(동욱이 고쳐서 ↑ — 강의 실습 「Brainy와 이 칸 하기」) */
   function fill(q) { showHist = false; viewPast = -1; open(); text.value = String(q || ""); text.dispatchEvent(new Event("input")); }
-  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
+  /* 새 대화 — 지금 대화는 지난 대화로 (↺ · 앱 단추 start) */
+  function newChat() { if (ctl) ctl.abort(); archive(); turns = []; showHist = false; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); }
+  /* start: 새 대화로 열고 바로 보낸다 — 지난 대화가 같이 가지 않게 (광고 실습 「▶ Brainy 진행」 · 2026-11-28 동욱 「응, 해」) */
+  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, start: function (q) { newChat(); viewPast = -1; open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");
@@ -282,7 +285,7 @@
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");
     if (a === "close") return close();
-    if (a === "new") { if (ctl) ctl.abort(); archive(); turns = []; showHist = false; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); return; }
+    if (a === "new") { newChat(); return; }
     if (a === "hist") { showHist = !(showHist && viewPast < 0); viewPast = -1; render(); return; }
     if (a === "delpast") { var dp = past[viewPast]; if (dp && confirm("이 지난 대화를 지울까요? 다른 기기에서도 지워져요.")) { gone.push(pkey(dp)); past.splice(viewPast, 1); viewPast = -1; keep(); render(); } return; }
     if (a === "resume") { var other = viewPast >= 1000, pr = other ? others()[viewPast - 1000] : past[viewPast]; if (pr && !busy) {

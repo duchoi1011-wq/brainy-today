@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "9f421a42cf"; window.BRAINY_APP = {key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]};</script>
-<script src="../shim.js?v=9f421a42cf"></script>
+<script>window.BRAINY_VERSION = "7f402eb0e5"; window.BRAINY_APP = {key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]};</script>
+<script src="../shim.js?v=7f402eb0e5"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -597,7 +597,7 @@ details.more > .prose { padding: 0 16px 16px; }
   }
   function runBtn(t) { return '<button type="button" class="run-btn" data-run="' + esc(t.id) + '" title="맥의 Brainy(본계정)가 이 태스크를 따라 하기 1단계부터 직접 진행해요 — 답은 오른쪽 아래 대화창">▶ Brainy 진행</button>'; }
   var askId = "";   // 실행 화면 「▶ Brainy 진행」으로 물은 과 — 교과서 밖에서도 ctx() 가 그 과 내용을 보낸다
-  function askBrainy(q, id, btn) {
+  function askBrainy(q, id, btn, fresh) {   // fresh: 새 대화로 (▶ Brainy 진행 — 지난 과 대화가 같이 가지 않게)
     var t = id ? taskBy(id) : curLesson(); if (!q) return;
     if (!window.BRAINY_CHAT) { $("sync").textContent = "Brainy 대화창을 못 불러왔어요. 새로고침해 주세요."; return; }
     if (window.BRAINY_CHAT.busy && window.BRAINY_CHAT.busy()) {   // 답하는 중엔 대화창이 새 질문을 안 받는다 — 지금 과를 바꾸지 않고 누른 자리에서 알린다
@@ -606,7 +606,8 @@ details.more > .prose { padding: 0 16px 16px; }
       return;
     }
     askId = t ? t.id : "";
-    window.BRAINY_CHAT.ask((t ? "(" + t.id + " " + name(t) + ") " : "") + q);
+    var text = (t ? "(" + t.id + " " + name(t) + ") " : "") + q;
+    if ((fresh || q.indexOf("이 과를 Brainy가 진행해 줘") === 0) && window.BRAINY_CHAT.start) window.BRAINY_CHAT.start(text); else window.BRAINY_CHAT.ask(text);   // 진행은 교과서 칩이든 ▶든 새 대화로
   }
   window.AD_APP = {   // ad-brainy.js 가 읽는 것 — 지금 화면·과
     view: view, lesson: function () { return view() === "book" ? curLesson() : askId ? taskBy(askId) : null; }, lessons: function () { return PLAN ? lessonList() : []; },
@@ -898,7 +899,7 @@ details.more > .prose { padding: 0 16px 16px; }
     var ab = e.target.closest("[data-ask]");
     if (ab) { askBrainy(ab.getAttribute("data-ask"), null, ab); return; }
     var rb = e.target.closest("[data-run]");
-    if (rb) askBrainy("이 과를 Brainy가 진행해 줘 — 따라 하기 1단계부터", rb.getAttribute("data-run"), rb);
+    if (rb) askBrainy("이 과를 Brainy가 진행해 줘 — 따라 하기 1단계부터", rb.getAttribute("data-run"), rb, true);
   });
   document.addEventListener("submit", function (e) {
     var f = e.target.closest("[data-askform]"); if (!f) return;
@@ -1300,7 +1301,10 @@ details.more > .prose { padding: 0 16px 16px; }
   function close() { box.hidden = true; fab.hidden = false; document.documentElement.classList.remove("bc-push"); window.dispatchEvent(new Event("resize")); paintFab(); try { localStorage.removeItem(KEY + ".open"); } catch (e) {} }
   /* 앱 안 다른 단추에서 대화를 열 때 — ask 는 바로 보내고, fill 은 입력칸만 채워 둔다(동욱이 고쳐서 ↑ — 강의 실습 「Brainy와 이 칸 하기」) */
   function fill(q) { showHist = false; viewPast = -1; open(); text.value = String(q || ""); text.dispatchEvent(new Event("input")); }
-  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
+  /* 새 대화 — 지금 대화는 지난 대화로 (↺ · 앱 단추 start) */
+  function newChat() { if (ctl) ctl.abort(); archive(); turns = []; showHist = false; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); }
+  /* start: 새 대화로 열고 바로 보낸다 — 지난 대화가 같이 가지 않게 (광고 실습 「▶ Brainy 진행」 · 2026-11-28 동욱 「응, 해」) */
+  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, start: function (q) { newChat(); viewPast = -1; open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");
@@ -1310,7 +1314,7 @@ details.more > .prose { padding: 0 16px 16px; }
     var b = e.target.closest("[data-bc],[data-bc-chip]"); if (!b) return;
     var a = b.getAttribute("data-bc");
     if (a === "close") return close();
-    if (a === "new") { if (ctl) ctl.abort(); archive(); turns = []; showHist = false; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); return; }
+    if (a === "new") { newChat(); return; }
     if (a === "hist") { showHist = !(showHist && viewPast < 0); viewPast = -1; render(); return; }
     if (a === "delpast") { var dp = past[viewPast]; if (dp && confirm("이 지난 대화를 지울까요? 다른 기기에서도 지워져요.")) { gone.push(pkey(dp)); past.splice(viewPast, 1); viewPast = -1; keep(); render(); } return; }
     if (a === "resume") { var other = viewPast >= 1000, pr = other ? others()[viewPast - 1000] : past[viewPast]; if (pr && !busy) {

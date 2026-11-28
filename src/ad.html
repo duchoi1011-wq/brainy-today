@@ -543,7 +543,7 @@ details.more > .prose { padding: 0 16px 16px; }
   }
   function runBtn(t) { return '<button type="button" class="run-btn" data-run="' + esc(t.id) + '" title="맥의 Brainy(본계정)가 이 태스크를 따라 하기 1단계부터 직접 진행해요 — 답은 오른쪽 아래 대화창">▶ Brainy 진행</button>'; }
   var askId = "";   // 실행 화면 「▶ Brainy 진행」으로 물은 과 — 교과서 밖에서도 ctx() 가 그 과 내용을 보낸다
-  function askBrainy(q, id, btn) {
+  function askBrainy(q, id, btn, fresh) {   // fresh: 새 대화로 (▶ Brainy 진행 — 지난 과 대화가 같이 가지 않게)
     var t = id ? taskBy(id) : curLesson(); if (!q) return;
     if (!window.BRAINY_CHAT) { $("sync").textContent = "Brainy 대화창을 못 불러왔어요. 새로고침해 주세요."; return; }
     if (window.BRAINY_CHAT.busy && window.BRAINY_CHAT.busy()) {   // 답하는 중엔 대화창이 새 질문을 안 받는다 — 지금 과를 바꾸지 않고 누른 자리에서 알린다
@@ -552,7 +552,8 @@ details.more > .prose { padding: 0 16px 16px; }
       return;
     }
     askId = t ? t.id : "";
-    window.BRAINY_CHAT.ask((t ? "(" + t.id + " " + name(t) + ") " : "") + q);
+    var text = (t ? "(" + t.id + " " + name(t) + ") " : "") + q;
+    if ((fresh || q.indexOf("이 과를 Brainy가 진행해 줘") === 0) && window.BRAINY_CHAT.start) window.BRAINY_CHAT.start(text); else window.BRAINY_CHAT.ask(text);   // 진행은 교과서 칩이든 ▶든 새 대화로
   }
   window.AD_APP = {   // ad-brainy.js 가 읽는 것 — 지금 화면·과
     view: view, lesson: function () { return view() === "book" ? curLesson() : askId ? taskBy(askId) : null; }, lessons: function () { return PLAN ? lessonList() : []; },
@@ -844,7 +845,7 @@ details.more > .prose { padding: 0 16px 16px; }
     var ab = e.target.closest("[data-ask]");
     if (ab) { askBrainy(ab.getAttribute("data-ask"), null, ab); return; }
     var rb = e.target.closest("[data-run]");
-    if (rb) askBrainy("이 과를 Brainy가 진행해 줘 — 따라 하기 1단계부터", rb.getAttribute("data-run"), rb);
+    if (rb) askBrainy("이 과를 Brainy가 진행해 줘 — 따라 하기 1단계부터", rb.getAttribute("data-run"), rb, true);
   });
   document.addEventListener("submit", function (e) {
     var f = e.target.closest("[data-askform]"); if (!f) return;
