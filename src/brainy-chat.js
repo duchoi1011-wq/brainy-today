@@ -50,7 +50,11 @@
   function keep() {
     stamp = Date.now(); local();
     clearTimeout(saveT2);
-    saveT2 = setTimeout(function () {
+    saveT2 = setTimeout(flush, 1200);
+  }
+  /* 몰아 둔 저장을 보낸다. 1.2초 안에 페이지를 떠나면(새로고침·닫기·다른 앱) 그 자리에서 바로 보낸다 — 안 그러면 마지막 바꿈이 저장소에 안 간다 (2026-11-28 검증 · 동욱 「응, 고쳐」) */
+  function flush() {
+      saveT2 = 0;
       if (!DBC) return;
       var r = remote || {}, devs = Object.assign({}, r.devs || {});
       delete devs.old;   // 예전 모양(cur 하나)은 기기로 두지 않고 지난 대화로 한 번 옮긴다 (2026-11-18 검증: 내 대화가 「다른 기기」로 한 번 더 보이던 것)
@@ -62,8 +66,10 @@
       var doc = { at: stamp, devs: devs, past: past, gone: gone.slice(-200) };
       remote = doc; local();
       DBC.doc(PATH).set(doc).catch(function () {});
-    }, 1200);
   }
+  function flushNow() { if (saveT2) { clearTimeout(saveT2); flush(); } }
+  window.addEventListener("pagehide", flushNow);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flushNow(); });
   function archive() { var c = clean(turns); if (!c.some(function (t) { return t.role === "user"; }) || past.some(function (p) { return sig(p.turns) === sig(c); })) return; past.unshift({ at: Date.now(), title: titleOf(c), turns: c }); past = past.slice(0, 20); }
   function others() {   // 다른 기기의 지금 대화 — 이 기기 것·지난 대화와 같은 건 뺀다
     var r = remote || {}, mine = sig(turns), list = [], seen = {};
@@ -333,7 +339,9 @@
         }
         firstOpen = false;
         local();
-        if (JSON.stringify([past, gone]) !== before && !busy) keep();   // 이 기기에만 있던 지난 대화를 저장소에도
+        var mine = (d.devs || {})[DEV];   // 이 기기 대화가 저장소와 다르고 이 기기 쪽이 더 새것 = 지난번에 못 보낸 것 (떠날 때 보내다 끊긴 경우)
+        var unsent = !!DEV && stamp > ((mine && mine.at) || 0) && (mine ? sig(mine.turns) !== sig(turns) : clean(turns).length > 0);
+        if ((JSON.stringify([past, gone]) !== before || unsent) && !busy) keep();   // 이 기기에만 있던 지난 대화·못 보낸 지금 대화를 저장소에도
         if (!box.hidden && !busy) render();
       });
     }, function () {});
