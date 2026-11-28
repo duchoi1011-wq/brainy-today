@@ -431,6 +431,7 @@ function runHtml(kinds){
 /*@include content-hist.js*/
 /*@include content-settings.js*/
 /*@include content-newbrand.js*/
+/*@include content-likes.js*/
 /*@include content-prompt.js*/
 /*@include content-auto.js*/
 /*@include content-profile.js*/
@@ -683,7 +684,8 @@ function act(name, el){
     send("script", "대본 초안 — " + bj.id + " " + bj.title, { ideas: [{ id: bj.id, title: bj.title, quote: bj.basis, refs: bj.refs, role: bj.role, stage: bj.stage, product: bj.product }] }); return }
   if(name === "buildscript"){ var bd = buildDocs().filter(function(x){ return x.id === el.dataset.id })[0]; if(!bd) return;   // 구축 문서 → 대본 (최종)
     send("script", "대본 초안 — 구축 문서 " + bd.id + " " + bd.title, { ids: [bd.id], build: bd.id }); return }
-  if(name === "cmtreq"){ setS({ cmtReq: { at: new Date().toISOString() } }); return }   // 추천 근거 영상 댓글 — 좋아요 순 5개
+  if(name === "cmtreq"){ setS({ cmtReq: { at: new Date().toISOString() } }); return }
+  if(name === "likedreq"){ setS({ cmtReq: { at: new Date().toISOString(), what: "search" } }); return }   // 💬 공감 댓글 — 키워드로 찾은 영상들 댓글 받기   // 추천 근거 영상 댓글 — 좋아요 순 5개
   if(name === "autostart"){ autoStart(); return }   // 🚀 자동 진행 — 키워드 → 추천 → 구축 → 대본 → 보고
   if(name === "autoopt"){ var ao5 = autoOpt(); ao5[el.dataset.k] = el.dataset.k === "n" ? autoN(el.dataset.v) : el.dataset.v; setS({ autoOpt: ao5 }); return }
   if(name === "script"){ var ids = pickedIds(s).filter(function(id){ return !scriptOf(id) }); if(!ids.length) return;
