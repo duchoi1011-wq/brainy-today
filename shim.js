@@ -253,8 +253,11 @@
           w.timers.push(setTimeout(function () {
             if (w.seen) return;
             if (!macOnly) { aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ Brainy가 답하지 않아요 — 인터넷을 확인하고 다시 보내 주세요."); return; }
-            sb.from("docs").upsert({ path: "ai/" + id, coll: "ai", id: id, data: { status: "취소" } }).then(function () {}, function () {});   // 맥이 나중에 켜져도 이 질문은 안 집게
-            aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ 맥이 꺼져 있거나 바빠서 답하지 못했어요. 이 앱은 맥(본계정)으로만 답해요 — 맥이 켜져 있는지 보고 다시 보내 주세요.");
+            var say = function () { aiFail(id, "unavailable", "맥이 꺼져 있거나 바빠서 답하지 못했어요. 이 앱은 맥(본계정)으로만 답해요 — 맥이 켜져 있는지 보고 다시 보내 주세요."); };   // 대화창이 「⚠ + 이 글」로 한 번만 보인다
+            // 아직 「요청」일 때만 거둔다 — 그사이 맥이 집었으면(받음) 덮지 않고 답을 기다린다 (11-28 검증 낮음 2: 취소가 받음에 덮여 아무도 안 보는 답을 만듦)
+            sb.from("docs").update({ data: { status: "취소" } }).eq("path", "ai/" + id).eq("data->>status", "요청").select("path").then(function (r) {
+              if (r.error || (r.data && r.data.length)) say();   // 0줄 = 맥이 이미 집음 → 그대로 기다린다 (9분 한도는 따로)
+            }, say);
           }, mac ? 45000 : 25000));
           if (mac && !macOnly) w.timers.push(setTimeout(function () {   // 맥이 꺼져 있으면 클라우드가 대신
             if (w.seen) return;

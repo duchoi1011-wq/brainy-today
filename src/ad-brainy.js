@@ -15,7 +15,7 @@
   }
   window.BRAINY_HOOK = {
     mode: function () { return { where: "mac", cloud: false }; },
-    chips: ["이 과를 Brainy가 진행해 줘", "외울 것만 퀴즈로 내 줘", "이 앱에서 ○○ 고쳐 줘"],
+    chips: ["이 과를 Brainy가 진행해 줘 — 따라 하기 1단계부터", "외울 것만 퀴즈로 내 줘", "이 앱에서 ○○ 고쳐 줘"],
     rules: function () {
       return ["[광고 실습 — Brainy가 직접 진행하고 동욱은 보며 배운다 (2026-11-28 동욱)]",
         "- [지금 앱 상태]에 그 과의 「한눈에·외울 것·더보기·확인 문제·완료 기준」이 들어 있다 — 진행·설명의 근거로 먼저 쓴다.",
