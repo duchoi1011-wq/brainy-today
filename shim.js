@@ -96,7 +96,13 @@
       onSnapshot: function (cb) { return listen({ kind: "coll", coll: coll, cb: cb, order: order, dir: dir, lim: lim }); }
     };
   }
-  var db = { doc: ref, collection: function (c) { return query(c); } };
+  // send: 이 화면에 남기지 않고 보내기만 한다 — 사진처럼 큰 문서(암기 사진 vo.cap · 2026-11-28)가 이 기기 저장 공간을 채우지 않게
+  function send(path, data) {
+    return sb.from("docs").upsert({ path: path, coll: collOf(path), id: idOf(path), data: data }).then(function (r) {
+      if (r.error) throw err(/row-level security|permission|JWT/i.test(r.error.message) ? "permission_denied" : "unavailable", r.error.message);
+    }, function (e) { throw err("unavailable", e && e.message); });
+  }
+  var db = { doc: ref, collection: function (c) { return query(c); }, send: send };
 
   // 통째로 받기는 처음과 10분에 한 번(지워진 문서까지 맞추려고). 그 사이 다시 볼 때는 바뀐 것만 받는다.
   var lastAt = "", lastFull = 0, FULL_EVERY = 10 * 60 * 1000;

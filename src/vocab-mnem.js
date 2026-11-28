@@ -4,19 +4,27 @@
       Claude 는 볼트 「외국어 암기 안내」 「발음매개 만드는 법」(오리쌤 07강) 순서로 초안을 그 cmd 문서의 drafts 에 적는다 (볼트 .claude/routines/cmd.md).
    2. 동욱이 초안 하나를 「이걸로 넣기」 하거나 고쳐서·직접 써서 넣으면 progress/<id>.mnem.pending = {hook, pic} 만 남긴다.
    3. 맥 동기화(app_data.py 발음매개 되쓰기)가 볼트 「영어 단어장」 표의 소리 고리·그림 칸에 넣고 mnem.done 으로 닫는다 — 정본은 볼트 표.
+   암기 사진(vocab-capture.js)으로 들어온 단어는 그 사진 cmd 의 mnem[단어] 에 초안이 같이 온다 — 단어 카드에 같은 모양으로 뜬다.
    단어·매개 글은 코드에 넣지 않는다. */
 let MN_CMDS = [];                  // 단어장이 보낸 발음매개 cmd (최근 것 먼저)
 const MN = { edit: null, draft: {} };   // edit = 「고쳐서·직접 써서」 칸이 열린 단어 id · draft = 그 칸의 처음 값
 const isMnWord = t => !!t && t.dom === "외국어 단어장" && /단어$/.test(t.cat || "");
 const mnOpenSt = c => /보내는 중|맥 대기|처리 중/.test(c?.status || "");
 const mnCmd = id => MN_CMDS.find(c => c.kind === "mnemonic" && c.params?.id === id) || null;
+/* 초안의 출처 — 이 단어로 보낸 발음매개 cmd 와 그 단어가 들어온 암기 사진 cmd 중 나중 것 */
+function mnDrafts(t){
+  const a = mnCmd(t.id), b = MN_CMDS.find(c => c.kind === "capture" && c.status === "끝" && c.mnem && Array.isArray(c.mnem[t.term]));
+  const ok = l => (Array.isArray(l) ? l : []).filter(d => d && d.hook);
+  if (a && (!b || String(a.createdAt) > String(b.createdAt))) return a.status === "끝" ? ok(a.drafts) : [];
+  return b ? ok(b.mnem[t.term]) : [];
+}
 const SIM = { "상": "p4", "중": "p3", "하": "p1" };
 function mnAge(iso){ const m = Math.round((Date.now() - Date.parse(iso || "")) / 60000); return !isFinite(m) ? "" : m < 1 ? "방금" : m < 60 ? m + "분 전" : Math.round(m / 60) + "시간 전"; }
 
 function mnemHtml(t){
   if (!isMnWord(t)) return "";
   const c = mnCmd(t.id), m = prog[t.id]?.mnem || {}, busy = mnOpenSt(c);
-  const drafts = c && c.status === "끝" && Array.isArray(c.drafts) ? c.drafts.filter(d => d && d.hook) : [];
+  const drafts = mnDrafts(t);
   let st = "";
   if (m.pending) st = `<p class="note">고른 매개 「${esc(m.pending.hook)}」를 볼트 단어장 표에 넣는 중이에요 — 맥이 켜져 있으면 몇 초 안에 들어가요.</p>`;
   else if (m.err) st = `<p class="note">${esc(m.err)}</p>`;
@@ -69,7 +77,7 @@ function mnPut(id, hook, pic, how){
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-mn]"); if (!b) return;
-  const a = b.dataset.mn, id = b.dataset.id, c = id ? mnCmd(id) : null, d = c?.drafts?.[+b.dataset.k];
+  const a = b.dataset.mn, id = b.dataset.id, d = id && BYID[id] ? mnDrafts(BYID[id])[+b.dataset.k] : null;
   if (a === "ask") { mnAsk(id); return; }
   if (a === "pick" && d) { mnPut(id, d.hook, d.pic, d.how); return; }
   if (a === "fix" || a === "own") { MN.edit = id; MN.draft = a === "fix" && d ? { hook: d.hook, pic: d.pic } : { hook: "", pic: "" }; render(); document.getElementById("mnH")?.focus(); return; }

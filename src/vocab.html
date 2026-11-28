@@ -170,6 +170,9 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .mn-d{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
 .mn-h{font-size:18px}
 .mn-ed input,.mn-ed textarea{display:block;width:100%;margin-top:4px;font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);resize:vertical}
+/* 암기 사진 (vocab-capture.js) */
+.cap-b{display:block;text-align:center;cursor:pointer}.cap-b.off{opacity:.5;pointer-events:none}
+.cap-r{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:10px;background:var(--surface-2)}
 /* 기억의 궁전 (vocab-palace.js) */
 .pl-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .pl-sum div{display:flex;flex-direction:column;gap:2px;padding:10px;border-radius:10px;background:var(--surface-2)}
@@ -465,7 +468,7 @@ function renderHome(){
   const fresh = ALL.filter(t => isFresh(t) && lv(t.id) < 4).length;
   return `
   ${statusNote()}
-  ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때). 단어를 펼치면 「🔤 발음매개 만들기」가 있고, 회화 문장은 위 「궁전」 탭에서 면마다 봐요.</p>` : ""}
+  ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때). 단어를 펼치면 「🔤 발음매개 만들기」가 있고, 회화 문장은 위 「궁전」 탭에서 면마다 봐요.</p>${capHtml()}` : ""}
   ${S.domain === "브랜드·상품" ? `<p class="note">프로그램·서비스·상품 이름을 모은 단어장이에요. 지금은 ${TERMS.length}개이고, 「분야」 탭에서 분야마다 따로 볼 수 있어요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "스킬" ? `<p class="note">내가 모아 둔 스킬을 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "MCP" ? `<p class="note">내가 연결한 MCP(Claude와 바깥 도구를 잇는 연결)를 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
@@ -763,7 +766,7 @@ async function init(){
   db.doc("vo.data/palace").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.palaces)) { PAL = v; if (view() === "palace") render(); } }, () => {});
   db.collection("cmd").onSnapshot(q => {   // 발음매개 cmd — 맥 Brainy 가 적은 초안(drafts)·상태
     MN_CMDS = q.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.from === "vocab").sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-    if (S.detail || view() === "list") render();
+    if (S.detail || ["list", "home", "palace"].includes(view())) render();
   }, () => {});
   db.doc("vo.marks/add").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { ADD = readAdd(v); rebuild(); render(); } }, () => {});
   db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = v; lsPut("vo.lec", v); if (view() === "lec") render(); } }, () => {});
@@ -786,5 +789,6 @@ async function init(){
 /*@include vocab-lec.js*/
 /*@include vocab-mnem.js*/
 /*@include vocab-palace.js*/
+/*@include vocab-capture.js*/
 init();
 </script>

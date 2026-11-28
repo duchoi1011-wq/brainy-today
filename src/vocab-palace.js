@@ -77,7 +77,7 @@ function renderPalace(){
   const loose = d.loose.length ? `<section class="card stack"><h2>면 번호가 궁전에 없는 문장 ${d.loose.length}</h2><div class="list">${d.loose.map(t => `<div class="row" style="cursor:default"><div class="t"><b>${esc(t.term)}</b><span>면 「${esc(t.face || "비어 있음")}」 · ${esc(t.def)}</span></div></div>`).join("")}</div><p class="small muted">회화장 표의 면 칸을 「장-면」(예: 1-3)으로 고치거나 궁전에 장을 더해요.</p></section>` : "";
   const legend = `<section class="card stack"><h2>문장 스테이지 (오리쌤)</h2><div class="list">${PL_STAGE.map(([n, nm, how]) => `<div class="row" style="cursor:default"><span class="pill">${n}</span><div class="t"><b>${nm}</b><span style="white-space:normal">${how}</span></div></div>`).join("")}</div>
     <p class="small muted">복습 단계(0~5)는 간격이고, 스테이지(1~3)는 문장 훈련의 진도예요. 색: <span class="pl-k p">문장 있음</span> <span class="pl-k d">오늘 복습</span> <span class="pl-k l">장기 기억</span> <span class="pl-k e">빈 면</span></p></section>`;
-  return chips + sum + today + chs + rest + loose + legend;
+  return chips + sum + today + capHtml() + chs + rest + loose + legend;   // 사진으로 문장 넣기 (vocab-capture.js)
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-pl]"); if (!b) return;
