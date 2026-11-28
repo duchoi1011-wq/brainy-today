@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "6741db7420"; window.BRAINY_APP = {key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고를 한 화면에서 보고 조율", colls: ["ah.data", "ad.data", "bchat"]};</script>
-<script src="../shim.js?v=6741db7420"></script>
+<script>window.BRAINY_VERSION = "2ebb20ef01"; window.BRAINY_APP = {key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고를 한 화면에서 보고 조율", colls: ["ah.data", "ad.data", "bchat"]};</script>
+<script src="../shim.js?v=2ebb20ef01"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -145,8 +145,9 @@ button.row{cursor:pointer}
 .row .ct b{display:block;font-weight:600;line-height:1.45}
 .row .ct span{display:block;font-size:13px;color:var(--muted)}
 .row .tags{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-.figs{display:flex;flex-wrap:wrap;gap:2px 12px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-top:2px}
+.figs,.row .ct .figs{display:flex;flex-wrap:wrap;gap:2px 12px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-top:2px}
 .figs i{font-style:normal;color:var(--ink)}
+.row .ct .figs>span{display:inline;font-size:inherit}
 .part{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 4px}
 .part h2{margin:0;letter-spacing:.02em;font-size:14px;color:var(--ink)}
 .part small{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
