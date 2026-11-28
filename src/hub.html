@@ -4,12 +4,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
-/* 틀은 광고 한눈에·강의 실습과 같다 — 한 줄 칸(640px) · 고정 머리말(숫자 4개) · 카드 · 아래 탭 막대.
-   상태 색 4개(문제 없음·볼 것·막힘·못 읽음)는 모든 탭과 대화창 윗줄이 같이 쓴다 — 여기 한 곳에서만 정한다 */
+/* 틀은 광고 한눈에·강의 실습과 같다 — 고정 머리말(숫자 4개) · 카드 · 아래 탭 막대. 흐름·지도는 넓은 화면에서 넓게 쓴다(1080px).
+   상태 색 4개(문제 없음·볼 것·막힘·못 읽음)와 종류 색 5개(스킬·대시보드·에이전트·예약·나)는 모든 탭과 대화창 윗줄이 같이 쓴다 — 여기 한 곳에서만 정한다 */
 :root{
   --bg:#F2F2F5; --surface:#FFFFFF; --surface-2:#F5F5F8; --ink:#16171C; --muted:#5D6070; --line:#DADBE3;
   --accent:#3E4BB8; --accent-ink:#FFFFFF;
   --s-ok:#1C9467; --s-warn:#B97F00; --s-bad:#C23B2C; --s-off:#A3A6B3;
+  --k-skill:#3E4BB8; --k-app:#0F7E72; --k-agent:#8A3FB5; --k-sched:#B26A00; --k-me:#5D6070;
   --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -17,12 +18,14 @@
   --bg:#101116; --surface:#181A21; --surface-2:#1E2029; --ink:#E7E8EE; --muted:#9A9DAD; --line:#2B2E3A;
   --accent:#8C97F2; --accent-ink:#10132B;
   --s-ok:#38C18A; --s-warn:#F0B52A; --s-bad:#F07A6A; --s-off:#5E6272;
+  --k-skill:#8C97F2; --k-app:#4FC7B6; --k-agent:#C58AF0; --k-sched:#F0B24A; --k-me:#9A9DAD;
   color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#101116; --surface:#181A21; --surface-2:#1E2029; --ink:#E7E8EE; --muted:#9A9DAD; --line:#2B2E3A;
   --accent:#8C97F2; --accent-ink:#10132B;
   --s-ok:#38C18A; --s-warn:#F0B52A; --s-bad:#F07A6A; --s-off:#5E6272;
+  --k-skill:#8C97F2; --k-app:#4FC7B6; --k-agent:#C58AF0; --k-sched:#F0B24A; --k-me:#9A9DAD;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -30,7 +33,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:1
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 calc(84px + env(safe-area-inset-bottom, 0px))}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--bg)}
 html{overflow-y:scroll}
-.wrap{max-width:640px;margin:0 auto}
+.wrap{max-width:1080px;margin:0 auto}
+.narrow{max-width:640px;margin-inline:auto;width:100%}
 header{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:var(--bg);padding-block:14px 10px;border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.01em}
@@ -69,7 +73,16 @@ button{font:inherit}
 .row .ct b{display:block;font-weight:600;line-height:1.45}
 .row .ct>span{display:block;font-size:13px;color:var(--muted)}
 .row .tags{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+/* 종류 표시 — 스킬 · 대시보드 · 에이전트 · 예약 · 나 (흐름·지도·앱이 같이 쓴다) */
+.kd{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;font-size:12px;font-weight:700;color:#fff;background:var(--k-me)}
+.kd.skill{background:var(--k-skill)}.kd.app{background:var(--k-app)}.kd.agent{background:var(--k-agent)}.kd.sched{background:var(--k-sched)}.kd.me{background:transparent;border:1.5px dashed var(--k-me);color:var(--k-me)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--s-off);flex:none}
+.dot.ok{background:var(--s-ok)}.dot.warn{background:var(--s-warn)}.dot.bad{background:var(--s-bad)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
 /* 앱 카드 */
+.grid2{display:grid;gap:16px}
+@media (min-width:900px){.grid2{grid-template-columns:1fr 1fr}}
 .app{display:flex;flex-direction:column;gap:6px}
 .app .top{display:flex;align-items:center;gap:10px}
 .app .ic{flex:none;width:36px;height:36px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-size:19px}
@@ -84,10 +97,70 @@ button{font:inherit}
 .al{font-size:13.5px;display:flex;gap:6px;align-items:baseline}
 .al i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent);transform:translateY(-1px)}
 .al.high i{background:var(--s-bad)}.al.mid i{background:var(--s-warn)}
+.links2{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.chipn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:3px 10px 3px 4px;font-size:12.5px;font-weight:600;cursor:pointer;min-height:32px}
+.chipn .kd{width:20px;height:20px;font-size:11px}
 .part{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:4px 4px 0}
 .part h2{margin:0;font-size:14px;color:var(--ink);letter-spacing:.02em}
 .part small{font-size:12px;color:var(--muted)}
 .foot{font-size:12.5px;color:var(--muted);text-align:center;padding:0 8px}
+/* 흐름 — 폰: 세로 줄(번호·선) · 넓은 화면: 가로로 이어지는 상자와 화살표 */
+.flow{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:0;counter-reset:st}
+.flow li{position:relative;display:flex;gap:10px;align-items:center;padding:6px 0 6px 0}
+.flow li:not(:last-child)::after{content:"";position:absolute;left:10px;top:30px;bottom:-6px;width:2px;background:var(--line)}
+.flow .stp{all:unset;box-sizing:border-box;cursor:pointer;flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:8px 10px;min-height:44px}
+.flow .stp:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.flow .stp:hover{border-color:var(--accent)}
+.flow .stp .tx{flex:1;min-width:0;line-height:1.35}
+.flow .stp .tx b{display:block;font-size:14px;font-weight:600}
+.flow .stp .tx span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flow .stp.me{background:transparent;border-style:dashed}
+.flow .stp.bad{border-color:var(--s-bad)}
+.flow .stp.warn{border-color:var(--s-warn)}
+.flow .kd{position:relative;z-index:1}
+@media (min-width:760px){
+  .flow{flex-direction:row;flex-wrap:wrap;gap:10px 0;align-items:stretch}
+  .flow li{padding:0 26px 0 0}
+  .flow li:not(:last-child)::after{left:auto;right:6px;top:50%;bottom:auto;width:14px;height:2px;background:var(--muted)}
+  .flow li:not(:last-child)::before{content:"";position:absolute;right:4px;top:calc(50% - 4px);border:5px solid transparent;border-left:6px solid var(--muted);border-right:0}
+  .flow .stp{flex:none;max-width:210px}
+  .flow li.eol::after,.flow li.eol::before{display:none}   /* 줄 끝 화살표는 감춘다 (drawFlowEnds) */
+}
+.fhead{display:flex;align-items:flex-start;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.fhead h3{margin:0;font-size:17px}
+.fhead p{font-size:13.5px;color:var(--muted)}
+.fdots{display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+.fdots i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--line)}
+.fdots i.skill{background:var(--k-skill)}.fdots i.app{background:var(--k-app)}.fdots i.agent{background:var(--k-agent)}.fdots i.sched{background:var(--k-sched)}.fdots i.me{background:transparent;border:1.5px dashed var(--k-me)}
+.fdots i.warn{outline:2px solid var(--s-warn);outline-offset:1px}.fdots i.bad{outline:2px solid var(--s-bad);outline-offset:1px}
+button.frow{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:10px;align-items:center;width:100%;padding:10px 4px;border-top:1px solid var(--line)}
+button.frow:first-child{border-top:0}
+button.frow:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
+button.frow b{flex:none;width:96px;font-size:14px}
+/* 지도 — 칸 넷(예약 · 스킬 · 대시보드 · 에이전트), 폰은 둘(예약+스킬 · 대시보드+에이전트). 선은 뒤에 깐 SVG */
+.map{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 34px;padding:4px 0}
+@media (min-width:900px){.map{grid-template-columns:.8fr 1.2fr 1fr .9fr;gap:12px 56px}}
+.map svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.map svg path{fill:none;stroke:var(--line);stroke-width:1.6}
+.map svg path.on{stroke:var(--accent);stroke-width:2.4}
+.map svg path.fl{stroke-dasharray:5 4}   /* 흐름의 앞뒤로만 이어진 선 — 점선 */
+@media (max-width:899px){.map:not(.focus) svg{display:none}}   /* 폰: 아무것도 안 골랐을 땐 선을 감춘다 — 좁은 틈에 한 덩어리로 뭉쳐 읽히지 않음 (11-28 검증 낮음 3) */
+.map svg path.dim{opacity:.25}
+.cw{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (min-width:900px){.cw{display:contents}}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0;position:relative;z-index:1}
+.col h4{margin:0 0 2px;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.06em}
+.col .sub{margin-top:10px}
+.nd{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 8px;min-height:40px;min-width:0;transition:opacity .15s}
+.nd:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nd .tx{flex:1;min-width:0;font-size:13px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nd .tx small{display:block;font-weight:500;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.nd.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.nd.near{border-color:var(--accent)}
+.map.focus .nd:not(.sel):not(.near){opacity:.35}
+.detail h3{margin:0;font-size:18px;display:flex;align-items:center;gap:8px}
+.detail .desc{margin-top:4px;font-size:14px}
+.detail h5{margin:12px 0 4px;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em}
 /* 대화창 윗줄 (brainy-chat.js 의 HOOK.bar 자리) — 받는 사람 · 엔진 */
 #bc .bc-xbar{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--surface);min-width:0}
 .hb-l{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.04em}
@@ -101,47 +174,50 @@ button{font:inherit}
 #bc.bc-has-m{grid-template-rows:auto auto 1fr auto auto}
 button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;gap:4px;background:var(--surface);border-top:1px solid var(--line);padding:6px max(12px, env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px))}
-#tabbar a{flex:0 1 160px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:12px;color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;min-height:44px;position:relative}
+#tabbar a{flex:0 1 140px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:12px;color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;min-height:44px;position:relative}
 #tabbar a span{font-size:18px;line-height:1.1}
 #tabbar a.on{color:var(--accent);background:var(--surface-2)}
 #tabbar a em{position:absolute;top:2px;right:calc(50% - 26px);font-style:normal;background:var(--s-bad);color:#fff;font-family:var(--f-mono);font-size:10px;min-width:16px;height:16px;border-radius:8px;display:grid;place-items:center;padding:0 4px}
 #toast{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 32px);background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 14px;font-size:14px;box-shadow:0 10px 28px rgba(0,0,0,.25)}
-@media (max-width:480px){.brand #sub{display:none}}
+@media (max-width:480px){.brand #sub{display:none}.map{gap:10px 22px}.nd{padding:6px}.nd .kd{display:none}}
 @media (max-width:420px){.sum{gap:4px}.sum button{padding:5px 6px}.sum b{font-size:14px}.card{padding:16px}}
+@media (prefers-reduced-motion:reduce){.nd{transition:none}}
 </style>
 
 <div class="wrap">
   <header>
-    <div class="brand"><h1>전체 현황</h1><small id="sub">내가 쓰는 비즈니스·학습 앱과 에이전트</small><small class="muted links" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">Brainy 홈</a> · <button type="button" class="out" data-brainy="out">로그아웃</button></small></div>
+    <div class="brand"><h1>전체 현황</h1><small id="sub">내가 쓰는 비즈니스·학습 앱 · 스킬 · 에이전트가 어떻게 이어져 도는지</small><small class="muted links" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">Brainy 홈</a> · <button type="button" class="out" data-brainy="out">로그아웃</button></small></div>
     <div class="sum" id="sum"></div>
   </header>
   <main id="view"></main>
 </div>
-<!-- 아래 탭: 지금 = 모든 앱에서 볼 것만 · 앱 = 비즈니스·학습 앱 카드 · 에이전트 = Brainy와 팀 에이전트 (누르면 그 팀과 대화) -->
+<!-- 아래 탭: 지금 = 볼 것과 흐름 요약 · 흐름 = 일이 도는 순서(스킬·대시보드·에이전트·예약·나) · 지도 = 무엇이 무엇과 이어지나 · 앱 = 대시보드 카드 -->
 <nav id="tabbar" aria-label="화면">
   <a href="#now" data-v="now"><span aria-hidden="true">▶</span>지금</a>
+  <a href="#flow" data-v="flow"><span aria-hidden="true">⇢</span>흐름</a>
+  <a href="#map" data-v="map"><span aria-hidden="true">◎</span>지도</a>
   <a href="#apps" data-v="apps"><span aria-hidden="true">▦</span>앱</a>
-  <a href="#agents" data-v="agents"><span aria-hidden="true">✦</span>에이전트</a>
 </nav>
 
 <script>/* Brainy 공통 부품 — 모든 앱이 같이 쓴다 */
 /*@include brainy-parts.js*/
 </script>
 <script>
-/* 전체 현황 — 내가 직접 쓰는 비즈니스·학습 앱의 현황을 한 화면에서 보고, Brainy·팀 에이전트와 바로 이야기한다 (2026-11-28 동욱).
-   데이터는 볼트가 정본이다: 4_Outputs/전체 현황 앱/전체 현황.json (넣을 앱·빠진 앱·에이전트 폴더·엔진)
-   + 맥 동기화(볼트 .claude/scripts/hub_app.py)가 각 앱 문서를 줄인 현황 → Supabase hub.data/main. 이 앱은 아무것도 쓰지 않는다.
-   대화는 맥으로만(본계정 — 클라우드 API 로 넘기지 않음). 받는 사람(Brainy · ~/agents 팀)과 엔진(Claude · GPT · Gemini)은 대화창 윗줄에서 고르고,
-   고른 값은 이 기기에만 둔다(hub.who · hub.eng). 앱 목록·숫자·문구를 코드에 넣지 않는다. */
+/* 전체 현황 — 내가 직접 쓰는 비즈니스·학습 앱(대시보드) · 스킬 · 에이전트 · 예약이 어떻게 이어져 일이 도는지 한 화면에서 보고, Brainy·팀 에이전트와 바로 이야기한다 (2026-11-28 동욱).
+   데이터는 볼트가 정본이다: 4_Outputs/전체 현황 앱/전체 현황.json (넣을 앱·흐름 순서·예약 시각·에이전트 폴더·엔진)
+   + 맥 동기화(볼트 .claude/scripts/hub_app.py)가 앱 현황 · SKILL.md 에서 뽑은 스킬 사이·스킬과 앱 사이 연결 → Supabase hub.data/main. 이 앱은 아무것도 쓰지 않는다.
+   대화는 맥으로만(본계정). 받는 사람·엔진은 대화창 윗줄에서 고르고 이 기기에만 둔다(hub.who · hub.eng). 목록·문구·연결을 코드에 넣지 않는다.
+   마디(node) 이름표 = "app:<id>" · "skill:<id>" · "agent:<id>" · "sched:<id>" · "me" — 흐름의 ref 와 같다. */
 let D = null, loaded = false;
-const S = { who: lsGet("hub.who", "brainy"), eng: lsGet("hub.eng", "claude") };
+const S = { who: lsGet("hub.who", "brainy"), eng: lsGet("hub.eng", "claude"), sel: "" };
 const LV = { high: "막힘", mid: "볼 것", low: "참고" }, ST = { ok: "문제 없음", warn: "볼 것", bad: "막힘", off: "못 읽음" }, RANK = { high: 0, mid: 1, low: 2 };
+const KIND = { skill: ["스킬", "S"], app: ["대시보드", "A"], agent: ["에이전트", "✦"], sched: ["예약", "⏰"], me: ["동욱", "나"] };
 
 function lsGet(k, d){ try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (e) { return d; } }
 function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const ago = iso => { if (!iso) return "—"; const t = new Date(iso); if (isNaN(t) || t.getFullYear() < 2020) return "—";   // 연도 없는 글자 등 못 읽는 시각은 숨긴다 (11-28 검증 중간 1 「9131일 전」)
-   const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "방금" : m < 60 ? m + "분 전" : m < 1440 ? Math.round(m / 60) + "시간 전" : Math.round(m / 1440) + "일 전"; };
+const ago = iso => { if (!iso) return "—"; const t = new Date(iso); if (isNaN(t) || t.getFullYear() < 2020) return "—";   // 연도 없는 글자 등 못 읽는 시각은 숨긴다 (11-28 검증 「9131일 전」)
+  const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "방금" : m < 60 ? m + "분 전" : m < 1440 ? Math.round(m / 60) + "시간 전" : Math.round(m / 1440) + "일 전"; };
 function toast(msg){
   let el = document.getElementById("toast");
   if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
@@ -150,6 +226,9 @@ function toast(msg){
 
 /* ── 데이터 꺼내기 ── */
 const apps = () => (D && D.apps) || [];
+const skills = () => (D && D.skills) || [];
+const scheds = () => (D && D.schedules) || [];
+const flows = () => (D && D.workflows) || [];
 const agents = () => (D && D.agents) || [{ id: "brainy", name: "Brainy" }];
 const engines = () => (D && D.engines && D.engines.length ? D.engines : [{ id: "claude", name: "Claude", note: "본계정" }]);
 const agentOf = id => agents().find(a => a.id === id) || agents()[0];
@@ -160,6 +239,32 @@ function allAlerts(){
   apps().filter(a => a.state === "off").forEach(a => out.push({ app: a, lv: "mid", t: a.name + " 현황을 못 읽었어요", ask: a.name + " 현황을 전체 현황 앱이 못 읽고 있어. 맥 동기화(hub_app.py)가 왜 못 읽는지 봐 줘." }));
   return out.sort((x, y) => RANK[x.lv] - RANK[y.lv]);
 }
+/* 마디 하나 — 이름표 "kind:id" 를 화면에 쓸 모양으로 {key, kind, id, name, sub, state, obj} */
+function node(ref){
+  const [kind, id] = ref === "me" ? ["me", "me"] : [ref.slice(0, ref.indexOf(":")), ref.slice(ref.indexOf(":") + 1)];
+  let o = null, name = id, sub = "", state = "";
+  if (kind === "app") { o = apps().find(a => a.id === id); if (o) { name = o.name; sub = o.line || ""; state = o.state; } }
+  else if (kind === "skill") { o = skills().find(s => s.id === id); if (o) sub = o.desc || ""; }
+  else if (kind === "agent") { o = agents().find(a => a.id === id); if (o) { name = o.name; sub = [o.dept, o.state].filter(Boolean).join(" · "); } }
+  else if (kind === "sched") { o = scheds().find(x => x.id === id); if (o) { name = o.name; sub = o.when || ""; } }
+  else { name = "동욱"; sub = "직접 고르기·승인·게시"; }
+  return { key: ref, kind, id, name, sub, state, obj: o };
+}
+const kdTag = k => `<span class="kd ${k}" aria-hidden="true">${KIND[k] ? KIND[k][1] : "·"}</span>`;
+
+/* 연결 — 스킬이 부르는 스킬(uses) · 스킬이 쓰는 대시보드(apps) · 예약이 돌리는 스킬 · 흐름의 앞뒤(동욱 칸은 건너 이음). 같은 짝은 하나로 */
+function edges(){
+  const seen = new Set(), out = [];
+  const add = (a, b, why) => { if (!a || !b || a === b || a === "me" || b === "me") return; const k = [a, b].sort().join("|"); if (seen.has(k)) return; seen.add(k); out.push({ a, b, why }); };
+  skills().forEach(s => { (s.uses || []).forEach(u => add("skill:" + s.id, "skill:" + u, "부름")); (s.apps || []).forEach(a => add("skill:" + s.id, "app:" + a, "씀")); });
+  scheds().forEach(x => x.skill && add("sched:" + x.id, "skill:" + x.skill, "예약"));
+  flows().forEach(w => { const st = (w.steps || []).filter(x => x.ref !== "me" && !x.bad).map(x => x.ref); for (let i = 1; i < st.length; i++) add(st[i - 1], st[i], "흐름"); });
+  return out;
+}
+const near = key => { const s = new Set(); edges().forEach(e => { if (e.a === key) s.add(e.b); else if (e.b === key) s.add(e.a); }); return s; };
+/* 이어진 것을 선 종류별로 — {부름·씀: [...], 예약: [...], 흐름: [...]} (지도 카드가 종류마다 따로 이름 붙인다 · 11-28 검증 중간 1) */
+const nearBy = key => { const o = {}; edges().forEach(e => { const other = e.a === key ? e.b : e.b === key ? e.a : ""; if (!other) return; const k = e.why === "흐름" ? "흐름" : e.why === "예약" ? "예약" : "부름·씀"; (o[k] = o[k] || []).push(other); }); return o; };
+const flowsWith = key => flows().filter(w => (w.steps || []).some(x => x.ref === key));
 
 /* ── 대화 — 받는 사람·엔진을 고르고, 대화창을 채운다 (보내기는 동욱이 ↑) ── */
 const ASKS = [];   // 그린 화면의 「Brainy에게」 문장들 — 단추는 번호만 들고 있다
@@ -188,40 +293,49 @@ function renderHead(){
   const sum = document.getElementById("sum");
   if (!D) { sum.innerHTML = ""; return; }
   const al = allAlerts(), bad = al.filter(x => x.lv === "high").length, mid = al.filter(x => x.lv === "mid").length;
-  const ok = apps().filter(a => a.state === "ok").length;
   sum.innerHTML = [
     [bad ? "bad" : "", "now", bad, "막힘"],
     [mid ? "warn" : "", "now", mid, "볼 것"],
-    ["", "apps", `${ok}/${apps().length}`, "문제 없는 앱"],
-    ["", "agents", agents().length, "에이전트"]
+    ["", "flow", flows().length, "흐름"],
+    ["", "map", `${skills().length}·${apps().length}·${agents().length}`, "스킬·앱·팀"]
   ].map(([k, v, val, label]) => `<button type="button" class="${k}" data-go="${v}" aria-label="${label} ${val}"><b>${val}</b><span>${label}</span></button>`).join("");
   document.querySelector('#tabbar a[data-v="now"]').innerHTML = `<span aria-hidden="true">▶</span>지금${bad ? `<em aria-label="막힌 것 ${bad}개">${bad}</em>` : ""}`;
 }
 
-/* ── 지금 — 모든 앱에서 볼 것만, 급한 순 ── */
+/* ── 지금 — 모든 앱에서 볼 것만, 급한 순 + 흐름 요약 + 누구와 이야기 ── */
+const openBtn = a => a.url ? `<a class="btn" href="${esc(a.url)}">열기 →</a>` : "";
 function alertRow(x){
   return `<div class="row ${x.lv}"><div class="ct"><b>${esc(x.t)}</b><span>${esc(x.app.icon || "")} ${esc(x.app.name)}</span>
     <div class="btns">${x.ask ? askBtn(x.ask, "✦ Brainy에게", x.lv === "high" ? "primary" : "") : ""}${openBtn(x.app)}</div></div>
     <div class="tags"><span class="pill ${x.lv === "high" ? "bad" : x.lv === "mid" ? "warn" : ""}">${LV[x.lv]}</span></div></div>`;
 }
-const openBtn = a => a.url ? `<a class="btn" href="${esc(a.url)}">열기 →</a>` : "";
+function agentRow(a){
+  const on = S.who === a.id;
+  return `<div class="row ${a.state === "진행" || a.id === "brainy" ? "ok" : "low"}"><div class="ct"><b>${esc(a.name)}</b>
+    <span>${[a.dept, a.state, a.updated ? "갱신 " + a.updated : ""].filter(Boolean).map(esc).join(" · ")}</span>
+    ${a.line ? `<p class="small" style="margin-top:2px">${esc(a.line)}</p>` : ""}
+    <div class="btns"><button type="button" class="btn ${on ? "" : "primary"}" data-who="${esc(a.id)}">${on ? "✓ 지금 이 상대와 대화 중 — 열기" : "✦ " + esc(a.id === "brainy" ? "Brainy와" : a.name + "과") + " 이야기"}</button>
+    <button type="button" class="btn" data-node="agent:${esc(a.id)}">지도에서 보기</button></div></div></div>`;
+}
 function renderNow(){
   const al = allAlerts(), hi = al.filter(x => x.lv !== "low"), lo = al.filter(x => x.lv === "low");
   let h = `<section class="card"><h2>지금 볼 것 · ${hi.length}</h2>${hi.length ? hi.map(alertRow).join("") : `<p class="empty">막히거나 볼 것이 없어요. 앱마다 숫자가 기준을 넘으면 여기에 떠요.</p>`}</section>`;
+  h += `<section class="card"><h2>흐름 한눈에 · ${flows().length}</h2>${flowSummary()}</section>`;
   if (lo.length) h += `<section class="card"><h2>다음 한 걸음 · ${lo.length}</h2>${lo.map(alertRow).join("")}</section>`;
   h += `<section class="card"><h2>누구와 이야기할까요</h2>${agents().map(agentRow).join("")}</section>`;
-  return h + foot();
+  return `<div class="narrow" style="display:flex;flex-direction:column;gap:16px">${h}${foot()}</div>`;
 }
 
-/* ── 앱 — 비즈니스·학습 묶음 ── */
+/* ── 앱 — 비즈니스·학습 묶음, 카드마다 이어진 스킬·흐름 ── */
 function appCard(a){
-  const al = a.alerts || [];
+  const key = "app:" + a.id, sk = [...near(key)].filter(k => k.startsWith("skill:")), fw = flowsWith(key);
   return `<section class="card app"><div class="top"><span class="ic" aria-hidden="true">${esc(a.icon || "▦")}</span>
     <div class="nm"><b>${esc(a.name)}</b><span>${esc(a.what || "")}</span></div><span class="pill ${esc(a.state)}">${ST[a.state] || ""}</span></div>
     <p class="line">${esc(a.line || "")}</p>
     ${(a.figs || []).length ? `<div class="stats">${a.figs.map(f => `<div class="stat"><span class="k">${esc(f[0])}</span><span class="v">${esc(f[1])}</span></div>`).join("")}</div>` : ""}
-    ${al.map(x => `<p class="al ${esc(x.lv)}"><i aria-hidden="true"></i><span>${esc(x.t)}</span></p>`).join("")}
-    <div class="btns">${openBtn(a)}${askBtn(`${a.name} 현황 정리해 줘 — 지금 숫자와 볼 것, 다음 한 걸음만.`, "✦ Brainy에게 이 앱 묻기")}</div>
+    ${(a.alerts || []).map(x => `<p class="al ${esc(x.lv)}"><i aria-hidden="true"></i><span>${esc(x.t)}</span></p>`).join("")}
+    ${sk.length || fw.length ? `<div class="links2">${fw.map(w => `<button type="button" class="chipn" data-flow="${esc(w.id)}"><span class="kd me" aria-hidden="true">⇢</span>${esc(w.name)}</button>`).join("")}${sk.map(k => `<button type="button" class="chipn" data-node="${esc(k)}">${kdTag("skill")}${esc(k.slice(6))}</button>`).join("")}</div>` : ""}
+    <div class="btns">${openBtn(a)}<button type="button" class="btn" data-node="${esc(key)}">지도에서 보기</button>${askBtn(`${a.name} 현황 정리해 줘 — 지금 숫자와 볼 것, 다음 한 걸음만.`, "✦ Brainy에게 이 앱 묻기")}</div>
     <p class="small muted">${a.at && ago(a.at) !== "—" ? "숫자 " + esc(ago(a.at)) : ""}${a.local ? (a.at ? " · " : "") + "이 맥에서만 열려요" : ""}</p></section>`;
 }
 function renderApps(){
@@ -229,56 +343,53 @@ function renderApps(){
   (D.groups || []).forEach(g => {
     const list = apps().filter(a => a.group === g.id);
     if (!list.length) return;
-    h += `<div class="part"><h2>${esc(g.name)}</h2><small>${list.length}개</small></div>` + list.map(appCard).join("");
+    h += `<div class="part"><h2>${esc(g.name)}</h2><small>${list.length}개</small></div><div class="grid2">${list.map(appCard).join("")}</div>`;
   });
   const rest = apps().filter(a => !(D.groups || []).some(g => g.id === a.group));
-  if (rest.length) h += rest.map(appCard).join("");
+  if (rest.length) h += `<div class="grid2">${rest.map(appCard).join("")}</div>`;
   if ((D.left || []).length) h += `<section class="card"><h2>여기 안 넣은 앱 · ${D.left.length}</h2>${D.left.map(x => `<div class="row"><div class="ct"><b>${x.url ? `<a href="${esc(x.url)}">${esc(x.name)}</a>` : esc(x.name)}</b><span>${esc(x.why || "")}</span></div></div>`).join("")}<p class="small muted" style="margin-top:8px">넣거나 빼려면 Brainy에게 「○○ 앱도 전체 현황에 넣어 줘」라고 하세요.</p></section>`;
   return h + foot();
 }
 
-/* ── 에이전트 ── */
-function agentRow(a){
-  const on = S.who === a.id;
-  return `<div class="row ${a.state === "진행" || a.id === "brainy" ? "ok" : "low"}"><div class="ct"><b>${esc(a.name)}</b>
-    <span>${[a.dept, a.state, a.updated ? "갱신 " + a.updated : ""].filter(Boolean).map(esc).join(" · ")}</span>
-    ${a.line ? `<p class="small" style="margin-top:2px">${esc(a.line)}</p>` : ""}
-    <div class="btns"><button type="button" class="btn ${on ? "" : "primary"}" data-who="${esc(a.id)}">${on ? "✓ 지금 이 상대와 대화 중 — 열기" : "✦ " + esc(a.id === "brainy" ? "Brainy와" : a.name + "과") + " 이야기"}</button></div></div></div>`;
-}
-function renderAgents(){
-  const e = engineOf(S.eng);
-  return `<section class="card"><h2>에이전트 · ${agents().length}</h2>${agents().map(agentRow).join("")}</section>
-    <section class="card"><h2>답할 엔진</h2><p class="small">지금 <b>${esc(e.name)}</b> — ${esc(e.note || "")}</p>
-    <p class="small muted" style="margin-top:4px">대화창 윗줄의 단추로 언제든 바꿔요. Claude·GPT는 그 폴더의 파일을 읽고 고치고, Gemini는 이 화면 현황만 보고 답해요.</p></section>` + foot();
-}
-const foot = () => `<p class="foot">현황 ${D && D.updatedAt ? esc(ago(D.updatedAt)) : "—"} · 맥 동기화가 5분마다 앱들의 숫자를 모아요<br>이 앱은 아무것도 바꾸지 않아요 — 일은 대화창에서 맡기고, 맥에서 본계정으로 돌아요.</p>`;
+/*@include hub-flow.js*/
+/*@include hub-map.js*/
 
-/* ── 화면 고르기 ── */
-const view = () => { const v = (location.hash || "#now").slice(1); return ["now", "apps", "agents"].includes(v) ? v : "now"; };
+const foot = () => `<p class="foot">현황 ${D && D.updatedAt ? esc(ago(D.updatedAt)) : "—"} · 맥 동기화가 5분마다 앱 숫자와 스킬 연결을 모아요<br>이 앱은 아무것도 바꾸지 않아요 — 일은 대화창에서 맡기고, 맥에서 본계정으로 돌아요.</p>`;
+
+/* ── 화면 고르기 — #now · #flow · #map · #apps (지도는 #map/<이름표> 로 그 마디를 골라 연다) ── */
+const view = () => { const v = (location.hash || "#now").slice(1).split("/")[0]; return ["now", "flow", "map", "apps"].includes(v) ? v : "now"; };
 function render(){
   ASKS.length = 0;
   const v = view();
+  if (v === "map") { const k = decodeURIComponent((location.hash.split("/")[1] || "")); S.sel = k; }
   document.querySelectorAll("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v));
   renderHead();
   const main = document.getElementById("view");
   if (!D) { main.innerHTML = `<section class="card"><p class="empty">${loaded ? "현황이 아직 없어요.<br>맥의 동기화가 앱들의 숫자를 모아 올리면 여기에 보여요." : "현황을 불러오는 중이에요…"}</p></section>`; return; }
-  main.innerHTML = v === "apps" ? renderApps() : v === "agents" ? renderAgents() : renderNow();
+  main.innerHTML = v === "apps" ? renderApps() : v === "flow" ? renderFlows() : v === "map" ? renderMap() : renderNow();
+  if (v === "map") { drawMap(); if (S.jump && S.sel && innerWidth < 900) window.scrollTo(0, 0); }
+  if (v === "flow") drawFlowEnds();
+  S.jump = false;
 }
+function openNode(key){ S.jump = true; location.hash = "map/" + encodeURIComponent(key); }   // jump: 고른 뒤 폰에서 설명 카드가 보이게 맨 위로
 
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-go],[data-ask],[data-who],[data-hb-who],[data-hb-eng]");
+  const t = e.target.closest("[data-go],[data-ask],[data-who],[data-hb-who],[data-hb-eng],[data-node],[data-flow]");
   if (!t) return;
   const d = t.dataset;
-  if (d.ask !== undefined) { const s = ASKS[+d.ask]; if (s) talk(s, "brainy"); return; }   // 「✦ Brainy에게」·「이 앱 물어보기」는 이름대로 Brainy에게 (골라 둔 팀으로 새지 않게 — 11-28 검증 낮음)
+  if (d.ask !== undefined) { const s = ASKS[+d.ask]; if (s) talk(s, "brainy"); return; }   // 「✦ Brainy에게」는 이름대로 Brainy에게 (골라 둔 팀으로 새지 않게)
   if (d.who) { if (S.who === d.who) { const c = chat(); if (c) c.open(); return; } return talk("", d.who); }
   if (d.hbWho) return setWho(d.hbWho);
   if (d.hbEng) return setEng(d.hbEng);
+  if (d.node !== undefined) { if (view() === "map" && S.sel === d.node) { location.hash = "map"; return; } return openNode(d.node); }   // 지도에서 고른 마디를 다시 누르면 풀린다
+  if (d.flow) { location.hash = "flow"; setTimeout(() => { const el = document.getElementById("fl-" + d.flow); if (el) el.scrollIntoView({ block: "start" }); }, 0); return; }
   if (d.go) { if (view() === d.go) window.scrollTo(0, 0); else location.hash = d.go; }
 });
-window.addEventListener("hashchange", () => { window.scrollTo(0, 0); render(); });
+window.addEventListener("hashchange", () => { if (!(view() === "map" && location.hash.includes("/"))) window.scrollTo(0, 0); render(); });
+window.addEventListener("resize", () => { if (view() === "map") drawMap(); if (view() === "flow") drawFlowEnds(); });
 
 /* 다른 부분(Brainy 연결 hub-brainy.js)이 쓰는 창구 */
-window.HUB_APP = { data: () => D, view, apps, agents, engines, allAlerts, who: () => agentOf(S.who), engine: () => engineOf(S.eng), setWho, setEng };
+window.HUB_APP = { data: () => D, view, apps, agents, engines, skills, flows, scheds, allAlerts, node, near, edges, selected: () => S.sel, who: () => agentOf(S.who), engine: () => engineOf(S.eng), setWho, setEng, openNode };
 
 /* ── 시작 ── */
 async function init(){

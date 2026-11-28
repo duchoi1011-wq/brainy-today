@@ -27,7 +27,7 @@
         return '<button type="button" data-hb-eng="' + esc(x.id) + '" aria-pressed="' + (x.id === e.id) + '" title="' + esc(x.note || "") + '"><b>' + (x.id === e.id ? "✓ " : "") + esc(x.name) + "</b><small>" + esc(x.note || "") + "</small></button>";
       }).join("") + "</div>";
     },
-    chips: ["오늘 모든 앱에서 손댈 것 순서대로 정리해 줘", "이번 주 비즈니스 현황 한 줄씩 요약해 줘", "학습 앱마다 다음 한 걸음 하나씩"],
+    chips: ["오늘 모든 앱에서 손댈 것 순서대로 정리해 줘", "흐름마다 지금 어디까지 왔는지 짚어 줘", "학습 앱마다 다음 한 걸음 하나씩"],
     editNote: "받는 사람과 엔진은 위 단추로 바꿔요. 이 맥에서 본계정으로 돌아요.",
     rules: function () {
       var h = H(), w = h ? h.who() : { id: "brainy", name: "Brainy" };
@@ -35,7 +35,7 @@
         "- 지금 받는 사람: " + w.name + (w.id === "brainy" ? " (볼트 전체)" : " (~/agents/" + w.id + " 폴더 — 그 폴더 CLAUDE.md 를 따른다)") + ".",
         "- 아래 현황은 맥 동기화가 각 앱 문서를 5분마다 줄인 것이다. 자세한 숫자가 필요하면 그 앱의 정본(볼트 4_Outputs/<앱>/ 의 JSON · 앱 문서)을 읽고, 못 읽는 숫자는 「못 읽음」이라 말하고 지어내지 않는다.",
         "- 「보여 줘·정리해 줘·제안해 줘」는 보여 주기까지. 쓰기·저장·적용은 동욱이 「해·넣어·반영해」라고 한 것만. 게시·발송·결제·광고 예산 늘리기는 하지 않고 준비까지만.",
-        "- 앱을 넣거나 빼 달라면 볼트 `4_Outputs/전체 현황 앱/전체 현황.json` 의 apps · left 를 고친다(앱 숫자 줄이는 법은 `.claude/scripts/hub_app.py` SUMMARY).",
+        "- 앱을 넣거나 빼 달라면 볼트 `4_Outputs/전체 현황 앱/전체 현황.json` 의 apps · left 를, 흐름 순서는 workflows 를, 예약 시각은 schedules 를 고친다(앱 숫자 줄이는 법은 `.claude/scripts/hub_app.py` SUMMARY, 스킬 사이 선은 SKILL.md 에서 자동).",
         "- 말은 짧게: 결론 한 줄 → 목록 → 다음 한 걸음."].join("\n");
     },
     ctx: function () {
@@ -48,15 +48,20 @@
           (a.alerts || []).forEach(function (x) { L.push("  · [" + x.lv + "] " + x.t); });
         });
       });
+      L.push("## 흐름 (단계 순서 — 정본 workflows)");
+      h.flows().forEach(function (w) { L.push("- " + w.name + ": " + (w.steps || []).map(function (st) { return st.t + "(" + st.ref + ")"; }).join(" → ")); });
+      L.push("## 스킬 (지도에 오른 것 · 이어진 대시보드 / 부르는 스킬)");
+      h.skills().forEach(function (s) { L.push("- " + s.id + ((s.apps || []).length ? " · 앱 " + s.apps.join(",") : "") + ((s.uses || []).length ? " · 부름 " + s.uses.join(",") : "")); });
+      if (h.selected()) L.push("- 지도에서 지금 고른 마디: " + h.selected());
       L.push("## 에이전트");
       h.agents().forEach(function (a) { L.push("- " + a.name + " (" + a.id + ")" + (a.dept ? " · " + a.dept : "") + (a.state ? " · " + a.state : "") + (a.line ? " — " + a.line : "")); });
       L.push("- 앱 저장소: hub.data/main (맥 동기화 hub_app.py 가 올림 — 직접 쓰지 않는다)");
       return L.join("\n");
     },
     tools: [
-      { name: "hub_open", description: "전체 현황 앱의 탭을 연다. view 는 now(지금 볼 것) · apps(앱 카드) · agents(에이전트).",
-        inputSchema: { type: "object", properties: { view: { type: "string", enum: ["now", "apps", "agents"] } }, required: ["view"] },
-        execute: function (i) { location.hash = i.view; return i.view; } }
+      { name: "hub_open", description: "전체 현황 앱의 탭을 연다. view 는 now(지금 볼 것) · flow(흐름) · map(연결 지도) · apps(대시보드 카드). node 를 주면 지도에서 그 마디를 골라 연다 — 이름표는 app:<id> · skill:<스킬> · agent:<폴더> · sched:<예약 id>.",
+        inputSchema: { type: "object", properties: { view: { type: "string", enum: ["now", "flow", "map", "apps"] }, node: { type: "string" } }, required: ["view"] },
+        execute: function (i) { var h = H(); if (i.node && h) { if (!h.node(i.node).obj) throw new Error("「" + i.node + "」 마디를 못 찾았어요"); h.openNode(i.node); return i.node; } location.hash = i.view; return i.view; } }
     ]
   };
 })();
