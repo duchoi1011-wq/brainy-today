@@ -1,6 +1,6 @@
 /* ── 지금 태스크 — 완료 기준 체크·상태 바꾸기 (build.py 가 course.html 에 끼움 · 2026-11-24 동욱 「볼트의 액션(3_Action 태스크)과 연동돼서 움직이도록」) ──
    볼트 태스크 노트가 정본이다. 앱은 누른 것을 문서 하나에 모아 보낸다 (광고 실습 앱과 같은 규약):
-     taskwork/cr-<번호표> = { task: "T- 뺀 노트 이름", from: "강의 실습", status: "할일|진행|완료|보류"(노트와 같으면 ""),
+     taskwork/cr-<번호표> = { task: "T- 뺀 노트 이름", from: "강의 실습", status: "할일|진행|완료|보류"(안 바꿨으면 ""),
                              steps: { "<본문 체크칸 번호 = crit.box>": true|false }, log: [], synced: false, updatedAt }
    맥의 task_sync.py 가 노트 status·머리줄·로그·허브·실행 로그·데일리 노트에 적고 synced:true 로 바꾼다.
    그 뒤 노트가 바뀌어 cr.data/main 이 다시 오면 화면은 노트 그대로. 그 사이에는 누른 대로 먼저 보여 준다. */
@@ -29,8 +29,7 @@ function twChange(t, mutate){
   if (cur.synced !== false) { cur.steps = {}; cur.status = ""; }   // 지난번 것은 이미 노트에 들어감 — 새로 시작
   cur.task = twName(t); cur.from = "강의 실습"; cur.steps = cur.steps || {}; cur.log = cur.log || [];
   mutate(cur);
-  Object.keys(cur.steps).forEach(b => { const k = t.crit.find(x => String(x.box) === b); if (k && cur.steps[b] === k.done) delete cur.steps[b]; });   // 노트와 같아진 칸은 뺀다
-  if (cur.status === t.status) cur.status = "";
+  // 노트와 같아 보여도 빼지 않고 보낸다 — 노트 사본(cr.data)이 늦게 와서, 바꿨다 바로 되돌린 값이 「같음」으로 빠지면 노트가 앞 값으로 남는다 (광고 실습 11-28 검증 F2와 같은 문제). 같은 값이면 task_sync 가 그냥 넘어간다
   cur.synced = false; cur.updatedAt = nowIso();
   TW[id] = cur; TW_UNSENT[id] = cur; lsPut("cr.tw.wait", TW_UNSENT); render();
   twPush(id, true);
