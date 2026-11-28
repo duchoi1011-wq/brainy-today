@@ -275,7 +275,7 @@
   /* 새 대화 — 지금 대화는 지난 대화로 (↺ · 앱 단추 start) */
   function newChat() { if (ctl) ctl.abort(); archive(); turns = []; showHist = false; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); }
   /* start: 새 대화로 열고 바로 보낸다 — 지난 대화가 같이 가지 않게 (광고 실습 「▶ Brainy 진행」 · 2026-11-28 동욱 「응, 해」) */
-  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, start: function (q) { newChat(); viewPast = -1; open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
+  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, start: function (q) { newChat(); viewPast = -1; open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");

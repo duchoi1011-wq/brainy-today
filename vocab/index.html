@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "f1563af0e5"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=f1563af0e5"></script>
+<script>window.BRAINY_VERSION = "d90038bac2"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=d90038bac2"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -1808,7 +1808,7 @@ init();
   /* 새 대화 — 지금 대화는 지난 대화로 (↺ · 앱 단추 start) */
   function newChat() { if (ctl) ctl.abort(); archive(); turns = []; showHist = false; try { localStorage.removeItem(SID); } catch (e) {} keep(); render(); }
   /* start: 새 대화로 열고 바로 보낸다 — 지난 대화가 같이 가지 않게 (광고 실습 「▶ Brainy 진행」 · 2026-11-28 동욱 「응, 해」) */
-  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, start: function (q) { newChat(); viewPast = -1; open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
+  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, start: function (q) { newChat(); viewPast = -1; open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");
