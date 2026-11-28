@@ -596,7 +596,8 @@ document.addEventListener("change", function(e){
 function act(name, el){
   if(claudeAct(name, el)) return;   // ⚙ Claude 모드 (content-claude.js)
   if(designAct(name, el)) return;   // 설계 · 템플릿 (content-design.js)
-  if(nbAct(name)) return;   // ＋ 새 브랜드 질문지 (content-newbrand.js)
+  if(nbAct(name)) return;
+  if(likedAct(name, el)) return;   // 💬 공감 댓글 → 대본 (content-likes.js)   // ＋ 새 브랜드 질문지 (content-newbrand.js)
   if(histAct(name, el)) return;   // 🕘 돌린 기록 · 🔖 중요 (content-hist.js)
   if(pastOn() && { ideas: 1, idearesearch: 1, ideascript: 1 }[name]){ toast(PAST_BLOCK); return }   // 보내기 전에 고른 것을 지우거나 칸을 옮기지 않게
   if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)

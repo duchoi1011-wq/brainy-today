@@ -2,7 +2,7 @@
    2026-11-18 동욱: "추천 버튼이 있으니 내가 누르기만 하면 알아서 대본까지 나오고 보고까지 하는 방향으로. 너가 직접 알아서 돌아가기에도 최적화".
    앱은 ct.set autoReq {at, upto, n, split:{key, pull}, params:{kw, rec, baseKw, topic}} 만 쓴다 → 맥 동기화(content_app.py)가 자동 진행.json 을 만들고 단계마다 cmd(kind auto)를 이어 보낸다.
    맥 Claude 는 한 cmd 에 한 단계만 하고 auto-step 으로 상태를 적는다 (cmd.md). 진행·보고는 자동 진행.json(ct.data .auto).
-   앱 밖(Claude 대화·예약 작업)에서는 `content_app.py auto-start <브랜드> [rec|build|script] [편 수]` 로 같은 흐름을 시작한다. */
+   앱 밖(Claude 대화·예약 작업)에서는 `content_app.py auto-start <브랜드> [rec|build|script|liked] [편 수]` 로 같은 흐름을 시작한다(liked = 공감 댓글 → 대본 길, 버튼은 content-likes.js). */
 var AUTO_UPTO = [["rec", "추천까지"], ["build", "구축 문서까지"], ["script", "대본까지"]];
 /* 편 수는 동욱이 직접 정한다 (2026-11-17 동욱: 1·2·3 고정 버튼 대신 숫자 입력과 −/+, 최소 1편). 나누기는 상품 파는 영상이 먼저 — 2편이면 1 · 1, 3편이면 2 · 1 */
 var AUTO_N_MAX = 10;
