@@ -264,7 +264,7 @@ var CMDS = [];                      // 이 앱이 보낸 명령 (최근 것부�
 var cur = new URLSearchParams(location.search).get("b") || load("ct.brand", "");     // 지금 브랜드
 var WANT = cur; if(new URLSearchParams(location.search).get("b")) save("ct.brand", cur);   // 열려고 한 브랜드 — 자료가 덜 들어온 순간 다른 브랜드로 바뀌어도, 들어오면 되돌린다 (2026-11-18 검증) — 주소 ?b=<id> 로 바로 연다 (브랜드마다 홈 화면 바로가기를 따로 둘 수 있다)
 var tab = load("ct.tab", "sum"); if(["design", "tpl", "claude", "hist", "imp"].indexOf(tab) >= 0) tab = "sum";   // 설계 · 기록 칸은 ⚙ 설정 창으로 옮김 (content-settings.js)
-var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", newBrand: false, hide: load("ct.hide", {}) };
+var ui = { kwKind: "all", kwMore: 60, refRole: "all", refSort: "mix", refBuyer: true, refView: "videos", refMore: 20, bdView: load("ct.bdView", "cards"), bdDoc: "", hide: load("ct.hide", {}) };
 /* 탭은 넷 — 한 탭 안을 칸(subs)으로 나눈다 (2026-11-17 동욱: "한눈에·브랜드는 한 탭 안에 나누고, 키워드는 따로, 콘텐츠·추천 한 탭, 구축·대본 한 탭").
    tab 변수는 칸 id(sum·brand·kw·ref·rec·build·refpage·script) 그대로 — 위 탭을 누르면 그 탭에서 마지막으로 본 칸이 열린다 */
 var TABS = [
