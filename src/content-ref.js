@@ -56,7 +56,7 @@ function viewRef(){
   var items = r ? r.items.filter(isLong) : [], nShort = r ? r.items.length - items.length : 0;
   var live = part("live"), chan = part("chan");
   var sr = part("search"), nFav = Object.keys((SETS[cur] || {}).favc || {}).length;
-  if(ui.refView === "videos" && !items.length) ui.refView = likedCount() ? "liked" : sr && sr.items && sr.items.length ? "search" : "videos";   // 레퍼런스가 없는 브랜드는 빈 칸 대신 공감 댓글·찾은 콘텐츠부터 (2026-11-28 동욱 키우고: "안 나오는데?")
+  if(!ui.refView) ui.refView = items.length ? "videos" : likedCount() ? "liked" : sr && sr.items && sr.items.length ? "search" : "videos";   // 처음 열 때만 — 레퍼런스가 없는 브랜드는 빈 칸 대신 공감 댓글·찾은 콘텐츠부터 (2026-11-28 동욱 키우고: "안 나오는데?"). 칩을 눌러 고른 칸은 그대로   // 레퍼런스가 없는 브랜드는 빈 칸 대신 공감 댓글·찾은 콘텐츠부터 (2026-11-28 동욱 키우고: "안 나오는데?")
   var h = "<div class=\"chips\"><button class=\"chip" + (ui.refView === "search" ? " on" : "") + "\" data-ui=\"refView=search\">키워드로 찾은 콘텐츠<span>" + (sr && sr.items ? sr.items.length : 0) + "</span></button>" +
     "<button class=\"chip" + (ui.refView === "liked" ? " on" : "") + "\" data-ui=\"refView=liked\">💬 공감 댓글<span>" + likedCount() + "</span></button>" +   // 키워드로 찾은 영상의 댓글, 공감 순 (content-likes.js)
     "<button class=\"chip" + (ui.refView === "ideas" ? " on" : "") + "\" data-ui=\"refView=ideas\">💡 아이디어<span>" + (((part("ideas") || {}).items) || []).length + "</span></button>" +
