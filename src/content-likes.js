@@ -42,7 +42,7 @@ function cmtHead(r){ var a = cmtxOf(r).ann; return a ? (a.head || a.mean || null
 /* 댓글 한 줄 — 의도 제목 · 공감 수 · 키워드 · 원문 · 영상 맥락 · 뜻 · 내 채널과 맞나 */
 function cmtRowHtml(r, i, opt){
   var x = cmtxOf(r), a = x.ann, hd = cmtHead(r), long = String(r.text).length > 160, fitCls = a ? (a.fit === "높음" ? " ok" : a.fit === "낮음" ? "" : " p") : "";
-  return "<div class=\"it\">" + (i != null ? "<span class=\"num muted\">" + (i + 1) + "</span>" : "") + "<div class=\"it-m\">" + (hd ? "<div class=\"cmt-head\">" + esc(hd) + "</div>" : "") + "<div class=\"it-h\"><b class=\"num\">👍 " + fmt(r.likes) + "</b>" + (r.replies ? " <span class=\"muted\">↩ 답글 " + fmt(r.replies) + "</span>" : "") + " <span class=\"tag\">" + esc(r.kw) + "</span>" +
+  return "<div class=\"it cmt-it\">" + (i != null ? "<span class=\"num muted\">" + (i + 1) + "</span>" : "") + "<div class=\"it-m\">" + (hd ? "<div class=\"cmt-head\">" + esc(hd) + "</div>" : "") + "<div class=\"it-h\"><b class=\"num\">👍 " + fmt(r.likes) + "</b>" + (r.replies ? " <span class=\"muted\">↩ 답글 " + fmt(r.replies) + "</span>" : "") + " <span class=\"tag\">" + esc(r.kw) + "</span>" +
       (a && a.fit ? " <span class=\"tag" + fitCls + "\" title=\"" + esc(a.why || "") + "\">🎯 내 채널 " + esc(a.fit) + "</span>" : "") + "</div>" +
     (long ? "<details><summary>" + esc(String(r.text).slice(0, 160)) + "…</summary><div class=\"pre" + (hd ? " cmt-orig" : "") + "\">" + esc(r.text) + "</div></details>" : "<div class=\"pre" + (hd ? " cmt-orig" : "") + "\">" + esc(r.text) + "</div>") +
     (x.ctx || a ? "<div class=\"cmtx\">" + (x.ctx ? "<div><b>🎬 영상 맥락</b> " + esc(x.ctx) + "</div>" : "") + (a && a.mean && a.mean !== hd ? "<div><b>💭 뜻</b> " + esc(a.mean) + "</div>" : "") +
