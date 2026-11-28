@@ -518,9 +518,9 @@ details.more > .prose { padding: 0 16px 16px; }
     if ((b.quiz || []).length) h += '<section class="panel quiz"><h3 class="qh">확인 문제 — 눌러서 답 보기</h3>' +
       b.quiz.map(function (q, n) { return "<details><summary>Q" + (n + 1) + ". " + inl(q.q) + '</summary><p class="ans"><b>A.</b> ' + inl(q.a || "노트에 답이 없어요") + "</p></details>"; }).join("") + "</section>";
     h += '<section class="panel ask"><h3>Brainy에게 묻기</h3>' + (window.BRAINY_CHAT ?
-      '<div class="chips2">' + ["이 과를 더 쉽게 설명해 줘", "우리 숫자로 예를 들어 줘", "따라 하기 1단계부터 같이 하자", "확인 문제 하나 더 내 줘"].map(function (q) { return '<button type="button" data-ask="' + esc(q) + '">' + esc(q) + "</button>"; }).join("") + "</div>" +
+      '<div class="chips2">' + ["이 과를 Brainy가 진행해 줘 — 따라 하기 1단계부터", "이 과를 더 쉽게 설명해 줘", "우리 숫자로 예를 들어 줘", "확인 문제 하나 더 내 줘"].map(function (q) { return '<button type="button" data-ask="' + esc(q) + '">' + esc(q) + "</button>"; }).join("") + "</div>" +
       '<form data-askform><input class="note" name="q" placeholder="이 과에서 궁금한 것" maxlength="500" autocomplete="off" enterkeyhint="send" aria-label="Brainy에게 물을 것"><button type="submit">묻기</button></form>' +
-      '<p class="small muted">지금 보는 과의 내용이 같이 가서 이 과 기준으로 답해요. 대화창은 오른쪽 아래(폰은 아래)에 열려요.</p>' :
+      '<p class="small muted">맥의 Brainy(본계정)가 이 과 기준으로 답해요 — 「진행해 줘」면 한 단계씩 직접 하고 왜 그런지 설명한 뒤 확인 질문을 해요. 광고 계정은 바꿀 표를 보여 주고 「승인」한 것만 바꿔요. 답은 1~8분, 맥이 꺼져 있으면 답하지 않아요. 대화창은 오른쪽 아래(폰은 아래)에 열려요.</p>' :
       '<p class="small muted">Brainy 대화창을 못 불러왔어요. 새로고침해 주세요.</p>') + "</section>";
     h += '<section class="panel box2" data-row="' + esc(t.id) + '"><h3>완료 기준 — 누르면 볼트 노트에 체크돼요</h3>' +
       (t.exists ? "" : '<p class="small warn">볼트에 「' + esc(t.title) + '」 노트가 없어 체크할 수 없어요.</p>') +

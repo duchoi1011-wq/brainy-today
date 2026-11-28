@@ -239,8 +239,9 @@
       return Promise.all(imgs.map(toJpeg)).then(function (list) {
         var id = "a" + Date.now().toString(36) + rid().slice(0, 6);
         /* opts.where "mac" = 맥의 Claude Code 가 볼트 폴더에서 직접 답한다(볼트 지침·스킬·자료를 읽음). 12초 안에 맥이 안 집으면 클라우드로 넘긴다.
+           opts.cloud === false (where "mac" 과 같이) = 맥으로만 — 맥이 안 집어도 클라우드(콘솔 API 키)로 넘기지 않는다. 45초 안에 안 집으면 요청을 거두고 알린다 (광고 실습 · 2026-11-28 동욱 「클로드 콘솔 말고 이 본계정 사용량으로」)
            opts.model = haiku · sonnet · opus (콘텐츠 기획 「Claude 모드」) — 맥은 그 모델로, 클라우드는 같은 급(quick·default·complex)으로 */
-        var mac = opts.where === "mac", TIER_OF = { haiku: "quick", sonnet: "default", opus: "complex" };
+        var mac = opts.where === "mac", macOnly = mac && opts.cloud === false, TIER_OF = { haiku: "quick", sonnet: "default", opus: "complex" };
         var req = {
           status: mac ? "요청" : "클라우드", input: input, json: !!json, tier: opts.modelTier || TIER_OF[opts.model] || "default", createdAt: new Date().toISOString(),
           tools: (opts.tools || []).filter(function (t) { return !READ_TOOL.test(t.name); }).map(function (t) { return { name: t.name, description: t.description || "", inputSchema: t.inputSchema || {} }; }),
@@ -249,8 +250,13 @@
         if (opts.model) req.model = opts.model;
         return new Promise(function (resolve, reject) {
           var w = aiWait[id] = { opts: opts, json: !!json, text: "", at: "", resolve: resolve, reject: reject, timers: [], seen: false };
-          w.timers.push(setTimeout(function () { if (!w.seen) aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ Brainy가 답하지 않아요 — 인터넷을 확인하고 다시 보내 주세요."); }, mac ? 45000 : 25000));
-          if (mac) w.timers.push(setTimeout(function () {   // 맥이 꺼져 있으면 클라우드가 대신
+          w.timers.push(setTimeout(function () {
+            if (w.seen) return;
+            if (!macOnly) { aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ Brainy가 답하지 않아요 — 인터넷을 확인하고 다시 보내 주세요."); return; }
+            sb.from("docs").upsert({ path: "ai/" + id, coll: "ai", id: id, data: { status: "취소" } }).then(function () {}, function () {});   // 맥이 나중에 켜져도 이 질문은 안 집게
+            aiFail(id, "unavailable", "맥이 답하지 않아요", "⚠ 맥이 꺼져 있거나 바빠서 답하지 못했어요. 이 앱은 맥(본계정)으로만 답해요 — 맥이 켜져 있는지 보고 다시 보내 주세요.");
+          }, mac ? 45000 : 25000));
+          if (mac && !macOnly) w.timers.push(setTimeout(function () {   // 맥이 꺼져 있으면 클라우드가 대신
             if (w.seen) return;
             sb.from("docs").update({ data: Object.assign({}, req, { status: "클라우드" }) }).eq("path", "ai/" + id).eq("data->>status", "요청").select("path").then(function (r) {
               if (r.data && r.data.length) aiCloud(id, Object.assign({}, req, { status: "클라우드" }));
