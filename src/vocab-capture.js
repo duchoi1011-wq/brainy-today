@@ -7,6 +7,7 @@
 const CAP = { busy: false, msg: "", ok: true };
 const CAP_MAX = 5, CAP_EDGE = 2000;
 const capCmds = () => MN_CMDS.filter(c => c.kind === "capture");
+const capWhen = iso => { const t = Date.parse(iso || ""); return isFinite(t) ? new Date(t + 9 * 3600e3).toISOString().slice(5, 16).replace("T", " ") : ""; };   // 한국 시간 MM-DD HH:MM
 function capShrink(file){
   return new Promise(res => {
     const url = URL.createObjectURL(file), img = new Image();
@@ -48,7 +49,7 @@ async function capUpload(files){
 function capRow(c){
   const open = mnOpenSt(c), added = c.added || {}, words = Array.isArray(added.words) ? added.words : [], sents = Array.isArray(added.sents) ? added.sents : [];
   const n = (c.params?.caps || c.params?.files || []).length;
-  const head = `<div class="meta"><span class="small mono muted">${esc(String(c.createdAt || "").slice(5, 16).replace("T", " "))} · ${c.params?.via === "폴더" ? "볼트 폴더" : "앱"} · 사진 ${n}장</span>
+  const head = `<div class="meta"><span class="small mono muted">${esc(capWhen(c.createdAt))} · ${c.params?.via === "폴더" ? "볼트 폴더" : "앱"} · 사진 ${n}장</span>
     <span class="pill ${c.status === "끝" ? "p4" : c.status === "멈춤" ? "" : "p3"}">${open ? "맥이 넣는 중" : esc(c.status || "")}</span></div>`;
   if (open) return `<div class="cap-r">${head}<p class="small muted">${mnAge(c.sentAt || c.createdAt)} 보냄 — 맥이 꺼져 있으면 켜질 때 넣어요.</p></div>`;
   const byTerm = w => ALL.find(t => t.dom === "외국어 단어장" && t.term === w);
