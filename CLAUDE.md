@@ -1,6 +1,6 @@
 # Brainy 홈 저장소
 
-여덟 앱(Brainy 홈 · 맥 단축키 · 체화 단어장 · 강의 실습 · 광고 실습 · 광고 한눈에 · 전체 현황 · 콘텐츠 기획)의 웹앱 저장소. 공개 저장소다 — 실명·연락처·키·볼트 노트 내용은 넣지 않는다 (원본에도 "동욱" 으로만).
+아홉 앱(Brainy 홈 · 맥 단축키 · 체화 단어장 · 기억의 궁전 · 강의 실습 · 광고 실습 · 광고 한눈에 · 전체 현황 · 콘텐츠 기획)의 웹앱 저장소. 공개 저장소다 — 실명·연락처·키·볼트 노트 내용은 넣지 않는다 (원본에도 "동욱" 으로만).
 
 ## 구조 — 어디를 고치나
 
@@ -10,6 +10,7 @@
 - **내용은 볼트가 정본이다 — 코드에 목록을 넣지 않는다.**
   - 맥 단축키 목록·묶음·작업 모드: 볼트 `4_Outputs/단축키 앱/단축키 데이터.json` → Supabase `sc.data/main`. 강의: `강의 순서.json` → `sc.data/course`.
   - 체화 단어장 용어·외국어: 볼트 위키 표 → `vo.data/main`. 강의 용어: `4_Outputs/체화 단어장/강의 용어.json` → `vo.data/lec`.
+  - 기억의 궁전(`src/palace.html` + `pl-face.js` 궁전·면 · `pl-walk.js` 걷기 · `pl-mnem.js` 매개 단어·발음매개 · `pl-capture.js` 암기 사진·PDF · `pl-brainy.js`, 2026-11-28 단어장 「궁전」 탭·발음매개·암기 사진을 떼어 옴): 볼트 `1_MyBrain/학습/외국어 암기/` 궁전 노트(장 목록 · 장별 면 표: 면 이름 · 장소 메모)·회화장(장면 이미지)·영어 단어장 → `vo.data/palace` · `vo.data/main`. 사진·그림 파일은 볼트 `궁전 사진/<궁전>/<장-면>.jpg`(장소) · `<장-면> 장면.jpg` · `매개 그림/<단어>.jpg` 가 정본이고, 맥 `palace_app.py` 가 작은 사본을 Supabase Storage 비공개 버킷 `palace` 에 올려 서명 주소를 `pl.data/img` 로. 앱이 쓰는 건 `pl.edit`(장·면·장면 글 → 맥이 볼트 표에) · `pl.up`(사진, db.send) · `pl.gen`(그림 생성 → 맥이 ChatGPT 계정 Codex 로) · `progress/<id>.mnem.pending` · `cmd`(from palace)뿐. 아이콘은 `palace/` 에 그대로.
   - 강의 실습(`src/course.html` + `course-now.js` 지금 · `course-book.js` 교과서(위키 요약을 장마다 한눈에·★ 핵심·더보기·이 장의 실습·확인 문제·묻기로 — 광고 실습 교과서와 같은 틀, 2026-11-28) · `course-map.js` 지도 · `course-detail.js` 칸 자세히 · `course-notes.js` 배운 것 · `course-memo.js` 내 메모 · `course-brainy.js`, 2026-11-24): 볼트 `3_Action/33_카드/C-<강의> 수강·실습 분류.md` · `C-<강의> 실습 학습 노트.md` · 그 지도를 잇는 `32_태스크` → 맥 동기화(`course_app.py`) → `cr.data/main`. 앱이 쓰는 건 `cr.memo/<강의 id>-<칸 번호표>`(칸마다 메모 문서 하나 — 스냅숏이 저장을 부르면 안 됨)뿐 — ✅ 는 앱이 안 바꾼다(course-practice 스킬이 볼트 카드에). 「▶ Brainy 진행」= `BRAINY_CHAT.start` 로 새 대화에 바로 보냄(광고 실습과 같은 길 — 지난 칸 대화가 같이 가지 않게), 요약·교과서 질문은 `ask`, 대화는 맥으로만(`where: mac` · `cloud: false`).
   - 맥의 동기화(볼트 `.claude/scripts/app_data.py`)가 몇 초 안에 올린다. 「앱 고치기」(GitHub)처럼 볼트에 손이 안 닿으면 코드에 내용을 박지 말고 요약에 「볼트에도 반영할 것: …」을 적는다.
   - 맥 단축키의 클로드 코드 목록은 앱을 점검·고칠 때마다 지금 클로드 코드와 맞춘다 — 볼트 데이터와 위키 「맥 핵심 단축키」 5-1의 「클로드 코드 최신화 날짜」를 같이 고친다 (2026-11-09 동욱).

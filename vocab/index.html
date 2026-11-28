@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "65f2f0ce0f"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "cmd", "bchat"], only: {cmd: {from: "vocab"}}};</script>
-<script src="../shim.js?v=65f2f0ce0f"></script>
+<script>window.BRAINY_VERSION = "a5a6047780"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=a5a6047780"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -217,34 +217,6 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .lc-flash{cursor:pointer;min-height:180px}.lc-gr{margin-top:12px}.lc-gr .btn{flex:1}
 .lt-mk{display:flex;gap:6px;align-items:flex-start}.lt-mk .mk{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:15px;cursor:pointer}
 .lt-mk .mk.ok[aria-pressed=true]{background:var(--l4);border-color:var(--l4);color:#fff}.lt-mk .mk.fav[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-/* 발음매개 (vocab-mnem.js) — 펼친 외국어 단어 카드 안 */
-.mn{padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2)}
-.mn .lbl{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted)}
-.mn-dr{display:flex;flex-direction:column;gap:10px}
-.mn-d{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
-.mn-h{font-size:18px}
-.mn-ed input,.mn-ed textarea{display:block;width:100%;margin-top:4px;font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);resize:vertical}
-/* 암기 사진 (vocab-capture.js) */
-.cap-b{display:block;text-align:center;cursor:pointer}.cap-b.off{opacity:.5;pointer-events:none}
-.cap-r{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:10px;background:var(--surface-2)}
-/* 기억의 궁전 (vocab-palace.js) */
-.pl-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.pl-sum div{display:flex;flex-direction:column;gap:2px;padding:10px;border-radius:10px;background:var(--surface-2)}
-.pl-sum b{font-size:22px;line-height:1.1}.pl-sum b small{font-size:13px;color:var(--muted)}.pl-sum span{font-size:12px;color:var(--muted)}
-.pl-bar{position:relative;height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}
-.pl-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}.pl-bar .b{background:var(--line)}.pl-bar .f{background:var(--l4)}
-.pl-g{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.pl-t{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-height:54px;padding:7px 8px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;min-width:0}
-.pl-t .mono{font-size:12px;font-weight:500}.pl-t small{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
-.pl-t.e{border-style:dashed;background:transparent}.pl-t.p{border-color:var(--l2)}.pl-t.d{border-color:var(--accent);background:var(--warn-bg)}.pl-t.l{border-color:var(--l4);background:var(--ok-bg)}
-.pl-t.on{outline:2px solid var(--ink);outline-offset:1px}
-.pl-f{padding:14px 16px;border-radius:12px;background:var(--surface-2)}
-.pl-s{font-size:17px;font-weight:600;line-height:1.5}
-.pl-stg{display:flex;gap:6px;flex-wrap:wrap}.pl-stg span{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}.pl-stg span.on{border-color:var(--l4);color:var(--l4);font-weight:600}
-.pl-q{padding:10px 2px;border-top:1px solid var(--line)}.pl-q:first-child{border-top:0}.pl-q summary{cursor:pointer}.pl-q .mono{color:var(--accent);margin-right:6px}
-.pl-rest{border-style:dashed;background:transparent}
-.pl-k{display:inline-block;padding:0 7px;border-radius:6px;border:1px solid var(--line);font-size:11px;margin:2px 2px 0 0}.pl-k.p{border-color:var(--l2)}.pl-k.d{border-color:var(--accent);background:var(--warn-bg)}.pl-k.l{border-color:var(--l4);background:var(--ok-bg)}.pl-k.e{border-style:dashed}
-@media (max-width:420px){.pl-sum{gap:6px}.pl-sum div{padding:8px 6px}.pl-sum b{font-size:19px}.pl-t{min-height:48px;padding:6px}}
 </style>
 
 <div class="wrap">
@@ -256,7 +228,6 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
       <a href="#lec" data-v="lec">강의</a>
       <a href="#field" data-v="field">분야</a>
       <a href="#list" data-v="list">전체</a>
-      <a href="#palace" data-v="palace">궁전</a>
     </nav>
   </header>
   <main id="view"></main>
@@ -633,7 +604,7 @@ function renderHome(){
   const fresh = ALL.filter(t => isFresh(t) && lv(t.id) < 4).length;
   return `
   ${statusNote()}
-  ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때). 단어를 펼치면 「🔤 발음매개 만들기」가 있고, 회화 문장은 위 「궁전」 탭에서 면마다 봐요.</p>` : ""}
+  ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때). 발음매개·암기 사진·회화 문장의 궁전(면·장소 사진·장면 그림)은 <a href="../palace/">기억의 궁전</a> 앱에서 해요.</p>` : ""}
   ${S.domain === "브랜드·상품" ? `<p class="note">프로그램·서비스·상품 이름을 모은 단어장이에요. 지금은 ${TERMS.length}개이고, 「분야」 탭에서 분야마다 따로 볼 수 있어요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "스킬" ? `<p class="note">내가 모아 둔 스킬을 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "MCP" ? `<p class="note">내가 연결한 MCP(Claude와 바깥 도구를 잇는 연결)를 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
@@ -646,7 +617,6 @@ function renderHome(){
       ${fixList().length ? `<a class="row" href="#list" data-listcat="fix" style="text-decoration:none"><div class="t"><b>고칠 단어 ${fixList().length}개</b><span>「이 단어는 고쳐요」로 표시하고 오류·중복을 적어 둔 단어 — 모든 단어장</span></div><span class="why">모아 보기 →</span></a>` : ""}
     </div>
   </section>
-  ${S.domain === "외국어 단어장" ? capHtml() : ""}
   ${splitDomHtml()}
   <section class="card">
     <h2>이해도 지도</h2>
@@ -806,7 +776,7 @@ function detailHtml(t){
     ${stageHtml(t)}
     ${ctxOk(t.id) ? `<div class="scene"><span class="lbl">장면</span>${esc(CTX[t.id].scene)}</div>` : ""}
     ${ctxLayers(t)}
-    ${mnemHtml(t)}
+    ${t.dom === "외국어 단어장" ? `<a class="btn ghost" href="../palace/${/단어$/.test(t.cat || "") ? "#words" : "#palace"}" style="text-decoration:none">🏛 기억의 궁전에서 ${/단어$/.test(t.cat || "") ? "매개 보기·만들기" : "이 문장의 면 보기"}</a>` : ""}
     ${!ctxOk(t.id) && sample ? `<button class="btn ghost" data-act="regen" data-id="${t.id}" ${genBusy.has(t.id)?"disabled":""}>${genBusy.has(t.id) ? "장면 만드는 중…" : "장면·맥락 만들기"}</button>` : ""}
     ${p.cmd?.text ? `<p class="small"><span class="muted">내가 쓴 명령</span><br>${esc(p.cmd.text)}</p>` : ""}
     ${p.action?.note ? `<p class="small"><span class="muted">써 본 기록</span><br>${esc(p.action.note)}</p>` : ""}
@@ -820,14 +790,14 @@ function detailHtml(t){
 
 function render(){
   const ae = document.activeElement;
-  if (ae && (ae.id === "rvTxt" || ae.classList?.contains("bt-in") || ae.classList?.contains("rq-in") || ae.classList?.contains("mn-in"))) { pendingRender = true; return; }
+  if (ae && (ae.id === "rvTxt" || ae.classList?.contains("bt-in") || ae.classList?.contains("rq-in"))) { pendingRender = true; return; }
   pendingRender = false;
   const v = view();
   document.querySelectorAll("#nav a, #tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v));
   const main = document.getElementById("view");
   const searchFocused = ae && ae.id === "listQ";
   if (v === "list" && searchFocused) { document.getElementById("listOut").innerHTML = listRows(); return; }
-  main.innerHTML = v === "palace" ? renderPalace() : v === "stage" ? renderStage() : v === "new" ? renderNew() : v === "lec" ? (S.domain === "학습 단어장" ? renderLec() : `<section class="card"><p class="empty">강의 용어는 학습 단어장에만 있어요.<br>${esc(S.domain)}에는 아직 강의가 없어요.</p></section>`) : v === "field" ? (S.domain === "학습 단어장" && S.fieldMode === "lec" ? `<div class="fseg"><button class="chip" data-fmode="">단어장 분야</button><button class="chip on">강의 용어 분야</button></div>` + renderField() : renderDomField()) : v === "review" ? renderReview() : v === "list" ? renderList() : renderHome();
+  main.innerHTML = v === "stage" ? renderStage() : v === "new" ? renderNew() : v === "lec" ? (S.domain === "학습 단어장" ? renderLec() : `<section class="card"><p class="empty">강의 용어는 학습 단어장에만 있어요.<br>${esc(S.domain)}에는 아직 강의가 없어요.</p></section>`) : v === "field" ? (S.domain === "학습 단어장" && S.fieldMode === "lec" ? `<div class="fseg"><button class="chip" data-fmode="">단어장 분야</button><button class="chip on">강의 용어 분야</button></div>` + renderField() : renderDomField()) : v === "review" ? renderReview() : v === "list" ? renderList() : renderHome();
   const domEl = document.getElementById("dom");
   domEl.innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
   domEdge(true);
@@ -928,11 +898,6 @@ async function init(){
     FOREIGN = Array.isArray(v.foreign) ? v.foreign : FOREIGN;
     rebuild();
     render();
-  }, () => {});
-  db.doc("vo.data/palace").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.palaces)) { PAL = v; if (view() === "palace") render(); } }, () => {});
-  db.collection("cmd").onSnapshot(q => {   // 발음매개 cmd — 맥 Brainy 가 적은 초안(drafts)·상태
-    MN_CMDS = q.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.from === "vocab").sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-    if (S.detail || ["list", "home", "palace"].includes(view())) render();
   }, () => {});
   db.doc("vo.marks/add").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { ADD = readAdd(v); rebuild(); render(); } }, () => {});
   db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = v; lsPut("vo.lec", v); if (view() === "lec") render(); } }, () => {});
@@ -1508,284 +1473,6 @@ document.addEventListener("click", e => {
 });
 window.addEventListener("hashchange", () => { LSTUDY = null; LDET = null; });
 
-/* ───────── 발음매개 (2026-11-28 동욱 「내 단어장에서 매개법이 진행될 수 있게 버튼 — 발음 매개법 위주로」) — build.py 가 단어장 스크립트 끝(init 앞)에 끼운다 ─────────
-   외국어 단어(분야 이름이 「… 단어」)를 펼치면 「🔤 발음매개 만들기」가 있다.
-   1. 누르면 cmd 문서 하나({from: "vocab", kind: "mnemonic", params})를 맥에 보낸다 — 맥의 cmd_runner 가 Claude 를 깨우고,
-      Claude 는 볼트 「외국어 암기 안내」 「발음매개 만드는 법」(오리쌤 07강) 순서로 초안을 그 cmd 문서의 drafts 에 적는다 (볼트 .claude/routines/cmd.md).
-   2. 동욱이 초안 하나를 「이걸로 넣기」 하거나 고쳐서·직접 써서 넣으면 progress/<id>.mnem.pending = {hook, pic} 만 남긴다.
-   3. 맥 동기화(app_data.py 발음매개 되쓰기)가 볼트 「영어 단어장」 표의 소리 고리·그림 칸에 넣고 mnem.done 으로 닫는다 — 정본은 볼트 표.
-   암기 사진(vocab-capture.js)으로 들어온 단어는 그 사진 cmd 의 mnem[단어] 에 초안이 같이 온다 — 단어 카드에 같은 모양으로 뜬다.
-   단어·매개 글은 코드에 넣지 않는다. */
-let MN_CMDS = [];                  // 단어장이 보낸 발음매개 cmd (최근 것 먼저)
-const MN = { edit: null, draft: {} };   // edit = 「고쳐서·직접 써서」 칸이 열린 단어 id · draft = 그 칸의 처음 값
-const isMnWord = t => !!t && t.dom === "외국어 단어장" && /단어$/.test(t.cat || "");
-const mnOpenSt = c => /보내는 중|맥 대기|처리 중/.test(c?.status || "");
-const mnCmd = id => MN_CMDS.find(c => c.kind === "mnemonic" && c.params?.id === id) || null;
-/* 초안의 출처 — 이 단어로 보낸 발음매개 cmd 와 그 단어가 들어온 암기 사진 cmd 중 나중 것 */
-function mnDrafts(t){
-  const a = mnCmd(t.id), b = MN_CMDS.find(c => c.kind === "capture" && c.status === "끝" && c.mnem && Array.isArray(c.mnem[t.term]));
-  const ok = l => (Array.isArray(l) ? l : []).filter(d => d && d.hook);
-  if (a && (!b || String(a.createdAt) > String(b.createdAt))) return a.status === "끝" ? ok(a.drafts) : [];
-  return b ? ok(b.mnem[t.term]) : [];
-}
-const SIM = { "상": "p4", "중": "p3", "하": "p1" };
-function mnAge(iso){ const m = Math.round((Date.now() - Date.parse(iso || "")) / 60000); return !isFinite(m) ? "" : m < 1 ? "방금" : m < 60 ? m + "분 전" : Math.round(m / 60) + "시간 전"; }
-
-function mnemHtml(t){
-  if (!isMnWord(t)) return "";
-  const c = mnCmd(t.id), m = prog[t.id]?.mnem || {}, busy = mnOpenSt(c);
-  const drafts = mnDrafts(t);
-  let st = "";
-  if (m.pending) st = `<p class="note">고른 매개 「${esc(m.pending.hook)}」를 볼트 단어장 표에 넣는 중이에요 — 맥이 켜져 있으면 몇 초 안에 들어가요.</p>`;
-  else if (m.err) st = `<p class="note">${esc(m.err)}</p>`;
-  else if (m.done && m.done.hook === t.hook) st = `<p class="small muted">✓ 볼트 표에 넣었어요 · ${esc(String(m.done.at || "").slice(0, 10))}</p>`;
-  const cmdLine = !c ? "" : busy ? `<p class="small muted" role="status">맥 Brainy가 초안을 만드는 중이에요 (${mnAge(c.sentAt || c.createdAt)} 보냄). 맥이 꺼져 있으면 켜질 때 만들어요.</p>`
-    : c.status === "멈춤" ? `<p class="note">초안을 못 만들었어요 — ${esc(String(c.result || "").split("\n")[0])}</p>`
-    : c.status === "못 보냄" ? `<p class="note">${esc(c.result || "못 보냈어요")}</p>`
-    : !drafts.length ? `<p class="small muted">${esc(String(c.result || "초안이 없어요").split("\n")[0])}</p>` : "";
-  const edit = MN.edit === t.id ? `<div class="mn-ed stack">
-      <label class="small muted">소리 고리 (한국어로 들리는 말)<input class="mn-in" id="mnH" maxlength="80" value="${esc(MN.draft.hook || "")}" placeholder="원 발음을 한국어로 들리는 말로"></label>
-      <label class="small muted">그림 (매개어와 뜻을 묶은 과장된 장면)<textarea class="mn-in" id="mnP" maxlength="200" rows="2" placeholder="소리 고리와 뜻이 한 장면에 — 크게, 움직이게, 웃기게">${esc(MN.draft.pic || "")}</textarea></label>
-      <div class="btns"><button class="btn primary" data-mn="save" data-id="${t.id}">이걸로 볼트에 넣기</button><button class="btn ghost" data-mn="cancel">닫기</button></div></div>` : "";
-  return `<div class="mn stack">
-    <div class="meta"><span class="lbl" style="margin:0">발음매개</span><span class="small muted">뜻 → 소리 고리 → 그림 → ${esc(t.cat.replace(/ ?단어$/, ""))} 발음</span></div>
-    ${t.hook ? "" : `<p class="small muted">아직 매개가 없어요.</p>`}
-    ${st}${cmdLine}
-    ${drafts.length ? `<div class="mn-dr">${drafts.map((d, k) => `<div class="mn-d">
-        <div class="meta"><b class="mn-h">${esc(d.hook)}</b>${d.sim ? `<span class="pill ${SIM[d.sim] || ""}">유사도 ${esc(d.sim)}</span>` : ""}</div>
-        ${d.how ? `<p class="small muted">${esc(d.how)}</p>` : ""}
-        ${d.pic ? `<p class="small">${esc(d.pic)}</p>` : ""}
-        ${d.reps ? `<p class="small muted">반복 · ${esc(d.reps)}</p>` : ""}
-        <div class="btns"><button class="btn primary" data-mn="pick" data-id="${t.id}" data-k="${k}" ${m.pending ? "disabled" : ""}>이걸로 넣기</button><button class="btn ghost" data-mn="fix" data-id="${t.id}" data-k="${k}">고쳐서 넣기</button></div>
-      </div>`).join("")}</div>` : ""}
-    ${edit}
-    <div class="btns">
-      <button class="btn ${drafts.length || t.hook ? "ghost" : "primary"}" data-mn="ask" data-id="${t.id}" ${busy || mode !== "db" ? "disabled" : ""}>${busy ? "초안 만드는 중…" : drafts.length || t.hook ? "🔤 발음매개 다시 만들기" : "🔤 발음매개 만들기"}</button>
-      ${MN.edit === t.id ? "" : `<button class="btn ghost" data-mn="own" data-id="${t.id}">직접 쓰기</button>`}
-    </div>
-    ${mode !== "db" ? `<p class="small muted">기록 저장소에 연결되면 맥에 보낼 수 있어요.</p>` : ""}
-  </div>`;
-}
-
-function mnAsk(id){
-  const t = BYID[id]; if (!t || !db || mode !== "db" || mnOpenSt(mnCmd(id))) return;
-  const cid = "c" + Date.now().toString(36), at = nowIso();
-  const data = { text: "🔤 체화 단어장 — 발음매개 초안: " + t.term + " (" + t.def + ")", from: "vocab", app: "vocab", kind: "mnemonic",
-    params: { id: t.id, term: t.term, def: t.def, cat: t.cat, hook: t.hook || "", pic: t.pic || "" }, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
-  MN_CMDS = [{ id: cid, ...data }, ...MN_CMDS];
-  db.doc("cmd/" + cid).set(data).catch(() => { const c = MN_CMDS.find(x => x.id === cid); if (c) { c.status = "못 보냄"; c.result = "못 보냈어요 — 인터넷을 확인하고 다시 눌러 주세요"; } render(); });
-  render();
-  toast("맥에 보냈어요 — 「" + t.term + "」 발음매개 초안을 만들어요");
-}
-function mnPut(id, hook, pic, how){
-  hook = String(hook || "").trim().slice(0, 80); pic = String(pic || "").trim().slice(0, 200);
-  if (!hook) { toast("소리 고리를 적어 주세요"); return false; }
-  const cur = prog[id]?.mnem || {};
-  save(id, { mnem: { ...cur, pending: { hook, pic, how: how || "", at: nowIso() }, err: null } }, "발음매개 고름");
-  toast("「" + hook + "」를 볼트 단어장에 넣어요");
-  return true;
-}
-document.addEventListener("click", e => {
-  const b = e.target.closest("[data-mn]"); if (!b) return;
-  const a = b.dataset.mn, id = b.dataset.id, d = id && BYID[id] ? mnDrafts(BYID[id])[+b.dataset.k] : null;
-  if (a === "ask") { mnAsk(id); return; }
-  if (a === "pick" && d) { mnPut(id, d.hook, d.pic, d.how); return; }
-  if (a === "fix" || a === "own") { MN.edit = id; MN.draft = a === "fix" && d ? { hook: d.hook, pic: d.pic } : { hook: "", pic: "" }; render(); document.getElementById("mnH")?.focus(); return; }
-  if (a === "cancel") { MN.edit = null; document.activeElement?.blur?.(); render(); return; }
-  if (a === "save") { const h = document.getElementById("mnH")?.value, p = document.getElementById("mnP")?.value; document.activeElement?.blur?.(); if (mnPut(id, h, p, "동욱이 고침")) { MN.edit = null; render(); } }
-});
-
-/* ───────── 기억의 궁전 대시보드 (2026-11-28 동욱 「기억의 궁전 대시보드를 우선 만들어야겠고」) — build.py 가 단어장 스크립트 끝(init 앞)에 끼운다 ─────────
-   궁전마다 장(면 10개) → 면마다 놓인 문장 · 장면 이미지 · 복습 단계 · 다음 복습 · 오리쌤 스테이지. 오늘 복습할 면 · 다음 빈 면.
-   - 궁전의 장·면: 볼트 `1_MyBrain/학습/외국어 암기/궁전-*.md` (장 목록 표 · 「N장 — 이름」 면 표 · frontmatter goal_faces·goal_from) → 맥 동기화 → vo.data/palace
-   - 면에 놓인 문장: 회화장 표(영어 회화장 · 중국어 회화장)의 `면` 칸이 정본 → vo.data/main foreign (face · stage · due · st · meta …)
-   - 장 이름·면 이름은 동욱이 정한다 — 비어 있으면 비어 있다고만 보인다 (지어내지 않는다).
-   - 스테이지 3(3단 챌린지)은 내용 확인 전이라 이름만 둔다. 이 화면은 아무것도 쓰지 않는다. */
-let PAL = null;                       // vo.data/palace — null 이면 아직 못 받음
-const PL = { sel: 0, face: null };
-const PAL_KEY = "chewha-vocab-palace";
-try { PL.sel = parseInt(localStorage.getItem(PAL_KEY) || "0", 10) || 0; } catch(e) {}
-const PL_STAGE = [["1", "궁전 결합", "문장을 면 하나에 장면으로 놓는다"], ["2", "메타반복", "단어·구조를 바꿔 다른 데 써 본다"], ["3", "3단 챌린지", "내용 확인 전 — 오리쌤 강의에서 확인한 뒤 채워요"]];
-const faceKey = s => { const m = String(s || "").match(/(\d+)\s*-\s*(\d+)/); return m ? m[1] + "-" + m[2] : ""; };   // 「현장 1-3(접수대)」 · 「1-3-7」(소) → 1-3
-const isDay = s => /^\d{4}-\d{2}-\d{2}/.test(String(s || ""));
-const plDue = t => isDay(t.due) && String(t.due).slice(0, 10) <= kday();
-const plLong = t => /장기/.test(String(t.due || "")) || String(t.stage) === "5";
-const plSt = t => { const m = String(t.st || "").match(/[123]/); return m ? +m[0] : 0; };
-
-function plOf(p){
-  const sent = FOREIGN.filter(t => t.cat === p.cat);
-  const byFace = {}; sent.forEach(t => { const k = faceKey(t.face); if (k) (byFace[k] = byFace[k] || []).push(t); });
-  const slots = p.chapters.flatMap(c => c.slots);
-  const placed = slots.filter(s => byFace[s.no] || s.placed).length;
-  const due = sent.filter(plDue).sort((a, b) => String(a.due).localeCompare(String(b.due)) || faceKey(a.face).localeCompare(faceKey(b.face), undefined, { numeric: true }));
-  const next = slots.find(s => !byFace[s.no] && !s.placed) || null;
-  const loose = sent.filter(t => !slots.some(s => s.no === faceKey(t.face)));   // 면 번호가 궁전에 없는 문장 (장이 아직 없거나 번호 오타)
-  return { sent, byFace, slots, placed, due, next, loose };
-}
-function plTile(s, d){
-  const t = d.byFace[s.no]?.[0], cls = !t && !s.placed ? "e" : t && plDue(t) ? "d" : t && plLong(t) ? "l" : "p";
-  return `<button class="pl-t ${cls}${PL.face === s.no ? " on" : ""}" data-pl="face" data-no="${esc(s.no)}" aria-pressed="${PL.face === s.no}" aria-label="${esc(s.no)}면 ${s.name ? esc(s.name) + " " : ""}${cls === "e" ? "빈 면" : cls === "d" ? "오늘 복습" : "문장 있음"}">
-    <span class="mono">${esc(s.no)}</span><small>${esc(s.name || (t || s.placed ? "" : "빈 면"))}</small></button>`;
-}
-function plFace(s, d){
-  const ts = d.byFace[s.no] || [];
-  const head = `<div class="meta"><h3 style="font-size:18px">${esc(s.no)}면${s.name ? " · " + esc(s.name) : ""}</h3><button class="btn ghost" data-pl="close" style="padding:6px 12px">접기</button></div>
-    ${s.name ? "" : `<p class="small muted">면 이름이 아직 없어요 — 궁전 노트 「${esc(s.no.split("-")[0])}장」 표에 동욱이 정해요.</p>`}`;
-  if (!ts.length) return `<div class="pl-f stack">${head}${s.placed ? `<p>${esc(s.placed)}</p><p class="small muted">궁전 노트에만 적혀 있고 회화장 표에는 아직 없어요.</p>` : `<p class="small muted">빈 면이에요. /memory-check로 문장을 넣으면 다음 빈 면부터 놓여요.</p>`}</div>`;
-  return `<div class="pl-f stack">${head}${ts.map(t => { const st = plSt(t); return `<div class="stack" style="gap:8px">
-      <p class="pl-s">${esc(t.term)}</p>
-      <p class="small">${esc(t.def)}</p>
-      ${t.pic ? `<div class="scene"><span class="lbl">장면 이미지</span>${esc(t.pic)}</div>` : `<p class="small muted">장면 이미지가 아직 없어요.</p>`}
-      <p class="small mono muted">복습 단계 ${esc(t.stage || "—")} · 다음 복습 ${esc(t.due || "—")}${t.rec ? " · " + esc(t.rec) : ""}${t.src ? " · " + esc(t.src) : ""}</p>
-      <div class="pl-stg" role="list" aria-label="오리쌤 스테이지">${PL_STAGE.map(([n, nm]) => `<span role="listitem" class="${st >= +n ? "on" : ""}"><b>${n}</b> ${nm}</span>`).join("")}</div>
-      ${t.meta ? `<p class="small"><span class="muted">메타반복 · </span>${esc(t.meta)}</p>` : ""}
-    </div>`; }).join("")}</div>`;
-}
-function renderPalace(){
-  if (!PAL) return `<section class="card"><p class="empty">${mode === "local" ? "기록 저장소에 연결되지 않아 궁전을 못 불러왔어요.<br>인터넷을 확인하고 새로고침해 주세요." : "궁전을 불러오는 중이에요…<br>맥 동기화가 궁전 노트를 올리면 여기에 떠요."}</p></section>`;
-  const pals = PAL.palaces || [];
-  if (!pals.length) return `<section class="card"><p class="empty">궁전 노트가 없어요.<br>볼트 「외국어 암기」에 궁전-○○ 노트를 만들면 여기에 떠요.</p></section>`;
-  if (PL.sel >= pals.length) PL.sel = 0;
-  const p = pals[PL.sel], d = plOf(p), built = d.slots.length, goal = p.goal || built;
-  const noName = p.chapters.filter(c => !c.name).length, needCh = Math.max(0, Math.ceil((goal - built) / 10));
-  const pct = n => Math.min(100, Math.round(n / (goal || 1) * 100));
-  const chips = `<div class="chips">${pals.map((x, i) => `<button class="chip${i === PL.sel ? " on" : ""}" data-pl="sel" data-i="${i}">${esc(x.name.replace(/^궁전-/, ""))} <span>${esc(x.cat || x.for)}</span></button>`).join("")}</div>`;
-  const sum = `<section class="card stack">
-    <div class="meta"><h3 style="margin:0">${esc(p.name)}</h3><span class="small muted">${esc(p.cat || p.for)}</span></div>
-    <div class="pl-sum">
-      <div><b class="mono">${d.placed}</b><span>놓은 면</span></div>
-      <div><b class="mono">${d.due.length}</b><span>오늘 복습</span></div>
-      <div><b class="mono">${built - d.placed}</b><span>빈 면</span></div>
-      <div><b class="mono">${built}<small>/${goal}</small></b><span>만든 면</span></div>
-    </div>
-    <div class="pl-bar" role="img" aria-label="목표 ${goal}면 중 만든 면 ${built} · 문장 ${d.placed}"><i class="b" style="width:${pct(built)}%"></i><i class="f" style="width:${pct(d.placed)}%"></i></div>
-    <p class="small muted">목표 ${goal}면${p.goalFrom ? " (" + esc(p.goalFrom) + ")" : ""} · 1장 = 10면 · <span class="pl-k" style="vertical-align:1px">회색</span> 만든 면 <span class="pl-k l" style="vertical-align:1px">초록</span> 문장${needCh ? ` · 장 ${needCh}개 더 필요` : ""}${noName ? ` · <b style="color:var(--accent)">장 이름 ${noName}개 빈칸 — 궁전 노트 「장 목록」에 동욱이 정해요</b>` : ""}</p>
-  </section>`;
-  const today = `<section class="card stack"><h2>오늘 복습할 면 ${d.due.length}</h2>
-    ${d.due.length ? `<div class="list">${d.due.map(t => `<details class="pl-q"><summary><span class="mono">${esc(faceKey(t.face) || t.face || "면 없음")}</span> ${esc(t.def)}</summary><p class="pl-s" style="margin-top:6px">${esc(t.term)}</p>${t.pic ? `<p class="small muted">${esc(t.pic)}</p>` : ""}</details>`).join("")}</div>
-      <p class="small muted">면과 뜻을 보고 문장을 먼저 말한 뒤 펼쳐요. 맞았는지는 /memory-check로 기록해요.</p>`
-      : `<p class="small muted">${d.sent.length ? "오늘 복습할 면이 없어요." : "아직 놓은 문장이 없어요. /memory-check로 문장을 넣으면 면에 놓이고 여기에 복습이 떠요."}</p>`}
-    ${d.next ? `<button class="btn ghost" data-pl="face" data-no="${esc(d.next.no)}">다음 빈 면 · ${esc(d.next.no)}${d.next.name ? " " + esc(d.next.name) : ""}</button>` : built ? `<p class="small">만든 면이 다 찼어요 — 장을 더해요.</p>` : ""}
-  </section>`;
-  const chs = p.chapters.map(c => { const fill = c.slots.filter(s => d.byFace[s.no] || s.placed).length, open = c.slots.find(s => s.no === PL.face);
-    return `<section class="card stack"><div class="meta"><h3 style="font-size:18px;margin:0">${c.n}장 · ${c.name ? esc(c.name) : `<span class="muted">이름 없음</span>`}</h3><span class="small mono muted">${fill}/${c.faces}면</span></div>
-      <div class="pl-g">${c.slots.map(s => plTile(s, d)).join("")}</div>${open ? plFace(open, d) : ""}</section>`; }).join("");
-  const rest = needCh ? `<section class="card pl-rest"><p class="small muted">${p.chapters.length + 1}~${p.chapters.length + needCh}장 · ${goal - built}면 — 아직 궁전 노트에 없어요.</p></section>` : "";
-  const loose = d.loose.length ? `<section class="card stack"><h2>면 번호가 궁전에 없는 문장 ${d.loose.length}</h2><div class="list">${d.loose.map(t => `<div class="row" style="cursor:default"><div class="t"><b>${esc(t.term)}</b><span>면 「${esc(t.face || "비어 있음")}」 · ${esc(t.def)}</span></div></div>`).join("")}</div><p class="small muted">회화장 표의 면 칸을 「장-면」(예: 1-3)으로 고치거나 궁전에 장을 더해요.</p></section>` : "";
-  const legend = `<section class="card stack"><h2>문장 스테이지 (오리쌤)</h2><div class="list">${PL_STAGE.map(([n, nm, how]) => `<div class="row" style="cursor:default"><span class="pill">${n}</span><div class="t"><b>${nm}</b><span style="white-space:normal">${how}</span></div></div>`).join("")}</div>
-    <p class="small muted">복습 단계(0~5)는 간격이고, 스테이지(1~3)는 문장 훈련의 진도예요. 색: <span class="pl-k p">문장 있음</span> <span class="pl-k d">오늘 복습</span> <span class="pl-k l">장기 기억</span> <span class="pl-k e">빈 면</span></p></section>`;
-  return chips + sum + today + capHtml() + chs + rest + loose + legend;   // 사진으로 문장 넣기 (vocab-capture.js)
-}
-document.addEventListener("click", e => {
-  const b = e.target.closest("[data-pl]"); if (!b) return;
-  const a = b.dataset.pl;
-  if (a === "sel") { PL.sel = +b.dataset.i || 0; PL.face = null; try { localStorage.setItem(PAL_KEY, String(PL.sel)); } catch(err) {} render(); return; }
-  if (a === "close") { PL.face = null; render(); return; }
-  if (a === "face") { PL.face = PL.face === b.dataset.no ? null : b.dataset.no; render(); if (PL.face) document.querySelector(".pl-t.on")?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
-});
-
-/* ───────── 암기 사진·PDF (2026-11-28 동욱 「단어장의 단어들을 넣거나 영어 회화를 사진으로 찍으면 자동으로 올라가게 · 영단어는 V표로 표시한 부분만」
-   · 「한번에 넣을 수 있도록 앱에서도 pdf나 사진을 넣으면 그걸 인식해서 단어장 등과 회화로」) — build.py 가 단어장 스크립트 끝(init 앞)에 끼운다 ─────────
-   1. 「📷 사진·PDF 올리기」(한 번에 CAP_MAX 개) → 사진은 긴 변 2000px JPEG 로 줄여 vo.cap/<id> {status "올림", img, name, at},
-      PDF 는 줄이지 않고 원본을 CAP_PART 글자씩 나눠 vo.cap/<묶음id>-<n> {status "올림", group, part, parts, b64, name, at} 로 보낸다 (db.send — 이 기기에 남기지 않음).
-      맥 memcap.py 가 조각을 모아 PDF 로 되살린다.
-   2. cmd 하나 {from: "vocab", kind: "capture", params: {caps, via: "앱"}} — 맥 cmd_runner 가 Claude 를 깨운다
-   3. 맥 Brainy(볼트 .claude/routines/cmd.md 「암기 사진」 · memcap.py)가 사진을 볼트 「외국어 암기/캡처/」로 꺼내고, V 표시한 영어 단어 · 회화 문장을 표에 넣고,
-      단어마다 발음매개 초안을 그 cmd 의 mnem 에 적는다 → 맥 동기화가 단어장에 올리면 단어 카드에 초안이 뜬다 (vocab-mnem.js)
-   폰에서 볼트 「외국어 암기/캡처/」에 바로 넣은 사진도 맥 동기화(app_data.py _capture_watch)가 같은 cmd 를 만든다 — 아래 목록에 같이 뜬다. */
-const CAP = { busy: false, msg: "", ok: true };
-const CAP_MAX = 20, CAP_EDGE = 2000, CAP_PART = 900000, CAP_PDF_MB = 30;   // 한 번에 20개 · PDF 조각 약 0.9MB · PDF 한 개 30MB까지
-const isPdf = f => f.type === "application/pdf" || /\.pdf$/i.test(f.name || "");
-const isImg = f => /^image\//.test(f.type) || /\.(heic|jpe?g|png|webp)$/i.test(f.name || "");
-function capB64(file){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).replace(/^data:[^,]*,/, "")); r.onerror = () => rej({ code: "read" }); r.readAsDataURL(file); }); }
-const capCmds = () => MN_CMDS.filter(c => c.kind === "capture");
-const capWhen = iso => { const t = Date.parse(iso || ""); return isFinite(t) ? new Date(t + 9 * 3600e3).toISOString().slice(5, 16).replace("T", " ") : ""; };   // 한국 시간 MM-DD HH:MM
-function capShrink(file){
-  return new Promise(res => {
-    const url = URL.createObjectURL(file), img = new Image();
-    img.onload = () => {
-      const s = Math.min(1, CAP_EDGE / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement("canvas");
-      c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      res(c.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); res(null); };
-    img.src = url;
-  });
-}
-async function capUpload(files){
-  const all = Array.from(files || []), pick = all.filter(f => isImg(f) || isPdf(f));
-  const big = pick.filter(f => isPdf(f) && f.size > CAP_PDF_MB * 1048576), list = pick.filter(f => !big.includes(f)).slice(0, CAP_MAX);
-  const skipped = all.length - list.length;
-  if (CAP.busy) return;
-  if (!list.length) { CAP.ok = false; CAP.msg = big.length ? `PDF는 ${CAP_PDF_MB}MB까지 올릴 수 있어요. 쪽을 나눠 올려 주세요.` : "사진(JPEG·PNG·HEIC)이나 PDF를 골라 주세요."; render(); return; }
-  if (!db || mode !== "db" || !db.send) { CAP.ok = false; CAP.msg = "기록 저장소에 연결된 뒤 올릴 수 있어요. 새로고침해 주세요."; render(); return; }
-  const nImg = list.filter(isImg).length, nPdf = list.length - nImg;
-  const what = [nImg ? `사진 ${nImg}장` : "", nPdf ? `PDF ${nPdf}개` : ""].filter(Boolean).join(" · ");
-  CAP.busy = true; CAP.ok = true; render();
-  const at = nowIso(), base = Date.now().toString(36), caps = [];
-  try {
-    for (let i = 0; i < list.length; i++) {
-      const f = list[i], name = String(f.name || "").slice(0, 80), id = "k" + base + i;
-      CAP.msg = `${what} 보내는 중 — ${i + 1}/${list.length}${isPdf(f) ? ` · ${name}` : ""}`; render();
-      if (isPdf(f)) {
-        const b = await capB64(f), parts = Math.max(1, Math.ceil(b.length / CAP_PART));
-        for (let k = 0; k < parts; k++) {
-          if (parts > 3) { CAP.msg = `${what} 보내는 중 — ${i + 1}/${list.length} · ${name} ${Math.round((k + 1) / parts * 100)}%`; render(); }
-          await db.send("vo.cap/" + id + "-" + k, { status: "올림", kind: "pdf", group: id, part: k, parts, b64: b.slice(k * CAP_PART, (k + 1) * CAP_PART), name, size: f.size, at });
-        }
-      } else {
-        const img = await capShrink(f);
-        if (!img) throw { code: "image", name };
-        await db.send("vo.cap/" + id, { status: "올림", img, name, at });
-      }
-      caps.push(id);
-    }
-    const data = { text: `🔤 체화 단어장 — 암기 ${what} 넣기`, from: "vocab", app: "vocab", kind: "capture",
-      params: { caps, via: "앱", pdf: nPdf, img: nImg }, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
-    await db.doc("cmd/c" + base).set(data);
-    CAP.msg = `${what}를 맥에 보냈어요 — 맥이 켜져 있으면 V 표시한 단어·회화 문장이 들어와요 (PDF는 쪽이 많으면 몇 번에 나눠 넣어요).`
-      + (skipped ? ` 고른 것 중 ${skipped}개는 빼고 보냈어요(사진·PDF가 아니거나 ${CAP_MAX}개를 넘거나 PDF ${CAP_PDF_MB}MB 초과).` : "");
-  } catch (e) {
-    CAP.ok = false;
-    CAP.msg = e?.code === "image" ? `「${e.name}」를 읽지 못했어요. JPEG·PNG로 바꿔 올려 주세요.` : e?.code === "read" ? "파일을 읽지 못했어요. 다시 골라 주세요."
-      : "보내지 못했어요 — 인터넷을 확인하고 다시 올려 주세요." + (caps.length ? ` (${caps.length}개는 이미 보내졌어요 — 맥이 다음에 같이 넣어요)` : "");
-    if (caps.length) db.doc("cmd/c" + base).set({ text: `🔤 체화 단어장 — 암기 ${caps.length}개 넣기 (보내다 끊김)`, from: "vocab", app: "vocab", kind: "capture",
-      params: { caps, via: "앱" }, createdAt: at, sentAt: at, status: "보내는 중", result: "" }).catch(() => {});
-  }
-  CAP.busy = false; render();
-}
-function capRow(c){
-  const open = mnOpenSt(c), added = c.added || {}, words = Array.isArray(added.words) ? added.words : [], sents = Array.isArray(added.sents) ? added.sents : [];
-  const head = `<div class="meta"><span class="small mono muted">${esc(capWhen(c.createdAt))} · ${c.params?.via === "폴더" ? "볼트 폴더에서" : "앱에서 올림"}</span>
-    <span class="pill ${c.status === "끝" ? "p4" : c.status === "멈춤" ? "" : "p3"}">${open ? "맥이 넣는 중" : esc(c.status || "")}</span></div>`;
-  if (open) return `<div class="cap-r">${head}<p class="small muted">${mnAge(c.sentAt || c.createdAt)} 보냄 — 맥이 꺼져 있으면 켜질 때 넣어요.</p></div>`;
-  const byTerm = w => ALL.find(t => t.dom === "외국어 단어장" && t.term === w);
-  return `<div class="cap-r">${head}
-    ${c.result ? `<p class="small">${esc(String(c.result).split("\n").slice(0, 2).join(" "))}</p>` : ""}
-    ${words.length ? `<div class="chips">${words.map(w => { const t = byTerm(w); return t ? `<button class="chip" data-detail="${t.id}">${esc(w)}</button>` : `<span class="chip" style="cursor:default;border-style:dashed" title="단어장에 올라오는 중">${esc(w)}</span>`; }).join("")}</div>` : ""}
-    ${sents.length ? `<p class="small muted">${sents.map(esc).join("<br>")}</p>` : ""}
-    ${c.status === "멈춤" ? `<button class="btn ghost" data-cap="retry" data-id="${esc(c.id)}">맥에 다시 보내기</button>` : ""}</div>`;
-}
-function capHtml(){
-  /* 맥이 넣는 중인 것 + 가장 최근 결과 하나만 — 쌓여도 「오늘 할 일」을 밀어내지 않게 (검증 F14) */
-  const all = capCmds(), last = all.find(c => !mnOpenSt(c)), cs = all.filter(mnOpenSt).concat(last ? [last] : []).slice(0, 3);
-  return `<section class="card stack cap">
-    <div class="meta"><h2 style="margin:0">📷 암기 사진·PDF</h2><span class="small muted">한 번에 ${CAP_MAX}개 · PDF ${CAP_PDF_MB}MB까지</span></div>
-    <p class="small muted">교재 사진이나 PDF를 여러 개 한 번에 올리면 맥 Brainy가 알아보고 넣어요. <b>영어 단어는 V 표시한 것만</b> 단어장에, 회화는 V 표시한 줄(없으면 그날 대표 문장)을 궁전의 다음 빈 자리에. 단어마다 발음매개 초안이 같이 와요 — 단어 카드에서 골라요.</p>
-    <label class="btn primary cap-b${CAP.busy || mode !== "db" ? " off" : ""}" for="capFile">${CAP.busy ? "보내는 중…" : "📷 사진·PDF 올리기"}</label>
-    <input type="file" id="capFile" accept="image/*,application/pdf,.pdf" multiple hidden ${CAP.busy || mode !== "db" ? "disabled" : ""}>
-    ${CAP.msg ? `<p class="${CAP.ok ? "small" : "note"}" role="status">${esc(CAP.msg)}</p>` : ""}
-    ${cs.length ? `<div class="stack" style="gap:8px">${cs.map(capRow).join("")}</div>` : ""}
-    <p class="small muted">볼트의 외국어 암기 「캡처」 폴더에 사진·PDF를 바로 넣어도 같은 길로 들어와요.</p>
-  </section>`;
-}
-document.addEventListener("change", e => { if (e.target?.id === "capFile") { const f = e.target.files; capUpload(f); e.target.value = ""; } });
-document.addEventListener("click", e => {
-  const b = e.target.closest("[data-cap]"); if (!b) return;
-  if (b.dataset.cap === "retry" && db) db.doc("cmd/" + b.dataset.id).update({ status: "보내는 중", result: "", sentAt: nowIso() }).catch(() => { CAP.ok = false; CAP.msg = "다시 보내지 못했어요 — 인터넷을 확인해 주세요."; render(); });
-});
-
 init();
 </script>
 <script>
@@ -1822,9 +1509,7 @@ init();
         "- 오늘 복습할 단어(" + due.length + "): " + due.slice(0, 40).join(", "),
         "- 고칠 단어 " + fixList().length + "개(동욱이 「이 단어는 고쳐요」로 표시하고 오류·중복을 적은 것, progress/<id>.fix·.req — 단어장 · 단어 — 적은 글): " + fixList().slice(0, 30).map(function (t) { return t.dom + " · " + t.term + " — " + (reqOf(t.id).slice(0, 120) || "(글 없음)"); }).join(" / "),
         "- 붙여 넣어 올리거나 옮긴 단어(vo.marks/add — 아직 볼트에 없을 수 있음): " + addItems().slice(0, 30).map(function (t) { return t.dom + (t.cat && t.cat !== t.dom ? " · " + t.cat : "") + " · " + t.term; }).concat(Object.keys(ADD.move || {}).slice(0, 30).map(function (id) { return ADD.move[id] + (ADD.cat && ADD.cat[id] ? " · " + ADD.cat[id] : "") + " ← " + (BYID[id] ? BYID[id].term : id); })).join(", "),
-        "- 궁전(「궁전」 탭 · 볼트 1_MyBrain/학습/외국어 암기/궁전-*.md 가 정본 — 장·면 이름은 동욱이 정함): " + ((PAL && PAL.palaces) || []).map(function (p) { var d = plOf(p); return p.name + "(" + (p.cat || p.for) + ") 만든 면 " + d.slots.length + "/" + (p.goal || d.slots.length) + " · 문장 " + d.placed + " · 오늘 복습 " + d.due.length; }).join(" / "),
-        "- 발음매개: 외국어 단어를 펼쳐 「🔤 발음매개 만들기」 → 맥 Brainy 가 초안을 cmd(from vocab)에 적음 → 동욱이 고른 것만 맥 동기화가 볼트 단어장 표에 넣음. 대화에서 매개를 정해 주면 그 단어 카드의 「직접 쓰기」로 넣으라고 안내한다.",
-        "- 암기 사진: 외국어 단어장 홈·궁전 탭 「📷 사진·PDF 올리기」(한 번에 20개, PDF 30MB까지) → 맥 Brainy 가 V 표시한 영어 단어·회화 문장을 묻지 않고 볼트 표에 넣고 단어마다 발음매개 초안 (볼트 외국어 암기/캡처/ 폴더에 넣어도 같음). 최근: " + capCmds().slice(0, 3).map(function (c) { return (c.status || "") + " " + String(c.result || "").split("\n")[0].slice(0, 80); }).join(" / "),
+        "- 외국어 발음매개 · 암기 사진·PDF 넣기 · 회화 문장의 기억의 궁전(면·장소 사진·장면 그림)은 따로 뗀 「기억의 궁전」 앱(../palace/)에서 한다 (2026-11-28). 여기 외국어 단어장은 단어 복습만.",
         "- 단어장: " + Object.keys(DOMAINS).map(function (d) { return d + " " + ALL.filter(function (t) { return t.dom === d; }).length; }).join(" · "),
         "- 단어를 새로 넣거나 정리할 때 규칙: 맥 단축키 앱과 겹치는 내용은 한쪽에만 둔다(단축키는 단축키 앱, 개념 설명은 단어장) · 동욱이 이미 알 만한 기본 단어는 넣지 않는다 · 브랜드·상품 단어, 스킬 설명, MCP 설명은 각자 단어장(dom: 브랜드·상품 · 스킬 · MCP)으로 따로 둔다",
         "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록 · fix/req 고칠 단어 · fixDone 고친 기록) · vo.marks/lec(강의 탭 표시) · vo.marks/add(items 붙여 넣어 올린 단어 — cat 이 넣을 분야 · move 옮긴 후보 · cat 옮긴 후보의 넣을 분야 — 볼트에 넣을 때 그 단어장 페이지의 그 「## 분야」 표로) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");

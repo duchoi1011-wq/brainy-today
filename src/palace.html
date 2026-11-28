@@ -1,0 +1,347 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>기억의 궁전</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* 기억의 궁전 (2026-11-28 동욱 — 체화 단어장 「궁전」 탭·발음매개를 따로 뗀 앱)
+   틀: 좁은 한 줄 기둥 · 위 머리말(궁전 고르기) · 아래 탭 네 개(오늘 · 궁전 · 걷기 · 매개). 색은 아래 토큰만 쓴다 — 남색 = 궁전·장면, 금색 = 매개 */
+:root{
+  --bg:#F3F1EC; --surface:#FFFFFF; --surface-2:#F8F6F1; --ink:#1B1915; --muted:#6B645B; --line:#E0DBD2;
+  --accent:#4B46B8; --accent-ink:#FFFFFF; --gold:#A87A1E; --ok:#2E8B62; --ok-bg:#E3F3EA; --warn:#C2451E; --warn-bg:#FBEFD9;
+  --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121116; --surface:#1B1A20; --surface-2:#232229; --ink:#ECE9F2; --muted:#A09BAA; --line:#302E37;
+  --accent:#8E89F5; --accent-ink:#0E0D16; --gold:#E0B456; --ok:#4CC48E; --ok-bg:#16301F; --warn:#FF7A4D; --warn-bg:#35270F; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#121116; --surface:#1B1A20; --surface-2:#232229; --ink:#ECE9F2; --muted:#A09BAA; --line:#302E37;
+  --accent:#8E89F5; --accent-ink:#0E0D16; --gold:#E0B456; --ok:#4CC48E; --ok-bg:#16301F; --warn:#FF7A4D; --warn-bg:#35270F; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
+  padding:0 max(16px, env(safe-area-inset-right, 0px)) calc(88px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--bg)}
+.wrap{max-width:680px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:var(--bg);padding-block:14px 10px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.01em}
+.brand small{font-size:12px;color:var(--muted)}
+.brand a,.brand button{color:inherit}
+main{display:flex;flex-direction:column;gap:16px;padding-top:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+h2{font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--muted);margin:0}
+h3{font-size:19px;font-weight:700;margin:0;line-height:1.35;text-wrap:balance}
+p{margin:0}
+.muted{color:var(--muted)} .small{font-size:13px} .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.stack{display:flex;flex-direction:column;gap:12px}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--warn-bg)}
+.empty{padding:22px 4px;text-align:center;color:var(--muted)}
+button{font:inherit}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 15px;border-radius:10px;font-weight:600;cursor:pointer;text-align:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn.ghost{background:transparent}
+.btn.sm{padding:6px 11px;font-size:13px;border-radius:9px}
+.btn:disabled,.btn.off{opacity:.5;cursor:default;pointer-events:none}
+.btns{display:flex;gap:8px;flex-wrap:wrap}.btns .btn{flex:1 1 140px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:5px 12px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer}
+.chip span{font-family:var(--f-mono);font-weight:500;font-size:11px;opacity:.75;margin-left:3px}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.ok{color:var(--ok);border-color:var(--ok)} .pill.acc{color:var(--accent);border-color:var(--accent)} .pill.gold{color:var(--gold);border-color:var(--gold)} .pill.warn{color:var(--warn);border-color:var(--warn)}
+.lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);margin-bottom:4px}
+.pl-in{display:block;width:100%;margin-top:4px;font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px 11px;resize:vertical}
+textarea.pl-in{min-height:64px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.list{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-top:1px solid var(--line);background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;width:100%;text-align:left;cursor:pointer}
+.row:first-child{border-top:0}
+.row .t{flex:1;min-width:0}.row .t b{display:block;font-weight:600}.row .t span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 그림 — 장소 사진(4:3) · 장면·매개 그림(3:2). 없으면 점선 자리 */
+.ph{position:relative;width:100%;border-radius:12px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+.ph img{display:block;width:100%;height:100%;object-fit:cover}
+.ph.place{aspect-ratio:4/3}.ph.scene{aspect-ratio:3/2}
+.ph.none{aspect-ratio:auto;min-height:96px;border-style:dashed;display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center;padding:12px}
+.ph .tag{position:absolute;left:8px;top:8px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff}
+.ph.busy::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);background-size:200% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.ph.busy::after{animation:none}}
+/* 요약 숫자 */
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sum div{display:flex;flex-direction:column;gap:2px;padding:10px;border-radius:10px;background:var(--surface-2)}
+.sum b{font-size:22px;line-height:1.1}.sum b small{font-size:13px;color:var(--muted)}.sum span{font-size:12px;color:var(--muted)}
+.bar{position:relative;height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}.bar .b{background:var(--line)}.bar .f{background:var(--accent)}
+/* 면 격자 — 칸마다 장소 사진이 있으면 배경으로 */
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tile{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:0;aspect-ratio:1;padding:6px 7px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;min-width:0;overflow:hidden}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile.ph-on::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(transparent 35%,rgba(0,0,0,.65))}
+.tile .mono,.tile small{position:relative;z-index:2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .mono{font-size:12px;font-weight:500}.tile small{font-size:11px;color:var(--muted)}
+.tile.ph-on .mono,.tile.ph-on small{color:#fff}
+.tile.e{border-style:dashed;background:transparent}
+.tile.s{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.tile.d{border-color:var(--warn);box-shadow:inset 0 0 0 2px var(--warn)}
+.tile .dot{position:absolute;right:6px;top:6px;z-index:2;width:8px;height:8px;border-radius:50%;background:var(--accent);border:1.5px solid #fff}
+.tile.on{outline:2px solid var(--ink);outline-offset:1px}
+.key{display:inline-block;padding:0 7px;border-radius:6px;border:1px solid var(--line);font-size:11px;margin:2px 2px 0 0}.key.s{border-color:var(--accent)}.key.d{border-color:var(--warn)}.key.e{border-style:dashed}
+.face{padding:16px;border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:14px}
+.sent{font-size:18px;font-weight:600;line-height:1.45}
+.stg{display:flex;gap:6px;flex-wrap:wrap}.stg span{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}.stg span.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.scene-t{font-size:15px;line-height:1.65;padding:12px 14px;border-radius:10px;background:var(--surface);border-left:3px solid var(--accent)}
+.chname{display:flex;gap:8px;align-items:center}.chname .pl-in{margin:0;flex:1}
+/* 걷기 */
+.walk{display:flex;flex-direction:column;gap:14px}
+.walk-no{font-family:var(--f-mono);font-size:13px;color:var(--accent)}
+.steps{display:flex;gap:3px}.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}.steps i.on{background:var(--accent)}.steps i.s{background:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.walk-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* 매개 */
+.wd{display:flex;flex-direction:column;gap:10px;padding:14px 0;border-top:1px solid var(--line)}.wd:first-child{border-top:0;padding-top:0}
+.wd-h{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.wd-h b{font-size:19px}.hook{font-size:17px;font-weight:700;color:var(--gold)}
+.mn-d{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.mn-h{font-size:18px;color:var(--gold)}
+.cap-r{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:10px;background:var(--surface-2)}
+.cap-b{display:block;cursor:pointer}
+/* 아래 탭 */
+#tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;gap:4px;background:var(--surface);border-top:1px solid var(--line);padding:6px max(12px, env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px))}
+#tabbar a{flex:0 1 160px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:12px;color:var(--muted);text-decoration:none;font-weight:600;font-size:13px}
+#tabbar a span{font-size:18px;line-height:1.1}
+#tabbar a.on{color:var(--accent);background:var(--surface-2)}
+#toast{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;padding:10px 14px;border-radius:10px;background:var(--ink);color:var(--bg);font-size:14px;z-index:60;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+@media (max-width:420px){.sum{gap:6px}.sum div{padding:8px 6px}.sum b{font-size:19px}.grid{gap:5px}.tile{padding:5px}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>기억의 궁전</h1><small id="sub">장소에 문장을 놓고, 단어는 매개로</small>
+      <small class="muted" style="flex-basis:100%"><a href="../home/">← Brainy 홈</a> · <a href="../vocab/">체화 단어장</a> · <button type="button" data-brainy="out" style="font:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer">로그아웃</button></small></div>
+    <div class="chips" id="pals" style="margin-top:10px" role="group" aria-label="궁전 고르기"></div>
+  </header>
+  <main id="view"></main>
+</div>
+<nav id="tabbar" aria-label="화면">
+  <a href="#today" data-v="today"><span aria-hidden="true">☀</span>오늘</a>
+  <a href="#palace" data-v="palace"><span aria-hidden="true">🏛</span>궁전</a>
+  <a href="#walk" data-v="walk"><span aria-hidden="true">👣</span>걷기</a>
+  <a href="#words" data-v="words"><span aria-hidden="true">🔤</span>매개</a>
+</nav>
+
+<script>/* Brainy 공통 부품 — 모든 앱이 같이 쓴다 */
+/*@include brainy-parts.js*/
+</script>
+<script>
+/* ───────── 기억의 궁전 — 정본은 볼트, 이 화면은 읽고 요청만 보낸다 ─────────
+   읽기  vo.data/palace  궁전 노트(장 목록 · 장별 면 표: 면 이름 · 장소 메모) ← 볼트 1_MyBrain/학습/외국어 암기/궁전-*.md
+         vo.data/main    foreign — 회화장 문장(면 · 장면 이미지 · 복습 단계 …) · 영어 단어장(소리 고리 · 그림 (매개) …)
+         pl.data/img     그림 주소 {키: {url, at}} — f/<궁전>/<장-면> 장소 사진 · s/<궁전>/<장-면> 장면 그림 · w/<단어> 매개 그림
+         progress        단어마다 발음매개 고른 상태(mnem) — 체화 단어장과 같은 문서
+         cmd             from: palace — 발음매개 초안 · 암기 사진 (맥 Brainy)
+   쓰기  pl.edit/<id>    장 이름 · 면 이름·장소 메모 · 장 더하기 · 문장 장면 글 → 맥 palace_app.py 가 볼트 표에
+         pl.up/<id>      사진(장소 · 장면 · 매개) → 맥이 볼트 「궁전 사진」「매개 그림」 폴더에 (db.send — 이 기기에 남지 않음)
+         pl.gen/<id>     그림 생성 요청 → 맥이 ChatGPT 계정 Codex 로 그려 볼트에
+   장·면·장면·매개 글은 코드에 넣지 않는다 — 비어 있으면 비어 있다고만 보인다. */
+let PAL = null, FOREIGN = [], IMG = {}, prog = {}, CMDS = [], EDITS = [], GENS = [];
+let db = null, mode = "loading", note = "", pendingRender = false;
+const LOCAL = {};   // 막 올린 사진 미리보기 {키: {url, prev}} — 맥이 사본을 올려 주소가 바뀌면 지운다
+const S = { pal: 0, face: null, walk: 0, open: false, wq: "all", word: null };
+const KEY = "brainy-palace-v1";
+try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || "{}"), { face: null, open: false, word: null }); } catch(e) {}
+const keep = () => { try { localStorage.setItem(KEY, JSON.stringify({ pal: S.pal, walk: S.walk, wq: S.wq })); } catch(e) {} };
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nowIso = () => new Date().toISOString();
+const kday = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);   // 한국 날짜
+const view = () => { const v = (location.hash || "#today").slice(1); return ["today", "palace", "walk", "words"].includes(v) ? v : "today"; };
+const rid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function ago(iso){ const m = Math.round((Date.now() - Date.parse(iso || "")) / 60000); return !isFinite(m) ? "" : m < 1 ? "방금" : m < 60 ? m + "분 전" : m < 1440 ? Math.round(m / 60) + "시간 전" : Math.round(m / 1440) + "일 전"; }
+function toast(msg){
+  let el = document.getElementById("toast");
+  if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 4000);
+}
+const canWrite = () => !!db && mode === "db";
+
+/* ---------- 궁전 · 면 ---------- */
+const faceKey = s => { const m = String(s || "").match(/(\d+)\s*-\s*(\d+)/); return m ? m[1] + "-" + m[2] : ""; };   // 「현장 1-3(접수대)」 · 「1-3-7」(소) → 1-3
+const isDay = s => /^\d{4}-\d{2}-\d{2}/.test(String(s || ""));
+const isDue = t => isDay(t.due) && String(t.due).slice(0, 10) <= kday();
+const STAGE = [["1", "궁전 결합", "문장을 면 하나에 장면으로 놓는다"], ["2", "메타반복", "단어·구조를 바꿔 다른 데 써 본다"], ["3", "3단 챌린지", "내용 확인 전 — 오리쌤 강의에서 확인한 뒤 채워요"]];
+const stOf = t => { const m = String(t.st || "").match(/[123]/); return m ? +m[0] : 0; };
+const pals = () => PAL?.palaces || [];
+const curPal = () => { const ps = pals(); if (S.pal >= ps.length) S.pal = 0; return ps[S.pal] || null; };
+const slotsOf = p => p ? p.chapters.flatMap(c => c.slots.map(s => ({ ...s, ch: c.n }))) : [];
+/* 아직 맥이 볼트에 넣지 않은 고침을 화면에 먼저 얹는다 (넣고 나면 vo.data/palace 가 같은 값을 준다) */
+function editOf(p, no){
+  const e = { name: null, memo: null, pending: false, err: "" };
+  EDITS.filter(x => x.kind === "face" && x.palace === p.name && x.no === no).sort((a, b) => String(a.at).localeCompare(String(b.at))).forEach(x => {
+    if (x.status === "올림") { if ("name" in x) e.name = x.name; if ("memo" in x) e.memo = x.memo; e.pending = true; }
+    else if (x.status === "못 넣음") e.err = x.err || "볼트에 넣지 못했어요";
+  });
+  return e;
+}
+function slotView(p, s){ const e = editOf(p, s.no); return { ...s, name: e.name ?? s.name, memo: e.memo ?? s.memo ?? "", pending: e.pending, err: e.err }; }
+function palData(p){
+  const sent = FOREIGN.filter(t => t.cat === p.cat);
+  const byFace = {}; sent.forEach(t => { const k = faceKey(t.face); if (k) (byFace[k] = byFace[k] || []).push(t); });
+  const slots = slotsOf(p).map(s => slotView(p, s));
+  const placed = slots.filter(s => byFace[s.no] || s.placed).length;
+  const due = sent.filter(isDue).sort((a, b) => String(a.due).localeCompare(String(b.due)) || faceKey(a.face).localeCompare(faceKey(b.face), undefined, { numeric: true }));
+  const next = slots.find(s => !byFace[s.no] && !s.placed) || null;
+  const loose = sent.filter(t => !slots.some(s => s.no === faceKey(t.face)));
+  return { sent, byFace, slots, placed, due, next, loose };
+}
+
+/* ---------- 그림 ---------- */
+const imgKey = (k, p, no) => k + "/" + p + "/" + no;   // f · s
+function imgOf(key){ const l = LOCAL[key]; if (l && (IMG[key]?.url || "") === l.prev) return l.url; return IMG[key]?.url || ""; }
+const genOf = key => GENS.filter(g => g.key === key).sort((a, b) => String(b.at).localeCompare(String(a.at)))[0] || null;
+const genBusy = g => !!g && /요청|그리는 중/.test(g.status || "");
+function picHtml(key, cls, empty, tag){
+  const u = imgOf(key), g = genOf(key), busy = genBusy(g) || (LOCAL[key] && !u);
+  if (!u) return `<div class="ph ${cls} none${busy ? " busy" : ""}">${busy ? (genBusy(g) ? "GPT가 그리는 중…" : "올리는 중…") : esc(empty)}</div>`;
+  return `<div class="ph ${cls}${genBusy(g) ? " busy" : ""}"><img src="${esc(u)}" alt="${esc(tag)}" loading="lazy">${tag ? `<span class="tag">${esc(tag)}</span>` : ""}</div>`;
+}
+function genLine(key){
+  const g = genOf(key); if (!g) return "";
+  if (genBusy(g)) return `<p class="small muted" role="status">${g.status === "요청" ? "맥에 보냈어요 — 맥이 켜져 있으면 곧 그려요" : "GPT가 그리는 중이에요"} (${ago(g.at)}). 1분쯤 걸려요.</p>`;
+  if (g.status === "멈춤") return `<p class="note">그림을 못 만들었어요 — ${esc(String(g.result || "").slice(0, 160))}</p>`;
+  return "";
+}
+/* 사진 고르기 → 긴 변 1600px JPEG → pl.up (맥이 볼트에 원본으로 둔다) */
+function shrink(file, edge = 1600){
+  return new Promise(res => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, edge / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement("canvas");
+      c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res(c.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); res(null); };
+    img.src = url;
+  });
+}
+async function upPhoto(file, meta, key){
+  if (!file) return;
+  if (!canWrite() || !db.send) { toast("기록 저장소에 연결된 뒤 올릴 수 있어요"); return; }
+  const img = await shrink(file);
+  if (!img) { toast("사진을 읽지 못했어요 — JPEG·PNG로 골라 주세요"); return; }
+  LOCAL[key] = { url: img, prev: IMG[key]?.url || "" };
+  render();
+  try { await db.send("pl.up/" + rid("u"), { ...meta, img, at: nowIso(), status: "올림" }); toast("사진을 맥에 보냈어요 — 볼트에 넣고 몇 초 뒤 여기 사진이 바뀌어요"); }
+  catch(e) { delete LOCAL[key]; toast("사진을 보내지 못했어요 — 인터넷을 확인하고 다시 골라 주세요"); render(); }
+}
+function askGen(data){
+  if (!canWrite()) { toast("기록 저장소에 연결된 뒤 그릴 수 있어요"); return; }
+  if (genBusy(genOf(data.key))) return;
+  const id = rid("g"), d = { ...data, at: nowIso(), status: "요청", result: "" };
+  GENS = [{ id, ...d }, ...GENS]; render();
+  db.doc("pl.gen/" + id).set(d).then(() => toast("GPT에 그림을 부탁했어요 — 1분쯤 걸려요"))
+    .catch(() => { GENS = GENS.filter(g => g.id !== id); toast("보내지 못했어요 — 인터넷을 확인해 주세요"); render(); });
+}
+function sendEdit(data, ok){
+  if (!canWrite()) { toast("기록 저장소에 연결된 뒤 고칠 수 있어요"); return false; }
+  const id = rid("e"), d = { ...data, at: nowIso(), status: "올림" };
+  EDITS = [...EDITS, { id, ...d }]; render();
+  db.doc("pl.edit/" + id).set(d).then(() => ok && toast(ok)).catch(() => { EDITS = EDITS.filter(x => x.id !== id); toast("보내지 못했어요 — 인터넷을 확인해 주세요"); render(); });
+  return true;
+}
+
+/* ---------- 오늘 ---------- */
+function sumHtml(p, d){
+  const built = d.slots.length, goal = p.goal || built, pct = n => Math.min(100, Math.round(n / (goal || 1) * 100));
+  const photos = d.slots.filter(s => imgOf(imgKey("f", p.name, s.no))).length;
+  return `<section class="card stack">
+    <div class="meta"><h3>${esc(p.name.replace(/^궁전-/, ""))} 궁전</h3><span class="small muted">${esc(p.cat || p.for)}</span></div>
+    <div class="sum">
+      <div><b class="mono">${d.placed}</b><span>문장 놓은 면</span></div>
+      <div><b class="mono">${d.due.length}</b><span>오늘 복습</span></div>
+      <div><b class="mono">${photos}</b><span>장소 사진</span></div>
+      <div><b class="mono">${built}<small>/${goal}</small></b><span>만든 면</span></div>
+    </div>
+    <div class="bar" role="img" aria-label="목표 ${goal}면 중 만든 면 ${built} · 문장 ${d.placed}"><i class="b" style="width:${pct(built)}%"></i><i class="f" style="width:${pct(d.placed)}%"></i></div>
+    <p class="small muted">목표 ${goal}면${p.goalFrom ? " (" + esc(p.goalFrom) + ")" : ""} · 1장 = 면 10개 · 회색 만든 면 · 남색 문장 놓은 면</p>
+  </section>`;
+}
+function renderToday(){
+  const p = curPal(); if (!p) return noPal();
+  const d = palData(p);
+  const unnamed = p.chapters.filter(c => !c.name).length, nophoto = d.slots.filter(s => !imgOf(imgKey("f", p.name, s.no))).length;
+  const words = FOREIGN.filter(t => /단어$/.test(t.cat || "")), wdue = words.filter(isDue).length, nohook = words.filter(t => !t.hook).length;
+  const todo = [
+    unnamed ? `<button class="row" data-go="palace"><span class="pill warn">${unnamed}</span><div class="t"><b>장 이름 정하기</b><span>들어가서 나오는 순서대로 — 궁전 탭에서 장 머리의 ✎</span></div></button>` : "",
+    nophoto ? `<button class="row" data-go="palace"><span class="pill acc">${nophoto}</span><div class="t"><b>장소 사진 찍기</b><span>면을 눌러 그 자리를 찍어 두면 걷기에서 순서대로 이어져요</span></div></button>` : "",
+    nohook ? `<button class="row" data-go="words"><span class="pill gold">${nohook}</span><div class="t"><b>매개 없는 단어</b><span>매개 탭에서 🔤 발음매개 만들기</span></div></button>` : "",
+    wdue ? `<button class="row" data-go="words" data-wq="due"><span class="pill gold">${wdue}</span><div class="t"><b>오늘 복습할 매개 단어</b><span>뜻 → 소리 고리 → 그림 → 발음</span></div></button>` : ""].filter(Boolean).join("");
+  return sumHtml(p, d) + `<section class="card stack"><h2>오늘 복습할 면 ${d.due.length}</h2>
+    ${d.due.length ? `<div class="list">${d.due.map(t => `<button class="row" data-face="${esc(faceKey(t.face))}"><span class="mono" style="color:var(--accent)">${esc(faceKey(t.face) || "면?")}</span><div class="t"><b>${esc(t.def)}</b><span>면을 떠올리고 문장을 먼저 말한 뒤 눌러요</span></div></button>`).join("")}</div>
+      <p class="small muted">맞았는지는 /memory-check로 기록해요.</p>`
+      : `<p class="small muted">${d.sent.length ? "오늘 복습할 면이 없어요." : "아직 놓은 문장이 없어요. 아래 「📷 암기 사진·PDF」로 문장을 넣으면 다음 빈 면부터 놓여요."}</p>`}
+    <div class="btns">${d.next ? `<button class="btn ghost" data-face="${esc(d.next.no)}">다음 빈 면 · ${esc(d.next.no)}${d.next.name ? " " + esc(d.next.name) : ""}</button>` : ""}<button class="btn primary" data-go="walk">👣 궁전 걷기</button></div>
+  </section>
+  ${todo ? `<section class="card stack"><h2>채울 것</h2><div class="list">${todo}</div></section>` : ""}
+  ${capHtml()}`;
+}
+function noPal(){
+  if (!PAL) return `<section class="card"><p class="empty">${mode === "local" ? "기록 저장소에 연결되지 않아 궁전을 못 불러왔어요.<br>인터넷을 확인하고 새로고침해 주세요." : "궁전을 불러오는 중이에요…<br>맥 동기화가 궁전 노트를 올리면 여기에 떠요."}</p></section>`;
+  return `<section class="card"><p class="empty">궁전 노트가 없어요.<br>볼트 「외국어 암기」에 궁전-○○ 노트를 만들면 여기에 떠요.</p></section>`;
+}
+
+/* ---------- 그리기 ---------- */
+function renderPals(){
+  const el = document.getElementById("pals"), ps = pals();
+  el.innerHTML = ps.map((x, i) => `<button class="chip${i === S.pal ? " on" : ""}" data-pal="${i}" aria-pressed="${i === S.pal}">${esc(x.name.replace(/^궁전-/, ""))}<span>${esc(x.cat || x.for)}</span></button>`).join("");
+  el.hidden = !ps.length || view() === "words";
+}
+function render(){
+  const ae = document.activeElement;
+  if (ae && ae.classList?.contains("pl-in")) { pendingRender = true; return; }   // 입력 중엔 다시 그리지 않는다 (글이 지워지지 않게)
+  pendingRender = false;
+  const v = view();
+  document.querySelectorAll("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v));
+  renderPals();
+  document.getElementById("view").innerHTML = (note ? `<p class="note">${esc(note)}</p>` : "") +
+    (v === "palace" ? renderPalace() : v === "walk" ? renderWalk() : v === "words" ? renderWords() : renderToday());
+}
+document.addEventListener("focusout", () => { if (pendingRender) setTimeout(() => { if (!document.activeElement?.classList?.contains("pl-in")) render(); }, 0); });
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-pal],[data-go],[data-face]"); if (!b) return;
+  if (b.dataset.pal != null) { S.pal = +b.dataset.pal || 0; S.face = null; S.walk = 0; keep(); render(); return; }
+  if (b.dataset.go) { if (b.dataset.wq) { S.wq = b.dataset.wq; keep(); } location.hash = b.dataset.go; return; }
+  if (b.dataset.face != null && !b.closest(".grid")) { S.face = b.dataset.face; if (view() !== "palace") location.hash = "palace"; else render(); setTimeout(() => document.getElementById("face")?.scrollIntoView({ block: "start", behavior: "smooth" }), 60); }
+});
+
+/* ---------- 시작 ---------- */
+async function init(){
+  render();
+  const c = window.claude;
+  db = c?.use ? await c.use("db").catch(() => null) : null;
+  if (!db) { mode = "local"; render(); return; }
+  const timer = setTimeout(() => { if (mode === "loading") { note = "기록을 아직 불러오지 못했어요. 연결을 확인해 주세요."; render(); } }, 10000);
+  db.doc("vo.data/palace").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.palaces)) { PAL = v; mode = "db"; clearTimeout(timer); if (note.startsWith("기록을 아직")) note = ""; render(); } }, () => { mode = "local"; render(); });
+  db.doc("vo.data/main").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.foreign)) { FOREIGN = v.foreign; render(); } }, () => {});
+  db.doc("pl.data/img").onSnapshot(s => {
+    const v = s.exists ? s.data() : null; IMG = v?.img || {};
+    Object.keys(LOCAL).forEach(k => { if ((IMG[k]?.url || "") !== LOCAL[k].prev) delete LOCAL[k]; });
+    render();
+  }, () => {});
+  db.collection("progress").onSnapshot(q => { const m = {}; q.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); }); prog = m; render(); }, () => {});
+  db.collection("cmd").onSnapshot(q => { CMDS = q.docs.map(d => ({ id: d.id, ...d.data() })).filter(x => x.from === "palace").sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))); render(); }, () => {});
+  db.collection("pl.edit").onSnapshot(q => { EDITS = q.docs.map(d => ({ id: d.id, ...d.data() })); render(); }, () => {});
+  db.collection("pl.gen").onSnapshot(q => { GENS = q.docs.map(d => ({ id: d.id, ...d.data() })); render(); }, () => {});
+}
+/*@include pl-face.js*/
+/*@include pl-walk.js*/
+/*@include pl-mnem.js*/
+/*@include pl-capture.js*/
+init();
+</script>

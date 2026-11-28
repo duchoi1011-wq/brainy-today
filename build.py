@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""src/ 의 원본 → Supabase 로 도는 독립 웹앱 8개 (조립만 한다).
+"""src/ 의 원본 → Supabase 로 도는 독립 웹앱 9개 (조립만 한다).
 
   src/brainy-home.html → home/index.html       (Brainy 홈)
   src/shortcuts.html   → shortcuts/index.html  (맥 단축키)
@@ -8,6 +8,7 @@
   src/ad.html          → ad/index.html         (광고 실습)
   src/ads.html         → ads/index.html        (광고 한눈에)
   src/hub.html         → hub/index.html        (전체 현황)
+  src/palace.html      → palace/index.html     (기억의 궁전)
   src/content.html     → content/index.html    (콘텐츠 기획)
 
 원본이 그대로 앱이다 — 여기선 머리말(로그인 화면·받침 shim.js·아이콘)을 붙이고 /*@include 파일*/ 자리에 src/ 의 파일을 끼울 뿐이다.
@@ -158,7 +159,8 @@ CT_BRAINY = "\n" + (root / "src" / "content-brainy.js").read_text(encoding="utf-
 CR_BRAINY = "\n" + (root / "src" / "course-brainy.js").read_text(encoding="utf-8")
 AD_BRAINY = "\n" + (root / "src" / "ad-brainy.js").read_text(encoding="utf-8")
 ADS_BRAINY = "\n" + (root / "src" / "ads-brainy.js").read_text(encoding="utf-8")   # 광고 한눈에 — 지금 브랜드·조율할 일을 Brainy 에게   # 광고 실습 — 교과서 과를 Brainy 에게 묻기
-HUB_BRAINY = "\n" + (root / "src" / "hub-brainy.js").read_text(encoding="utf-8")   # 전체 현황 — 받는 사람·엔진 단추와 모든 앱 현황을 Brainy 에게
+HUB_BRAINY = "\n" + (root / "src" / "hub-brainy.js").read_text(encoding="utf-8")
+PL_BRAINY = "\n" + (root / "src" / "pl-brainy.js").read_text(encoding="utf-8")   # 기억의 궁전 — 지금 궁전·면·매개 단어를 Brainy 에게   # 전체 현황 — 받는 사람·엔진 단추와 모든 앱 현황을 Brainy 에게
 
 # ═════════════════════════ 맥 단축키 ═════════════════════════
 load("shortcuts.html")
@@ -176,8 +178,20 @@ include()
 emit("vocab", "체화 단어장", "단어장", ("#EEF1F0", "#0F1314"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--accent);--g-ok:var(--l4)",
      '<link rel="apple-touch-icon" href="vo-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="vo-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="vo-icon-64.png">',
-     '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "cmd", "bchat"], only: {cmd: {from: "vocab"}}}',
+     '{key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]}',
      '{"id":"/brainy-today/vocab/","name":"체화 단어장","short_name":"단어장","start_url":"./","scope":"./","display":"standalone","background_color":"#0F1314","theme_color":"#0F1314","icons":[{"src":"vo-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"vo-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}', "", VO_BRAINY + BRAINY_CHAT)
+
+# ═════════════════════════ 기억의 궁전 ═════════════════════════
+# 체화 단어장 「궁전」 탭·발음매개·암기 사진을 따로 뗀 앱 (2026-11-28 동욱 「매개법 단어가 드러나고, 장면소를 내가 기록해서 이어지게, 사진·그림 생성도」).
+# 읽는 건 vo.data/palace · vo.data/main · pl.data/img · progress · cmd(from palace), 쓰는 건 pl.edit · pl.up · pl.gen · progress mnem · cmd — 맥 palace_app.py 가 볼트에 넣는다. 아이콘은 palace/ 에 그대로 둔다.
+load("palace.html")
+include()
+emit("palace", "기억의 궁전", "기억의 궁전", ("#F3F1EC", "#121116"),
+     "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--warn);--g-ok:var(--ok)",
+     '<link rel="apple-touch-icon" href="pl-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="pl-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="pl-icon-64.png">',
+     '{key: "palace", name: "기억의 궁전", icon: "pl-icon-192.png", sub: "장소에 문장을 놓고, 단어는 매개로", colls: ["vo.data", "pl.data", "pl.edit", "pl.gen", "progress", "cmd", "bchat"], only: {cmd: {from: "palace"}}}',
+     '{"id":"/brainy-today/palace/","name":"기억의 궁전","short_name":"기억의 궁전","start_url":"./","scope":"./","display":"standalone","background_color":"#F3F1EC","theme_color":"#F3F1EC","icons":[{"src":"pl-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"pl-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
+     "", PL_BRAINY + BRAINY_CHAT)
 
 # ═════════════════════════ 강의 실습 ═════════════════════════
 # 강의 지도(볼트 33_카드 「C-<강의> 수강·실습 분류」)·학습 노트·지금 태스크를 보며 Brainy와 한 칸씩 실습 (2026-11-24 동욱).
@@ -267,7 +281,7 @@ redirect = """<!doctype html>
 <title>Brainy 홈</title><meta http-equiv="refresh" content="0; url=home/">
 <script>location.replace("home/" + location.search + location.hash);</script></head>
 <body style="font-family:-apple-system,sans-serif;padding:24px">
-<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="course/">강의 실습</a> · <a href="ad/">광고 실습</a> · <a href="ads/">광고 한눈에</a> · <a href="hub/">전체 현황</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
+<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="course/">강의 실습</a> · <a href="ad/">광고 실습</a> · <a href="ads/">광고 한눈에</a> · <a href="hub/">전체 현황</a> · <a href="palace/">기억의 궁전</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
 """
 (root / "index.html").write_text(redirect, encoding="utf-8")
 # 열려 있던 옛 화면이 version.txt 를 보고 스스로 새로 고치면 → 이 넘김 페이지 → home/

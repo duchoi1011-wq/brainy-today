@@ -163,34 +163,6 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 .lc-flash{cursor:pointer;min-height:180px}.lc-gr{margin-top:12px}.lc-gr .btn{flex:1}
 .lt-mk{display:flex;gap:6px;align-items:flex-start}.lt-mk .mk{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:15px;cursor:pointer}
 .lt-mk .mk.ok[aria-pressed=true]{background:var(--l4);border-color:var(--l4);color:#fff}.lt-mk .mk.fav[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-/* 발음매개 (vocab-mnem.js) — 펼친 외국어 단어 카드 안 */
-.mn{padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2)}
-.mn .lbl{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted)}
-.mn-dr{display:flex;flex-direction:column;gap:10px}
-.mn-d{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
-.mn-h{font-size:18px}
-.mn-ed input,.mn-ed textarea{display:block;width:100%;margin-top:4px;font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);resize:vertical}
-/* 암기 사진 (vocab-capture.js) */
-.cap-b{display:block;text-align:center;cursor:pointer}.cap-b.off{opacity:.5;pointer-events:none}
-.cap-r{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:10px;background:var(--surface-2)}
-/* 기억의 궁전 (vocab-palace.js) */
-.pl-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.pl-sum div{display:flex;flex-direction:column;gap:2px;padding:10px;border-radius:10px;background:var(--surface-2)}
-.pl-sum b{font-size:22px;line-height:1.1}.pl-sum b small{font-size:13px;color:var(--muted)}.pl-sum span{font-size:12px;color:var(--muted)}
-.pl-bar{position:relative;height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}
-.pl-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}.pl-bar .b{background:var(--line)}.pl-bar .f{background:var(--l4)}
-.pl-g{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.pl-t{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-height:54px;padding:7px 8px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;min-width:0}
-.pl-t .mono{font-size:12px;font-weight:500}.pl-t small{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
-.pl-t.e{border-style:dashed;background:transparent}.pl-t.p{border-color:var(--l2)}.pl-t.d{border-color:var(--accent);background:var(--warn-bg)}.pl-t.l{border-color:var(--l4);background:var(--ok-bg)}
-.pl-t.on{outline:2px solid var(--ink);outline-offset:1px}
-.pl-f{padding:14px 16px;border-radius:12px;background:var(--surface-2)}
-.pl-s{font-size:17px;font-weight:600;line-height:1.5}
-.pl-stg{display:flex;gap:6px;flex-wrap:wrap}.pl-stg span{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}.pl-stg span.on{border-color:var(--l4);color:var(--l4);font-weight:600}
-.pl-q{padding:10px 2px;border-top:1px solid var(--line)}.pl-q:first-child{border-top:0}.pl-q summary{cursor:pointer}.pl-q .mono{color:var(--accent);margin-right:6px}
-.pl-rest{border-style:dashed;background:transparent}
-.pl-k{display:inline-block;padding:0 7px;border-radius:6px;border:1px solid var(--line);font-size:11px;margin:2px 2px 0 0}.pl-k.p{border-color:var(--l2)}.pl-k.d{border-color:var(--accent);background:var(--warn-bg)}.pl-k.l{border-color:var(--l4);background:var(--ok-bg)}.pl-k.e{border-style:dashed}
-@media (max-width:420px){.pl-sum{gap:6px}.pl-sum div{padding:8px 6px}.pl-sum b{font-size:19px}.pl-t{min-height:48px;padding:6px}}
 </style>
 
 <div class="wrap">
@@ -202,7 +174,6 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
       <a href="#lec" data-v="lec">강의</a>
       <a href="#field" data-v="field">분야</a>
       <a href="#list" data-v="list">전체</a>
-      <a href="#palace" data-v="palace">궁전</a>
     </nav>
   </header>
   <main id="view"></main>
@@ -468,7 +439,7 @@ function renderHome(){
   const fresh = ALL.filter(t => isFresh(t) && lv(t.id) < 4).length;
   return `
   ${statusNote()}
-  ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때). 단어를 펼치면 「🔤 발음매개 만들기」가 있고, 회화 문장은 위 「궁전」 탭에서 면마다 봐요.</p>` : ""}
+  ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때). 발음매개·암기 사진·회화 문장의 궁전(면·장소 사진·장면 그림)은 <a href="../palace/">기억의 궁전</a> 앱에서 해요.</p>` : ""}
   ${S.domain === "브랜드·상품" ? `<p class="note">프로그램·서비스·상품 이름을 모은 단어장이에요. 지금은 ${TERMS.length}개이고, 「분야」 탭에서 분야마다 따로 볼 수 있어요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "스킬" ? `<p class="note">내가 모아 둔 스킬을 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "MCP" ? `<p class="note">내가 연결한 MCP(Claude와 바깥 도구를 잇는 연결)를 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
@@ -481,7 +452,6 @@ function renderHome(){
       ${fixList().length ? `<a class="row" href="#list" data-listcat="fix" style="text-decoration:none"><div class="t"><b>고칠 단어 ${fixList().length}개</b><span>「이 단어는 고쳐요」로 표시하고 오류·중복을 적어 둔 단어 — 모든 단어장</span></div><span class="why">모아 보기 →</span></a>` : ""}
     </div>
   </section>
-  ${S.domain === "외국어 단어장" ? capHtml() : ""}
   ${splitDomHtml()}
   <section class="card">
     <h2>이해도 지도</h2>
@@ -641,7 +611,7 @@ function detailHtml(t){
     ${stageHtml(t)}
     ${ctxOk(t.id) ? `<div class="scene"><span class="lbl">장면</span>${esc(CTX[t.id].scene)}</div>` : ""}
     ${ctxLayers(t)}
-    ${mnemHtml(t)}
+    ${t.dom === "외국어 단어장" ? `<a class="btn ghost" href="../palace/${/단어$/.test(t.cat || "") ? "#words" : "#palace"}" style="text-decoration:none">🏛 기억의 궁전에서 ${/단어$/.test(t.cat || "") ? "매개 보기·만들기" : "이 문장의 면 보기"}</a>` : ""}
     ${!ctxOk(t.id) && sample ? `<button class="btn ghost" data-act="regen" data-id="${t.id}" ${genBusy.has(t.id)?"disabled":""}>${genBusy.has(t.id) ? "장면 만드는 중…" : "장면·맥락 만들기"}</button>` : ""}
     ${p.cmd?.text ? `<p class="small"><span class="muted">내가 쓴 명령</span><br>${esc(p.cmd.text)}</p>` : ""}
     ${p.action?.note ? `<p class="small"><span class="muted">써 본 기록</span><br>${esc(p.action.note)}</p>` : ""}
@@ -655,14 +625,14 @@ function detailHtml(t){
 
 function render(){
   const ae = document.activeElement;
-  if (ae && (ae.id === "rvTxt" || ae.classList?.contains("bt-in") || ae.classList?.contains("rq-in") || ae.classList?.contains("mn-in"))) { pendingRender = true; return; }
+  if (ae && (ae.id === "rvTxt" || ae.classList?.contains("bt-in") || ae.classList?.contains("rq-in"))) { pendingRender = true; return; }
   pendingRender = false;
   const v = view();
   document.querySelectorAll("#nav a, #tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v));
   const main = document.getElementById("view");
   const searchFocused = ae && ae.id === "listQ";
   if (v === "list" && searchFocused) { document.getElementById("listOut").innerHTML = listRows(); return; }
-  main.innerHTML = v === "palace" ? renderPalace() : v === "stage" ? renderStage() : v === "new" ? renderNew() : v === "lec" ? (S.domain === "학습 단어장" ? renderLec() : `<section class="card"><p class="empty">강의 용어는 학습 단어장에만 있어요.<br>${esc(S.domain)}에는 아직 강의가 없어요.</p></section>`) : v === "field" ? (S.domain === "학습 단어장" && S.fieldMode === "lec" ? `<div class="fseg"><button class="chip" data-fmode="">단어장 분야</button><button class="chip on">강의 용어 분야</button></div>` + renderField() : renderDomField()) : v === "review" ? renderReview() : v === "list" ? renderList() : renderHome();
+  main.innerHTML = v === "stage" ? renderStage() : v === "new" ? renderNew() : v === "lec" ? (S.domain === "학습 단어장" ? renderLec() : `<section class="card"><p class="empty">강의 용어는 학습 단어장에만 있어요.<br>${esc(S.domain)}에는 아직 강의가 없어요.</p></section>`) : v === "field" ? (S.domain === "학습 단어장" && S.fieldMode === "lec" ? `<div class="fseg"><button class="chip" data-fmode="">단어장 분야</button><button class="chip on">강의 용어 분야</button></div>` + renderField() : renderDomField()) : v === "review" ? renderReview() : v === "list" ? renderList() : renderHome();
   const domEl = document.getElementById("dom");
   domEl.innerHTML = Object.keys(DOMAINS).map(d => `<button role="tab" aria-selected="${S.domain===d}" class="${S.domain===d?"on":""}" data-dom="${d}">${d}<span>${ALL.filter(t => t.dom===d).length}</span></button>`).join("");
   domEdge(true);
@@ -764,11 +734,6 @@ async function init(){
     rebuild();
     render();
   }, () => {});
-  db.doc("vo.data/palace").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.palaces)) { PAL = v; if (view() === "palace") render(); } }, () => {});
-  db.collection("cmd").onSnapshot(q => {   // 발음매개 cmd — 맥 Brainy 가 적은 초안(drafts)·상태
-    MN_CMDS = q.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.from === "vocab").sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-    if (S.detail || ["list", "home", "palace"].includes(view())) render();
-  }, () => {});
   db.doc("vo.marks/add").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { ADD = readAdd(v); rebuild(); render(); } }, () => {});
   db.doc("vo.data/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.courses)) { LEC = v; lsPut("vo.lec", v); if (view() === "lec") render(); } }, () => {});
   db.doc("vo.marks/lec").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v) { LM = { ...v, ok: v.ok || {}, fav: v.fav || {}, pk: v.pk || {} }; lsPut("vo.lecm", LM); if (view() === "lec") render(); } }, () => {});
@@ -788,8 +753,5 @@ async function init(){
 }
 /*@include vocab-review.js*/
 /*@include vocab-lec.js*/
-/*@include vocab-mnem.js*/
-/*@include vocab-palace.js*/
-/*@include vocab-capture.js*/
 init();
 </script>
