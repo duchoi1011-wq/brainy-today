@@ -13,7 +13,7 @@ function likedRows(kw){
   var sr = ((part("search") || {}).items) || [], cm = ((part("cmts") || {}).items) || {}, seen = {}, out = [];
   sr.forEach(function(v){
     if(ui.lkRel && !vidRelOf(v)) return;
-    if(kw != null && v.kw !== kw) return;   // 「키워드와 맞는 영상만」 — 제목·설명에 키워드가 든 영상
+    if(kw != null && v.kw !== kw) return;   // 그 키워드로 찾은 영상만
     ((cm[v.vid] || {}).comments || []).forEach(function(c){
       var key = String(c.text || "").replace(/\s+/g, " ").trim(); if(!key || seen[key]) return; seen[key] = 1;
       out.push({ text: c.text, likes: c.likes || 0, replies: c.replies || 0, at: c.at, vid: v.vid, title: v.title, channel: v.channel, kw: v.kw });
@@ -23,7 +23,7 @@ function likedRows(kw){
 }
 function lkKey(r){ return r.vid + ":" + String(r.text).replace(/\s+/g, " ").slice(0, 40) }
 function lkPicks(){ return (SETS[cur] || {}).lkPick || {} }
-function lkPickList(){ var pk = lkPicks(); return Object.keys(pk).map(function(k){ return pk[k] }) }
+function lkPickList(){ var pk = lkPicks(); return Object.keys(pk).map(function(k){ return pk[k] }).sort(function(a, b){ return (a.at || 0) - (b.at || 0) }) }   // 고른 순서대로 (저장소가 키 순서를 바꾼다)
 function likedCount(){ return likedRows().length }
 function likedBusy(){ var r = (SETS[cur] || {}).cmtReq, d = part("cmts"); return !!(r && r.what === "search" && (!d || Date.parse(d.updatedAt) < Date.parse(r.at) - 5000)) }
 function likedHtml(){
@@ -41,7 +41,8 @@ function likedHtml(){
   /* 정리 — 키워드마다 공감 1위 */
   h += "<section class=\"card\"><div class=\"card-h\"><h3>키워드마다 공감 1위</h3><span class=\"n\">" + kws.length + "개 키워드</span></div><div class=\"list\">" +
     kws.slice().sort(function(a, b){ return ((byKw[b][0] || {}).likes || -1) - ((byKw[a][0] || {}).likes || -1) }).map(function(kw){ var r = byKw[kw][0];
-      if(!r) return "<div class=\"it\"><span class=\"num muted\">—</span><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag\">" + esc(kw) + "</span> <span class=\"muted\">찾은 영상에 댓글이 없어요 (댓글 0개 · 막힘)</span></div></div></div>";
+      if(!r){ var vs = sr.filter(function(v){ return v.kw === kw }), nNo = vs.filter(function(v){ return !cm[v.vid] }).length, nOff = vs.filter(function(v){ return cm[v.vid] && cm[v.vid].error }).length;   // 0개인 까닭을 나눈다: 아직 안 받음 · 막힘 · 받았는데 0개 (2026-11-28 검증)
+        return "<div class=\"it\"><span class=\"num muted\">—</span><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag\">" + esc(kw) + "</span> <span class=\"muted\">" + (nNo ? "영상 " + nNo + "개 댓글을 아직 안 받았어요 — 위 「댓글 받기」" : nOff ? "댓글이 막힌 영상이에요" : "찾은 영상 " + vs.length + "개에 댓글이 없어요") + "</span></div></div></div>" }
       return "<div class=\"it\"><span class=\"num\">👍 " + fmt(r.likes) + "</span><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag\">" + esc(kw) + "</span> " + esc(String(r.text).replace(/\s+/g, " ").slice(0, 90)) + (String(r.text).length > 90 ? "…" : "") + "</div>" +
         "<div class=\"it-d lk-t\"><a href=\"https://www.youtube.com/watch?v=" + esc(r.vid) + "\" target=\"_blank\" rel=\"noopener\">" + esc(r.title || r.vid) + "</a></div></div>" +
         "<button class=\"btn sm\" data-act=\"lkkw\" data-kw=\"" + esc(kw) + "\">이 키워드 " + byKw[kw].length + "개 →</button></div>" }).join("") + "</div></section>";
@@ -63,7 +64,7 @@ function likedHtml(){
 function likedToScriptHtml(){
   var pk = lkPickList(), a = autoState(), st = a.st, mine = st && st.route === "liked", busyS = !!openCmd("script"), busyI = !!openCmd("ideas");
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>댓글 → 대본</h3><span class=\"n\">고른 댓글 " + pk.length + "개</span></div>";
-  if(pk.length) h += "<div class=\"list\">" + pk.map(function(r){ return "<div class=\"it\"><span class=\"num\">👍 " + fmt(r.likes) + "</span><div class=\"it-m lk-t\">" + esc(String(r.text).replace(/\s+/g, " ")) + "</div><button class=\"mk no\" data-act=\"lkpick\" data-k=\"" + esc(lkKey(r)) + "\" aria-label=\"빼기\">✕</button></div>" }).join("") + "</div>" +
+  if(pk.length) h += "<div class=\"list\">" + pk.map(function(r){ return "<div class=\"it\"><span class=\"num\">👍 " + fmt(r.likes) + "</span><div class=\"it-m\">" + esc(String(r.text).replace(/\s+/g, " ").slice(0, 160)) + (String(r.text).length > 160 ? "…" : "") + "</div><button class=\"mk no\" data-act=\"lkpick\" data-k=\"" + esc(lkKey(r)) + "\" aria-label=\"빼기\">✕</button></div>" }).join("") + "</div>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"lkscript\"" + (busyS ? " disabled" : "") + ">✍️ 고른 " + pk.length + "개로 대본 초안</button><button class=\"btn\" data-act=\"lkideas\"" + (busyI ? " disabled" : "") + ">💡 아이디어만 뽑기</button><button class=\"btn sm\" data-act=\"lkclear\">고르기 풀기</button></div>";
   else h += "<p class=\"lead\">아래 순위에서 ＋로 댓글을 고르면 그 댓글로 대본 초안(대본 탭)이나 💡 아이디어를 만들어요. 고르기 귀찮으면 🚀 — 맥이 공감 순위에서 이 브랜드에 맞는 댓글을 골라 대본까지 만들고 보고해요.</p>";
   if(mine) h += "<p class=\"note\">🚀 공감 댓글 자동 진행 · " + esc(st.status || "") + "</p>" + autoStepsHtml(st) + (st.report ? "<div class=\"pre\">" + txt(st.report) + "</div>" : "");
@@ -71,7 +72,7 @@ function likedToScriptHtml(){
 }
 function likedAct(name, el){
   if(name === "lkpick"){ var k = el.dataset.k, pk = Object.assign({}, lkPicks());
-    if(pk[k]) delete pk[k]; else { var r = likedRows().filter(function(x){ return lkKey(x) === k })[0] || lkPickList().filter(function(x){ return lkKey(x) === k })[0]; if(!r) return true; pk[k] = { text: String(r.text).slice(0, 600), likes: r.likes, vid: r.vid, title: r.title, kw: r.kw } }
+    if(pk[k]) delete pk[k]; else { var r = likedRows().filter(function(x){ return lkKey(x) === k })[0] || lkPickList().filter(function(x){ return lkKey(x) === k })[0]; if(!r) return true; pk[k] = { text: String(r.text).slice(0, 600), likes: r.likes, vid: r.vid, title: r.title, kw: r.kw, at: Date.now() } }
     setS({ lkPick: pk }); var nn = Object.keys(pk).length; toast(nn ? "댓글 " + nn + "개 골랐어요 — 위 「댓글 → 대본」에서 대본 만들기" : "고른 댓글을 뺐어요"); return true }   // 아래 순위에서 고르면 칸이 화면 밖이라 알림으로 (2026-11-28 써 보기)
   if(name === "lkkw"){ ui.lkKw = el.dataset.kw; ui.lkMore = 30; render(); var rk = document.getElementById("lk-rank"); if(rk){ var hd = document.querySelector("header"); window.scrollTo(0, rk.getBoundingClientRect().top + window.scrollY - (hd ? hd.getBoundingClientRect().bottom : 0) - 8) } return true }   // 그 키워드 순위로 내려 준다 (2026-11-28 검증: 눌러도 화면 밖)
   if(name === "lkclear"){ setS({ lkPick: {} }); return true }
@@ -79,7 +80,7 @@ function likedAct(name, el){
     send(name === "lkscript" ? "script" : "ideas", (name === "lkscript" ? "공감 댓글로 대본 초안 — 댓글 " : "공감 댓글에서 아이디어 뽑기 — 댓글 ") + cs.length + "개", { comments: cs });
     setS({ lkPick: {} }); toast(name === "lkscript" ? "맥에 보냈어요 — 대본은 대본 탭에 생겨요" : "맥에 보냈어요 — 아이디어는 「💡 아이디어」 칸에"); return true }
   if(name === "lkauto"){ var n = +el.dataset.n || 1; if(autoState().running) return true; if(pastOn()){ toast(PAST_BLOCK); return true }
-    if(!confirm("🚀 공감 댓글 자동 진행 — 맥이 공감 순위에서 이 브랜드에 맞는 댓글 " + n + "개를 골라 아이디어 → 대본 초안까지 만들고 보고해요. 시작할까요?")) return true;
+    if(!confirm("🚀 공감 댓글 자동 진행 — 맥이 공감 순위(키워드와 맞는 영상의 댓글)에서 이 브랜드에 맞는 댓글 " + n + "개를 골라 아이디어 → 대본 초안까지 만들고 보고해요. 시작할까요?")) return true;
     setS({ autoReq: { at: new Date().toISOString(), route: "liked", upto: "script", n: n, params: baseParams() } }); return true }
   return false;
 }
