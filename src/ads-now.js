@@ -18,7 +18,7 @@ function renderNow(){
       const t = totalsOf([b]), n = todosOf([b]).filter(x => x.lv === "high").length;
       return `<button type="button" class="row ${n ? "high" : chOrder().some(ch => chState(b, ch).k === "run") ? "run" : "none"}" data-brand="${esc(b.id)}" aria-label="${esc(b.name)} 열기">
         <span class="ct"><b>${esc(b.name)}</b><span>${esc(b.product || "")}${b.goal ? " · 목표 " + esc(b.goal) : ""}</span>
-        <span class="figs">${chOrder().map(ch => `${esc(chName(ch))} <i>${esc(chState(b, ch).t)}</i>`).join("")}${t.camps ? `<span>7일 <i>${won(t.cost7)}원</i></span>` : ""}</span></span>
+        <span class="figs">${chOrder().map(ch => `<span>${esc(chName(ch))} <i>${esc(chState(b, ch).t)}</i></span>`).join("")}${t.camps ? `<span>7일 <i>${won(t.cost7)}원</i></span>` : ""}</span></span>
         <span class="tags">${n ? `<span class="pill high">급한 일 ${n}</span>` : ""}</span></button>`;
     }).join("")}</section>`;
   } else {

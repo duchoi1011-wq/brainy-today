@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "c5f71b0ca3"; window.BRAINY_APP = {key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고를 한 화면에서 보고 조율", colls: ["ah.data", "ad.data", "bchat"]};</script>
-<script src="../shim.js?v=c5f71b0ca3"></script>
+<script>window.BRAINY_VERSION = "6741db7420"; window.BRAINY_APP = {key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고를 한 화면에서 보고 조율", colls: ["ah.data", "ad.data", "bchat"]};</script>
+<script src="../shim.js?v=6741db7420"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -145,8 +145,8 @@ button.row{cursor:pointer}
 .row .ct b{display:block;font-weight:600;line-height:1.45}
 .row .ct span{display:block;font-size:13px;color:var(--muted)}
 .row .tags{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-.row .figs{display:flex;flex-wrap:wrap;gap:2px 12px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-top:2px}
-.row .figs i{font-style:normal;color:var(--ink)}
+.figs{display:flex;flex-wrap:wrap;gap:2px 12px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-top:2px}
+.figs i{font-style:normal;color:var(--ink)}
 .part{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 4px}
 .part h2{margin:0;letter-spacing:.02em;font-size:14px;color:var(--ink)}
 .part small{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
@@ -505,7 +505,7 @@ function renderNow(){
       const t = totalsOf([b]), n = todosOf([b]).filter(x => x.lv === "high").length;
       return `<button type="button" class="row ${n ? "high" : chOrder().some(ch => chState(b, ch).k === "run") ? "run" : "none"}" data-brand="${esc(b.id)}" aria-label="${esc(b.name)} 열기">
         <span class="ct"><b>${esc(b.name)}</b><span>${esc(b.product || "")}${b.goal ? " · 목표 " + esc(b.goal) : ""}</span>
-        <span class="figs">${chOrder().map(ch => `${esc(chName(ch))} <i>${esc(chState(b, ch).t)}</i>`).join("")}${t.camps ? `<span>7일 <i>${won(t.cost7)}원</i></span>` : ""}</span></span>
+        <span class="figs">${chOrder().map(ch => `<span>${esc(chName(ch))} <i>${esc(chState(b, ch).t)}</i></span>`).join("")}${t.camps ? `<span>7일 <i>${won(t.cost7)}원</i></span>` : ""}</span></span>
         <span class="tags">${n ? `<span class="pill high">급한 일 ${n}</span>` : ""}</span></button>`;
     }).join("")}</section>`;
   } else {
@@ -605,6 +605,13 @@ function renderJudge(){
   const LIM = 40;
   list.forEach(b => {
     const L = J.filter(x => x.b === b && keepJ(x.j.code)).sort((x, y) => KJ_ORDER.indexOf(x.j.code) - KJ_ORDER.indexOf(y.j.code) || y.k.all.clk - x.k.all.clk || y.k.all.imp - x.k.all.imp);
+    /* 손볼 것이 0이면 빈 칸 대신 판정에 가장 가까운 키워드(클릭 많은 순 10개)를 보여 준다 */
+    if (S.filt === "act" && !L.length) {
+      const near = J.filter(x => x.b === b && x.j.code === "wait").sort((x, y) => y.k.all.clk - x.k.all.clk).slice(0, 10);
+      h += `<section class="card"><div class="part"><h2>${esc(b.name)}</h2><small>손볼 것 0</small></div>
+        <p class="small muted" style="margin-bottom:6px">아직 ${R.adjust}클릭을 넘은 켜진 키워드가 없어요 — 판정에 가장 가까운 ${near.length}개예요.</p>${near.map(x => kwRow(x, b)).join("")}</section>`;
+      return;
+    }
     const shown = S.kwMore ? L : L.slice(0, LIM);
     h += `<section class="card"><div class="part"><h2>${esc(b.name)}</h2><small>${L.length}개</small></div>
       ${L.length ? shown.map(x => kwRow(x, b)).join("") + (L.length > shown.length ? `<button type="button" class="more" data-kwmore>나머지 ${L.length - shown.length}개 더 보기</button>` : "") : `<p class="empty">이 거르기에 맞는 키워드가 없어요.</p>`}

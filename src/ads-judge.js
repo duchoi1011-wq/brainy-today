@@ -23,6 +23,13 @@ function renderJudge(){
   const LIM = 40;
   list.forEach(b => {
     const L = J.filter(x => x.b === b && keepJ(x.j.code)).sort((x, y) => KJ_ORDER.indexOf(x.j.code) - KJ_ORDER.indexOf(y.j.code) || y.k.all.clk - x.k.all.clk || y.k.all.imp - x.k.all.imp);
+    /* 손볼 것이 0이면 빈 칸 대신 판정에 가장 가까운 키워드(클릭 많은 순 10개)를 보여 준다 */
+    if (S.filt === "act" && !L.length) {
+      const near = J.filter(x => x.b === b && x.j.code === "wait").sort((x, y) => y.k.all.clk - x.k.all.clk).slice(0, 10);
+      h += `<section class="card"><div class="part"><h2>${esc(b.name)}</h2><small>손볼 것 0</small></div>
+        <p class="small muted" style="margin-bottom:6px">아직 ${R.adjust}클릭을 넘은 켜진 키워드가 없어요 — 판정에 가장 가까운 ${near.length}개예요.</p>${near.map(x => kwRow(x, b)).join("")}</section>`;
+      return;
+    }
     const shown = S.kwMore ? L : L.slice(0, LIM);
     h += `<section class="card"><div class="part"><h2>${esc(b.name)}</h2><small>${L.length}개</small></div>
       ${L.length ? shown.map(x => kwRow(x, b)).join("") + (L.length > shown.length ? `<button type="button" class="more" data-kwmore>나머지 ${L.length - shown.length}개 더 보기</button>` : "") : `<p class="empty">이 거르기에 맞는 키워드가 없어요.</p>`}
