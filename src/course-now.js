@@ -10,7 +10,7 @@ function renderNow(c){
       <h3>${esc(x.title)}</h3>
       ${(() => { const m = missingOf(c, x); return m.has && m.n ? `<div class="remain"><span class="lbl">빠진 것 — ${missWord(m)}</span>${m.req.concat(m.chk).slice(0, 3).map(it => inline(it.t)).join("<br>")}${m.n > 3 ? `<br><span class="muted">… 외 ${m.n - 3}개 — 요구사항 보기에서 전부</span>` : ""}</div>` : ""; })() || (x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${remainHtml(x.remain)}</div>` : "") || (x.desc ? `<p class="small muted" style="margin-bottom:12px">${inline(x.desc)}</p>` : "")}
       <div class="btns">${doBtn(x)}<button type="button" class="btn" data-cell="${esc(x.key)}">요구사항 보기</button></div>
-      <p class="small muted" style="margin-top:10px">누르면 Brainy 대화창에 「${esc(sayDo(c, x))}」가 채워져요. ↑ 로 보내면 Brainy가 이 칸이 뭔지 설명하고 한 단계씩 같이 진행해요.</p>
+      <p class="small muted" style="margin-top:10px">누르면 Brainy 대화창에 「${esc(sayDo(c, x))}」가 채워져요. ↑ 로 보내면 맥의 Brainy(본계정)가 이 칸을 한 단계씩 직접 진행하고, 단계마다 결과를 보여 주며 확인 질문을 해요. 맥이 꺼져 있으면 답하지 않아요.</p>
     </section>`;
   } else {
     h += `<section class="card"><h2>지금 할 칸</h2><p class="empty">남은 실습 칸이 없어요. 이 강의는 실습을 다 끝냈어요.</p></section>`;
