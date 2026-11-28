@@ -36,13 +36,16 @@ function cmtxTodo(){
   pick.forEach(function(r){ var k = lkKey(r); if(seen[k]) return; seen[k] = 1; if(!cmtxOf(r).ann) n++ });
   return n;
 }
-/* 댓글 한 줄 — 공감 수 · 키워드 · 원문 · 영상 맥락 · 뜻 · 내 채널과 맞나 */
+/* 의도 제목 — 이 댓글이 무엇을 말하려는지 제목만 봐도 보이게 (2026-11-28 동욱 "어떤 의도인지가 제목으로 먼저 드러났으면. 그 제목만 봐도 이런 의미라는 게 보이도록").
+   맥 풀이의 head(짧은 제목), 아직 없으면 뜻(mean) 한 줄, 풀이가 없으면 null — 그때는 원문이 제목 자리 */
+function cmtHead(r){ var a = cmtxOf(r).ann; return a ? (a.head || a.mean || null) : null }
+/* 댓글 한 줄 — 의도 제목 · 공감 수 · 키워드 · 원문 · 영상 맥락 · 뜻 · 내 채널과 맞나 */
 function cmtRowHtml(r, i, opt){
-  var x = cmtxOf(r), a = x.ann, long = String(r.text).length > 160, fitCls = a ? (a.fit === "높음" ? " ok" : a.fit === "낮음" ? "" : " p") : "";
-  return "<div class=\"it\">" + (i != null ? "<span class=\"num muted\">" + (i + 1) + "</span>" : "") + "<div class=\"it-m\"><div class=\"it-h\"><b class=\"num\">👍 " + fmt(r.likes) + "</b>" + (r.replies ? " <span class=\"muted\">↩ 답글 " + fmt(r.replies) + "</span>" : "") + " <span class=\"tag\">" + esc(r.kw) + "</span>" +
+  var x = cmtxOf(r), a = x.ann, hd = cmtHead(r), long = String(r.text).length > 160, fitCls = a ? (a.fit === "높음" ? " ok" : a.fit === "낮음" ? "" : " p") : "";
+  return "<div class=\"it\">" + (i != null ? "<span class=\"num muted\">" + (i + 1) + "</span>" : "") + "<div class=\"it-m\">" + (hd ? "<div class=\"cmt-head\">" + esc(hd) + "</div>" : "") + "<div class=\"it-h\"><b class=\"num\">👍 " + fmt(r.likes) + "</b>" + (r.replies ? " <span class=\"muted\">↩ 답글 " + fmt(r.replies) + "</span>" : "") + " <span class=\"tag\">" + esc(r.kw) + "</span>" +
       (a && a.fit ? " <span class=\"tag" + fitCls + "\" title=\"" + esc(a.why || "") + "\">🎯 내 채널 " + esc(a.fit) + "</span>" : "") + "</div>" +
-    (long ? "<details><summary>" + esc(String(r.text).slice(0, 160)) + "…</summary><div class=\"pre\">" + esc(r.text) + "</div></details>" : "<div class=\"pre\">" + esc(r.text) + "</div>") +
-    (x.ctx || a ? "<div class=\"cmtx\">" + (x.ctx ? "<div><b>🎬 영상 맥락</b> " + esc(x.ctx) + "</div>" : "") + (a && a.mean ? "<div><b>💭 뜻</b> " + esc(a.mean) + "</div>" : "") +
+    (long ? "<details><summary>" + esc(String(r.text).slice(0, 160)) + "…</summary><div class=\"pre" + (hd ? " cmt-orig" : "") + "\">" + esc(r.text) + "</div></details>" : "<div class=\"pre" + (hd ? " cmt-orig" : "") + "\">" + esc(r.text) + "</div>") +
+    (x.ctx || a ? "<div class=\"cmtx\">" + (x.ctx ? "<div><b>🎬 영상 맥락</b> " + esc(x.ctx) + "</div>" : "") + (a && a.mean && a.mean !== hd ? "<div><b>💭 뜻</b> " + esc(a.mean) + "</div>" : "") +
       (a && a.why ? "<div><b>🎯 왜</b> " + esc(a.why) + "</div>" : "") + (a && a.angle ? "<div><b>📋 찍을 것</b> " + esc(a.angle) + "</div>" : "") + "</div>" : "") +
     "<div class=\"it-d lk-t\"><a href=\"https://www.youtube.com/watch?v=" + esc(r.vid) + "\" target=\"_blank\" rel=\"noopener\">" + esc(r.title || r.vid) + "</a> · " + esc(r.channel || "") + (r.at ? " · 댓글 " + esc(r.at) : "") + "</div></div>" +
     ((opt || {}).plan ? "<button class=\"btn sm\" data-act=\"lkplan1\" data-k=\"" + esc(lkKey(r)) + "\"" + (openCmd("build") ? " disabled" : "") + ">📋 이걸로 기획</button>" : "") +
@@ -77,9 +80,9 @@ function viewCmt(){
     kws.slice().sort(function(a, b){ return ((byKw[b][0] || {}).likes || -1) - ((byKw[a][0] || {}).likes || -1) }).map(function(kw){ var r = byKw[kw][0];
       if(!r){ var vs = sr.filter(function(v){ return v.kw === kw }), nNo = vs.filter(function(v){ return !cm[v.vid] }).length, nOff = vs.filter(function(v){ return cm[v.vid] && cm[v.vid].error }).length;   // 0개인 까닭: 아직 안 받음 · 막힘 · 받았는데 0개
         return "<div class=\"it\"><span class=\"num muted\">—</span><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag\">" + esc(kw) + "</span> <span class=\"muted\">" + (ui.lkFit ? "내 채널에 맞는 댓글이 없어요" : nNo ? "영상 " + nNo + "개 댓글을 아직 안 받았어요 — 위 「댓글 받기」" : nOff ? "댓글이 막힌 영상이에요" : "찾은 영상 " + vs.length + "개에 댓글이 없어요") + "</span></div></div></div>" }
-      var x = cmtxOf(r);
-      return "<div class=\"it\"><span class=\"num\">👍 " + fmt(r.likes) + "</span><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag\">" + esc(kw) + "</span> " + esc(String(r.text).replace(/\s+/g, " ").slice(0, 90)) + (String(r.text).length > 90 ? "…" : "") + "</div>" +
-        (x.ann && x.ann.mean ? "<div class=\"it-d\">💭 " + esc(x.ann.mean) + "</div>" : "") +
+      var hd1 = cmtHead(r);
+      return "<div class=\"it\"><span class=\"num\">👍 " + fmt(r.likes) + "</span><div class=\"it-m\"><div class=\"it-h\"><span class=\"tag\">" + esc(kw) + "</span> " + (hd1 ? "<b>" + esc(hd1) + "</b>" : esc(String(r.text).replace(/\s+/g, " ").slice(0, 90)) + (String(r.text).length > 90 ? "…" : "")) + "</div>" +
+        (hd1 ? "<div class=\"it-d\">「" + esc(String(r.text).replace(/\s+/g, " ").slice(0, 70)) + (String(r.text).length > 70 ? "…" : "") + "」</div>" : "") +
         "<div class=\"it-d lk-t\"><a href=\"https://www.youtube.com/watch?v=" + esc(r.vid) + "\" target=\"_blank\" rel=\"noopener\">" + esc(r.title || r.vid) + "</a></div></div>" +
         "<button class=\"btn sm\" data-act=\"lkkw\" data-kw=\"" + esc(kw) + "\">이 키워드 " + byKw[kw].length + "개 →</button></div>" }).join("") + "</div></section>";
   h += likedToScriptHtml();
@@ -96,14 +99,14 @@ function viewCmt(){
 function likedToScriptHtml(){
   var pk = lkPickList(), a = autoState(), st = a.st, mine = st && st.route === "liked", busyB = !!openCmd("build"), busyS = !!openCmd("script"), busyI = !!openCmd("ideas");
   var h = "<section class=\"card\"><div class=\"card-h\"><h3>댓글로 기획 · 대본</h3><span class=\"n\">고른 댓글 " + pk.length + "개</span></div>";
-  if(pk.length) h += "<div class=\"list\">" + pk.map(function(r){ return "<div class=\"it\"><span class=\"num\">👍 " + fmt(r.likes) + "</span><div class=\"it-m\">" + esc(String(r.text).replace(/\s+/g, " ").slice(0, 160)) + (String(r.text).length > 160 ? "…" : "") + "</div><button class=\"mk no\" data-act=\"lkpick\" data-k=\"" + esc(lkKey(r)) + "\" aria-label=\"빼기\">✕</button></div>" }).join("") + "</div>" +
+  if(pk.length) h += "<div class=\"list\">" + pk.map(function(r){ return "<div class=\"it\"><span class=\"num\">👍 " + fmt(r.likes) + "</span><div class=\"it-m\">" + (cmtHead(r) ? "<b>" + esc(cmtHead(r)) + "</b><div class=\"it-d\">" : "") + esc(String(r.text).replace(/\s+/g, " ").slice(0, 160)) + (String(r.text).length > 160 ? "…" : "") + (cmtHead(r) ? "</div>" : "") + "</div><button class=\"mk no\" data-act=\"lkpick\" data-k=\"" + esc(lkKey(r)) + "\" aria-label=\"빼기\">✕</button></div>" }).join("") + "</div>" +
     "<div class=\"acts\"><button class=\"btn primary\" data-act=\"lkplan\"" + (busyB ? " disabled" : "") + ">📋 고른 " + pk.length + "개로 콘텐츠 기획</button><button class=\"btn\" data-act=\"lkscript\"" + (busyS ? " disabled" : "") + ">✍️ 대본 초안</button><button class=\"btn\" data-act=\"lkideas\"" + (busyI ? " disabled" : "") + ">💡 아이디어만</button><button class=\"btn sm\" data-act=\"lkclear\">고르기 풀기</button></div>";
   else h += "<p class=\"lead\">댓글 줄의 ＋로 고르면 그 댓글로 <b>콘텐츠 기획</b>(대본 탭 「구축」 문서) · 대본 초안 · 💡 아이디어를 만들어요. 고르기 귀찮으면 🚀 — 맥이 「내 채널에 맞음」 댓글부터 골라 대본까지 만들고 보고해요.</p>";
   if(mine) h += "<p class=\"note\">🚀 공감 댓글 자동 진행 · " + esc(st.status || "") + "</p>" + autoStepsHtml(st) + (st.report ? "<div class=\"pre\">" + txt(st.report) + "</div>" : "");
   return h + nextBar("공감 댓글에서 바로 대본으로", [1, 2, 3].map(function(n){ return ["🚀 공감 상위에서 " + n + "편 자동", "data-act=\"lkauto\" data-n=\"" + n + "\"", a.running] })) + "</section>";
 }
 function lkFind(k){ return likedRows().filter(function(x){ return lkKey(x) === k })[0] || lkPickList().filter(function(x){ return lkKey(x) === k })[0] }
-function lkWithCtx(r){ var x = cmtxOf(r); return { text: String(r.text).slice(0, 600), likes: r.likes, vid: r.vid, title: r.title, kw: r.kw, ctx: x.ctx || "", mean: (x.ann || {}).mean || "", angle: (x.ann || {}).angle || "" } }   // 맥에 보낼 때 풀이도 같이
+function lkWithCtx(r){ var x = cmtxOf(r); return { text: String(r.text).slice(0, 600), likes: r.likes, vid: r.vid, title: r.title, kw: r.kw, ctx: x.ctx || "", head: (x.ann || {}).head || "", mean: (x.ann || {}).mean || "", angle: (x.ann || {}).angle || "" } }   // 맥에 보낼 때 풀이도 같이
 function likedAct(name, el){
   if(name === "lkpick"){ var k = el.dataset.k, pk = Object.assign({}, lkPicks());
     if(pk[k]) delete pk[k]; else { var r = lkFind(k); if(!r) return true; pk[k] = Object.assign(lkWithCtx(r), { at: Date.now() }) }
