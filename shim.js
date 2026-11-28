@@ -7,7 +7,7 @@
   var SB_KEY = "sb_publishable_uuyp3LdaEeKr002cSVrfhw_hWy1Q8i3"; // 공개용 키
   // 같은 주소 아래 앱 셋(Brainy 홈 · 맥 단축키 · 체화 단어장)이 이 받침을 같이 쓴다. 앱마다 자기 컬렉션만 읽는다.
   var APP = window.BRAINY_APP || { key: "home", name: "Brainy 홈", icon: "icon.svg" };
-  var OTHER = ["ai", "ai_out", "sc.data", "sc.marks", "additions", "requests", "vo.data", "vo.ids", "progress", "ctx", "mac", "ct.data", "ct.set", "cr.data", "cr.memo", "cr.study", "cr.tog", "ad.data", "bchat"]; // 홈이 안 읽는 것 (mac = 맥 동기화 신호, 새로고침 버튼이 따로 본다)
+  var OTHER = ["ai", "ai_out", "sc.data", "sc.marks", "additions", "requests", "vo.data", "vo.ids", "progress", "ctx", "mac", "ct.data", "ct.set", "cr.data", "cr.memo", "cr.study", "cr.tog", "ad.data", "bchat", "vo.cap"]; // 홈이 안 읽는 것 (vo.cap = 단어장 암기 사진 원본 — 크다) (mac = 맥 동기화 신호, 새로고침 버튼이 따로 본다)
   function mine(coll) { return APP.colls ? APP.colls.indexOf(coll) >= 0 : OTHER.indexOf(coll) < 0; }
   // 여러 앱이 같이 쓰는 컬렉션(cmd 등)에서 이 앱 것만 받는다 — APP.only = { cmd: { from: "vocab" } } (2026-11-28 단어장이 다른 앱 cmd 113줄까지 받던 일)
   var ONLY = APP.only || {};

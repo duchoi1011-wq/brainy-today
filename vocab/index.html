@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "cf6494b3f2"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "cmd", "bchat"], only: {cmd: {from: "vocab"}}};</script>
-<script src="../shim.js?v=cf6494b3f2"></script>
+<script>window.BRAINY_VERSION = "ad67ec6fd3"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "cmd", "bchat"], only: {cmd: {from: "vocab"}}};</script>
+<script src="../shim.js?v=ad67ec6fd3"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -633,7 +633,7 @@ function renderHome(){
   const fresh = ALL.filter(t => isFresh(t) && lv(t.id) < 4).length;
   return `
   ${statusNote()}
-  ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때). 단어를 펼치면 「🔤 발음매개 만들기」가 있고, 회화 문장은 위 「궁전」 탭에서 면마다 봐요.</p>${capHtml()}` : ""}
+  ${S.domain === "외국어 단어장" ? `<p class="note">볼트 「영어 단어장」의 단어를 가져와요. 지금은 ${TERMS.length}개예요. /memory-check로 단어를 넣으면 몇 초 안에 여기에도 들어와요 (맥이 켜져 있을 때). 단어를 펼치면 「🔤 발음매개 만들기」가 있고, 회화 문장은 위 「궁전」 탭에서 면마다 봐요.</p>` : ""}
   ${S.domain === "브랜드·상품" ? `<p class="note">프로그램·서비스·상품 이름을 모은 단어장이에요. 지금은 ${TERMS.length}개이고, 「분야」 탭에서 분야마다 따로 볼 수 있어요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "스킬" ? `<p class="note">내가 모아 둔 스킬을 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
   ${S.domain === "MCP" ? `<p class="note">내가 연결한 MCP(Claude와 바깥 도구를 잇는 연결)를 하나씩 설명해 두는 단어장이에요. 지금은 ${TERMS.length}개예요. 후보를 넣거나 붙여 넣어 올릴 수 있고, 볼트에서 이 단어장으로 넣어도 몇 초 안에 들어와요.</p>` : ""}
@@ -646,6 +646,7 @@ function renderHome(){
       ${fixList().length ? `<a class="row" href="#list" data-listcat="fix" style="text-decoration:none"><div class="t"><b>고칠 단어 ${fixList().length}개</b><span>「이 단어는 고쳐요」로 표시하고 오류·중복을 적어 둔 단어 — 모든 단어장</span></div><span class="why">모아 보기 →</span></a>` : ""}
     </div>
   </section>
+  ${S.domain === "외국어 단어장" ? capHtml() : ""}
   ${splitDomHtml()}
   <section class="card">
     <h2>이해도 지도</h2>
@@ -1739,12 +1740,13 @@ function capRow(c){
   const byTerm = w => ALL.find(t => t.dom === "외국어 단어장" && t.term === w);
   return `<div class="cap-r">${head}
     ${c.result ? `<p class="small">${esc(String(c.result).split("\n").slice(0, 2).join(" "))}</p>` : ""}
-    ${words.length ? `<div class="chips">${words.map(w => { const t = byTerm(w); return t ? `<button class="chip" data-detail="${t.id}">${esc(w)}</button>` : `<span class="chip">${esc(w)}</span>`; }).join("")}</div>` : ""}
-    ${sents.length ? `<p class="small muted">${sents.map(esc).join(" · ")}</p>` : ""}
+    ${words.length ? `<div class="chips">${words.map(w => { const t = byTerm(w); return t ? `<button class="chip" data-detail="${t.id}">${esc(w)}</button>` : `<span class="chip" style="cursor:default;border-style:dashed" title="단어장에 올라오는 중">${esc(w)}</span>`; }).join("")}</div>` : ""}
+    ${sents.length ? `<p class="small muted">${sents.map(esc).join("<br>")}</p>` : ""}
     ${c.status === "멈춤" ? `<button class="btn ghost" data-cap="retry" data-id="${esc(c.id)}">맥에 다시 보내기</button>` : ""}</div>`;
 }
 function capHtml(){
-  const cs = capCmds().slice(0, 3);
+  /* 맥이 넣는 중인 것 + 가장 최근 결과 하나만 — 쌓여도 「오늘 할 일」을 밀어내지 않게 (검증 F14) */
+  const all = capCmds(), last = all.find(c => !mnOpenSt(c)), cs = all.filter(mnOpenSt).concat(last ? [last] : []).slice(0, 3);
   return `<section class="card stack cap">
     <div class="meta"><h2 style="margin:0">📷 암기 사진</h2><span class="small muted">한 번에 ${CAP_MAX}장</span></div>
     <p class="small muted">교재·단어 화면을 찍어 올리면 맥 Brainy가 넣어요. <b>영어 단어는 V 표시한 것만</b>, 회화는 V 표시한 줄(없으면 그날 대표 문장)을 다음 빈 면에. 단어마다 발음매개 초안이 같이 와요 — 단어 카드에서 골라요.</p>
@@ -1799,6 +1801,7 @@ init();
         "- 붙여 넣어 올리거나 옮긴 단어(vo.marks/add — 아직 볼트에 없을 수 있음): " + addItems().slice(0, 30).map(function (t) { return t.dom + (t.cat && t.cat !== t.dom ? " · " + t.cat : "") + " · " + t.term; }).concat(Object.keys(ADD.move || {}).slice(0, 30).map(function (id) { return ADD.move[id] + (ADD.cat && ADD.cat[id] ? " · " + ADD.cat[id] : "") + " ← " + (BYID[id] ? BYID[id].term : id); })).join(", "),
         "- 궁전(「궁전」 탭 · 볼트 1_MyBrain/학습/외국어 암기/궁전-*.md 가 정본 — 장·면 이름은 동욱이 정함): " + ((PAL && PAL.palaces) || []).map(function (p) { var d = plOf(p); return p.name + "(" + (p.cat || p.for) + ") 만든 면 " + d.slots.length + "/" + (p.goal || d.slots.length) + " · 문장 " + d.placed + " · 오늘 복습 " + d.due.length; }).join(" / "),
         "- 발음매개: 외국어 단어를 펼쳐 「🔤 발음매개 만들기」 → 맥 Brainy 가 초안을 cmd(from vocab)에 적음 → 동욱이 고른 것만 맥 동기화가 볼트 단어장 표에 넣음. 대화에서 매개를 정해 주면 그 단어 카드의 「직접 쓰기」로 넣으라고 안내한다.",
+        "- 암기 사진: 외국어 단어장 홈·궁전 탭 「📷 암기 사진 올리기」 → 맥 Brainy 가 V 표시한 영어 단어·회화 문장을 묻지 않고 볼트 표에 넣고 단어마다 발음매개 초안 (볼트 외국어 암기/캡처/ 폴더에 넣어도 같음). 최근: " + capCmds().slice(0, 3).map(function (c) { return (c.status || "") + " " + String(c.result || "").split("\n")[0].slice(0, 80); }).join(" / "),
         "- 단어장: " + Object.keys(DOMAINS).map(function (d) { return d + " " + ALL.filter(function (t) { return t.dom === d; }).length; }).join(" · "),
         "- 단어를 새로 넣거나 정리할 때 규칙: 맥 단축키 앱과 겹치는 내용은 한쪽에만 둔다(단축키는 단축키 앱, 개념 설명은 단어장) · 동욱이 이미 알 만한 기본 단어는 넣지 않는다 · 브랜드·상품 단어, 스킬 설명, MCP 설명은 각자 단어장(dom: 브랜드·상품 · 스킬 · MCP)으로 따로 둔다",
         "- 앱 저장소(app_doc): vo.data/main(단어 목록·뜻) · progress/<단어id>(단계·복습 기록 · fix/req 고칠 단어 · fixDone 고친 기록) · vo.marks/lec(강의 탭 표시) · vo.marks/add(items 붙여 넣어 올린 단어 — cat 이 넣을 분야 · move 옮긴 후보 · cat 옮긴 후보의 넣을 분야 — 볼트에 넣을 때 그 단어장 페이지의 그 「## 분야」 표로) · ctx/<단어id>(카드 장면·쉽게)"].join("\n");

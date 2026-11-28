@@ -54,12 +54,13 @@ function capRow(c){
   const byTerm = w => ALL.find(t => t.dom === "외국어 단어장" && t.term === w);
   return `<div class="cap-r">${head}
     ${c.result ? `<p class="small">${esc(String(c.result).split("\n").slice(0, 2).join(" "))}</p>` : ""}
-    ${words.length ? `<div class="chips">${words.map(w => { const t = byTerm(w); return t ? `<button class="chip" data-detail="${t.id}">${esc(w)}</button>` : `<span class="chip">${esc(w)}</span>`; }).join("")}</div>` : ""}
-    ${sents.length ? `<p class="small muted">${sents.map(esc).join(" · ")}</p>` : ""}
+    ${words.length ? `<div class="chips">${words.map(w => { const t = byTerm(w); return t ? `<button class="chip" data-detail="${t.id}">${esc(w)}</button>` : `<span class="chip" style="cursor:default;border-style:dashed" title="단어장에 올라오는 중">${esc(w)}</span>`; }).join("")}</div>` : ""}
+    ${sents.length ? `<p class="small muted">${sents.map(esc).join("<br>")}</p>` : ""}
     ${c.status === "멈춤" ? `<button class="btn ghost" data-cap="retry" data-id="${esc(c.id)}">맥에 다시 보내기</button>` : ""}</div>`;
 }
 function capHtml(){
-  const cs = capCmds().slice(0, 3);
+  /* 맥이 넣는 중인 것 + 가장 최근 결과 하나만 — 쌓여도 「오늘 할 일」을 밀어내지 않게 (검증 F14) */
+  const all = capCmds(), last = all.find(c => !mnOpenSt(c)), cs = all.filter(mnOpenSt).concat(last ? [last] : []).slice(0, 3);
   return `<section class="card stack cap">
     <div class="meta"><h2 style="margin:0">📷 암기 사진</h2><span class="small muted">한 번에 ${CAP_MAX}장</span></div>
     <p class="small muted">교재·단어 화면을 찍어 올리면 맥 Brainy가 넣어요. <b>영어 단어는 V 표시한 것만</b>, 회화는 V 표시한 줄(없으면 그날 대표 문장)을 다음 빈 면에. 단어마다 발음매개 초안이 같이 와요 — 단어 카드에서 골라요.</p>
