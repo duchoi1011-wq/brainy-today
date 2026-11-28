@@ -175,7 +175,7 @@ function fitTag(x){ var a = anaOf(x.vid), v = a && a.fit && String(a.fit.verdict
 function anaTargets(words){
   var o = anaOpt(), d = part("search"), its = (d && d.items) || [];
   if(o.target === "picked") return its.filter(function(x){ return ideaPicks()[x.vid] });
-  var by = {}; its.filter(function(x){ return relOf(x) > 0 }).forEach(function(x){ (by[x.kw] = by[x.kw] || []).push(x) });
+  var by = {}; its.filter(function(x){ return vidRelOf(x) > 0 }).forEach(function(x){ (by[x.kw] = by[x.kw] || []).push(x) });
   return Object.keys(by).reduce(function(a, k){ return a.concat(by[k].sort(function(p, q){ return srScore(q, words) - srScore(p, words) }).slice(0, o.topN)) }, []);
 }
 /* 영상 분석 — 무엇을 읽을지·어떤 영상을 읽을지는 ⚙ 설정 › 단계별 기준 「콘텐츠」 칸(anaOptHtml), 여기는 한 줄과 분석하기 버튼 */
@@ -222,7 +222,7 @@ function searchCard(x, words){
       "<dt>다시 본 구간</dt><dd>" + (hasWave(x) ? "" + x.replayed.map(function(t){ return "<a href=\"" + url + "&t=" + secs(t) + "\" target=\"_blank\" rel=\"noopener\">" + esc(t) + "</a>" }).join(" · ") : esc(typeof x.replayed === "string" ? x.replayed : "없음")) + "</dd>" +
       "<dt>댓글 수</dt><dd>" + (x.comments != null ? fmt(n) + "개" : "확인 못 함") + "</dd>" +
       "<dt>성과</dt><dd>구독 " + fmt(x.subs) + " · " + (x.ratio != null ? "조회÷구독 " + x.ratio + "배 · " : "") + bd[0] + " · " + esc(x.len) + "</dd>" +
-      "<dt>찾은 키워드</dt><dd>" + esc(x.kw) + (relOf(x) === 2 ? " (제목에 있음)" : relOf(x) === 1 ? " (설명·키워드 조각에 있음)" : " (먼 영상)") + "</dd></dl></details>" +
+      "<dt>찾은 키워드</dt><dd>" + esc(x.kw) + (vidRelOf(x) === 2 ? " (제목에 있음)" : vidRelOf(x) === 1 ? " (설명·키워드 조각에 있음)" : " (먼 영상)") + "</dd></dl></details>" +
     "<div class=\"acts\" style=\"margin-top:4px\">" + ideaPickBtn(x.vid) + "</div></div></div>";
 }
 function searchResultsHtml(){
@@ -245,7 +245,7 @@ function searchResultsHtml(){
     anaBarHtml(words) + ideaBarHtml() + "</section>" +
     kws.map(function(k){
       var l = by[k].filter(keep).sort(cmp);
-      var near = l.filter(function(x){ return relOf(x) > 0 }), far = l.filter(function(x){ return relOf(x) === 0 });
+      var near = l.filter(function(x){ return vidRelOf(x) > 0 }), far = l.filter(function(x){ return vidRelOf(x) === 0 });
       return "<section class=\"card\"><details open><summary style=\"font-size:16px;color:var(--ink)\">" + esc(k) + " <span class=\"num muted\">맞는 영상 " + near.length + "개" + (by[k].length > l.length ? " · 거른 것 " + (by[k].length - l.length) + "개" : "") + "</span></summary>" +
         (near.map(function(x){ return searchCard(x, words) }).join("") || "<p class=\"lead\">조건에 맞는 영상이 없어요. 거르기를 풀거나 💡 아이디어·다른 키워드로 다시 검색해 보세요.</p>") +
         (far.length ? "<details style=\"margin-top:8px\"><summary>키워드와 먼 영상 " + far.length + "개 — 유튜브가 함께 보여 준 것</summary>" + far.map(function(x){ return searchCard(x, words) }).join("") + "</details>" : "") + "</details></section>";
@@ -267,8 +267,8 @@ function favListHtml(){
       "<div class=\"it-d\">" + esc(x.channel || "") + (x.kw ? " · 키워드 " + esc(x.kw) : "") + " · " + esc(day(x.at)) + "</div></div></div>" }).join("") + "</div></section>";
 }
 
-/* 키워드와 맞는 영상인가 — 맥이 검색할 때 매긴 rel(제목 2 · 설명 1 · 없음 0). 예전 결과처럼 rel 이 없으면 제목에 키워드가 있는지로 본다 */
-function relOf(x){ return x.rel != null ? x.rel : String(x.title || "").replace(/\s+/g, "").indexOf(String(x.kw || "").replace(/\s+/g, "")) >= 0 ? 2 : 0 }
+/* 키워드와 맞는 영상인가 (이름이 vidRelOf 인 까닭: content-kwcrit.js 의 relOf(키워드-씨앗 가까움)와 겹쳐 덮였다, 2026-11-28) — 맥이 검색할 때 매긴 rel(제목 2 · 설명 1 · 없음 0). 예전 결과처럼 rel 이 없으면 제목에 키워드가 있는지로 본다 */
+function vidRelOf(x){ return x.rel != null ? x.rel : String(x.title || "").replace(/\s+/g, "").indexOf(String(x.kw || "").replace(/\s+/g, "")) >= 0 ? 2 : 0 }
 /* 💡 아이디어 — 고른 영상의 댓글과 많이 다시 본 구간에서 맥의 Claude가 아이디어를 뽑는다 (cmd kind "ideas" → 볼트 <브랜드>/아이디어.json → ct.data .ideas).
    아이디어마다 「이 말로 다시 검색」(searchReq) 이나 「바로 원고 짜기」(cmd script + params.ideas → 대본.json) 로 이어진다. 고른 영상은 ct.set ideaPick */
 function ideaPicks(){ return (SETS[cur] || {}).ideaPick || {} }

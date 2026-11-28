@@ -6,7 +6,7 @@
 function likedRows(){
   var sr = ((part("search") || {}).items) || [], cm = ((part("cmts") || {}).items) || {}, seen = {}, out = [];
   sr.forEach(function(v){
-    if(ui.lkRel && !relOf(v)) return;   // 「키워드와 맞는 영상만」 — 제목·설명에 키워드가 든 영상
+    if(ui.lkRel && !vidRelOf(v)) return;   // 「키워드와 맞는 영상만」 — 제목·설명에 키워드가 든 영상
     ((cm[v.vid] || {}).comments || []).forEach(function(c){
       var key = String(c.text || "").replace(/\s+/g, " ").trim(); if(!key || seen[key]) return; seen[key] = 1;
       out.push({ text: c.text, likes: c.likes || 0, replies: c.replies || 0, at: c.at, vid: v.vid, title: v.title, channel: v.channel, kw: v.kw });
