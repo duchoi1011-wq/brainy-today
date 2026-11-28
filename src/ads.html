@@ -78,7 +78,7 @@ button{font:inherit}
 /* 상태 알약 · 급함 띠 */
 .pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;color:var(--muted)}
 .pill.run{color:var(--s-run);border-color:var(--s-run)}.pill.stop{color:var(--s-stop);border-color:var(--s-stop)}.pill.prep{color:var(--s-prep);border-color:var(--s-prep)}.pill.none{border-style:dashed}
-.pill.high{color:var(--s-bad);border-color:var(--s-bad)}.pill.mid{color:var(--s-stop);border-color:var(--s-stop)}
+.pill.bad{color:var(--s-bad);border-color:var(--s-bad)}.pill.warn{color:var(--s-stop);border-color:var(--s-stop)}.pill.ok{color:var(--s-run);border-color:var(--s-run)}.pill.info{color:var(--s-prep);border-color:var(--s-prep)}
 .pill.solid{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .row{all:unset;box-sizing:border-box;display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px 10px 10px 12px;border-top:1px solid var(--line)}
 button.row{cursor:pointer}
@@ -86,7 +86,7 @@ button.row{cursor:pointer}
 .row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
 .row::before{content:"";flex:none;width:4px;align-self:stretch;border-radius:2px;background:var(--s-none)}
 .row.run::before{background:var(--s-run)}.row.stop::before{background:var(--s-stop)}.row.prep::before{background:var(--s-prep)}
-.row.high::before{background:var(--s-bad)}.row.mid::before{background:var(--s-stop)}.row.low::before{background:var(--s-prep)}
+.row.bad::before{background:var(--s-bad)}.row.warn::before{background:var(--s-stop)}.row.ok::before{background:var(--s-run)}.row.info::before{background:var(--s-prep)}
 .row.none::before{background:repeating-linear-gradient(180deg,var(--s-none) 0 4px,transparent 4px 8px)}
 .row .ct{flex:1;min-width:0}
 .row .ct b{display:block;font-weight:600;line-height:1.45}
@@ -100,10 +100,35 @@ button.row{cursor:pointer}
 .part small{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
 .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin-top:8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--s-none)}
-.legend i.run{background:var(--s-run)}.legend i.stop{background:var(--s-stop)}.legend i.prep{background:var(--s-prep)}.legend i.high{background:var(--s-bad)}.legend i.none{background:transparent;border:1px dashed var(--s-none)}
-/* 지금 — 조율할 일 */
-.todo .act{margin-top:8px}
-.todo .act .btn{flex:0 1 auto;padding:8px 14px;font-size:14px;min-height:40px}
+.legend i.run,.legend i.ok{background:var(--s-run)}.legend i.stop,.legend i.warn{background:var(--s-stop)}.legend i.prep,.legend i.info{background:var(--s-prep)}.legend i.bad{background:var(--s-bad)}.legend i.none{background:transparent;border:1px dashed var(--s-none)}
+/* 점검 줄 · 조작 */
+.act{margin-top:8px}
+.btn.sm{flex:0 1 auto;padding:6px 12px;font-size:14px;min-height:44px}
+.btn.ok{border-color:var(--s-run);color:var(--s-run)}
+.btn:disabled{opacity:.45;cursor:default}
+.vs{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;margin-top:2px}
+.vs .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px;color:var(--ink)!important;display:inline!important}
+.vs .s{font-size:12.5px;display:inline!important}
+.ctlrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.ctlrow .lbl{font-size:12px;font-weight:600;color:var(--muted);min-width:44px}
+.ctl{display:inline-flex;gap:4px;align-items:center}
+.bidin{width:84px;font:inherit;font-family:var(--f-mono);font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px;min-height:44px;text-align:right}
+.linkbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+details.fold>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary h2{margin:0}
+details.fold>summary::after{content:"펼치기";font-size:12px;color:var(--accent);font-weight:600}
+details.fold[open]>summary::after{content:"접기"}
+/* 표 · 예산 비중 막대 */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.tbl table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:560px}
+.tbl th,.tbl td{text-align:left;vertical-align:middle;padding:7px 9px;border-top:1px solid var(--line);white-space:nowrap}
+.tbl th{background:var(--surface-2);border-top:0;font-weight:600;font-size:12.5px;color:var(--muted)}
+.tbl .n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.share{display:grid;grid-template-columns:52px 1fr 92px;gap:8px;align-items:center;font-size:13.5px;margin-top:6px}
+.share .num{text-align:right;font-size:12.5px;color:var(--muted)}.share .num b{color:var(--ink)}
+.sb{position:relative;height:16px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.sb i{position:absolute;left:0;height:7px}.sb i.plan{top:0;background:var(--s-none)}.sb i.real{bottom:0;background:var(--accent)}
 .why{font-size:13.5px;color:var(--muted);margin-top:2px}
 /* 숫자 칸 */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin-top:10px}
@@ -153,11 +178,11 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
   </header>
   <main id="view"></main>
 </div>
-<!-- 아래 탭: 지금 = 오늘 조율할 일 · 지도 = 브랜드 × 매체 전부 · 판정 = 키워드별 누적 클릭 판정 · 기록 = 바꾼 것·기준·숫자 출처 -->
+<!-- 아래 탭: 점검 = 지표마다 값·기준·할 일 · 지표 = 브랜드별 숫자 한 장 · 조율 = 캠페인·그룹·키워드를 보며 바로 바꾸기 · 기록 = 요청·바꾼 것·기준·출처 -->
 <nav id="tabbar" aria-label="화면">
-  <a href="#now" data-v="now"><span aria-hidden="true">▶</span>지금</a>
-  <a href="#map" data-v="map"><span aria-hidden="true">▦</span>지도</a>
-  <a href="#judge" data-v="judge"><span aria-hidden="true">⚖</span>판정</a>
+  <a href="#now" data-v="now"><span aria-hidden="true">✓</span>점검</a>
+  <a href="#metrics" data-v="metrics"><span aria-hidden="true">▦</span>지표</a>
+  <a href="#control" data-v="control"><span aria-hidden="true">⇅</span>조율</a>
   <a href="#log" data-v="log"><span aria-hidden="true">✎</span>기록</a>
 </nav>
 
@@ -168,10 +193,11 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 /* 광고 한눈에 — 모든 브랜드의 모든 광고(네이버·메타·구글)를 한 화면에서 파악하고, 조율은 Brainy에게 넘긴다.
    데이터는 볼트가 정본이다: 4_Outputs/광고 한눈에 앱/광고 한눈에.json (브랜드·매체 상태·판정 기준·변경 기록)
    + 맥 동기화(볼트 .claude/scripts/adhub_app.py)가 네이버 검색광고·스마트스토어 API 에서 받은 숫자 → Supabase ah.data/main.
-   광고 태스크 상태는 광고 실습 앱과 같은 ad.data/main 을 읽는다. 이 앱은 아무것도 쓰지 않는다 — 「Brainy와 조율」은 대화창을 채울 뿐(보내기는 동욱이 ↑).
-   숫자·목록을 코드에 넣지 않는다. 판정 기준 숫자(30·50)도 데이터의 hub.rules 에서 읽는다. */
+   광고 태스크 상태는 광고 실습 앱과 같은 ad.data/main 을 읽는다. 지표·기준은 광고 실습 교과서(외울 것)와 같은 것 — 광고 실습 계획(products·budgetShare·glossary)을 데이터로 받는다.
+   이 앱이 쓰는 것은 ah.req(조율 요청)뿐 — 한 줄 확인 뒤 남기고, 맥이 limits 안에서 네이버에 적용한다 (ads-req.js). 「Brainy와 조율」은 대화창을 채울 뿐.
+   숫자·목록을 코드에 넣지 않는다. 기준 숫자는 데이터의 hub.rules · hub.checks · hub.limits 에서 읽는다. */
 let D = null, AD = null, loaded = false;
-const S = { bid: lsGet("ah.bid", "all"), filt: "act", camp: "", from: "map", kwMore: false };
+const S = { bid: lsGet("ah.bid", "all"), cf: "need", kf: "act", grp: "", kwMore: false };
 
 function lsGet(k, d){ try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (e) { return d; } }
 function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -186,9 +212,10 @@ function toast(msg){
 }
 
 /*@include ads-calc.js*/
+/*@include ads-req.js*/
 /*@include ads-now.js*/
-/*@include ads-map.js*/
-/*@include ads-judge.js*/
+/*@include ads-metrics.js*/
+/*@include ads-control.js*/
 /*@include ads-log.js*/
 
 /* ── Brainy와 조율 — 대화창을 이 말로 채워 연다 (보내기는 동욱이 ↑) ── */
@@ -207,54 +234,63 @@ function renderHead(){
   const seg = document.getElementById("brands"), sum = document.getElementById("sum");
   if (!D) { seg.innerHTML = ""; sum.innerHTML = ""; return; }
   const all = [{ id: "all", name: "전체" }].concat(brands());
-  seg.innerHTML = all.map(b => { const n = todosOf(b.id === "all" ? brands() : [b]).filter(t => t.lv === "high").length; return `<button type="button" role="tab" aria-selected="${S.bid === b.id}" class="${S.bid === b.id ? "on" : ""}" data-brand="${b.id}">${esc(b.short || b.name)}${n ? `<span class="hot">급함 ${n}</span>` : ""}</button>`; }).join("");
-  const t = totalsOf(selBrands()), ord = storeOrders(selBrands());
+  seg.innerHTML = all.map(b => { const n = checksOf(b.id === "all" ? brands() : [b]).filter(t => t.lv === "bad").length; return `<button type="button" role="tab" aria-selected="${S.bid === b.id}" class="${S.bid === b.id ? "on" : ""}" data-brand="${b.id}">${esc(b.short || b.name)}${n ? `<span class="hot">문제 ${n}</span>` : ""}</button>`; }).join("");
+  const L = selBrands(), t = totalsOf(L), ord = storeOrders(L), C = checksOf(L), bad = C.filter(x => x.lv === "bad").length, warn = C.filter(x => x.lv === "warn").length;
+  const cap = L.length === 1 ? maxCpc(L[0]) : null, cpc = cpcOf(t.s7);
   sum.innerHTML = [
-    ["", "map", wonK(t.cost7), "광고비 7일"],
-    ["", "map", won(t.clk7), "클릭 7일"],
-    ["", "map", wonK(t.costAll), "광고비 누적"],
-    [ord.ok && ord.n === 0 && t.clkAll >= rules().adjust ? "bad" : "", "log", ord.ok ? won(ord.n) : "—", ord.none ? "주문 (스토어 없음)" : ord.ok ? "주문 28일" : "주문 미연결"],
-    ["", "map", `${t.on}<small>/${t.camps}</small>`, "켜진 캠페인"]
+    ["", "metrics", wonK(t.s7.cost), "광고비 7일"],
+    ["", "metrics", ctrTxt(t.s7), "CTR 7일"],
+    [cap && cpc > cap ? "bad" : "", "metrics", cpc == null ? "—" : won(cpc), cap ? `CPC · 허용 ${won(cap)}` : "CPC 7일"],
+    [ord.ok && ord.n === 0 && t.all.clk >= (rules().adjust || 0) ? "bad" : "", "metrics", ord.ok ? won(ord.n) : "—", ord.none ? "주문 (스토어 없음)" : ord.ok ? "주문 28일" : "주문 미연결"],
+    [bad ? "bad" : "", "now", `${bad}<small> · 주의 ${warn}</small>`, "점검 문제"]
   ].map(([k, v, val, label]) => `<button type="button" class="${k}" data-go="${v}" aria-label="${label} ${String(val).replace(/<[^>]+>/g, "")}"><b>${val}</b><span>${label}</span></button>`).join("");
   const on = seg.querySelector(".on");
   if (on && (on.offsetLeft < seg.scrollLeft || on.offsetLeft + on.offsetWidth > seg.scrollLeft + seg.clientWidth)) seg.scrollLeft = on.offsetLeft - 8;
   segMore();
-  const high = todosOf(selBrands()).filter(x => x.lv === "high").length;
-  document.querySelector('#tabbar a[data-v="now"]').innerHTML = `<span aria-hidden="true">▶</span>지금${high ? `<em aria-label="급한 일 ${high}개">${high}</em>` : ""}`;
+  document.querySelector('#tabbar a[data-v="now"]').innerHTML = `<span aria-hidden="true">✓</span>점검${bad ? `<em aria-label="문제 ${bad}개">${bad}</em>` : ""}`;
 }
 
 /* ── 화면 고르기 ── */
-const view = () => { const v = (location.hash || "#now").slice(1); return ["now", "map", "judge", "log", "camp"].includes(v) ? v : "now"; };
+const view = () => { const v = (location.hash || "#now").slice(1); return ["now", "metrics", "control", "log"].includes(v) ? v : "now"; };
 function render(){
-  ASKS.length = 0;
-  let v = view();
-  if (v === "camp" && !(D && campBy(S.camp))) v = "map";
-  document.querySelectorAll("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v || (v === "camp" && a.dataset.v === S.from)));
+  const ae = document.activeElement;
+  if (ae && ae.classList && ae.classList.contains("bidin")) { render.later = true; return; }   // 입찰·예산 칸에 쓰는 중이면 다시 그리지 않는다
+  render.later = false;
+  ASKS.length = 0; RQ.length = 0;
+  const v = view();
+  document.querySelectorAll("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v));
   renderHead();
   const main = document.getElementById("view");
   if (!D) { main.innerHTML = `<section class="card"><p class="empty">${loaded ? "광고 데이터가 아직 없어요.<br>맥의 동기화가 볼트 「광고 한눈에.json」과 네이버 광고 숫자를 올리면 여기에 보여요." : "광고 숫자를 불러오는 중이에요…"}</p></section>`; return; }
-  main.innerHTML = v === "map" ? renderMap() : v === "judge" ? renderJudge() : v === "log" ? renderLog() : v === "camp" ? renderCamp(campBy(S.camp)) : renderNow();
+  main.innerHTML = v === "metrics" ? renderMetrics() : v === "control" ? renderControl() : v === "log" ? renderLog() : renderNow();
 }
-function setBrand(id){ S.bid = id; lsPut("ah.bid", id); S.kwMore = false; if (view() === "camp") location.hash = S.from || "map"; else render(); window.scrollTo(0, 0); }
-function openCamp(id){ const v = view(); if (v !== "camp") S.from = v; S.camp = id; if (v === "camp") { render(); window.scrollTo(0, 0); } else location.hash = "camp"; }
+document.addEventListener("focusout", e => { if (e.target.classList && e.target.classList.contains("bidin")) setTimeout(() => { if (render.later) render(); }, 200); });
+function setBrand(id){ S.bid = id; lsPut("ah.bid", id); S.kwMore = false; S.grp = ""; render(); window.scrollTo(0, 0); }
+function goControl(bid, filt){ if (bid && S.bid !== "all" && S.bid !== bid) { S.bid = bid; lsPut("ah.bid", bid); } S.kf = filt || "act"; S.grp = ""; S.kwMore = false; if (view() === "control") { render(); window.scrollTo(0, 0); } else location.hash = "control"; }
 
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-brand],[data-go],[data-ask],[data-camp],[data-filt],[data-back],[data-kwmore],[data-jf]");
+  const t = e.target.closest("[data-brand],[data-go],[data-ask],[data-rq],[data-cf],[data-kf],[data-grp],[data-goctl],[data-kwmore]");
   if (!t) return;
   const d = t.dataset;
   if (d.brand) return setBrand(d.brand);
   if (d.ask !== undefined) { const s = ASKS[+d.ask]; if (s) brainy(s); return; }
-  if (d.camp) return openCamp(d.camp);
-  if (d.jf) { S.filt = d.jf; S.kwMore = false; if (view() === "judge") render(); else location.hash = "judge"; return; }
+  if (d.rq !== undefined) {
+    const q = Object.assign({}, RQ[+d.rq]); if (!q.kind) return;
+    const inp = document.querySelector(`.bidin[data-bidin="${d.rq}"]`);
+    if (inp) { const v = Math.round(Number(inp.value)); if (!isFinite(v) || v <= 0) { toast("숫자를 넣어 주세요."); return; } if (v === q.from) { toast("지금 값과 같아요."); return; } q.to = v; }
+    return sendReq(q);
+  }
+  if (d.goctl !== undefined) return goControl(d.goctl, d.gf);
   if (d.go) { if (view() === d.go) window.scrollTo(0, 0); else location.hash = d.go; return; }
-  if (d.filt) { S.filt = d.filt; S.kwMore = false; render(); return; }
+  if (d.cf) { S.cf = d.cf; render(); return; }
+  if (d.kf) { S.kf = d.kf; S.kwMore = false; render(); return; }
+  if (d.grp !== undefined) { S.grp = d.grp; S.kf = d.grp ? "all" : "act"; S.kwMore = false; render(); if (d.grp) { const c = document.querySelector('[data-kf="all"]'); if (c) c.closest(".card").scrollIntoView({ block: "start" }); } return; }
   if (d.kwmore !== undefined) { S.kwMore = true; render(); return; }
-  if (d.back !== undefined) { location.hash = S.from || "map"; return; }
 });
 window.addEventListener("hashchange", () => { window.scrollTo(0, 0); render(); });
 
 /* 다른 앱(Brainy 연결)이 쓰는 창구 */
-window.ADS_APP = { data: () => D, tasks: () => AD, view, selBrands, todosOf, rules, judgeKw, campsOf, kwsOf, brandOf, chState, totalsOf, storeOrders, setBrand, openCamp };
+window.ADS_APP = { data: () => D, tasks: () => AD, view, selBrands, checksOf, rules, judgeKw, campsOf, kwsOf, brandOf, chState, totalsOf, storeOrders, maxCpc, setBrand, goControl, requests: () => REQ };
 
 /* ── 시작 ── */
 async function init(){
@@ -265,6 +301,7 @@ async function init(){
   if (!db) { loaded = true; render(); return; }
   db.doc("ah.data/main").onSnapshot(s => { loaded = true; const v = s.exists ? s.data() : null; if (v && v.hub) D = v; render(); }, () => { loaded = true; render(); });
   db.doc("ad.data/main").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.tasks)) { AD = v; render(); } }, () => {});
+  reqListen(db);
 }
 init();
 </script>

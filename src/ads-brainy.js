@@ -7,7 +7,7 @@
   function norm(s) { return String(s || "").replace(/\s+/g, "").toLowerCase(); }
   window.BRAINY_HOOK = {
     mode: function () { return { where: "mac", cloud: false }; },
-    chips: ["오늘 광고에서 손댈 것 순서대로 정리해 줘", "브랜드별 광고비·결과를 표로 비교해 줘", "이 앱에서 ○○ 고쳐 줘"],
+    chips: ["점검표의 문제부터 순서대로 조정안 줘", "브랜드별 광고비·CTR·CPC를 표로 비교해 줘", "이 앱에서 ○○ 고쳐 줘"],
     rules: function () {
       return ["[광고 한눈에 — 모든 브랜드의 광고를 파악하고 조율한다 (2026-11-28 동욱)]",
         "- 판단 전에 볼트 기준 문서를 먼저 읽는다: `2_LLMWiki/wiki/기업/광고 손익분기와 표본 기준.md` · `3_Action/33_카드/C-진액 키워드 광고 집행 기획.md` · `3_Action/33_카드/C-광고 3채널 동시 실습 전략판.md`. 문서와 어긋나는 제안을 하지 않는다.",
@@ -19,34 +19,32 @@
     },
     ctx: function () {
       var a = A(); if (!a || !a.data()) return "[지금 앱 상태 — 광고 한눈에] 데이터를 아직 못 받았어요.";
-      var D = a.data(), B = a.selBrands(), R = a.rules(), T = a.todosOf(B);
-      var L = ["[지금 앱 상태 — 광고 한눈에]", "- 보고 있는 화면: " + a.view() + " (now 지금 · map 지도 · judge 판정 · log 기록 · camp 캠페인)",
+      var D = a.data(), B = a.selBrands(), R = a.rules(), T = a.checksOf(B), Q = a.requests();
+      var L = ["[지금 앱 상태 — 광고 한눈에]", "- 보고 있는 화면: " + a.view() + " (now 점검 · metrics 지표 · control 조율 · log 기록)",
         "- 고른 브랜드: " + B.map(function (b) { return b.name; }).join(", ") + " · 판정 기준 조정 " + R.adjust + " / 정지 " + R.stop + "클릭",
         "- 네이버 숫자 받은 때: " + (D.naver && D.naver.at || "못 받음") + " · 스토어: " + (D.store && D.store.ok ? "연결 " + D.store.period : "연결 안 됨 (" + (D.store && D.store.error || "") + ")")];
       B.forEach(function (b) {
         var t = a.totalsOf([b]);
-        L.push("## " + b.name + " (" + (b.product || "") + ")" + (b.breakeven ? " · 손익분기 구매당 광고비 " + b.breakeven + "원" : ""));
+        L.push("## " + b.name + " (" + (b.product || "") + ")" + (b.breakeven ? " · 손익분기 구매당 광고비 " + b.breakeven + "원" : "") + (a.maxCpc(b) ? " · 허용 CPC " + a.maxCpc(b) + "원 (전환율 " + b.cvr + "% 가정)" : ""));
         ["naver", "meta", "google"].forEach(function (ch) { var s = a.chState(b, ch); L.push("- " + ch + ": " + s.t + (((b.channels || {})[ch] || {}).plan ? " — " + b.channels[ch].plan : "")); });
-        a.campsOf(b).forEach(function (c) { L.push("  · 캠페인 " + c.name + " [" + c.id + "] " + (c.on ? "켜짐" : "꺼짐") + " · 7일 노출 " + c.s7.imp + " 클릭 " + c.s7.clk + " 광고비 " + c.s7.cost + "원" + (c.all ? " · 누적(" + (c.from || c.start) + "~) 클릭 " + c.all.clk + " 광고비 " + c.all.cost + "원" : "")); });
-        if (t.camps) L.push("  · 합계 7일 광고비 " + t.cost7 + "원 · 누적 " + t.costAll + "원");
+        a.campsOf(b).forEach(function (c) { L.push("  · 캠페인 " + c.name + " [" + c.id + "] " + (c.on ? "켜짐" : "꺼짐") + (c.budget ? " · 일예산 " + c.budget : "") + " · 7일 노출 " + c.s7.imp + " 클릭 " + c.s7.clk + " 광고비 " + c.s7.cost + "원" + (c.all ? " · 누적(" + (c.from || c.start) + "~) 클릭 " + c.all.clk + " 광고비 " + c.all.cost + "원" : "")); });
+        if (t.camps) L.push("  · 합계 7일 광고비 " + t.s7.cost + "원 · 클릭 " + t.s7.clk + " · 누적 " + t.all.cost + "원");
       });
-      L.push("## 조율할 일 (앱이 숫자에서 뽑음)");
-      T.forEach(function (x) { L.push("- [" + x.lv + "] " + x.b.name + " · " + x.ch + " · " + x.title + (x.why ? " — " + x.why : "")); });
-      L.push("- 앱 저장소: ah.data/main (볼트 JSON + API 숫자, 맥 동기화 adhub_app.py 가 올림 — 직접 쓰지 않는다) · ad.data/main (광고 태스크)");
+      L.push("## 점검표 (앱이 숫자에서 뽑음 — bad 문제 · warn 주의 · none 숫자 없음 · ok · info)");
+      T.forEach(function (x) { L.push("- [" + x.lv + "] " + x.b.name + " · " + x.ch + " · " + x.name + ": " + x.val + (x.std ? " (기준 " + x.std + ")" : "") + (x.why ? " — " + x.why : "")); });
+      var open = Object.keys(Q).map(function (k) { return Q[k]; }).filter(function (q) { return q.status === "요청"; });
+      if (open.length) L.push("- 적용 기다리는 앱 요청: " + open.map(function (q) { return q.name + " " + q.kind + " → " + q.to; }).join(" / "));
+      L.push("- 앱 저장소: ah.data/main (볼트 JSON + API 숫자, 맥 동기화 adhub_app.py 가 올림 — 직접 쓰지 않는다) · ah.req (앱의 조율 요청 — 맥이 limits 안에서 적용) · ad.data/main (광고 태스크)");
       return L.join("\n");
     },
     tools: [
-      { name: "ads_open", description: "광고 한눈에 앱에서 브랜드·탭을 연다. brand 는 브랜드 이름 일부 또는 「전체」, view 는 now·map·judge·log, campaign 은 캠페인 이름 일부(자세히 열기).",
-        inputSchema: { type: "object", properties: { brand: { type: "string" }, view: { type: "string", enum: ["now", "map", "judge", "log"] }, campaign: { type: "string" } } },
+      { name: "ads_open", description: "광고 한눈에 앱에서 브랜드·탭을 연다. brand 는 브랜드 이름 일부 또는 「전체」, view 는 now(점검)·metrics(지표)·control(조율)·log(기록).",
+        inputSchema: { type: "object", properties: { brand: { type: "string" }, view: { type: "string", enum: ["now", "metrics", "control", "log"] } } },
         execute: function (i) {
           var a = A(); if (!a || !a.data()) throw new Error("앱을 아직 못 읽었어요");
           if (i.brand) {
             var n = norm(i.brand), b = n === "전체" || n === "all" ? { id: "all", name: "전체" } : (a.data().hub.brands || []).filter(function (x) { return norm(x.name).indexOf(n) >= 0 || norm(x.id) === n; })[0];
             if (!b) throw new Error("「" + i.brand + "」 브랜드를 못 찾았어요"); a.setBrand(b.id);
-          }
-          if (i.campaign) {
-            var m = norm(i.campaign), c = (a.data().naver.campaigns || []).filter(function (x) { return norm(x.name).indexOf(m) >= 0; })[0];
-            if (!c) throw new Error("「" + i.campaign + "」 캠페인을 못 찾았어요"); a.openCamp(c.id); return c.name;
           }
           if (i.view) location.hash = i.view;
           return (i.brand || "") + " " + (i.view || "");

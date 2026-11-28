@@ -205,13 +205,13 @@ emit("ad", "광고 실습", "광고 실습", ("#f4f6f2", "#141814"),
 
 # ═════════════════════════ 광고 한눈에 ═════════════════════════
 # 모든 브랜드 × 네이버·메타·구글 광고를 한 화면에서 파악하고 조율한다 (2026-11-28 동욱 「강의 실습 앱을 기반해서 … 간략하지만 정확히」 — 틀은 강의 실습과 같다).
-# 데이터 ah.data/main 은 맥 동기화(adhub_app.py)가 볼트 「광고 한눈에.json」 + 네이버 검색광고·스토어 API(읽기만)로 올린다. 광고 태스크는 ad.data/main 을 같이 읽는다. 앱은 아무것도 쓰지 않는다. 아이콘은 ads/ 에 그대로 둔다.
+# 데이터 ah.data/main 은 맥 동기화(adhub_app.py)가 볼트 「광고 한눈에.json」 + 네이버 검색광고·스토어 API로 올린다. 광고 태스크는 ad.data/main 을 같이 읽는다. 앱이 쓰는 건 ah.req(조율 요청)뿐 — 맥이 limits 안에서 네이버에 적용. 아이콘은 ads/ 에 그대로 둔다.
 load("ads.html")
 include()
 emit("ads", "광고 한눈에", "광고 한눈에", ("#F1F3F2", "#0F1413"),
      "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--s-stop);--g-ok:var(--s-run)",
      '<link rel="apple-touch-icon" href="ah-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="ah-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="ah-icon-64.png">',
-     '{key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고를 한 화면에서 보고 조율", colls: ["ah.data", "ad.data", "bchat"]}',
+     '{key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고 지표를 점검하고 바로 조율", colls: ["ah.data", "ah.req", "ad.data", "bchat"]}',
      '{"id":"/brainy-today/ads/","name":"광고 한눈에","short_name":"광고 한눈에","start_url":"./","scope":"./","display":"standalone","background_color":"#F1F3F2","theme_color":"#F1F3F2","icons":[{"src":"ah-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ah-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
      "", ADS_BRAINY + BRAINY_CHAT)
 

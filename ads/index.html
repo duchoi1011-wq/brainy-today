@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "e0898fca7b"; window.BRAINY_APP = {key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고를 한 화면에서 보고 조율", colls: ["ah.data", "ad.data", "bchat"]};</script>
-<script src="../shim.js?v=e0898fca7b"></script>
+<script>window.BRAINY_VERSION = "fa70fbe32b"; window.BRAINY_APP = {key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고 지표를 점검하고 바로 조율", colls: ["ah.data", "ah.req", "ad.data", "bchat"]};</script>
+<script src="../shim.js?v=fa70fbe32b"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -132,7 +132,7 @@ button{font:inherit}
 /* 상태 알약 · 급함 띠 */
 .pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;color:var(--muted)}
 .pill.run{color:var(--s-run);border-color:var(--s-run)}.pill.stop{color:var(--s-stop);border-color:var(--s-stop)}.pill.prep{color:var(--s-prep);border-color:var(--s-prep)}.pill.none{border-style:dashed}
-.pill.high{color:var(--s-bad);border-color:var(--s-bad)}.pill.mid{color:var(--s-stop);border-color:var(--s-stop)}
+.pill.bad{color:var(--s-bad);border-color:var(--s-bad)}.pill.warn{color:var(--s-stop);border-color:var(--s-stop)}.pill.ok{color:var(--s-run);border-color:var(--s-run)}.pill.info{color:var(--s-prep);border-color:var(--s-prep)}
 .pill.solid{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .row{all:unset;box-sizing:border-box;display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px 10px 10px 12px;border-top:1px solid var(--line)}
 button.row{cursor:pointer}
@@ -140,7 +140,7 @@ button.row{cursor:pointer}
 .row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
 .row::before{content:"";flex:none;width:4px;align-self:stretch;border-radius:2px;background:var(--s-none)}
 .row.run::before{background:var(--s-run)}.row.stop::before{background:var(--s-stop)}.row.prep::before{background:var(--s-prep)}
-.row.high::before{background:var(--s-bad)}.row.mid::before{background:var(--s-stop)}.row.low::before{background:var(--s-prep)}
+.row.bad::before{background:var(--s-bad)}.row.warn::before{background:var(--s-stop)}.row.ok::before{background:var(--s-run)}.row.info::before{background:var(--s-prep)}
 .row.none::before{background:repeating-linear-gradient(180deg,var(--s-none) 0 4px,transparent 4px 8px)}
 .row .ct{flex:1;min-width:0}
 .row .ct b{display:block;font-weight:600;line-height:1.45}
@@ -154,10 +154,35 @@ button.row{cursor:pointer}
 .part small{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
 .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin-top:8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--s-none)}
-.legend i.run{background:var(--s-run)}.legend i.stop{background:var(--s-stop)}.legend i.prep{background:var(--s-prep)}.legend i.high{background:var(--s-bad)}.legend i.none{background:transparent;border:1px dashed var(--s-none)}
-/* 지금 — 조율할 일 */
-.todo .act{margin-top:8px}
-.todo .act .btn{flex:0 1 auto;padding:8px 14px;font-size:14px;min-height:40px}
+.legend i.run,.legend i.ok{background:var(--s-run)}.legend i.stop,.legend i.warn{background:var(--s-stop)}.legend i.prep,.legend i.info{background:var(--s-prep)}.legend i.bad{background:var(--s-bad)}.legend i.none{background:transparent;border:1px dashed var(--s-none)}
+/* 점검 줄 · 조작 */
+.act{margin-top:8px}
+.btn.sm{flex:0 1 auto;padding:6px 12px;font-size:14px;min-height:44px}
+.btn.ok{border-color:var(--s-run);color:var(--s-run)}
+.btn:disabled{opacity:.45;cursor:default}
+.vs{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;margin-top:2px}
+.vs .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px;color:var(--ink)!important;display:inline!important}
+.vs .s{font-size:12.5px;display:inline!important}
+.ctlrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.ctlrow .lbl{font-size:12px;font-weight:600;color:var(--muted);min-width:44px}
+.ctl{display:inline-flex;gap:4px;align-items:center}
+.bidin{width:84px;font:inherit;font-family:var(--f-mono);font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px;min-height:44px;text-align:right}
+.linkbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+details.fold>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary h2{margin:0}
+details.fold>summary::after{content:"펼치기";font-size:12px;color:var(--accent);font-weight:600}
+details.fold[open]>summary::after{content:"접기"}
+/* 표 · 예산 비중 막대 */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.tbl table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:560px}
+.tbl th,.tbl td{text-align:left;vertical-align:middle;padding:7px 9px;border-top:1px solid var(--line);white-space:nowrap}
+.tbl th{background:var(--surface-2);border-top:0;font-weight:600;font-size:12.5px;color:var(--muted)}
+.tbl .n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.share{display:grid;grid-template-columns:52px 1fr 92px;gap:8px;align-items:center;font-size:13.5px;margin-top:6px}
+.share .num{text-align:right;font-size:12.5px;color:var(--muted)}.share .num b{color:var(--ink)}
+.sb{position:relative;height:16px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.sb i{position:absolute;left:0;height:7px}.sb i.plan{top:0;background:var(--s-none)}.sb i.real{bottom:0;background:var(--accent)}
 .why{font-size:13.5px;color:var(--muted);margin-top:2px}
 /* 숫자 칸 */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin-top:10px}
@@ -207,11 +232,11 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
   </header>
   <main id="view"></main>
 </div>
-<!-- 아래 탭: 지금 = 오늘 조율할 일 · 지도 = 브랜드 × 매체 전부 · 판정 = 키워드별 누적 클릭 판정 · 기록 = 바꾼 것·기준·숫자 출처 -->
+<!-- 아래 탭: 점검 = 지표마다 값·기준·할 일 · 지표 = 브랜드별 숫자 한 장 · 조율 = 캠페인·그룹·키워드를 보며 바로 바꾸기 · 기록 = 요청·바꾼 것·기준·출처 -->
 <nav id="tabbar" aria-label="화면">
-  <a href="#now" data-v="now"><span aria-hidden="true">▶</span>지금</a>
-  <a href="#map" data-v="map"><span aria-hidden="true">▦</span>지도</a>
-  <a href="#judge" data-v="judge"><span aria-hidden="true">⚖</span>판정</a>
+  <a href="#now" data-v="now"><span aria-hidden="true">✓</span>점검</a>
+  <a href="#metrics" data-v="metrics"><span aria-hidden="true">▦</span>지표</a>
+  <a href="#control" data-v="control"><span aria-hidden="true">⇅</span>조율</a>
   <a href="#log" data-v="log"><span aria-hidden="true">✎</span>기록</a>
 </nav>
 
@@ -333,10 +358,11 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 /* 광고 한눈에 — 모든 브랜드의 모든 광고(네이버·메타·구글)를 한 화면에서 파악하고, 조율은 Brainy에게 넘긴다.
    데이터는 볼트가 정본이다: 4_Outputs/광고 한눈에 앱/광고 한눈에.json (브랜드·매체 상태·판정 기준·변경 기록)
    + 맥 동기화(볼트 .claude/scripts/adhub_app.py)가 네이버 검색광고·스마트스토어 API 에서 받은 숫자 → Supabase ah.data/main.
-   광고 태스크 상태는 광고 실습 앱과 같은 ad.data/main 을 읽는다. 이 앱은 아무것도 쓰지 않는다 — 「Brainy와 조율」은 대화창을 채울 뿐(보내기는 동욱이 ↑).
-   숫자·목록을 코드에 넣지 않는다. 판정 기준 숫자(30·50)도 데이터의 hub.rules 에서 읽는다. */
+   광고 태스크 상태는 광고 실습 앱과 같은 ad.data/main 을 읽는다. 지표·기준은 광고 실습 교과서(외울 것)와 같은 것 — 광고 실습 계획(products·budgetShare·glossary)을 데이터로 받는다.
+   이 앱이 쓰는 것은 ah.req(조율 요청)뿐 — 한 줄 확인 뒤 남기고, 맥이 limits 안에서 네이버에 적용한다 (ads-req.js). 「Brainy와 조율」은 대화창을 채울 뿐.
+   숫자·목록을 코드에 넣지 않는다. 기준 숫자는 데이터의 hub.rules · hub.checks · hub.limits 에서 읽는다. */
 let D = null, AD = null, loaded = false;
-const S = { bid: lsGet("ah.bid", "all"), filt: "act", camp: "", from: "map", kwMore: false };
+const S = { bid: lsGet("ah.bid", "all"), cf: "need", kf: "act", grp: "", kwMore: false };
 
 function lsGet(k, d){ try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (e) { return d; } }
 function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -350,14 +376,19 @@ function toast(msg){
   el.textContent = msg; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 5000);
 }
 
-/* ── 셈 — 브랜드·캠페인 짝, 매체 상태, 합계, 키워드 판정, 조율할 일 (build.py 가 ads.html 에 끼움) ──
-   판정 기준 숫자(조정 30 · 정지 50)와 대표 키워드는 데이터(hub.rules · brand.coreKeywords)에서 읽는다. 여기는 셈법만. */
+/* ── 셈 — 브랜드·캠페인 짝, 매체 상태, 지표, 키워드 판정, 점검표 (build.py 가 ads.html 에 끼움) ──
+   지표와 기준은 광고 실습 교과서(외울 것)에서 온 것만 쓴다: CTR · CPC · 평균 순위 · 품질지수 · 허용 CPC(손익분기 × 전환율)
+   · 누적 클릭 판정(조정·정지) · 구매당/계약당 광고비 · 계약률 · 예산 비중 · 측정 준비(공통 기반 태스크).
+   기준 숫자는 데이터(hub.rules · hub.checks · hub.limits · brand.breakeven·cvr · plan.budgetShare)에서 읽는다. 여기는 셈법만. */
 const brands = () => (D && D.hub.brands) || [];
 const selBrands = () => S.bid === "all" ? brands() : brands().filter(b => b.id === S.bid);
 const rules = () => (D && D.hub.rules) || {};
+const CK = () => (D && D.hub.checks) || {};
+const LIM = () => (D && D.hub.limits) || {};
 const chName = ch => ((D && D.hub.channels[ch]) || {}).name || ch;
 const chOrder = () => (D && D.hub.order) || ["naver", "meta", "google"];
 const NV = () => (D && D.naver) || {};
+const PLAN = () => (D && D.plan) || {};
 const matchName = (b, name) => (b.naverMatch || []).some(m => String(name || "").includes(m));
 const campsOf = b => (NV().campaigns || []).filter(c => matchName(b, c.name));
 const campBy = id => (NV().campaigns || []).find(c => c.id === id) || null;
@@ -366,9 +397,19 @@ const groupBy = id => (NV().groups || []).find(g => g.id === id) || null;
 const groupsOf = c => (NV().groups || []).filter(g => g.camp === c.id);
 const kwsOf = b => { const ids = new Set(campsOf(b).map(c => c.id)); return (NV().keywords || []).filter(k => ids.has(k.camp)); };
 const taskBy = id => ((AD && AD.tasks) || []).find(t => t.id === id) || null;
+const taskName = t => String(t.title || "").replace(/^T-/, "");
 const daysSince = d => Math.max(1, Math.round((Date.now() - new Date(d + "T00:00:00+09:00")) / 86400000) + 1);
-const pctOf = (a, b) => { if (!(b > 0)) return "0"; const p = a / b * 100; return p > 0 && p < 1 ? p.toFixed(1) : String(Math.round(p)); };
+const pctTxt = (a, b) => { if (!(b > 0)) return "0"; const p = a / b * 100; return p > 0 && p < 1 ? p.toFixed(1) : String(Math.round(p)); };
 const since = c => c.from && c.from > c.start ? `${c.start}부터 · 숫자는 ${c.from}부터(최근 92일)` : `${c.start}부터`;
+
+/* 지표 — 숫자 묶음 s = {imp, clk, cost, conv, rank} */
+const ctrOf = s => s && s.imp > 0 ? s.clk / s.imp * 100 : null;
+const cpcOf = s => s && s.clk > 0 ? s.cost / s.clk : null;
+const ctrTxt = s => { const v = ctrOf(s); return v == null ? "—" : v.toFixed(v < 1 ? 2 : 1) + "%"; };
+const cpcTxt = s => { const v = cpcOf(s); return v == null ? "—" : won(v) + "원"; };
+const sumStats = L => { const t = { imp: 0, clk: 0, cost: 0, conv: 0, rk: 0 }; L.forEach(s => { if (!s) return; t.imp += s.imp; t.clk += s.clk; t.cost += s.cost; t.conv += s.conv; if (s.rank) t.rk += s.rank * s.imp; }); t.rank = t.imp ? +(t.rk / t.imp).toFixed(1) : null; return t; };
+/* 허용 CPC = 손익분기 결과당 광고비 × 전환율 (교과서 N1 「클릭당 허용 비용 = 93,500원 × 전환율」) */
+const maxCpc = b => b && b.breakeven && b.cvr ? Math.round(b.breakeven * b.cvr / 100) : null;
 
 /* 매체 상태 — 네이버는 실제 캠페인에서, 메타·구글은 볼트 JSON 의 state 에서 */
 const STATE = { run: "집행 중", stop: "꺼 둠", prep: "준비", none: "없음" };
@@ -384,25 +425,21 @@ function chState(b, ch){
   return { k: s === "집행" || s === "집행 중" ? "run" : s === "준비" ? "prep" : s === "멈춤" || s === "꺼 둠" ? "stop" : "none", t: s === "집행" ? STATE.run : s };
 }
 const stPill = st => `<span class="pill ${st.k}">${esc(st.t)}</span>`;
-/* 메타·구글 숫자 — 광고 실습 계획 metrics (주간 통합 리뷰가 채움) */
+/* 주간 숫자 — 광고 실습 계획 metrics (주간 통합 리뷰가 채움) */
 const metricOf = (b, ch) => b.plan ? ((D.metrics || {}).values || {})[`${b.plan}-${ch}`] || null : null;
 const hasSlot = (b, ch) => b.plan && ((D.metrics || {}).slots || []).some(s => s.product === b.plan && s.channel === ch);
-/* 그 매체의 다음 광고 태스크 — 볼트 32_태스크 (광고 실습 앱과 같은 ad.data) */
+const product = b => b.plan ? (PLAN().products || {})[b.plan] || null : null;
 function nextTask(b, ch){
-  const ids = ((b.channels || {})[ch] || {}).tasks || [];
-  const L = ids.map(taskBy).filter(Boolean);
+  const L = ((((b.channels || {})[ch] || {}).tasks) || []).map(taskBy).filter(Boolean);
   return L.find(t => t.status === "진행") || L.find(t => !["완료", "보류"].includes(t.status)) || null;
 }
-const taskName = t => String(t.title || "").replace(/^T-/, "");
+/* 측정 준비 — 공통 기반 태스크(track common) 중 이 브랜드 상품에 걸린 것 */
+const baseTasks = b => b.plan ? ((AD && AD.tasks) || []).filter(t => t.track === "common" && (t.products || []).includes(b.plan)) : [];
 
-/* 합계 — 고른 브랜드들의 네이버 캠페인 */
 function totalsOf(list){
   const L = list.flatMap(campsOf);
-  const t = { camps: L.length, on: L.filter(c => c.on).length, cost7: 0, clk7: 0, imp7: 0, costAll: 0, clkAll: 0, impAll: 0 };
-  L.forEach(c => { t.cost7 += c.s7.cost; t.clk7 += c.s7.clk; t.imp7 += c.s7.imp; if (c.all) { t.costAll += c.all.cost; t.clkAll += c.all.clk; t.impAll += c.all.imp; } });
-  return t;
+  return { camps: L.length, on: L.filter(c => c.on).length, s7: sumStats(L.map(c => c.s7)), all: sumStats(L.filter(c => c.all).map(c => c.all)), today: sumStats(L.map(c => c.today)), budget: L.filter(c => c.on).reduce((a, c) => a + (c.budget || 0), 0) };
 }
-/* 스토어 실제 주문 (판정의 기준 숫자) — store:true 인 브랜드만 */
 function storeOrders(list){
   const st = (D && D.store) || {};
   if (!list.some(b => b.store)) return { none: true, ok: false };
@@ -412,12 +449,12 @@ function storeOrders(list){
 }
 const storeWhy = err => /IP/.test(err || "") ? "커머스API센터에 이 맥의 공인 IP가 등록돼 있지 않아요 — 동욱이 커머스API센터에 로그인해 애플리케이션 「API 호출 IP」에 넣으면 다음 바퀴(60분 안)부터 자동으로 받아요." : (err || "");
 
-/* 키워드 판정 — 누적 클릭(캠페인 켠 날부터)으로. 기간이 아니라 클릭 수 */
+/* 키워드 판정 — 누적 클릭(캠페인 켠 날부터)으로 */
 const KJ = {
-  stop:  { lv: "high", name: "정지 후보",   how: "클릭이 정지 기준을 넘었는데 전환 0" },
-  core:  { lv: "mid",  name: "대표 — 유지", how: "정지 기준을 넘었지만 대표 키워드라 끄지 않음 — 입찰·페이지를 먼저 본다" },
-  watch: { lv: "mid",  name: "조정 구간",   how: "조정 기준을 넘었고 전환 0 — 입찰 조정을 볼 수 있음, 정지까지 남은 클릭" },
-  win:   { lv: "low",  name: "전환 있음",   how: "조정 기준을 넘었고 전환이 있음 — 승격 후보" },
+  stop:  { lv: "bad",  name: "정지 후보",   how: "클릭이 정지 기준을 넘었는데 전환 0" },
+  core:  { lv: "warn", name: "대표 — 유지", how: "정지 기준을 넘었지만 대표 키워드라 끄지 않음 — 입찰·페이지를 먼저 본다" },
+  watch: { lv: "warn", name: "조정 구간",   how: "조정 기준을 넘었고 전환 0" },
+  win:   { lv: "ok",   name: "전환 있음",   how: "조정 기준을 넘었고 전환이 있음 — 승격 후보" },
   wait:  { lv: "",     name: "표본 부족",   how: "조정 기준까지 클릭이 모자람 — 그대로 둔다" },
   off:   { lv: "",     name: "꺼 둠",       how: "키워드·광고그룹·캠페인 중 하나가 꺼져 있음" }
 };
@@ -431,214 +468,326 @@ function judgeKw(k, b){
   return { code: "wait", left: R.adjust - clk };
 }
 
-/* 조율할 일 — 급함 high(빨강) · mid(노랑) · low(파랑 · 참고). 각 일에는 Brainy에게 넘길 말이 붙는다 */
-const ASK_TAIL = () => ` 볼트 기준(${rules().doc || "광고 손익분기와 표본 기준"})대로 판단하고, 바꿀 것은 「대상 · 지금 · 바꿀 값 · 근거」 표로 보여 줘. 적용은 내가 승인한 줄만.`;
-function todosOf(list){
+/* ── 점검표 — 지표마다 한 줄: lv bad(빨강) · warn(노랑) · ok(초록) · info(참고) · none(숫자 없음)
+   각 줄 = {lv, b, ch, name 지표, val 지금 값, std 기준, why, ask, camp?, filt?} ── */
+const ASK_TAIL = () => ` 볼트 기준(${rules().doc || ""})대로 판단하고, 바꿀 것은 「대상 · 지금 · 바꿀 값 · 근거」 표로 보여 줘. 적용은 내가 승인한 줄만.`;
+function checksOf(list){
   if (!D) return [];
-  const R = rules(), out = [];
-  const add = (lv, b, ch, title, why, ask, extra = {}) => out.push(Object.assign({ lv, b, ch, title, why, ask: ask ? `광고 한눈에 — ${b.name} ${chName(ch)}: ${ask}` : "" }, extra));
+  const R = rules(), C = CK(), out = [];
+  const add = (lv, b, ch, name, val, std, why, ask, extra = {}) => out.push(Object.assign({ lv, b, ch, name, val, std, why, ask: ask ? `광고 한눈에 — ${b.name} ${chName(ch)}: ${ask}` + ASK_TAIL() : "" }, extra));
   list.forEach(b => {
-    const camps = campsOf(b);
-    camps.filter(c => c.on).forEach(c => {
-      if (c.all) {
-        const days = daysSince(c.from || c.start), wk = c.all.imp / (days / 7);
-        if (days >= 10 && wk > 0 && c.s7.imp < wk * 0.1)
-          add("high", b, "naver", `「${c.name}」 노출이 거의 멈췄어요`,
-            `최근 7일 노출 ${won(c.s7.imp)} · 클릭 ${won(c.s7.clk)} · 광고비 ${won(c.s7.cost)}원 — 켠 뒤 주당 평균 노출 ${won(wk)}회의 ${pctOf(c.s7.imp, wk)}%. 일예산 ${won(c.budget)}원 중 하루 ${won(c.s7.cost / 7)}원만 쓰는 중이에요.`,
-            `「${c.name}」 노출이 최근 7일 ${won(c.s7.imp)}회로 거의 멈췄어. 꺼진 키워드·광고그룹, 입찰가와 순위, 검수 상태를 네이버 API로 확인해서 왜 멈췄는지 말해 주고 다시 돌게 할 조정안을 줘.` + ASK_TAIL(), { camp: c.id });
-      }
-      if (!c.tracking) add("mid", b, "naver", "전환추적이 꺼져 있어요", `「${c.name}」은 매체 전환이 늘 0으로 보여요. 그래서 판정은 키워드 누적 클릭과 스토어 실제 주문으로만 해요.`,
-        `「${c.name}」 전환추적이 꺼져 있어. 켜는 게 맞는지, 켠다면 어디서 어떻게 하는지 단계로 알려 줘 (설정 변경은 내가 직접).`, { camp: c.id });
-    });
-    const J = kwsOf(b).map(k => ({ k, j: judgeKw(k, b) }));
-    const of = code => J.filter(x => x.j.code === code);
-    const names = L => L.sort((x, y) => y.k.all.clk - x.k.all.clk).slice(0, 3).map(x => `${x.k.kw}(${x.k.all.clk})`).join(" · ") + (L.length > 3 ? " …" : "");
-    if (of("stop").length) add("high", b, "naver", `정지 후보 키워드 ${of("stop").length}개`, `클릭 ${R.stop}번이 넘었는데 전환 0 — ${names(of("stop"))}`,
-      `정지 후보 키워드 ${of("stop").length}개(${names(of("stop"))})를 끌지 판단해 줘. 전환추적이 꺼져 있으면 스토어 주문도 같이 봐.` + ASK_TAIL(), { go: "judge", filt: "stop" });
-    if (of("core").length) add("mid", b, "naver", `대표 키워드가 정지 기준을 넘었어요`, `${names(of("core"))} — 끄지 않고 입찰을 낮추거나 상세페이지를 먼저 봐요.`,
-      `대표 키워드 ${names(of("core"))}가 정지 기준을 넘었어. 끄지 않는 대신 입찰·페이지 중 뭘 먼저 볼지 정리해 줘.` + ASK_TAIL(), { go: "judge", filt: "core" });
-    if (of("watch").length) add("mid", b, "naver", `조정 구간 키워드 ${of("watch").length}개`, `클릭 ${R.adjust}~${R.stop - 1}번, 전환 0 — ${names(of("watch"))}`,
-      `조정 구간 키워드 ${of("watch").length}개(${names(of("watch"))})의 입찰 조정안을 만들어 줘.` + ASK_TAIL(), { go: "judge", filt: "watch" });
-    const rej = J.filter(x => x.j.code !== "off" && x.k.inspect && x.k.inspect !== "APPROVED");
-    if (rej.length) add("mid", b, "naver", `검수 통과 못 한 키워드 ${rej.length}개가 켜져 있어요`, rej.slice(0, 3).map(x => x.k.kw).join(" · ") + (rej.length > 3 ? " …" : ""),
-      `검수 통과 못 한 키워드 ${rej.length}개를 정리할지(끄기·지우기·문구 바꾸기) 판단해 줘.` + ASK_TAIL());
+    const camps = campsOf(b), on = camps.filter(c => c.on), cap = maxCpc(b);
+    if (on.length) {
+      const t = totalsOf([b]);
+      on.forEach(c => {
+        if (!c.all) return;
+        const days = daysSince(c.from || c.start), wk = c.all.imp / (days / 7), stall = days >= 10 && wk > 0 && c.s7.imp < wk * (C.stallPct || 10) / 100;
+        add(stall ? "bad" : "ok", b, "naver", "노출 흐름", `7일 노출 ${won(c.s7.imp)}`, `켠 뒤 주당 평균 ${won(wk)}`, stall ? `평균의 ${pctTxt(c.s7.imp, wk)}% — 「${c.name}」이 사실상 멈췄어요. 꺼진 키워드·입찰가·순위를 봐야 해요.` : "",
+          stall ? `「${c.name}」 노출이 최근 7일 ${won(c.s7.imp)}회로 거의 멈췄어. 꺼진 키워드·광고그룹, 입찰가와 순위, 검수 상태를 네이버 API로 확인해서 왜 멈췄는지 말해 주고 다시 돌게 할 조정안을 줘.` : "", { camp: c.id });
+        if (c.budget) { const day = c.s7.cost / 7, low = day < c.budget * (C.spendLowPct || 15) / 100;
+          add(low ? "warn" : "ok", b, "naver", "일예산 소진", `하루 ${won(day)}원 (${pctTxt(day, c.budget)}%)`, `일예산 ${won(c.budget)}원 · 오늘 ${won(c.today ? c.today.cost : 0)}원`, low ? "예산이 남는다 = 노출 기회를 못 사고 있다는 뜻이에요. 입찰가가 낮거나 켜진 키워드가 적어요." : "", "", { camp: c.id }); }
+        if (!c.tracking) add("warn", b, "naver", "전환추적", "꺼짐", "켜져 있어야 매체 전환이 보임", `「${c.name}」은 매체 전환이 늘 0이에요. 판정은 누적 클릭과 스토어 실제 주문으로만 해요.`,
+          `「${c.name}」 전환추적이 꺼져 있어. 켜는 게 맞는지, 켠다면 어디서 어떻게 하는지 단계로 알려 줘 (설정 변경은 내가 직접).`, { camp: c.id });
+      });
+      const cpc = cpcOf(t.s7);
+      add(cpc == null ? "none" : cap && cpc > cap ? "bad" : "ok", b, "naver", "CPC (클릭당 광고비)", cpc == null ? "7일 클릭 0" : `${won(cpc)}원 (7일)`, cap ? `허용 CPC ${won(cap)}원 이하` : "허용 CPC 없음 (손익분기·전환율 필요)",
+        cap ? `허용 CPC = 손익분기 ${won(b.breakeven)}원 × 전환율 ${b.cvr}%${b.cvrNote ? " — " + b.cvrNote : ""}` : "", "");
+      add("info", b, "naver", "CTR (클릭률)", `${ctrTxt(t.s7)} (7일)`, `누적 ${ctrTxt(t.all)}`, "광고를 본 사람 중 누른 비율. 넓은 키워드가 많으면 낮아져요.", "");
+      add("info", b, "naver", "평균 노출 순위", t.s7.rank ? `${t.s7.rank}위 (7일)` : "—", `누적 ${t.all.rank || "—"}위`, "광고 순위 = 입찰가 × 품질지수. 순위가 너무 낮으면 노출이 줄어요.", "");
+      const K = kwsOf(b), J = K.map(k => ({ k, j: judgeKw(k, b) })), live = J.filter(x => x.j.code !== "off");
+      const qlow = live.filter(x => x.k.qi && x.k.qi <= 2).length;
+      add(qlow ? "warn" : "ok", b, "naver", "품질지수", `켜진 ${live.length}개 중 낮음(1~2) ${qlow}개`, "1~7칸 · 높을수록 같은 입찰에 높은 순위", qlow ? "품질지수가 낮은 키워드는 같은 돈으로 순위가 낮아요 — 광고 문구·랜딩이 그 검색어와 맞는지 봐요." : "", qlow ? "품질지수 1~2 키워드를 어떻게 할지(문구·랜딩·끄기) 판단해 줘." : "", { filt: "qlow" });
+      const over = cap ? live.filter(x => x.k.bid > cap) : [];
+      if (cap) add(over.length ? "bad" : "ok", b, "naver", "입찰가 상한", over.length ? `허용 CPC 넘은 키워드 ${over.length}개` : `모두 ${won(cap)}원 이하`, `허용 CPC ${won(cap)}원`, over.length ? over.slice(0, 3).map(x => `${x.k.kw}(${won(x.k.bid)}원)`).join(" · ") : "", over.length ? `입찰가가 허용 CPC를 넘은 키워드 ${over.length}개를 내릴 안을 줘.` : "", { filt: "over" });
+      const of = code => J.filter(x => x.j.code === code), names = L => L.slice().sort((x, y) => y.k.all.clk - x.k.all.clk).slice(0, 3).map(x => `${x.k.kw}(${x.k.all.clk})`).join(" · ") + (L.length > 3 ? " …" : "");
+      const top = live.slice().sort((x, y) => y.k.all.clk - x.k.all.clk)[0];
+      const lvJ = of("stop").length ? "bad" : of("watch").length || of("core").length ? "warn" : "ok";
+      add(lvJ, b, "naver", "키워드 판정 (누적 클릭)", `정지 후보 ${of("stop").length} · 조정 구간 ${of("watch").length} · 대표 ${of("core").length}`, `${R.adjust}클릭 조정 · ${R.stop}클릭에 전환 0이면 정지`,
+        lvJ === "ok" ? (top ? `아직 판정할 키워드가 없어요 — 가장 많은 「${top.k.kw}」가 ${top.k.all.clk}클릭` : "") : [of("stop").length ? "정지 후보: " + names(of("stop")) : "", of("watch").length ? "조정 구간: " + names(of("watch")) : "", of("core").length ? "대표: " + names(of("core")) : ""].filter(Boolean).join(" / "),
+        lvJ === "ok" ? "" : `판정 대상 키워드(정지 후보 ${names(of("stop")) || "없음"} · 조정 구간 ${names(of("watch")) || "없음"} · 대표 ${names(of("core")) || "없음"})의 조정안을 줘.`, { filt: lvJ === "ok" ? "" : "act" });
+      const rej = live.filter(x => x.k.inspect && x.k.inspect !== "APPROVED");
+      if (rej.length) add("warn", b, "naver", "검수", `통과 못 한 켜진 키워드 ${rej.length}개`, "검수 통과", rej.slice(0, 3).map(x => x.k.kw).join(" · "), `검수 통과 못 한 키워드 ${rej.length}개를 정리할지 판단해 줘.`);
+    }
+    /* 결과 — 스토어 실제 주문(염소) · 주간 숫자(메타·구글·이벤트랩) */
+    const pr = product(b);
     if (b.store) {
       const o = storeOrders([b]);
-      if (!o.ok) add("mid", b, "naver", "스토어 주문을 못 받고 있어요", storeWhy(o.err) + " 그 전까지 주문은 「—」로 보여요.", "");
+      if (!o.ok) add("none", b, "naver", `${pr ? pr.metric : "구매당 광고비"}`, "스토어 미연결", b.breakeven ? `손익분기 ${won(b.breakeven)}원 이하` : "", storeWhy(o.err), "");
       else {
         const daily = camps.flatMap(c => c.daily || []), cost14 = daily.reduce((a, d) => a + d.cost, 0), clk14 = daily.reduce((a, d) => a + d.clk, 0);
-        if (clk14 >= R.adjust && o.n14 === 0) add("high", b, "naver", `14일 동안 클릭 ${clk14}번에 주문 0`, "클릭이 쌓였는데 주문이 0이면 키워드가 아니라 상세페이지를 고쳐요.",
-          `14일 클릭 ${clk14}번에 스토어 주문 0이야. 상세페이지에서 무엇부터 볼지 점검 순서를 줘.` + ASK_TAIL());
-        else if (o.n14 > 0 && b.breakeven) {
-          const cpa = cost14 / o.n14;
-          add(cpa > b.breakeven ? "high" : "low", b, "naver", `구매당 광고비 ${won(cpa)}원 (14일)`, `손익분기 ${won(b.breakeven)}원 ${cpa > b.breakeven ? "초과" : "안"} — 광고비 ${won(cost14)}원 ÷ 스토어 주문 ${o.n14}건. 주문은 광고 밖에서 온 것도 섞여 있어요.`,
-            cpa > b.breakeven ? `14일 구매당 광고비가 ${won(cpa)}원으로 손익분기 ${won(b.breakeven)}원을 넘었어. 어디를 줄일지 조정안을 줘.` + ASK_TAIL() : "");
-        }
+        if (!o.n14) add(clk14 >= R.adjust ? "bad" : "info", b, "naver", pr ? pr.metric : "구매당 광고비", `14일 주문 0 · 광고비 ${won(cost14)}원`, `손익분기 ${won(b.breakeven)}원`, clk14 >= R.adjust ? `클릭 ${clk14}번에 주문 0 — 키워드가 아니라 상세페이지를 고쳐요.` : "", clk14 >= R.adjust ? `14일 클릭 ${clk14}번에 스토어 주문 0이야. 상세페이지에서 무엇부터 볼지 점검 순서를 줘.` : "");
+        else { const cpa = cost14 / o.n14; add(cpa > b.breakeven ? "bad" : "ok", b, "naver", pr ? pr.metric : "구매당 광고비", `${won(cpa)}원 (14일 · 주문 ${o.n14})`, `손익분기 ${won(b.breakeven)}원 이하`, "주문에는 광고 밖에서 온 것도 섞여 있어요.", cpa > b.breakeven ? `14일 구매당 광고비가 ${won(cpa)}원으로 손익분기를 넘었어. 어디를 줄일지 조정안을 줘.` : ""); }
       }
     }
     chOrder().forEach(ch => {
+      if (!hasSlot(b, ch) || (ch === "naver" && campsOf(b).length)) return;   // 네이버는 API 숫자가 있으니 주간 칸을 따로 보지 않는다
+      const m = metricOf(b, ch), st = chState(b, ch);
+      if (!m) { if (st.k === "run") add("warn", b, ch, `${chName(ch)} 주간 숫자`, "비어 있음", "주간 통합 리뷰가 채움", "집행 중인데 이번 주 광고비·결과가 없어요.", `${chName(ch)} 이번 주 광고비·결과를 광고 실습 계획 metrics 에 채워 줘.`); return; }
+      const res = pr ? m[pr.resultField] : m.result, per = m.spend && res ? m.spend / res : null;
+      add(per != null && b.breakeven && per > b.breakeven ? "bad" : per != null ? "ok" : "info", b, ch, `${chName(ch)} ${pr ? pr.metric.replace("계약당", "결과당") : "결과당 광고비"}`, per != null ? `${won(per)}원 (${m.period || m.week || ""})` : `광고비 ${won(m.spend)}원 · ${pr ? pr.resultLabel : "결과"} ${won(res)}`, b.breakeven ? `손익분기 ${won(b.breakeven)}원` : "목표 아직 없음", "", "");
+      if (pr && pr.hasContracts && res) add("info", b, ch, `${chName(ch)} 계약률`, `${pctTxt(m.contracts || 0, res)}% (계약 ${m.contracts || 0} ÷ 문의 ${res})`, "문의 → 계약", `계약당 광고비 ${m.contracts ? won(m.spend / m.contracts) + "원" : "—"}`, "");
+    });
+    /* 예산 비중 — 계획(광고 실습) vs 실제 */
+    const share = b.plan ? ((PLAN().budgetShare || {})[b.plan]) : null;
+    if (share) {
+      const spend = { naver: totalsOf([b]).s7.cost }; chOrder().forEach(ch => { if (ch !== "naver") { const m = metricOf(b, ch); spend[ch] = m && m.spend ? m.spend / (m.days || 7) * 7 : 0; } });
+      const tot = Object.values(spend).reduce((a, v) => a + v, 0);
+      const plan = chOrder().map(ch => `${chName(ch)} ${share[ch] || 0}`).join(" · "), real = tot ? chOrder().map(ch => `${chName(ch)} ${pctTxt(spend[ch] || 0, tot)}`).join(" · ") : "광고비 0";
+      const running = chOrder().filter(ch => chState(b, ch).k === "run"), notYet = chOrder().filter(ch => (share[ch] || 0) > 0 && chState(b, ch).k !== "run");
+      const gap = tot && running.length > 1 ? running.some(ch => Math.abs((share[ch] || 0) - (spend[ch] || 0) / tot * 100) > 20) : false;
+      add(gap ? "warn" : "info", b, "naver", "예산 비중 (%)", real, `계획 ${plan}`, gap ? "집행 중인 매체끼리 계획과 20%p 넘게 달라요." : notYet.length ? `${notYet.map(chName).join("·")}를 아직 켜지 않아서 계획과 달라요 — 켜면 맞춰 봐요.` : "", "");
+    }
+    /* 측정 준비 — 공통 기반 */
+    const base = baseTasks(b);
+    if (base.length) { const done = base.filter(t => t.status === "완료"); add(done.length === base.length ? "ok" : "warn", b, "naver", "측정 준비", `${done.length}/${base.length} 끝`, "공통 기반 태스크 전부", done.length === base.length ? "" : "남은 것: " + base.filter(t => t.status !== "완료").map(taskName).slice(0, 3).join(" · ") + " — 이게 끝나야 어느 매체가 주문·문의를 만들었는지 가를 수 있어요.", "", { tasks: base.map(t => t.id) }); }
+    chOrder().forEach(ch => {
       const st = chState(b, ch), t = nextTask(b, ch);
-      if (st.k === "prep") add("low", b, ch, `${chName(ch)} 준비 중`, t ? `다음 태스크 「${taskName(t)}」 · ${t.status || "할일"}` : (((b.channels || {})[ch] || {}).plan || ""),
-        t ? `${chName(ch)} 광고를 켜려면 지금 뭐가 남았는지 태스크 「${taskName(t)}」 완료 기준으로 보여 주고, 내가 할 것과 네가 할 것을 나눠 줘.` : "", { task: t && t.id });
-      if (st.k === "run" && ch !== "naver" && hasSlot(b, ch) && !metricOf(b, ch)) add("mid", b, ch, `${chName(ch)} 숫자가 비어 있어요`, "집행 중인데 이번 주 광고비·결과가 없어요 — 주간 통합 리뷰가 채워요.",
-        `${chName(ch)} 이번 주 광고비·결과를 광고 실습 계획 metrics 에 채워 줘 (못 읽는 건 내가 볼 곳을 알려 줘).`);
+      if (st.k === "prep") add("info", b, ch, `${chName(ch)} 준비`, t ? `다음 「${taskName(t)}」` : "준비 중", t ? t.status || "할일" : "", "", t ? `${chName(ch)} 광고를 켜려면 지금 뭐가 남았는지 태스크 「${taskName(t)}」 완료 기준으로 보여 주고, 내가 할 것과 네가 할 것을 나눠 줘.` : "", { task: t && t.id });
     });
   });
-  const rank = { high: 0, mid: 1, low: 2 };
+  const rank = { bad: 0, warn: 1, none: 2, ok: 3, info: 4 };
   return out.sort((x, y) => rank[x.lv] - rank[y.lv]);
 }
+const LVN = { bad: "문제", warn: "주의", ok: "좋음", info: "참고", none: "숫자 없음" };
 
-/* ── 「지금」 탭 — 오늘 조율할 일 (build.py 가 ads.html 에 끼움) ──
-   일은 ads-calc.js todosOf() 가 숫자에서 뽑는다: 빨강 = 오늘 손대야 함 · 노랑 = 보고 판단 · 파랑 = 참고·준비.
-   「✦ Brainy와 조율」은 대화창을 그 일의 말로 채운다 — 맥의 Brainy가 볼트 기준으로 조정안 표를 보여 주고, 동욱이 승인한 줄만 적용한다. */
-const LV = { high: "오늘 손대기", mid: "보고 판단", low: "참고" };
-function todoRow(x, showBrand){
-  const more = x.camp ? `<button type="button" class="btn" data-camp="${esc(x.camp)}">캠페인 보기</button>` : x.filt ? `<button type="button" class="btn" data-jf="${x.filt}">키워드 보기</button>` : "";
-  return `<div class="row ${x.lv} todo"><div class="ct">
-    <b>${esc(x.title)}</b><span>${showBrand ? esc(x.b.short || x.b.name) + " · " : ""}${esc(chName(x.ch))}</span>
+/* ── 조율 요청 — 앱이 쓰는 유일한 자료 (build.py 가 ads.html 에 끼움) ──
+   ah.req/<id> = {kind: bid|onoff|budget, type: keyword|group|campaign, id, name, brand, to, why, status: "요청", at}
+   누르면 한 줄로 확인받고(confirm) 요청을 남긴다 → 맥 동기화(adhub_app.py)가 정본 JSON limits·허용 CPC 안인지 다시 보고 네이버에 적용,
+   status 적용/실패 · before(바꾸기 전 값) · error 를 적는다. 적용한 것은 볼트 changes 에 한 줄. 되돌리기 = before 값으로 새 요청.
+   저장소 소식(스냅숏)은 화면만 맞춘다 — 저장을 부르지 않는다. */
+let REQ = {};
+let reqDb = null;
+const REQ_WORD = { bid: "입찰가", onoff: "켜기·끄기", budget: "일예산" };
+const reqOpen = (type, id) => Object.values(REQ).filter(q => q.type === type && q.id === id && q.status === "요청");
+const reqFmt = (kind, v) => kind === "onoff" ? (v ? "켬" : "끔") : won(v) + "원";
+function reqListen(db){
+  reqDb = db;
+  db.collection("ah.req").onSnapshot(snap => {
+    const m = {}; snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); });
+    const before = REQ; REQ = m;
+    Object.entries(m).forEach(([id, q]) => { const o = before[id]; if (o && o.status === "요청" && q.status !== "요청") toast(q.status === "적용" ? `적용됨 — ${q.name} ${REQ_WORD[q.kind]} ${reqFmt(q.kind, q.to)}` : `못 바꿈 — ${q.name}: ${q.error || ""}`); });
+    render();
+  }, () => {});
+}
+/* 요청 보내기 — 한 줄 확인 뒤에만 */
+function sendReq(q){
+  if (!reqDb) { toast("로그인하지 않아 바꿀 수 없어요."); return; }
+  const line = `${q.name} — ${REQ_WORD[q.kind]} ${q.from != null ? reqFmt(q.kind, q.from) + " → " : ""}${reqFmt(q.kind, q.to)}`;
+  if (!window.confirm(`${line}\n\n네이버 광고에 적용할까요? (맥이 켜져 있으면 1분 안에 적용돼요)`)) return;
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const body = { kind: q.kind, type: q.type, id: q.id, name: q.name, brand: q.brand, to: q.to, from: q.from ?? null, why: q.why || "앱 「조율」에서", status: "요청", at: new Date().toISOString() };
+  REQ[id] = body; render();
+  reqDb.doc("ah.req/" + id).set(body).then(() => toast("요청했어요 — 맥이 적용하면 알려 드려요."), () => { delete REQ[id]; render(); toast("요청을 못 보냈어요. 연결을 확인해 주세요."); });
+}
+/* 조작 버튼 — data-rq 에 요청 번호를 두고 RQ 표에서 꺼낸다 (긴 글을 속성에 넣지 않게) */
+const RQ = [];
+const rqBtn = (q, label, cls = "") => `<button type="button" class="btn sm ${cls}" data-rq="${RQ.push(q) - 1}"${reqOpen(q.type, q.id).some(r => r.kind === q.kind) ? " disabled" : ""}>${esc(label)}</button>`;
+const pendTag = (type, id) => { const L = reqOpen(type, id); return L.length ? `<span class="pill prep">적용 기다림 · ${L.map(q => REQ_WORD[q.kind] + " " + reqFmt(q.kind, q.to)).join(", ")}</span>` : ""; };
+/* 입찰 조작 한 묶음: −10 · 입력 · +10 · 켜기/끄기 */
+function bidCtl(type, o, b, cur){
+  const L = LIM(), step = L.bidStep || 10, cap = maxCpc(b), lo = L.bidMin || 70;
+  const base = { kind: "bid", type, id: o.id, name: o.kw || o.name, brand: b.id, from: cur };
+  return `<span class="ctl">${rqBtn({ ...base, to: Math.max(lo, cur - step) }, `−${step}`, "")}<input class="bidin" type="number" inputmode="numeric" min="${lo}" ${cap ? `max="${cap}"` : ""} step="${step}" value="${cur}" aria-label="${esc(o.kw || o.name)} 입찰가" data-bidin="${RQ.length}">${rqBtn({ ...base, to: cur }, "적용", "")}${rqBtn({ ...base, to: cap ? Math.min(cap, cur + step) : cur + step }, `+${step}`, "")}</span>`;
+}
+const onBtn = (type, o, b) => rqBtn({ kind: "onoff", type, id: o.id, name: o.kw || o.name, brand: b.id, from: !!o.on, to: !o.on }, o.on ? "끄기" : "켜기", o.on ? "" : "ok");
+
+/* ── 「점검」 탭 — 지표마다 한 줄: 지금 값 · 기준 · 왜 · 할 일 (build.py 가 ads.html 에 끼움) ──
+   줄은 ads-calc.js checksOf() 가 숫자에서 뽑는다: 빨강 문제 · 노랑 주의 · 회색 숫자 없음 · 초록 좋음 · 파랑 참고.
+   「✦ Brainy와 조율」은 대화창을 채우고, 「조율하러 가기」는 그 대상의 조작 화면(조율 탭)으로 간다. */
+const CF = [["need", "손볼 것"], ["all", "전체"], ["ok", "좋음"], ["info", "참고"]];
+const keepC = x => S.cf === "all" ? true : S.cf === "need" ? ["bad", "warn", "none"].includes(x.lv) : S.cf === "ok" ? x.lv === "ok" : x.lv === "info";
+function checkRow(x, many){
+  const go = x.camp || x.filt != null && x.filt !== "" ? `<button type="button" class="btn sm" data-goctl="${esc(x.b.id)}" data-gf="${esc(x.filt || "")}">조율하러 가기</button>` : "";
+  return `<div class="row ${x.lv} ck"><div class="ct">
+    <b>${esc(x.name)}</b><span>${many ? esc(x.b.short || x.b.name) + " · " : ""}${esc(chName(x.ch))}</span>
+    <div class="vs"><span class="v">${esc(x.val)}</span>${x.std ? `<span class="s">기준 ${esc(x.std)}</span>` : ""}</div>
     ${x.why ? `<p class="why">${esc(x.why)}</p>` : ""}
-    ${x.ask || more ? `<div class="btns act">${x.ask ? askBtn(x.ask, "✦ Brainy와 조율", x.lv === "high" ? "primary" : "") : ""}${more}</div>` : ""}
-  </div><div class="tags"><span class="pill ${x.lv}">${LV[x.lv]}</span></div></div>`;
+    ${x.ask || go ? `<div class="btns act">${x.ask ? askBtn(x.ask, "✦ Brainy와 조율", x.lv === "bad" ? "primary sm" : "sm") : ""}${go}</div>` : ""}
+  </div><div class="tags"><span class="pill ${x.lv}">${LVN[x.lv]}</span></div></div>`;
 }
 function renderNow(){
-  const list = selBrands(), T = todosOf(list), many = list.length > 1;
+  const list = selBrands(), T = checksOf(list), many = list.length > 1;
+  const cnt = f => T.filter(x => { const k = S.cf; S.cf = f; const r = keepC(x); S.cf = k; return r; }).length;
   let h = "";
   if (many) {
     h += `<section class="card"><h2>브랜드 한눈에</h2>${list.map(b => {
-      const t = totalsOf([b]), n = todosOf([b]).filter(x => x.lv === "high").length;
-      return `<button type="button" class="row ${n ? "high" : chOrder().some(ch => chState(b, ch).k === "run") ? "run" : "none"}" data-brand="${esc(b.id)}" aria-label="${esc(b.name)} 열기">
+      const C = checksOf([b]), bad = C.filter(x => x.lv === "bad").length, warn = C.filter(x => x.lv === "warn").length, t = totalsOf([b]);
+      return `<button type="button" class="row ${bad ? "bad" : warn ? "warn" : chOrder().some(ch => chState(b, ch).k === "run") ? "ok" : "none"}" data-brand="${esc(b.id)}" aria-label="${esc(b.name)} 열기">
         <span class="ct"><b>${esc(b.name)}</b><span>${esc(b.product || "")}${b.goal ? " · 목표 " + esc(b.goal) : ""}</span>
-        <span class="figs">${chOrder().map(ch => `<span>${esc(chName(ch))} <i>${esc(chState(b, ch).t)}</i></span>`).join("")}${t.camps ? `<span>7일 <i>${won(t.cost7)}원</i></span>` : ""}</span></span>
-        <span class="tags">${n ? `<span class="pill high">급함 ${n}</span>` : ""}</span></button>`;
+        <span class="figs">${chOrder().map(ch => `<span>${esc(chName(ch))} <i>${esc(chState(b, ch).t)}</i></span>`).join("")}${t.camps ? `<span>7일 <i>${won(t.s7.cost)}원</i> · CTR <i>${ctrTxt(t.s7)}</i> · CPC <i>${cpcTxt(t.s7)}</i></span>` : ""}</span></span>
+        <span class="tags">${bad ? `<span class="pill bad">문제 ${bad}</span>` : ""}${warn ? `<span class="pill warn">주의 ${warn}</span>` : ""}</span></button>`;
     }).join("")}</section>`;
-  } else {
-    const b = list[0];
-    if (b) h += `<p class="small muted" style="padding:0 4px">${esc(b.product || "")}${b.goal ? " · 목표 " + esc(b.goal) : ""}${b.breakeven ? ` · 손익분기 구매당 광고비 <span class="num">${won(b.breakeven)}</span>원` : b.breakevenNote ? " · " + esc(b.breakevenNote) : ""}${b.note ? "<br>" + esc(b.note) : ""}</p>`;
+  } else if (list[0]) {
+    const b = list[0], cap = maxCpc(b);
+    h += `<p class="small muted" style="padding:0 4px">${esc(b.product || "")}${b.goal ? " · 목표 " + esc(b.goal) : ""}${b.breakeven ? ` · 손익분기 <span class="num">${won(b.breakeven)}</span>원` : b.breakevenNote ? " · " + esc(b.breakevenNote) : ""}${cap ? ` · 허용 CPC <span class="num">${won(cap)}</span>원` : ""}${b.note ? "<br>" + esc(b.note) : ""}</p>`;
   }
-  const hi = T.filter(x => x.lv !== "low"), lo = T.filter(x => x.lv === "low");
-  h += `<section class="card"><h2>조율할 일 · ${hi.length}</h2>${hi.length ? hi.map(x => todoRow(x, many)).join("") : `<p class="empty">지금 손댈 일이 없어요. 숫자가 기준을 넘으면 여기에 떠요.</p>`}</section>`;
-  if (lo.length) h += `<section class="card"><h2>참고 · 준비 중 ${lo.length}</h2>${lo.map(x => todoRow(x, many)).join("")}</section>`;
+  if (!T.length) return h + `<section class="card"><p class="empty">이 브랜드는 광고 계획이 없어 점검할 지표가 없어요.</p></section>`;
+  h += `<div><div class="filt" role="group" aria-label="점검 거르기">${CF.map(([f, t]) => `<button type="button" class="chip ${S.cf === f ? "on" : ""}" data-cf="${f}" aria-pressed="${S.cf === f}">${t}<b>${cnt(f)}</b></button>`).join("")}</div>
+    <div class="legend" style="padding:0 4px">${["bad", "warn", "none", "ok", "info"].map(k => `<span><i class="${k}"></i>${LVN[k]}</span>`).join("")}</div></div>`;
+  const L = T.filter(keepC);
+  h += `<section class="card"><h2>점검표 · ${L.length}</h2>${L.length ? L.map(x => checkRow(x, many)).join("") : `<p class="empty">${S.cf === "need" ? "손볼 지표가 없어요." : "이 거르기에 맞는 줄이 없어요."}</p>`}</section>`;
   const nv = NV(), st = D.store || {};
-  const hasStore = list.some(b => b.store), hasPlan = list.some(b => b.plan);
-  h += `<p class="small muted" style="text-align:center;padding:0 8px">${hasPlan ? `네이버 숫자 ${nv.ok ? ago(nv.at) : "못 받음"}${hasStore ? ` · 스토어 주문 ${st.ok ? ago(st.at) : "연결 안 됨"}` : ""} · 메타·구글은 주간 리뷰 숫자<br>` : ""}이 앱은 광고를 바꾸지 않아요. 「Brainy와 조율」로 제안을 받고, 승인한 것만 Brainy가 적용해요.</p>`;
+  h += `<p class="small muted" style="text-align:center;padding:0 8px">네이버 숫자 ${nv.ok ? ago(nv.at) : "못 받음"}${list.some(b => b.store) ? ` · 스토어 주문 ${st.ok ? ago(st.at) : "미연결"}` : ""} · 메타·구글은 주간 리뷰 숫자<br>기준은 광고 실습 교과서의 「외울 것」과 볼트 광고 문서에서 왔어요.</p>`;
   return h;
 }
 
-/* ── 「지도」 탭 — 브랜드 × 매체 전부, 상태 색으로 + 캠페인 자세히 (build.py 가 ads.html 에 끼움) ──
-   네이버 줄은 실제 캠페인(API), 메타·구글 줄은 볼트 JSON 상태 + 광고 실습 계획 metrics(주간 리뷰 숫자).
-   태스크 칩은 그 매체를 잇는 볼트 32_태스크 (광고 실습 앱과 같은 ad.data). 캠페인을 누르면 자세히. */
-function chNums(b, ch){
-  if (ch === "naver") {
-    const t = totalsOf([b]);
-    return t.camps ? `<div class="figs"><span>7일 <i>${won(t.cost7)}원</i> · 클릭 <i>${won(t.clk7)}</i></span><span>누적 <i>${won(t.costAll)}원</i> · 클릭 <i>${won(t.clkAll)}</i></span></div>` : "";
-  }
-  const m = metricOf(b, ch);
-  if (m) return `<div class="figs"><span>${esc(m.week || "")} 주 광고비 <i>${won(m.spend)}원</i></span><span>${esc(b.resultLabel || "결과")} <i>${won(m.result)}</i>${m.contracts != null ? ` · 계약 <i>${won(m.contracts)}</i>` : ""}</span></div>`;
-  return hasSlot(b, ch) ? `<div class="figs"><span>숫자 없음 — 주간 통합 리뷰가 채워요</span></div>` : "";
+/* ── 「지표」 탭 — 브랜드마다 숫자를 한 장에 (build.py 가 ads.html 에 끼움) ──
+   ① 네이버 7일·누적·오늘 (노출·클릭·CTR·CPC·광고비·순위) ② 손익 기준 (판매가·마진·손익분기·전환율·허용 CPC)
+   ③ 매체별 결과 표 (네이버 실시간 + 메타·구글 주간 숫자 · 결과당 광고비 · 계약률) ④ 예산 비중 계획 vs 실제
+   ⑤ 14일 추이 ⑥ 측정 준비(공통 기반 태스크) · 용어 풀이. 숫자는 API·볼트 그대로, 판단은 점검 탭에서. */
+const statBox = (k, v, s) => `<div class="stat"><span class="k">${esc(k)}</span><span class="v">${v}</span>${s ? `<span class="s">${s}</span>` : ""}</div>`;
+function chTable(b){
+  const pr = product(b), t = totalsOf([b]);
+  const rows = chOrder().map(ch => {
+    const st = chState(b, ch);
+    if (ch === "naver" && t.camps) { const o = b.store ? storeOrders([b]) : null;
+      return `<tr><td>${esc(chName(ch))} ${stPill(st)}</td><td class="n">${won(t.s7.cost)}</td><td class="n">${won(t.s7.clk)}</td><td class="n">${ctrTxt(t.s7)}</td><td class="n">${cpcTxt(t.s7)}</td><td class="n">${o ? (o.ok ? won(o.n14) + " (14일)" : "미연결") : "—"}</td><td class="n">—</td><td>최근 7일 · API</td></tr>`; }
+    const m = metricOf(b, ch);
+    if (!m) return `<tr><td>${esc(chName(ch))} ${stPill(st)}</td><td class="n" colspan="6">${hasSlot(b, ch) ? "숫자 없음 — 주간 통합 리뷰가 채워요" : st.k === "none" || st.t === "안 함" ? "집행하지 않음" : "—"}</td><td></td></tr>`;
+    const res = pr ? m[pr.resultField] : m.result;
+    return `<tr><td>${esc(chName(ch))} ${stPill(st)}</td><td class="n">${won(m.spend)}</td><td class="n">${won(m.clicks)}</td><td class="n">${m.clicks && m.impressions ? (m.clicks / m.impressions * 100).toFixed(2) + "%" : "—"}</td><td class="n">${m.spend && m.clicks ? won(m.spend / m.clicks) + "원" : "—"}</td><td class="n">${won(res)}</td><td class="n">${m.spend && res ? won(m.spend / res) : "—"}</td><td>${esc(m.period || m.week || "")}</td></tr>`;
+  }).join("");
+  return `<div class="tbl"><table><thead><tr><th>매체</th><th class="n">광고비</th><th class="n">클릭</th><th class="n">CTR</th><th class="n">CPC</th><th class="n">${esc(pr ? pr.resultLabel : "결과")}</th><th class="n">${esc(pr ? pr.metric : "결과당")}</th><th>기간</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
-function taskChips(b, ch){
-  const ids = ((b.channels || {})[ch] || {}).tasks || [];
-  if (!ids.length) return "";
-  /* 태스크 이름을 그대로 — 누르면 광고 실습 앱 교과서의 그 과로 */
-  return `<div class="tasklist">${ids.map(taskBy).filter(Boolean).map(t => `<a class="pill ${t.status === "완료" ? "run" : t.status === "진행" ? "prep" : ""}" href="../ad/#book/${encodeURIComponent(t.id)}" style="white-space:normal;text-decoration:none;min-height:32px">${esc(taskName(t))} · ${esc(t.status || "할일")}</a>`).join("")}</div>`;
+function shareBars(b){
+  const share = b.plan ? ((PLAN().budgetShare || {})[b.plan]) : null; if (!share) return "";
+  const spend = { naver: totalsOf([b]).s7.cost }; chOrder().forEach(ch => { if (ch !== "naver") { const m = metricOf(b, ch); spend[ch] = m && m.spend ? m.spend : 0; } });
+  const tot = Object.values(spend).reduce((a, v) => a + v, 0);
+  return `<h2 style="margin:16px 0 6px">예산 비중 · 계획 vs 실제</h2>${chOrder().map(ch => { const p = share[ch] || 0, r = tot ? spend[ch] / tot * 100 : 0;
+    return `<div class="share"><span>${esc(chName(ch))}</span><div class="sb"><i class="plan" style="width:${p}%"></i><i class="real" style="width:${r}%"></i></div><span class="num">${p}% · <b>${Math.round(r)}%</b></span></div>`; }).join("")}
+    <p class="small muted">위 막대 = 계획(광고 실습 예산 비중) · 아래 = 실제 광고비 비중 · ${esc((PLAN().budgetShare || {}).note || "")}</p>`;
 }
-const campRow = c => `<button type="button" class="row ${c.on ? "run" : "stop"}" data-camp="${esc(c.id)}" aria-label="${esc(c.name)} 자세히">
-  <span class="ct"><b>${esc(c.name)}</b><span>${c.type === "SHOPPING" ? "쇼핑검색" : c.type === "POWER_CONTENTS" ? "파워콘텐츠" : "파워링크"}${c.budget ? ` · 일예산 ${won(c.budget)}원` : ""} · ${esc(since(c))}</span>
-  <span class="figs"><span>7일 <i>${won(c.s7.cost)}원</i> · 노출 <i>${won(c.s7.imp)}</i> · 클릭 <i>${won(c.s7.clk)}</i></span>${c.all ? `<span>누적 <i>${won(c.all.cost)}원</i> · 클릭 <i>${won(c.all.clk)}</i></span>` : ""}</span></span>
-  <span class="tags">${stPill({ k: c.on ? "run" : "stop", t: c.on ? "켜짐" : "꺼 둠" })}</span></button>`;
-function renderMap(){
-  let h = `<div class="legend" aria-label="색 뜻" style="padding:0 4px">${["run", "stop", "prep", "none"].map(k => `<span><i class="${k}"></i>${STATE[k]}</span>`).join("")}</div>`;
+function trend(b){
+  const days = {}; campsOf(b).forEach(c => (c.daily || []).forEach(d => { const x = days[d.d] || (days[d.d] = { d: d.d, cost: 0, clk: 0, imp: 0 }); x.cost += d.cost; x.clk += d.clk; x.imp += d.imp; }));
+  const L = Object.values(days).sort((x, y) => x.d < y.d ? -1 : 1); if (!L.length) return "";
+  const max = Math.max(0, ...L.map(d => d.cost));
+  return `<h2 style="margin:16px 0 0">최근 14일 · 광고비 막대</h2><div class="bars" role="img" aria-label="최근 14일 하루 광고비">${L.map(d => `<i class="${d.cost ? "" : "zero"}" style="height:${max ? Math.max(2, d.cost / max * 100) : 2}%" title="${esc(d.d)} · ${won(d.cost)}원 · 클릭 ${d.clk} · 노출 ${won(d.imp)}"></i>`).join("")}</div>
+    <div class="barcap"><span>${esc(L[0].d.slice(5))}</span><span>${max ? `최고 ${won(max)}원` : "14일 동안 0원"} · 클릭 ${won(L.reduce((a, d) => a + d.clk, 0))}</span><span>${esc(L[L.length - 1].d.slice(5))}</span></div>`;
+}
+function renderMetrics(){
+  let h = "";
   selBrands().forEach(b => {
-    const camps = campsOf(b).sort((x, y) => (y.on - x.on) || (y.all ? 1 : 0) - (x.all ? 1 : 0));
-    h += `<section class="card"><div class="part"><h2>${esc(b.name)}</h2><small>${esc(b.product || "")}</small></div>${b.note ? `<p class="small muted">${esc(b.note)}</p>` : ""}
-      <div style="margin-top:8px">${chOrder().map(ch => { const st = chState(b, ch), conf = (b.channels || {})[ch] || {};
-        return `<div class="chrow"><b>${esc(chName(ch))}</b><div><div class="btns" style="gap:6px;align-items:center">${stPill(st)}${st.sub ? `<span class="small muted">${esc(st.sub)}</span>` : ""}</div>
-          ${conf.plan ? `<p class="plan" style="margin-top:4px">${esc(conf.plan)}</p>` : ""}${chNums(b, ch)}${taskChips(b, ch)}</div></div>`; }).join("")}</div>
-      ${camps.length ? `<h2 style="margin:14px 0 4px">네이버 캠페인 ${camps.length}</h2><div>${camps.map(campRow).join("")}</div>` : ""}</section>`;
+    const t = totalsOf([b]), cap = maxCpc(b), base = baseTasks(b);
+    h += `<section class="card"><div class="part"><h2>${esc(b.name)}</h2><small>${esc(b.product || "")}</small></div>`;
+    if (!b.plan && !t.camps) { h += `<p class="empty">광고 계획이 없는 브랜드예요. ${esc(b.note || "")}</p></section>`; return; }
+    if (t.camps) h += `<div class="stats">
+        ${statBox("광고비 7일", won(t.s7.cost) + "원", `오늘 ${won(t.today.cost)}원 / 일예산 ${won(t.budget)}원`)}
+        ${statBox("노출 · 클릭 7일", `${won(t.s7.imp)} · ${won(t.s7.clk)}`, `누적 ${won(t.all.imp)} · ${won(t.all.clk)}`)}
+        ${statBox("CTR 7일", ctrTxt(t.s7), `누적 ${ctrTxt(t.all)}`)}
+        ${statBox("CPC 7일", cpcTxt(t.s7), `누적 ${cpcTxt(t.all)}${cap ? ` · 허용 ${won(cap)}원` : ""}`)}
+        ${statBox("평균 순위 7일", t.s7.rank ? t.s7.rank + "위" : "—", `누적 ${t.all.rank || "—"}위`)}
+        ${statBox("누적 광고비", won(t.all.cost) + "원", `켜진 캠페인 ${t.on}/${t.camps}`)}
+      </div>`;
+    if (b.breakeven || b.breakevenNote) h += `<h2 style="margin:16px 0 6px">손익 기준</h2><div class="stats">
+        ${b.price ? statBox("판매가", won(b.price) + "원", "") : ""}${b.margin ? statBox("마진율", b.margin + "%", "손익분기 ACoS") : ""}
+        ${statBox(product(b) ? product(b).metric + " 손익분기" : "손익분기", b.breakeven ? won(b.breakeven) + "원" : "—", b.breakeven ? "" : esc(b.breakevenNote || ""))}
+        ${b.cvr ? statBox("전환율", b.cvr + "%", "가정") : ""}${cap ? statBox("허용 CPC", won(cap) + "원", "손익분기 × 전환율") : ""}</div>${b.cvrNote ? `<p class="small muted" style="margin-top:6px">${esc(b.cvrNote)}</p>` : ""}`;
+    h += `<h2 style="margin:16px 0 6px">매체별 결과</h2>${chTable(b)}`;
+    h += shareBars(b) + trend(b);
+    if (base.length) h += `<h2 style="margin:16px 0 4px">측정 준비 · ${base.filter(x => x.status === "완료").length}/${base.length}</h2><div>${base.map(x => `<a class="row ${x.status === "완료" ? "ok" : x.status === "진행" ? "info" : "none"}" href="../ad/#book/${encodeURIComponent(x.id)}" style="text-decoration:none;color:inherit"><span class="ct"><b>${esc(taskName(x))}</b><span>광고 실습 교과서에서 열기</span></span><span class="tags"><span class="pill">${esc(x.status || "할일")}</span></span></a>`).join("")}</div>`;
+    h += `</section>`;
   });
-  return h;
-}
-/* ── 캠페인 자세히 ── */
-function renderCamp(c){
-  const b = brandOf(c), G = groupsOf(c), K = (NV().keywords || []).filter(k => k.camp === c.id);
-  const ctr = c.all && c.all.imp ? (c.all.clk / c.all.imp * 100).toFixed(2) + "%" : "—", cpc = c.all && c.all.clk ? won(c.all.cost / c.all.clk) + "원" : "—";
-  const days = c.daily || [], max = Math.max(0, ...days.map(d => d.cost));
-  let h = `<div><button type="button" class="back" data-back>← 돌아가기</button></div>
-    <section class="card"><div class="btns" style="gap:6px;align-items:center">${stPill({ k: c.on ? "run" : "stop", t: c.on ? "켜짐" : "꺼 둠" })}<span class="small muted">${esc(b ? b.name : "")} · 네이버</span></div>
-      <h3 style="margin-top:6px">${esc(c.name)}</h3>
-      <p class="small muted">${c.budget ? `일예산 ${won(c.budget)}원 · ` : ""}${esc(since(c))} · 전환추적 ${c.tracking ? "켜짐" : "꺼짐"}</p>
-      <div class="stats">
-        <div class="stat"><span class="k">광고비 7일</span><span class="v">${won(c.s7.cost)}</span><span class="s">원 · 하루 ${won(c.s7.cost / 7)}</span></div>
-        <div class="stat"><span class="k">클릭 7일</span><span class="v">${won(c.s7.clk)}</span><span class="s">노출 ${won(c.s7.imp)}</span></div>
-        ${c.all ? `<div class="stat"><span class="k">누적 광고비</span><span class="v">${won(c.all.cost)}</span><span class="s">원 · CPC ${cpc}</span></div>
-        <div class="stat"><span class="k">누적 클릭</span><span class="v">${won(c.all.clk)}</span><span class="s">노출 ${won(c.all.imp)} · CTR ${ctr}</span></div>` : ""}
-      </div>
-      ${days.length ? `<h2 style="margin:14px 0 0">최근 14일 광고비</h2><div class="bars" role="img" aria-label="최근 14일 하루 광고비">${days.map(d => `<i class="${d.cost ? "" : "zero"}" style="height:${max ? Math.max(2, d.cost / max * 100) : 2}%" title="${esc(d.d)} · ${won(d.cost)}원 · 클릭 ${d.clk}"></i>`).join("")}</div><div class="barcap"><span>${esc((days[0] || {}).d || "")}</span><span>${max ? `최고 ${won(max)}원` : "14일 동안 0원"}</span><span>${esc((days[days.length - 1] || {}).d || "")}</span></div>` : ""}
-      <div class="btns" style="margin-top:14px">${askBtn(`광고 한눈에 — ${b ? b.name : ""} 네이버 「${c.name}」 캠페인을 점검해 줘: 지금 상태·노출 추이·광고그룹별로 손볼 곳.` + ASK_TAIL(), "✦ Brainy와 이 캠페인 조율", "primary")}</div></section>`;
-  if (G.length) h += `<section class="card"><h2>광고그룹 ${G.length}</h2>${G.map(g => {
-      const ks = K.filter(k => k.group === g.id), J = ks.map(k => judgeKw(k, b).code), cnt = code => J.filter(x => x === code).length;
-      return `<div class="row ${!g.on || !c.on ? "stop" : cnt("stop") ? "high" : cnt("watch") || cnt("core") ? "mid" : "run"}"><div class="ct"><b>${esc(g.name)}</b>
-        <span>입찰 ${won(g.bid)}원 · ${c.type === "SHOPPING" ? "쇼핑검색이라 키워드 없음" : `키워드 ${ks.length}개`}${cnt("stop") ? ` · 정지 후보 ${cnt("stop")}` : ""}${cnt("watch") ? ` · 조정 구간 ${cnt("watch")}` : ""}</span>
-        <span class="figs"><span>누적 광고비 <i>${won(g.all.cost)}원</i> · 클릭 <i>${won(g.all.clk)}</i> · 노출 <i>${won(g.all.imp)}</i></span></span></div>
-        <div class="tags">${stPill(!c.on ? { k: "stop", t: "캠페인 꺼짐" } : { k: g.on ? "run" : "stop", t: g.on ? "켜짐" : "꺼 둠" })}</div></div>`; }).join("")}</section>`;
-  else if (!c.all) h += `<section class="card"><p class="empty">오래 꺼 둔 캠페인이라 광고그룹·키워드는 받지 않았어요.</p></section>`;
+  const G = PLAN().glossary || [];
+  if (G.length) h += `<section class="card"><details class="fold"><summary><h2>지표 용어 ${G.length}</h2></summary><ul class="plain">${G.map(g => `<li><b>${esc(g.term)}</b> — ${esc(g.desc)}</li>`).join("")}</ul><p class="small muted" style="margin-top:6px">정본: 광고 실습 계획 용어</p></details></section>`;
   return h;
 }
 
-/* ── 「판정」 탭 — 네이버 키워드마다 누적 클릭 판정 (build.py 가 ads.html 에 끼움) ──
-   셈법은 ads-calc.js judgeKw(): 기준 숫자(조정·정지)는 hub.rules, 대표 키워드는 brand.coreKeywords.
-   거르기(S.filt): act 손볼 것(정지 후보·대표·조정 구간·전환 있음) · all 전체 · 판정 이름 하나. 막대 = 누적 클릭, 눈금 = 조정·정지 */
-const JF = [["act", "손볼 것"], ["stop", KJ.stop.name], ["core", KJ.core.name], ["watch", KJ.watch.name], ["win", KJ.win.name], ["wait", KJ.wait.name], ["off", KJ.off.name], ["all", "전체"]];
-const keepJ = code => S.filt === "all" ? true : S.filt === "act" ? ["stop", "core", "watch", "win"].includes(code) : code === S.filt;
+/* ── 「조율」 탭 — 캠페인 → 광고그룹 → 키워드를 보며 바로 바꾼다 (build.py 가 ads.html 에 끼움) ──
+   바꿀 수 있는 것: 켜기·끄기 · 입찰가(그룹·키워드) · 일예산(캠페인). 누르면 한 줄 확인 → ah.req 요청 → 맥이 limits·허용 CPC 안에서 적용 (ads-req.js).
+   키워드 거르기(S.kf): act 손볼 것(판정 대상·품질 낮음·상한 넘음) · live 켜진 것 · qlow 품질지수 1~2 · over 허용 CPC 넘음 · 판정 이름 · all 전체. S.grp = 광고그룹 하나만. */
+const KF = [["act", "손볼 것"], ["live", "켜진 것"], ["qlow", "품질 낮음"], ["over", "상한 넘음"], ["stop", KJ.stop.name], ["watch", KJ.watch.name], ["wait", KJ.wait.name], ["off", KJ.off.name], ["all", "전체"]];
+function keepK(x, b){
+  const f = S.kf, cap = maxCpc(b), live = x.j.code !== "off";
+  if (S.grp && x.k.group !== S.grp) return false;
+  if (f === "all") return true;
+  if (f === "live") return live;
+  if (f === "qlow") return live && x.k.qi && x.k.qi <= 2;
+  if (f === "over") return live && cap && x.k.bid > cap;
+  if (f === "act") return ["stop", "core", "watch", "win"].includes(x.j.code) || (live && ((x.k.qi && x.k.qi <= 2) || (cap && x.k.bid > cap)));
+  return x.j.code === f;
+}
+function budgetCtl(c, b){
+  const L = LIM(), step = 1000, lo = L.budgetMin || 1000, hi = L.budgetMax || 0, cur = c.budget || 0;
+  const base = { kind: "budget", type: "campaign", id: c.id, name: c.name, brand: b.id, from: cur };
+  return `<span class="ctl">${rqBtn({ ...base, to: Math.max(lo, cur - step) }, "−1,000")}<input class="bidin" type="number" inputmode="numeric" min="${lo}" max="${hi}" step="${step}" value="${cur}" aria-label="${esc(c.name)} 일예산" data-bidin="${RQ.length}">${rqBtn({ ...base, to: cur }, "적용")}${rqBtn({ ...base, to: Math.min(hi, cur + step) }, "+1,000")}</span>
+    <span class="small muted">일예산 ${won(lo)}~${won(hi)}원 안에서 (상한은 볼트 정본)</span>`;
+}
+function campCard(c, b){
+  const G = groupsOf(c);
+  return `<section class="card"><div class="btns" style="gap:6px;align-items:center">${stPill({ k: c.on ? "run" : "stop", t: c.on ? "켜짐" : "꺼 둠" })}${pendTag("campaign", c.id)}</div>
+    <h3 style="margin-top:6px">${esc(c.name)}</h3>
+    <p class="small muted">${c.type === "SHOPPING" ? "쇼핑검색" : c.type === "POWER_CONTENTS" ? "파워콘텐츠" : "파워링크"} · ${esc(since(c))} · 전환추적 ${c.tracking ? "켜짐" : "꺼짐"}</p>
+    <div class="figs" style="margin-top:4px"><span>7일 광고비 <i>${won(c.s7.cost)}원</i></span><span>노출 <i>${won(c.s7.imp)}</i></span><span>클릭 <i>${won(c.s7.clk)}</i></span><span>CTR <i>${ctrTxt(c.s7)}</i></span><span>CPC <i>${cpcTxt(c.s7)}</i></span>${c.today ? `<span>오늘 <i>${won(c.today.cost)}원</i></span>` : ""}</div>
+    <div class="ctlrow"><span class="lbl">캠페인</span>${onBtn("campaign", c, b)}</div>
+    ${c.budget != null ? `<div class="ctlrow"><span class="lbl">일예산</span>${budgetCtl(c, b)}</div>` : ""}
+    ${G.length ? `<h2 style="margin:14px 0 4px">광고그룹 ${G.length}</h2>${G.map(g => { const ks = (NV().keywords || []).filter(k => k.group === g.id);
+      return `<div class="row ${!g.on || !c.on ? "stop" : "ok"}"><div class="ct"><b>${esc(g.name)}</b>
+        <span>${c.type === "SHOPPING" ? "쇼핑검색이라 키워드 없음" : `키워드 ${ks.length}개`} · 입찰 ${won(g.bid)}원${!c.on ? " · 캠페인 꺼짐" : ""}</span>
+        <span class="figs"><span>7일 노출 <i>${won(g.s7 ? g.s7.imp : 0)}</i> · 클릭 <i>${won(g.s7 ? g.s7.clk : 0)}</i> · CTR <i>${ctrTxt(g.s7)}</i></span><span>누적 <i>${won(g.all.cost)}원</i> · 클릭 <i>${won(g.all.clk)}</i> · CPC <i>${cpcTxt(g.all)}</i></span></span>
+        ${pendTag("group", g.id)}
+        <div class="ctlrow">${bidCtl("group", g, b, g.bid || 0)}${onBtn("group", g, b)}${ks.length ? `<button type="button" class="btn sm" data-grp="${esc(g.id)}">키워드 보기</button>` : ""}</div></div>
+        <div class="tags">${stPill(!c.on ? { k: "stop", t: "캠페인 꺼짐" } : { k: g.on ? "run" : "stop", t: g.on ? "켜짐" : "꺼 둠" })}</div></div>`; }).join("")}` : ""}
+  </section>`;
+}
 function kwRow(x, b){
-  const k = x.k, j = x.j, R = rules(), g = groupBy(k.group), scale = Math.max(R.stop * 1.2, k.all.clk), info = KJ[j.code];
+  const k = x.k, j = x.j, R = rules(), g = groupBy(k.group), cap = maxCpc(b), scale = Math.max(R.stop * 1.2, k.all.clk), info = KJ[j.code];
   const note = j.code === "wait" ? `조정 기준(${R.adjust}클릭)까지 ${j.left}클릭 남음` : j.code === "watch" ? `정지 기준(${R.stop}클릭)까지 ${j.left}클릭 남음` : info.how;
   return `<div class="row ${info.lv || (j.code === "off" ? "none" : "")}"><div class="ct">
-    <b>${esc(k.kw)}</b><span>${esc(g ? g.name : "")} · 입찰 ${won(k.bid)}원${k.inspect && k.inspect !== "APPROVED" ? " · 검수 " + esc(k.inspect) : ""}</span>
-    <span class="figs"><span>클릭 <i>${won(k.all.clk)}</i></span><span>광고비 <i>${won(k.all.cost)}원</i></span><span>노출 <i>${won(k.all.imp)}</i></span>${k.all.rank ? `<span>순위 <i>${k.all.rank}</i></span>` : ""}${k.all.conv ? `<span>전환 <i>${k.all.conv}</i></span>` : ""}</span>
+    <b>${esc(k.kw)}</b><span>${esc(g ? g.name : "")} · 입찰 ${won(k.bid)}원${k.groupBid ? "(그룹 값)" : ""}${cap && k.bid > cap ? ` · <span style="color:var(--s-bad)">허용 ${won(cap)}원 넘음</span>` : ""}${k.qi ? ` · 품질지수 ${k.qi}/7` : ""}${k.inspect && k.inspect !== "APPROVED" ? " · 검수 " + esc(k.inspect) : ""}</span>
+    <span class="figs"><span>7일 노출 <i>${won(k.s7 ? k.s7.imp : 0)}</i> · 클릭 <i>${won(k.s7 ? k.s7.clk : 0)}</i> · CTR <i>${ctrTxt(k.s7)}</i></span><span>누적 클릭 <i>${won(k.all.clk)}</i> · 광고비 <i>${won(k.all.cost)}원</i> · CPC <i>${cpcTxt(k.all)}</i>${k.all.rank ? ` · 순위 <i>${k.all.rank}</i>` : ""}</span></span>
     ${j.code !== "off" ? `<div class="meter" aria-hidden="true"><i style="width:${Math.min(100, k.all.clk / scale * 100)}%"></i><b style="left:${R.adjust / scale * 100}%"></b><b style="left:${R.stop / scale * 100}%"></b></div>` : ""}
-    <span style="margin-top:4px">${esc(note)}</span></div>
+    <span style="margin-top:4px">${esc(note)}</span>${pendTag("keyword", k.id)}
+    <div class="ctlrow">${bidCtl("keyword", k, b, k.bid || 0)}${onBtn("keyword", k, b)}</div></div>
     <div class="tags"><span class="pill ${info.lv}">${esc(info.name)}</span></div></div>`;
 }
-function renderJudge(){
-  const R = rules(), list = selBrands().filter(b => kwsOf(b).length);
-  const J = list.flatMap(b => kwsOf(b).map(k => ({ k, b, j: judgeKw(k, b) })));
-  const cnt = f => J.filter(x => f === "all" ? true : f === "act" ? ["stop", "core", "watch", "win"].includes(x.j.code) : x.j.code === f).length;
-  let h = `<div><div class="filt" role="group" aria-label="판정 거르기">${JF.map(([f, t]) => `<button type="button" class="chip ${S.filt === f ? "on" : ""}" data-filt="${f}" aria-pressed="${S.filt === f}">${esc(t)}<b>${cnt(f)}</b></button>`).join("")}</div>
-    <p class="small muted" style="margin-top:6px;padding:0 4px">켠 날부터 쌓인 클릭으로 판정해요 — ${R.adjust}번이면 조정, ${R.stop}번에 전환 0이면 정지. 대표 키워드는 끄지 않아요. 막대의 눈금 두 개가 ${R.adjust}·${R.stop}이에요.</p></div>`;
-  if (!list.length) return h + `<section class="card"><p class="empty">고른 브랜드에 네이버 키워드가 없어요.</p></section>`;
-  const LIM = 40;
+function renderControl(){
+  const list = selBrands().filter(b => campsOf(b).length);
+  if (!list.length) return `<section class="card"><p class="empty">고른 브랜드에 네이버 캠페인이 없어요. 메타·구글은 아직 이 앱에서 바꿀 수 없어요 — 광고 관리자에서 직접.</p></section>`;
+  let h = `<p class="small muted" style="padding:0 4px">누르면 한 줄로 확인한 뒤 요청을 남기고, 맥이 네이버에 적용해요(1분 안). 입찰은 ${won(LIM().bidMin || 70)}원~허용 CPC, 일예산은 ${won(LIM().budgetMin || 1000)}~${won(LIM().budgetMax || 0)}원 안에서만 돼요. 적용한 것은 기록 탭에서 되돌릴 수 있어요.</p>`;
   list.forEach(b => {
-    const L = J.filter(x => x.b === b && keepJ(x.j.code)).sort((x, y) => KJ_ORDER.indexOf(x.j.code) - KJ_ORDER.indexOf(y.j.code) || y.k.all.clk - x.k.all.clk || y.k.all.imp - x.k.all.imp);
-    /* 손볼 것이 0이면 빈 칸 대신 판정에 가장 가까운 키워드(클릭 많은 순 10개)를 보여 준다 */
-    if (S.filt === "act" && !L.length) {
-      const near = J.filter(x => x.b === b && x.j.code === "wait").sort((x, y) => y.k.all.clk - x.k.all.clk).slice(0, 10);
-      h += `<section class="card"><div class="part"><h2>${esc(b.name)}</h2><small>손볼 것 0</small></div>
-        <p class="small muted" style="margin-bottom:6px">아직 ${R.adjust}클릭을 넘은 켜진 키워드가 없어요 — 판정에 가장 가까운 ${near.length}개예요.</p>${near.map(x => kwRow(x, b)).join("")}</section>`;
-      return;
-    }
-    const shown = S.kwMore ? L : L.slice(0, LIM);
-    h += `<section class="card"><div class="part"><h2>${esc(b.name)}</h2><small>${L.length}개</small></div>
-      ${L.length ? shown.map(x => kwRow(x, b)).join("") + (L.length > shown.length ? `<button type="button" class="more" data-kwmore>나머지 ${L.length - shown.length}개 더 보기</button>` : "") : `<p class="empty">이 거르기에 맞는 키워드가 없어요.</p>`}
-      ${L.length && S.filt !== "off" && S.filt !== "wait" ? `<div class="btns" style="margin-top:10px">${askBtn(`광고 한눈에 — ${b.name} 네이버: 판정 탭 「${(JF.find(f => f[0] === S.filt) || [])[1]}」 키워드 ${L.length}개를 기준대로 볼게. 손볼 순서와 조정안을 줘. 목록: ${L.slice(0, 25).map(x => `${x.k.kw}(클릭 ${x.k.all.clk}·${won(x.k.all.cost)}원·${KJ[x.j.code].name})`).join(", ")}${L.length > 25 ? " …" : ""}.` + ASK_TAIL(), "✦ 이 목록으로 Brainy와 조율")}</div>` : ""}</section>`;
+    const C = campsOf(b), on = C.filter(c => c.on), off = C.filter(c => !c.on);
+    h += on.map(c => campCard(c, b)).join("");
+    if (off.length) h += `<section class="card"><details class="fold"><summary><h2>${esc(b.short || b.name)} · 꺼 둔 캠페인 ${off.length}</h2></summary>${off.map(c => `<div class="row stop"><div class="ct"><b>${esc(c.name)}</b><span>${esc(since(c))}${c.budget ? ` · 일예산 ${won(c.budget)}원` : ""}</span>${pendTag("campaign", c.id)}<div class="ctlrow">${onBtn("campaign", c, b)}</div></div></div>`).join("")}</details></section>`;
+    const J = kwsOf(b).map(k => ({ k, j: judgeKw(k, b) }));
+    if (!J.length) return;
+    const cnt = f => { const k = S.kf; S.kf = f; const n = J.filter(x => keepK(x, b)).length; S.kf = k; return n; };
+    const L = J.filter(x => keepK(x, b)).sort((x, y) => KJ_ORDER.indexOf(x.j.code) - KJ_ORDER.indexOf(y.j.code) || y.k.all.clk - x.k.all.clk || (y.k.s7 ? y.k.s7.imp : 0) - (x.k.s7 ? x.k.s7.imp : 0));
+    const shown = S.kwMore ? L : L.slice(0, 30), g = S.grp && groupBy(S.grp);
+    h += `<section class="card"><div class="part"><h2>${esc(b.short || b.name)} · 키워드</h2><small>${L.length}개</small></div>
+      ${g ? `<p class="small" style="margin-bottom:6px">광고그룹 「${esc(g.name)}」만 <button type="button" class="linkbtn" data-grp="">모든 그룹 보기</button></p>` : ""}
+      <div class="filt" role="group" aria-label="키워드 거르기">${KF.map(([f, t]) => `<button type="button" class="chip ${S.kf === f ? "on" : ""}" data-kf="${f}" aria-pressed="${S.kf === f}">${esc(t)}<b>${cnt(f)}</b></button>`).join("")}</div>
+      <p class="small muted" style="margin:6px 0">판정은 켠 날부터 쌓인 클릭으로 — ${rules().adjust}번이면 조정, ${rules().stop}번에 전환 0이면 정지. 막대의 눈금 두 개가 ${rules().adjust}·${rules().stop}.</p>
+      ${L.length ? shown.map(x => kwRow(x, b)).join("") + (L.length > shown.length ? `<button type="button" class="more" data-kwmore>나머지 ${L.length - shown.length}개 더 보기</button>` : "")
+        : S.kf === "act" ? `<p class="empty">손볼 키워드가 없어요 — 아직 ${rules().adjust}클릭을 넘은 것이 없고, 품질지수·입찰 상한도 괜찮아요. 「켜진 것」에서 하나씩 볼 수 있어요.</p>` : `<p class="empty">이 거르기에 맞는 키워드가 없어요.</p>`}
+      ${L.length && S.kf !== "off" ? `<div class="btns" style="margin-top:10px">${askBtn(`광고 한눈에 — ${b.name} 네이버: 조율 탭 「${(KF.find(f => f[0] === S.kf) || [])[1]}」 키워드 ${L.length}개. 손볼 순서와 조정안을 줘. 목록: ${L.slice(0, 25).map(x => `${x.k.kw}(누적 클릭 ${x.k.all.clk}·${won(x.k.all.cost)}원·입찰 ${x.k.bid}·품질 ${x.k.qi || "?"}·${KJ[x.j.code].name})`).join(", ")}${L.length > 25 ? " …" : ""}.` + ASK_TAIL(), "✦ 이 목록으로 Brainy와 조율", "sm")}</div>` : ""}</section>`;
   });
   return h;
 }
 
-/* ── 「기록」 탭 — 바꾼 것 · 판정 기준 · 숫자 출처 (build.py 가 ads.html 에 끼움) ──
-   변경 기록 정본은 볼트 광고 한눈에.json 의 changes (Brainy가 적용한 뒤 한 줄씩 위에 더함). 기준 글은 hub.rules.lines. */
+/* ── 「기록」 탭 — 조율 요청 · 바꾼 것 · 판정 기준 · 숫자 출처 (build.py 가 ads.html 에 끼움) ──
+   요청은 ah.req (앱이 남기고 맥이 적용 · 하루 지나면 맥이 지움). 바꾼 것 정본은 볼트 광고 한눈에.json 의 changes.
+   되돌리기 = 적용된 요청의 before 값으로 새 요청 (한 줄 확인 뒤). */
 function renderLog(){
   const ids = new Set(selBrands().map(b => b.id)), C = (D.hub.changes || []).filter(c => ids.has(c.brand));
-  const nv = NV(), st = D.store || {}, o = storeOrders(selBrands()), R = rules();
-  let h = `<section class="card"><h2>바꾼 것 · ${C.length}</h2>${C.length ? C.map(c => { const b = brands().find(x => x.id === c.brand);
+  const Q = Object.entries(REQ).filter(([, q]) => ids.has(q.brand)).sort((a, b) => (b[1].at || "") < (a[1].at || "") ? -1 : 1);
+  const nv = NV(), o = storeOrders(selBrands()), R = rules();
+  let h = "";
+  if (Q.length) h += `<section class="card"><h2>조율 요청 · ${Q.length}</h2>${Q.map(([id, q]) => `<div class="row ${q.status === "적용" ? "ok" : q.status === "실패" ? "bad" : "info"}"><div class="ct">
+      <b>${esc(q.name)} — ${REQ_WORD[q.kind]} ${q.before != null || q.from != null ? reqFmt(q.kind, q.before ?? q.from) + " → " : ""}${reqFmt(q.kind, q.to)}</b>
+      <span>${esc((q.at || "").slice(5, 16).replace("T", " "))} 요청${q.done ? " · " + esc(q.done.slice(5, 16).replace("T", " ")) + " " + esc(q.status) : ""}</span>
+      ${q.status === "실패" ? `<p class="why">${esc(q.error || "")}</p>` : q.status === "요청" ? `<p class="why">맥이 적용하기를 기다려요 (맥이 꺼져 있으면 켜질 때).</p>` : ""}
+      ${q.status === "적용" && q.before != null ? `<div class="btns act">${rqBtn({ kind: q.kind, type: q.type, id: q.id, name: q.name, brand: q.brand, from: q.to, to: q.before, why: "되돌리기" }, "되돌리기", "sm")}</div>` : ""}
+    </div><div class="tags"><span class="pill ${q.status === "적용" ? "ok" : q.status === "실패" ? "bad" : "info"}">${esc(q.status)}</span></div></div>`).join("")}
+    <p class="small muted" style="margin-top:8px">끝난 요청은 하루 뒤 이 목록에서 빠지고, 아래 「바꾼 것」에 남아요.</p></section>`;
+  h += `<section class="card"><h2>바꾼 것 · ${C.length}</h2>${C.length ? C.map(c => { const b = brands().find(x => x.id === c.brand);
       return `<div class="logline"><span class="d">${esc(c.d)}</span><div><b style="font-weight:600">${esc(c.t)}</b><p class="small muted">${esc((b ? (b.short || b.name) + " · " : "") + chName(c.ch))}${c.why ? " — " + esc(c.why) : ""}</p></div></div>`; }).join("") : `<p class="empty">이 브랜드는 아직 바꾼 기록이 없어요.</p>`}
-    <p class="small muted" style="margin-top:8px">Brainy가 승인받아 적용하면 볼트 「광고 한눈에.json」에 한 줄씩 더해요.</p></section>`;
+    <p class="small muted" style="margin-top:8px">앱에서 바꾼 것은 맥이, Brainy가 바꾼 것은 Brainy가 볼트 「광고 한눈에.json」에 한 줄씩 더해요.</p></section>`;
   if (selBrands().some(b => b.plan)) h += `<section class="card"><h2>판정 기준</h2><ul class="plain">${(R.lines || []).map(l => `<li>${esc(l)}</li>`).join("")}</ul>${R.doc ? `<p class="small muted" style="margin-top:8px">정본: 볼트 ${esc(R.doc)}</p>` : ""}</section>`;
   h += `<section class="card"><h2>숫자 출처</h2>
-    <div class="row ${nv.ok ? "run" : "high"}"><div class="ct"><b>네이버 검색광고</b><span>${nv.ok ? `${ago(nv.at)} 받음 · 캠페인 ${(nv.campaigns || []).length} · 광고그룹 ${(nv.groups || []).length} · 키워드 ${(nv.keywords || []).length}` : "못 받음 — " + esc(nv.error || "")}</span><span>맥이 30분마다 API에서 받아요 (읽기만). 누적은 캠페인 켠 날부터, 92일까지.</span></div></div>
-    ${o.none ? "" : `<div class="row ${o.ok ? "run" : "mid"}"><div class="ct"><b>스마트스토어 주문</b><span>${o.ok ? `${ago(o.at)} 받음 · ${esc(o.period || "")} 주문 ${won(o.n)}건 · ${won(o.amount)}원` : "연결 안 됨"}</span><span>${o.ok ? o.products.slice(0, 3).map(p => esc(p.name) + " " + p.qty + "개").join(" · ") : esc(storeWhy(o.err))}</span></div></div>`}
-    <div class="row ${Object.keys((D.metrics || {}).values || {}).length ? "run" : "none"}"><div class="ct"><b>메타 · 구글</b><span>${Object.keys((D.metrics || {}).values || {}).length ? "주간 통합 리뷰 숫자" : "아직 숫자 없음 — 두 매체 모두 준비 단계"}</span><span>정본: 볼트 광고 실습 계획.json metrics (주간 통합 리뷰가 채움)</span></div></div>
-    <p class="small muted" style="margin-top:8px">브랜드·매체 상태·기준·기록 정본: 볼트 4_Outputs/광고 한눈에 앱/광고 한눈에.json · 화면 갱신 ${ago(D.updatedAt)}</p></section>`;
+    <div class="row ${nv.ok ? "ok" : "bad"}"><div class="ct"><b>네이버 검색광고</b><span>${nv.ok ? `${ago(nv.at)} 받음 · 캠페인 ${(nv.campaigns || []).length} · 광고그룹 ${(nv.groups || []).length} · 키워드 ${(nv.keywords || []).length}` : "못 받음 — " + esc(nv.error || "")}</span><span>맥이 30분마다 API에서 받아요(바꾼 직후엔 바로). 누적은 캠페인 켠 날부터, 최대 92일. 오래 꺼 둔 캠페인은 광고그룹·키워드를 받지 않아요.</span></div></div>
+    ${o.none ? "" : `<div class="row ${o.ok ? "ok" : "warn"}"><div class="ct"><b>스마트스토어 주문</b><span>${o.ok ? `${ago(o.at)} 받음 · ${esc(o.period || "")} 주문 ${won(o.n)}건 · ${won(o.amount)}원` : "미연결"}</span><span>${o.ok ? o.products.slice(0, 3).map(p => esc(p.name) + " " + p.qty + "개").join(" · ") : esc(storeWhy(o.err))}</span></div></div>`}
+    <div class="row ${Object.keys((D.metrics || {}).values || {}).length ? "ok" : "none"}"><div class="ct"><b>메타 · 구글 · 이벤트랩 결과</b><span>${Object.keys((D.metrics || {}).values || {}).length ? "주간 통합 리뷰 숫자" : "아직 숫자 없음 — 두 매체 모두 준비 단계"}</span><span>정본: 볼트 광고 실습 계획.json metrics (주간 통합 리뷰가 채움)</span></div></div>
+    <p class="small muted" style="margin-top:8px">브랜드·기준·바꿀 수 있는 범위(limits) 정본: 볼트 4_Outputs/광고 한눈에 앱/광고 한눈에.json · 화면 갱신 ${ago(D.updatedAt)}</p></section>`;
   return h;
 }
 
@@ -659,54 +808,63 @@ function renderHead(){
   const seg = document.getElementById("brands"), sum = document.getElementById("sum");
   if (!D) { seg.innerHTML = ""; sum.innerHTML = ""; return; }
   const all = [{ id: "all", name: "전체" }].concat(brands());
-  seg.innerHTML = all.map(b => { const n = todosOf(b.id === "all" ? brands() : [b]).filter(t => t.lv === "high").length; return `<button type="button" role="tab" aria-selected="${S.bid === b.id}" class="${S.bid === b.id ? "on" : ""}" data-brand="${b.id}">${esc(b.short || b.name)}${n ? `<span class="hot">급함 ${n}</span>` : ""}</button>`; }).join("");
-  const t = totalsOf(selBrands()), ord = storeOrders(selBrands());
+  seg.innerHTML = all.map(b => { const n = checksOf(b.id === "all" ? brands() : [b]).filter(t => t.lv === "bad").length; return `<button type="button" role="tab" aria-selected="${S.bid === b.id}" class="${S.bid === b.id ? "on" : ""}" data-brand="${b.id}">${esc(b.short || b.name)}${n ? `<span class="hot">문제 ${n}</span>` : ""}</button>`; }).join("");
+  const L = selBrands(), t = totalsOf(L), ord = storeOrders(L), C = checksOf(L), bad = C.filter(x => x.lv === "bad").length, warn = C.filter(x => x.lv === "warn").length;
+  const cap = L.length === 1 ? maxCpc(L[0]) : null, cpc = cpcOf(t.s7);
   sum.innerHTML = [
-    ["", "map", wonK(t.cost7), "광고비 7일"],
-    ["", "map", won(t.clk7), "클릭 7일"],
-    ["", "map", wonK(t.costAll), "광고비 누적"],
-    [ord.ok && ord.n === 0 && t.clkAll >= rules().adjust ? "bad" : "", "log", ord.ok ? won(ord.n) : "—", ord.none ? "주문 (스토어 없음)" : ord.ok ? "주문 28일" : "주문 미연결"],
-    ["", "map", `${t.on}<small>/${t.camps}</small>`, "켜진 캠페인"]
+    ["", "metrics", wonK(t.s7.cost), "광고비 7일"],
+    ["", "metrics", ctrTxt(t.s7), "CTR 7일"],
+    [cap && cpc > cap ? "bad" : "", "metrics", cpc == null ? "—" : won(cpc), cap ? `CPC · 허용 ${won(cap)}` : "CPC 7일"],
+    [ord.ok && ord.n === 0 && t.all.clk >= (rules().adjust || 0) ? "bad" : "", "metrics", ord.ok ? won(ord.n) : "—", ord.none ? "주문 (스토어 없음)" : ord.ok ? "주문 28일" : "주문 미연결"],
+    [bad ? "bad" : "", "now", `${bad}<small> · 주의 ${warn}</small>`, "점검 문제"]
   ].map(([k, v, val, label]) => `<button type="button" class="${k}" data-go="${v}" aria-label="${label} ${String(val).replace(/<[^>]+>/g, "")}"><b>${val}</b><span>${label}</span></button>`).join("");
   const on = seg.querySelector(".on");
   if (on && (on.offsetLeft < seg.scrollLeft || on.offsetLeft + on.offsetWidth > seg.scrollLeft + seg.clientWidth)) seg.scrollLeft = on.offsetLeft - 8;
   segMore();
-  const high = todosOf(selBrands()).filter(x => x.lv === "high").length;
-  document.querySelector('#tabbar a[data-v="now"]').innerHTML = `<span aria-hidden="true">▶</span>지금${high ? `<em aria-label="급한 일 ${high}개">${high}</em>` : ""}`;
+  document.querySelector('#tabbar a[data-v="now"]').innerHTML = `<span aria-hidden="true">✓</span>점검${bad ? `<em aria-label="문제 ${bad}개">${bad}</em>` : ""}`;
 }
 
 /* ── 화면 고르기 ── */
-const view = () => { const v = (location.hash || "#now").slice(1); return ["now", "map", "judge", "log", "camp"].includes(v) ? v : "now"; };
+const view = () => { const v = (location.hash || "#now").slice(1); return ["now", "metrics", "control", "log"].includes(v) ? v : "now"; };
 function render(){
-  ASKS.length = 0;
-  let v = view();
-  if (v === "camp" && !(D && campBy(S.camp))) v = "map";
-  document.querySelectorAll("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v || (v === "camp" && a.dataset.v === S.from)));
+  const ae = document.activeElement;
+  if (ae && ae.classList && ae.classList.contains("bidin")) { render.later = true; return; }   // 입찰·예산 칸에 쓰는 중이면 다시 그리지 않는다
+  render.later = false;
+  ASKS.length = 0; RQ.length = 0;
+  const v = view();
+  document.querySelectorAll("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v));
   renderHead();
   const main = document.getElementById("view");
   if (!D) { main.innerHTML = `<section class="card"><p class="empty">${loaded ? "광고 데이터가 아직 없어요.<br>맥의 동기화가 볼트 「광고 한눈에.json」과 네이버 광고 숫자를 올리면 여기에 보여요." : "광고 숫자를 불러오는 중이에요…"}</p></section>`; return; }
-  main.innerHTML = v === "map" ? renderMap() : v === "judge" ? renderJudge() : v === "log" ? renderLog() : v === "camp" ? renderCamp(campBy(S.camp)) : renderNow();
+  main.innerHTML = v === "metrics" ? renderMetrics() : v === "control" ? renderControl() : v === "log" ? renderLog() : renderNow();
 }
-function setBrand(id){ S.bid = id; lsPut("ah.bid", id); S.kwMore = false; if (view() === "camp") location.hash = S.from || "map"; else render(); window.scrollTo(0, 0); }
-function openCamp(id){ const v = view(); if (v !== "camp") S.from = v; S.camp = id; if (v === "camp") { render(); window.scrollTo(0, 0); } else location.hash = "camp"; }
+document.addEventListener("focusout", e => { if (e.target.classList && e.target.classList.contains("bidin")) setTimeout(() => { if (render.later) render(); }, 200); });
+function setBrand(id){ S.bid = id; lsPut("ah.bid", id); S.kwMore = false; S.grp = ""; render(); window.scrollTo(0, 0); }
+function goControl(bid, filt){ if (bid && S.bid !== "all" && S.bid !== bid) { S.bid = bid; lsPut("ah.bid", bid); } S.kf = filt || "act"; S.grp = ""; S.kwMore = false; if (view() === "control") { render(); window.scrollTo(0, 0); } else location.hash = "control"; }
 
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-brand],[data-go],[data-ask],[data-camp],[data-filt],[data-back],[data-kwmore],[data-jf]");
+  const t = e.target.closest("[data-brand],[data-go],[data-ask],[data-rq],[data-cf],[data-kf],[data-grp],[data-goctl],[data-kwmore]");
   if (!t) return;
   const d = t.dataset;
   if (d.brand) return setBrand(d.brand);
   if (d.ask !== undefined) { const s = ASKS[+d.ask]; if (s) brainy(s); return; }
-  if (d.camp) return openCamp(d.camp);
-  if (d.jf) { S.filt = d.jf; S.kwMore = false; if (view() === "judge") render(); else location.hash = "judge"; return; }
+  if (d.rq !== undefined) {
+    const q = Object.assign({}, RQ[+d.rq]); if (!q.kind) return;
+    const inp = document.querySelector(`.bidin[data-bidin="${d.rq}"]`);
+    if (inp) { const v = Math.round(Number(inp.value)); if (!isFinite(v) || v <= 0) { toast("숫자를 넣어 주세요."); return; } if (v === q.from) { toast("지금 값과 같아요."); return; } q.to = v; }
+    return sendReq(q);
+  }
+  if (d.goctl !== undefined) return goControl(d.goctl, d.gf);
   if (d.go) { if (view() === d.go) window.scrollTo(0, 0); else location.hash = d.go; return; }
-  if (d.filt) { S.filt = d.filt; S.kwMore = false; render(); return; }
+  if (d.cf) { S.cf = d.cf; render(); return; }
+  if (d.kf) { S.kf = d.kf; S.kwMore = false; render(); return; }
+  if (d.grp !== undefined) { S.grp = d.grp; S.kf = d.grp ? "all" : "act"; S.kwMore = false; render(); if (d.grp) { const c = document.querySelector('[data-kf="all"]'); if (c) c.closest(".card").scrollIntoView({ block: "start" }); } return; }
   if (d.kwmore !== undefined) { S.kwMore = true; render(); return; }
-  if (d.back !== undefined) { location.hash = S.from || "map"; return; }
 });
 window.addEventListener("hashchange", () => { window.scrollTo(0, 0); render(); });
 
 /* 다른 앱(Brainy 연결)이 쓰는 창구 */
-window.ADS_APP = { data: () => D, tasks: () => AD, view, selBrands, todosOf, rules, judgeKw, campsOf, kwsOf, brandOf, chState, totalsOf, storeOrders, setBrand, openCamp };
+window.ADS_APP = { data: () => D, tasks: () => AD, view, selBrands, checksOf, rules, judgeKw, campsOf, kwsOf, brandOf, chState, totalsOf, storeOrders, maxCpc, setBrand, goControl, requests: () => REQ };
 
 /* ── 시작 ── */
 async function init(){
@@ -717,6 +875,7 @@ async function init(){
   if (!db) { loaded = true; render(); return; }
   db.doc("ah.data/main").onSnapshot(s => { loaded = true; const v = s.exists ? s.data() : null; if (v && v.hub) D = v; render(); }, () => { loaded = true; render(); });
   db.doc("ad.data/main").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.tasks)) { AD = v; render(); } }, () => {});
+  reqListen(db);
 }
 init();
 </script>
@@ -729,7 +888,7 @@ init();
   function norm(s) { return String(s || "").replace(/\s+/g, "").toLowerCase(); }
   window.BRAINY_HOOK = {
     mode: function () { return { where: "mac", cloud: false }; },
-    chips: ["오늘 광고에서 손댈 것 순서대로 정리해 줘", "브랜드별 광고비·결과를 표로 비교해 줘", "이 앱에서 ○○ 고쳐 줘"],
+    chips: ["점검표의 문제부터 순서대로 조정안 줘", "브랜드별 광고비·CTR·CPC를 표로 비교해 줘", "이 앱에서 ○○ 고쳐 줘"],
     rules: function () {
       return ["[광고 한눈에 — 모든 브랜드의 광고를 파악하고 조율한다 (2026-11-28 동욱)]",
         "- 판단 전에 볼트 기준 문서를 먼저 읽는다: `2_LLMWiki/wiki/기업/광고 손익분기와 표본 기준.md` · `3_Action/33_카드/C-진액 키워드 광고 집행 기획.md` · `3_Action/33_카드/C-광고 3채널 동시 실습 전략판.md`. 문서와 어긋나는 제안을 하지 않는다.",
@@ -741,34 +900,32 @@ init();
     },
     ctx: function () {
       var a = A(); if (!a || !a.data()) return "[지금 앱 상태 — 광고 한눈에] 데이터를 아직 못 받았어요.";
-      var D = a.data(), B = a.selBrands(), R = a.rules(), T = a.todosOf(B);
-      var L = ["[지금 앱 상태 — 광고 한눈에]", "- 보고 있는 화면: " + a.view() + " (now 지금 · map 지도 · judge 판정 · log 기록 · camp 캠페인)",
+      var D = a.data(), B = a.selBrands(), R = a.rules(), T = a.checksOf(B), Q = a.requests();
+      var L = ["[지금 앱 상태 — 광고 한눈에]", "- 보고 있는 화면: " + a.view() + " (now 점검 · metrics 지표 · control 조율 · log 기록)",
         "- 고른 브랜드: " + B.map(function (b) { return b.name; }).join(", ") + " · 판정 기준 조정 " + R.adjust + " / 정지 " + R.stop + "클릭",
         "- 네이버 숫자 받은 때: " + (D.naver && D.naver.at || "못 받음") + " · 스토어: " + (D.store && D.store.ok ? "연결 " + D.store.period : "연결 안 됨 (" + (D.store && D.store.error || "") + ")")];
       B.forEach(function (b) {
         var t = a.totalsOf([b]);
-        L.push("## " + b.name + " (" + (b.product || "") + ")" + (b.breakeven ? " · 손익분기 구매당 광고비 " + b.breakeven + "원" : ""));
+        L.push("## " + b.name + " (" + (b.product || "") + ")" + (b.breakeven ? " · 손익분기 구매당 광고비 " + b.breakeven + "원" : "") + (a.maxCpc(b) ? " · 허용 CPC " + a.maxCpc(b) + "원 (전환율 " + b.cvr + "% 가정)" : ""));
         ["naver", "meta", "google"].forEach(function (ch) { var s = a.chState(b, ch); L.push("- " + ch + ": " + s.t + (((b.channels || {})[ch] || {}).plan ? " — " + b.channels[ch].plan : "")); });
-        a.campsOf(b).forEach(function (c) { L.push("  · 캠페인 " + c.name + " [" + c.id + "] " + (c.on ? "켜짐" : "꺼짐") + " · 7일 노출 " + c.s7.imp + " 클릭 " + c.s7.clk + " 광고비 " + c.s7.cost + "원" + (c.all ? " · 누적(" + (c.from || c.start) + "~) 클릭 " + c.all.clk + " 광고비 " + c.all.cost + "원" : "")); });
-        if (t.camps) L.push("  · 합계 7일 광고비 " + t.cost7 + "원 · 누적 " + t.costAll + "원");
+        a.campsOf(b).forEach(function (c) { L.push("  · 캠페인 " + c.name + " [" + c.id + "] " + (c.on ? "켜짐" : "꺼짐") + (c.budget ? " · 일예산 " + c.budget : "") + " · 7일 노출 " + c.s7.imp + " 클릭 " + c.s7.clk + " 광고비 " + c.s7.cost + "원" + (c.all ? " · 누적(" + (c.from || c.start) + "~) 클릭 " + c.all.clk + " 광고비 " + c.all.cost + "원" : "")); });
+        if (t.camps) L.push("  · 합계 7일 광고비 " + t.s7.cost + "원 · 클릭 " + t.s7.clk + " · 누적 " + t.all.cost + "원");
       });
-      L.push("## 조율할 일 (앱이 숫자에서 뽑음)");
-      T.forEach(function (x) { L.push("- [" + x.lv + "] " + x.b.name + " · " + x.ch + " · " + x.title + (x.why ? " — " + x.why : "")); });
-      L.push("- 앱 저장소: ah.data/main (볼트 JSON + API 숫자, 맥 동기화 adhub_app.py 가 올림 — 직접 쓰지 않는다) · ad.data/main (광고 태스크)");
+      L.push("## 점검표 (앱이 숫자에서 뽑음 — bad 문제 · warn 주의 · none 숫자 없음 · ok · info)");
+      T.forEach(function (x) { L.push("- [" + x.lv + "] " + x.b.name + " · " + x.ch + " · " + x.name + ": " + x.val + (x.std ? " (기준 " + x.std + ")" : "") + (x.why ? " — " + x.why : "")); });
+      var open = Object.keys(Q).map(function (k) { return Q[k]; }).filter(function (q) { return q.status === "요청"; });
+      if (open.length) L.push("- 적용 기다리는 앱 요청: " + open.map(function (q) { return q.name + " " + q.kind + " → " + q.to; }).join(" / "));
+      L.push("- 앱 저장소: ah.data/main (볼트 JSON + API 숫자, 맥 동기화 adhub_app.py 가 올림 — 직접 쓰지 않는다) · ah.req (앱의 조율 요청 — 맥이 limits 안에서 적용) · ad.data/main (광고 태스크)");
       return L.join("\n");
     },
     tools: [
-      { name: "ads_open", description: "광고 한눈에 앱에서 브랜드·탭을 연다. brand 는 브랜드 이름 일부 또는 「전체」, view 는 now·map·judge·log, campaign 은 캠페인 이름 일부(자세히 열기).",
-        inputSchema: { type: "object", properties: { brand: { type: "string" }, view: { type: "string", enum: ["now", "map", "judge", "log"] }, campaign: { type: "string" } } },
+      { name: "ads_open", description: "광고 한눈에 앱에서 브랜드·탭을 연다. brand 는 브랜드 이름 일부 또는 「전체」, view 는 now(점검)·metrics(지표)·control(조율)·log(기록).",
+        inputSchema: { type: "object", properties: { brand: { type: "string" }, view: { type: "string", enum: ["now", "metrics", "control", "log"] } } },
         execute: function (i) {
           var a = A(); if (!a || !a.data()) throw new Error("앱을 아직 못 읽었어요");
           if (i.brand) {
             var n = norm(i.brand), b = n === "전체" || n === "all" ? { id: "all", name: "전체" } : (a.data().hub.brands || []).filter(function (x) { return norm(x.name).indexOf(n) >= 0 || norm(x.id) === n; })[0];
             if (!b) throw new Error("「" + i.brand + "」 브랜드를 못 찾았어요"); a.setBrand(b.id);
-          }
-          if (i.campaign) {
-            var m = norm(i.campaign), c = (a.data().naver.campaigns || []).filter(function (x) { return norm(x.name).indexOf(m) >= 0; })[0];
-            if (!c) throw new Error("「" + i.campaign + "」 캠페인을 못 찾았어요"); a.openCamp(c.id); return c.name;
           }
           if (i.view) location.hash = i.view;
           return (i.brand || "") + " " + (i.view || "");
