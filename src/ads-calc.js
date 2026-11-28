@@ -2,7 +2,7 @@
    판정 기준 숫자(조정 30 · 정지 50)와 대표 키워드는 데이터(hub.rules · brand.coreKeywords)에서 읽는다. 여기는 셈법만. */
 const brands = () => (D && D.hub.brands) || [];
 const selBrands = () => S.bid === "all" ? brands() : brands().filter(b => b.id === S.bid);
-const rules = () => Object.assign({ adjust: 30, stop: 50 }, (D && D.hub.rules) || {});
+const rules = () => (D && D.hub.rules) || {};
 const chName = ch => ((D && D.hub.channels[ch]) || {}).name || ch;
 const chOrder = () => (D && D.hub.order) || ["naver", "meta", "google"];
 const NV = () => (D && D.naver) || {};
@@ -15,7 +15,8 @@ const groupsOf = c => (NV().groups || []).filter(g => g.camp === c.id);
 const kwsOf = b => { const ids = new Set(campsOf(b).map(c => c.id)); return (NV().keywords || []).filter(k => ids.has(k.camp)); };
 const taskBy = id => ((AD && AD.tasks) || []).find(t => t.id === id) || null;
 const daysSince = d => Math.max(1, Math.round((Date.now() - new Date(d + "T00:00:00+09:00")) / 86400000) + 1);
-const pctOf = (a, b) => b > 0 ? Math.round(a / b * 100) : 0;
+const pctOf = (a, b) => { if (!(b > 0)) return "0"; const p = a / b * 100; return p > 0 && p < 1 ? p.toFixed(1) : String(Math.round(p)); };
+const since = c => c.from && c.from > c.start ? `${c.start}부터 · 숫자는 ${c.from}부터(최근 92일)` : `${c.start}부터`;
 
 /* 매체 상태 — 네이버는 실제 캠페인에서, 메타·구글은 볼트 JSON 의 state 에서 */
 const STATE = { run: "집행 중", stop: "꺼 둠", prep: "준비", none: "없음" };
@@ -79,7 +80,7 @@ function judgeKw(k, b){
 }
 
 /* 조율할 일 — 급함 high(빨강) · mid(노랑) · low(파랑 · 참고). 각 일에는 Brainy에게 넘길 말이 붙는다 */
-const ASK_TAIL = " 볼트 기준(광고 손익분기와 표본 기준 · C-진액 키워드 광고 집행 기획)대로 판단하고, 바꿀 것은 「대상 · 지금 · 바꿀 값 · 근거」 표로 보여 줘. 적용은 내가 승인한 줄만.";
+const ASK_TAIL = () => ` 볼트 기준(${rules().doc || "광고 손익분기와 표본 기준"})대로 판단하고, 바꿀 것은 「대상 · 지금 · 바꿀 값 · 근거」 표로 보여 줘. 적용은 내가 승인한 줄만.`;
 function todosOf(list){
   if (!D) return [];
   const R = rules(), out = [];
@@ -88,11 +89,11 @@ function todosOf(list){
     const camps = campsOf(b);
     camps.filter(c => c.on).forEach(c => {
       if (c.all) {
-        const days = daysSince(c.start), wk = c.all.imp / (days / 7);
+        const days = daysSince(c.from || c.start), wk = c.all.imp / (days / 7);
         if (days >= 10 && wk > 0 && c.s7.imp < wk * 0.1)
           add("high", b, "naver", `「${c.name}」 노출이 거의 멈췄어요`,
             `최근 7일 노출 ${won(c.s7.imp)} · 클릭 ${won(c.s7.clk)} · 광고비 ${won(c.s7.cost)}원 — 켠 뒤 주당 평균 노출 ${won(wk)}회의 ${pctOf(c.s7.imp, wk)}%. 일예산 ${won(c.budget)}원 중 하루 ${won(c.s7.cost / 7)}원만 쓰는 중이에요.`,
-            `「${c.name}」 노출이 최근 7일 ${won(c.s7.imp)}회로 거의 멈췄어. 꺼진 키워드·광고그룹, 입찰가와 순위, 검수 상태를 네이버 API로 확인해서 왜 멈췄는지 말해 주고 다시 돌게 할 조정안을 줘.` + ASK_TAIL, { camp: c.id });
+            `「${c.name}」 노출이 최근 7일 ${won(c.s7.imp)}회로 거의 멈췄어. 꺼진 키워드·광고그룹, 입찰가와 순위, 검수 상태를 네이버 API로 확인해서 왜 멈췄는지 말해 주고 다시 돌게 할 조정안을 줘.` + ASK_TAIL(), { camp: c.id });
       }
       if (!c.tracking) add("mid", b, "naver", "전환추적이 꺼져 있어요", `「${c.name}」은 매체 전환이 늘 0으로 보여요. 그래서 판정은 키워드 누적 클릭과 스토어 실제 주문으로만 해요.`,
         `「${c.name}」 전환추적이 꺼져 있어. 켜는 게 맞는지, 켠다면 어디서 어떻게 하는지 단계로 알려 줘 (설정 변경은 내가 직접).`, { camp: c.id });
@@ -101,25 +102,25 @@ function todosOf(list){
     const of = code => J.filter(x => x.j.code === code);
     const names = L => L.sort((x, y) => y.k.all.clk - x.k.all.clk).slice(0, 3).map(x => `${x.k.kw}(${x.k.all.clk})`).join(" · ") + (L.length > 3 ? " …" : "");
     if (of("stop").length) add("high", b, "naver", `정지 후보 키워드 ${of("stop").length}개`, `클릭 ${R.stop}번이 넘었는데 전환 0 — ${names(of("stop"))}`,
-      `정지 후보 키워드 ${of("stop").length}개(${names(of("stop"))})를 끌지 판단해 줘. 전환추적이 꺼져 있으면 스토어 주문도 같이 봐.` + ASK_TAIL, { go: "judge", filt: "stop" });
+      `정지 후보 키워드 ${of("stop").length}개(${names(of("stop"))})를 끌지 판단해 줘. 전환추적이 꺼져 있으면 스토어 주문도 같이 봐.` + ASK_TAIL(), { go: "judge", filt: "stop" });
     if (of("core").length) add("mid", b, "naver", `대표 키워드가 정지 기준을 넘었어요`, `${names(of("core"))} — 끄지 않고 입찰을 낮추거나 상세페이지를 먼저 봐요.`,
-      `대표 키워드 ${names(of("core"))}가 정지 기준을 넘었어. 끄지 않는 대신 입찰·페이지 중 뭘 먼저 볼지 정리해 줘.` + ASK_TAIL, { go: "judge", filt: "core" });
+      `대표 키워드 ${names(of("core"))}가 정지 기준을 넘었어. 끄지 않는 대신 입찰·페이지 중 뭘 먼저 볼지 정리해 줘.` + ASK_TAIL(), { go: "judge", filt: "core" });
     if (of("watch").length) add("mid", b, "naver", `조정 구간 키워드 ${of("watch").length}개`, `클릭 ${R.adjust}~${R.stop - 1}번, 전환 0 — ${names(of("watch"))}`,
-      `조정 구간 키워드 ${of("watch").length}개(${names(of("watch"))})의 입찰 조정안을 만들어 줘.` + ASK_TAIL, { go: "judge", filt: "watch" });
+      `조정 구간 키워드 ${of("watch").length}개(${names(of("watch"))})의 입찰 조정안을 만들어 줘.` + ASK_TAIL(), { go: "judge", filt: "watch" });
     const rej = J.filter(x => x.j.code !== "off" && x.k.inspect && x.k.inspect !== "APPROVED");
     if (rej.length) add("mid", b, "naver", `검수 통과 못 한 키워드 ${rej.length}개가 켜져 있어요`, rej.slice(0, 3).map(x => x.k.kw).join(" · ") + (rej.length > 3 ? " …" : ""),
-      `검수 통과 못 한 키워드 ${rej.length}개를 정리할지(끄기·지우기·문구 바꾸기) 판단해 줘.` + ASK_TAIL);
+      `검수 통과 못 한 키워드 ${rej.length}개를 정리할지(끄기·지우기·문구 바꾸기) 판단해 줘.` + ASK_TAIL());
     if (b.store) {
       const o = storeOrders([b]);
       if (!o.ok) add("mid", b, "naver", "스토어 주문을 못 받고 있어요", storeWhy(o.err) + " 그 전까지 주문은 「—」로 보여요.", "");
       else {
         const daily = camps.flatMap(c => c.daily || []), cost14 = daily.reduce((a, d) => a + d.cost, 0), clk14 = daily.reduce((a, d) => a + d.clk, 0);
         if (clk14 >= R.adjust && o.n14 === 0) add("high", b, "naver", `14일 동안 클릭 ${clk14}번에 주문 0`, "클릭이 쌓였는데 주문이 0이면 키워드가 아니라 상세페이지를 고쳐요.",
-          `14일 클릭 ${clk14}번에 스토어 주문 0이야. 상세페이지에서 무엇부터 볼지 점검 순서를 줘.` + ASK_TAIL);
+          `14일 클릭 ${clk14}번에 스토어 주문 0이야. 상세페이지에서 무엇부터 볼지 점검 순서를 줘.` + ASK_TAIL());
         else if (o.n14 > 0 && b.breakeven) {
           const cpa = cost14 / o.n14;
           add(cpa > b.breakeven ? "high" : "low", b, "naver", `구매당 광고비 ${won(cpa)}원 (14일)`, `손익분기 ${won(b.breakeven)}원 ${cpa > b.breakeven ? "초과" : "안"} — 광고비 ${won(cost14)}원 ÷ 스토어 주문 ${o.n14}건. 주문은 광고 밖에서 온 것도 섞여 있어요.`,
-            cpa > b.breakeven ? `14일 구매당 광고비가 ${won(cpa)}원으로 손익분기 ${won(b.breakeven)}원을 넘었어. 어디를 줄일지 조정안을 줘.` + ASK_TAIL : "");
+            cpa > b.breakeven ? `14일 구매당 광고비가 ${won(cpa)}원으로 손익분기 ${won(b.breakeven)}원을 넘었어. 어디를 줄일지 조정안을 줘.` + ASK_TAIL() : "");
         }
       }
     }

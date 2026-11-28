@@ -27,7 +27,7 @@
         var t = a.totalsOf([b]);
         L.push("## " + b.name + " (" + (b.product || "") + ")" + (b.breakeven ? " · 손익분기 구매당 광고비 " + b.breakeven + "원" : ""));
         ["naver", "meta", "google"].forEach(function (ch) { var s = a.chState(b, ch); L.push("- " + ch + ": " + s.t + (((b.channels || {})[ch] || {}).plan ? " — " + b.channels[ch].plan : "")); });
-        a.campsOf(b).forEach(function (c) { L.push("  · 캠페인 " + c.name + " [" + c.id + "] " + (c.on ? "켜짐" : "꺼짐") + " · 7일 노출 " + c.s7.imp + " 클릭 " + c.s7.clk + " 광고비 " + c.s7.cost + "원" + (c.all ? " · 누적(" + c.start + "~) 클릭 " + c.all.clk + " 광고비 " + c.all.cost + "원" : "")); });
+        a.campsOf(b).forEach(function (c) { L.push("  · 캠페인 " + c.name + " [" + c.id + "] " + (c.on ? "켜짐" : "꺼짐") + " · 7일 노출 " + c.s7.imp + " 클릭 " + c.s7.clk + " 광고비 " + c.s7.cost + "원" + (c.all ? " · 누적(" + (c.from || c.start) + "~) 클릭 " + c.all.clk + " 광고비 " + c.all.cost + "원" : "")); });
         if (t.camps) L.push("  · 합계 7일 광고비 " + t.cost7 + "원 · 누적 " + t.costAll + "원");
       });
       L.push("## 조율할 일 (앱이 숫자에서 뽑음)");

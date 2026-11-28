@@ -5,7 +5,7 @@ const JF = [["act", "손볼 것"], ["stop", KJ.stop.name], ["core", KJ.core.name
 const keepJ = code => S.filt === "all" ? true : S.filt === "act" ? ["stop", "core", "watch", "win"].includes(code) : code === S.filt;
 function kwRow(x, b){
   const k = x.k, j = x.j, R = rules(), g = groupBy(k.group), scale = Math.max(R.stop * 1.2, k.all.clk), info = KJ[j.code];
-  const note = j.code === "wait" ? `판정까지 ${j.left}클릭` : j.code === "watch" ? `정지 기준까지 ${j.left}클릭` : info.how;
+  const note = j.code === "wait" ? `조정 기준(${R.adjust}클릭)까지 ${j.left}클릭 남음` : j.code === "watch" ? `정지 기준(${R.stop}클릭)까지 ${j.left}클릭 남음` : info.how;
   return `<div class="row ${info.lv || (j.code === "off" ? "none" : "")}"><div class="ct">
     <b>${esc(k.kw)}</b><span>${esc(g ? g.name : "")} · 입찰 ${won(k.bid)}원${k.inspect && k.inspect !== "APPROVED" ? " · 검수 " + esc(k.inspect) : ""}</span>
     <span class="figs"><span>클릭 <i>${won(k.all.clk)}</i></span><span>광고비 <i>${won(k.all.cost)}원</i></span><span>노출 <i>${won(k.all.imp)}</i></span>${k.all.rank ? `<span>순위 <i>${k.all.rank}</i></span>` : ""}${k.all.conv ? `<span>전환 <i>${k.all.conv}</i></span>` : ""}</span>
@@ -33,7 +33,7 @@ function renderJudge(){
     const shown = S.kwMore ? L : L.slice(0, LIM);
     h += `<section class="card"><div class="part"><h2>${esc(b.name)}</h2><small>${L.length}개</small></div>
       ${L.length ? shown.map(x => kwRow(x, b)).join("") + (L.length > shown.length ? `<button type="button" class="more" data-kwmore>나머지 ${L.length - shown.length}개 더 보기</button>` : "") : `<p class="empty">이 거르기에 맞는 키워드가 없어요.</p>`}
-      ${L.length && S.filt !== "off" && S.filt !== "wait" ? `<div class="btns" style="margin-top:10px">${askBtn(`광고 한눈에 — ${b.name} 네이버: 판정 탭 「${(JF.find(f => f[0] === S.filt) || [])[1]}」 키워드 ${L.length}개를 기준대로 볼게. 손볼 순서와 조정안을 줘. 목록: ${L.slice(0, 25).map(x => `${x.k.kw}(클릭 ${x.k.all.clk}·${won(x.k.all.cost)}원·${KJ[x.j.code].name})`).join(", ")}${L.length > 25 ? " …" : ""}.` + ASK_TAIL, "✦ 이 목록으로 Brainy와 조율")}</div>` : ""}</section>`;
+      ${L.length && S.filt !== "off" && S.filt !== "wait" ? `<div class="btns" style="margin-top:10px">${askBtn(`광고 한눈에 — ${b.name} 네이버: 판정 탭 「${(JF.find(f => f[0] === S.filt) || [])[1]}」 키워드 ${L.length}개를 기준대로 볼게. 손볼 순서와 조정안을 줘. 목록: ${L.slice(0, 25).map(x => `${x.k.kw}(클릭 ${x.k.all.clk}·${won(x.k.all.cost)}원·${KJ[x.j.code].name})`).join(", ")}${L.length > 25 ? " …" : ""}.` + ASK_TAIL(), "✦ 이 목록으로 Brainy와 조율")}</div>` : ""}</section>`;
   });
   return h;
 }

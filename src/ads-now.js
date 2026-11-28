@@ -19,7 +19,7 @@ function renderNow(){
       return `<button type="button" class="row ${n ? "high" : chOrder().some(ch => chState(b, ch).k === "run") ? "run" : "none"}" data-brand="${esc(b.id)}" aria-label="${esc(b.name)} 열기">
         <span class="ct"><b>${esc(b.name)}</b><span>${esc(b.product || "")}${b.goal ? " · 목표 " + esc(b.goal) : ""}</span>
         <span class="figs">${chOrder().map(ch => `<span>${esc(chName(ch))} <i>${esc(chState(b, ch).t)}</i></span>`).join("")}${t.camps ? `<span>7일 <i>${won(t.cost7)}원</i></span>` : ""}</span></span>
-        <span class="tags">${n ? `<span class="pill high">급한 일 ${n}</span>` : ""}</span></button>`;
+        <span class="tags">${n ? `<span class="pill high">급함 ${n}</span>` : ""}</span></button>`;
     }).join("")}</section>`;
   } else {
     const b = list[0];
@@ -29,6 +29,7 @@ function renderNow(){
   h += `<section class="card"><h2>조율할 일 · ${hi.length}</h2>${hi.length ? hi.map(x => todoRow(x, many)).join("") : `<p class="empty">지금 손댈 일이 없어요. 숫자가 기준을 넘으면 여기에 떠요.</p>`}</section>`;
   if (lo.length) h += `<section class="card"><h2>참고 · 준비 중 ${lo.length}</h2>${lo.map(x => todoRow(x, many)).join("")}</section>`;
   const nv = NV(), st = D.store || {};
-  h += `<p class="small muted" style="text-align:center;padding:0 8px">네이버 숫자 ${nv.ok ? ago(nv.at) : "못 받음"} · 스토어 주문 ${st.ok ? ago(st.at) : "연결 안 됨"} · 메타·구글은 주간 리뷰 숫자<br>이 앱은 광고를 바꾸지 않아요. 「Brainy와 조율」로 제안을 받고, 승인한 것만 Brainy가 적용해요.</p>`;
+  const hasStore = list.some(b => b.store), hasPlan = list.some(b => b.plan);
+  h += `<p class="small muted" style="text-align:center;padding:0 8px">${hasPlan ? `네이버 숫자 ${nv.ok ? ago(nv.at) : "못 받음"}${hasStore ? ` · 스토어 주문 ${st.ok ? ago(st.at) : "연결 안 됨"}` : ""} · 메타·구글은 주간 리뷰 숫자<br>` : ""}이 앱은 광고를 바꾸지 않아요. 「Brainy와 조율」로 제안을 받고, 승인한 것만 Brainy가 적용해요.</p>`;
   return h;
 }
