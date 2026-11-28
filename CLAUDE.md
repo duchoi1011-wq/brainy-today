@@ -4,7 +4,7 @@
 
 ## 구조 — 어디를 고치나
 
-- **화면 원본은 `src/` 가 그대로 앱이다.** `src/brainy-home.html` · `src/shortcuts.html` · `src/vocab.html` · `src/content.html`. 역할별로 나눈 파일(`home-ic.js` · `home-today.js` · `sc-course.js` · `vocab-review.js` · `vocab-lec.js`)은 원본의 `/*@include 파일*/` 자리에 끼워진다. 앱마다 Brainy 연결(`sc-brainy.js` · `vo-brainy.js`)과 대화창(`brainy-chat.js`)은 빌드가 뒤에 붙인다.
+- **화면 원본은 `src/` 가 그대로 앱이다.** `src/*.html` 일곱 개 — `brainy-home` · `shortcuts` · `vocab` · `course` · `ad` · `ads` · `content` (앱마다 아래 「내용은 볼트가 정본」에 설명). 역할별로 나눈 파일(`home-ic.js` · `home-today.js` · `sc-course.js` · `vocab-review.js` · `vocab-lec.js`)은 원본의 `/*@include 파일*/` 자리에 끼워진다. 앱마다 Brainy 연결(`sc-brainy.js` · `vo-brainy.js`)과 대화창(`brainy-chat.js`)은 빌드가 뒤에 붙인다.
 - **`build.py` 는 조립만 한다** — 원본에 머리말(로그인 화면·받침 `shim.js`·아이콘)을 붙여 `home/` `shortcuts/` `vocab/` 의 `index.html` 을 만들고, **콘텐츠 기획은 옆 저장소 `../content-plan`(주소 `/content-plan/`, 저장소 duchoi1011-wq/content-plan)에 조립한다** (2026-11-17 동욱: 맥에 설치한 Brainy 홈 앱에 섞여 열려 따로 웹앱으로). 그 저장소도 함께 커밋·푸시한다. `content/` 는 새 주소로 넘기기만 한다. 이 폴더들은 손으로 고치지 않는다.
 - **덧대기(`patch()`) 0개가 기준이다** (2026-11-12 109+27+3개를 원본에 합침). 고칠 땐 원본을 직접 고친다. `patch()` 를 쓰면 빌드 끝에 경고가 뜬다.
 - **내용은 볼트가 정본이다 — 코드에 목록을 넣지 않는다.**

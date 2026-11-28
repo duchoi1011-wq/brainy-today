@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""src/ 의 원본 → Supabase 로 도는 독립 웹앱 5개 (조립만 한다).
+"""src/ 의 원본 → Supabase 로 도는 독립 웹앱 7개 (조립만 한다).
 
   src/brainy-home.html → home/index.html       (Brainy 홈)
   src/shortcuts.html   → shortcuts/index.html  (맥 단축키)
@@ -10,7 +10,7 @@
   src/content.html     → content/index.html    (콘텐츠 기획)
 
 원본이 그대로 앱이다 — 여기선 머리말(로그인 화면·받침 shim.js·아이콘)을 붙이고 /*@include 파일*/ 자리에 src/ 의 파일을 끼울 뿐이다.
-patch() 덧대기는 0개가 기준 (2026-11-12 모두 원본에 합침). 세 앱은 같은 주소(github.io) 아래라 한 번 로그인하면 셋 다 열린다.
+patch() 덧대기는 0개가 기준 (2026-11-12 모두 원본에 합침). 모든 앱이 같은 주소(github.io) 아래라 한 번 로그인하면 다 열린다.
 """
 import hashlib
 import re
@@ -246,13 +246,13 @@ else:
 
 # ═════════════════════════ 옛 주소 /brainy-today/ → home/ ═════════════════════════
 # 예전엔 Brainy 홈이 맨 위 주소에 있어서 그 앱 범위가 단축키·단어장까지 덮었다 (같은 앱 창으로 열림).
-# 이제 세 앱은 home/ · shortcuts/ · vocab/ 로 나란히 서고, 맨 위 주소는 home/ 으로 넘기기만 한다.
+# 이제 앱마다 home/ · shortcuts/ · vocab/ · course/ · ad/ · ads/ 로 나란히 서고, 맨 위 주소는 home/ 으로 넘기기만 한다.
 redirect = """<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Brainy 홈</title><meta http-equiv="refresh" content="0; url=home/">
 <script>location.replace("home/" + location.search + location.hash);</script></head>
 <body style="font-family:-apple-system,sans-serif;padding:24px">
-<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="course/">강의 실습</a> · <a href="ad/">광고 실습</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
+<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="course/">강의 실습</a> · <a href="ad/">광고 실습</a> · <a href="ads/">광고 한눈에</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
 """
 (root / "index.html").write_text(redirect, encoding="utf-8")
 # 열려 있던 옛 화면이 version.txt 를 보고 스스로 새로 고치면 → 이 넘김 페이지 → home/
