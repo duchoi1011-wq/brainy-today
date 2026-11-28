@@ -68,7 +68,7 @@ function likedToScriptHtml(){
 function likedAct(name, el){
   if(name === "lkpick"){ var k = el.dataset.k, pk = Object.assign({}, lkPicks());
     if(pk[k]) delete pk[k]; else { var r = likedRows().filter(function(x){ return lkKey(x) === k })[0] || lkPickList().filter(function(x){ return lkKey(x) === k })[0]; if(!r) return true; pk[k] = { text: String(r.text).slice(0, 600), likes: r.likes, vid: r.vid, title: r.title, kw: r.kw } }
-    setS({ lkPick: pk }); return true }
+    setS({ lkPick: pk }); var nn = Object.keys(pk).length; toast(nn ? "댓글 " + nn + "개 골랐어요 — 맨 위 「댓글 → 대본」에서 대본 만들기" : "고른 댓글을 뺐어요"); return true }   // 아래 순위에서 고르면 칸이 화면 밖이라 알림으로 (2026-11-28 써 보기)
   if(name === "lkclear"){ setS({ lkPick: {} }); return true }
   if(name === "lkideas" || name === "lkscript"){ var cs = lkPickList(); if(!cs.length) return true;
     send(name === "lkscript" ? "script" : "ideas", (name === "lkscript" ? "공감 댓글로 대본 초안 — 댓글 " : "공감 댓글에서 아이디어 뽑기 — 댓글 ") + cs.length + "개", { comments: cs });
