@@ -602,6 +602,11 @@ function act(name, el){
   if(histAct(name, el)) return;   // 🕘 돌린 기록 · 🔖 중요 (content-hist.js)
   if(pastOn() && { ideas: 1, idearesearch: 1, ideascript: 1 }[name]){ toast(PAST_BLOCK); return }   // 보내기 전에 고른 것을 지우거나 칸을 옮기지 않게
   if(profAct(name, el)) return;   // 브랜드 탭 그 자리 고치기 (content-profile.js)
+  if(name === "confirm" || name === "unconfirm"){   // ✅ 대본 컨펌 — ct.set confirm {열쇠: {at, title}} → 맥이 설정.json 으로 → 편집 믹서 촬영실이 이것만 보여 줌
+    var cf = Object.assign({}, (SETS[cur] || {}).confirm || {});
+    if(name === "confirm") cf[el.dataset.key] = { at: new Date().toISOString(), title: el.dataset.label || "" };
+    else { if(!confirm("컨펌을 취소할까요? 촬영실 목록에서 빠져요 (찍은 것은 그대로 남아요).")) return; delete cf[el.dataset.key] }
+    setS({ confirm: cf }); toast(name === "confirm" ? "컨펌했어요 — 촬영실에 떠요" : "컨펌을 취소했어요"); return }
   if(baseAct(name, el)) return;   // 기준 키워드 · 영상 주제 · 지우기/되돌리기 · 찾는 나라 (content-basekw.js)
   var s = S();
   if(name === "buildpdf"){ window.print(); return }   // 구축 문서 PDF — 인쇄 창에서 「PDF로 저장」 (인쇄할 땐 가운데 문서만 남는다)

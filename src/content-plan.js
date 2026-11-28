@@ -151,8 +151,9 @@ function viewScript(){
   var b = B(), sc = part("script"); if(!b) return "<p class=\"empty\">브랜드를 먼저 고르세요.</p>";
   var h = "";
   if(!sc || !sc.items || !sc.items.length) return "<p class=\"empty\">아직 대본 초안이 없어요. 콘텐츠 탭 「추천」 칸에서 ＋로 고른 뒤 「대본 초안 만들기」를 누르세요.</p>";
-  h += "<p class=\"lead\">여기까지가 편집 믹서 바로 앞 단계예요. 대본을 「대본 복사」로 복사해 편집 믹서의 대본 칸에 붙여 넣으세요.</p>";
+  h += "<p class=\"lead\">여기까지가 촬영 바로 앞 단계예요. 찍을 대본에 「✅ 컨펌」을 누르면 편집 믹서 촬영실에 떠요(컨펌한 것만 보여요).</p>";
   function sid(x){ return x.rec || x.title }   // 지우기 열쇠 — 추천 번호(없으면 제목)
+  var conf = (SETS[cur] || {}).confirm || {};   // ✅ 컨펌한 대본 {열쇠: {at, title}} — 편집 믹서 촬영실은 이것만 보여 준다 (맥 동기화가 설정.json 으로 내려 줌)
   var live = sc.items.filter(function(x){ return !isGone("script", sid(x)) });
   if(!live.length) h += "<p class=\"empty\">대본을 모두 지웠어요. 아래 「지운 것」에서 되돌릴 수 있어요.</p>";
   sc.items.forEach(function(x, i){
@@ -165,7 +166,9 @@ function viewScript(){
       sourceHtml(x.rec) +
       "<details class=\"prbar\"" + (prDraft("script:" + x.rec) ? " open" : "") + "><summary>✍️ 이 대본 고치기 · 첨삭</summary>" + promptBoxHtml("script:" + x.rec, "무엇을 고칠까요?", "예: 도입 3초를 시청자에게 던지는 질문으로 바꾸고, 두 번째 소주제를 실제 사례로 바꿔 줘", "scriptedit") + "</details>" +
       (x.todo ? "<details><summary>아직 정해야 할 것</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.todo) + "</div></details>" : "") +
-      "<div class=\"acts\">" + (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + delBtn("script", sid(x), x.title, "btn sm") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
+      "<div class=\"acts\">" + (conf[sid(x)] ? "<span class=\"tag ok\">✅ 컨펌 " + esc(String(conf[sid(x)].at || "").slice(5, 10).replace("-", "/")) + " — 촬영실에 떠요</span><button class=\"btn sm\" data-act=\"unconfirm\" data-key=\"" + esc(sid(x)) + "\">컨펌 취소</button>"
+        : "<button class=\"btn sm primary\" data-act=\"confirm\" data-key=\"" + esc(sid(x)) + "\" data-label=\"" + esc(x.title) + "\" title=\"이 대본으로 찍어요 — 편집 믹서 촬영실에 뜹니다\">✅ 컨펌 — 촬영실로</button>") +
+      (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + delBtn("script", sid(x), x.title, "btn sm") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
   });
   var goneSc = goneListHtml("script", sc.items, sid, function(x){ return x.title });   // 🗑 로 지운 대본 — 되돌리기
   if(goneSc) h += "<section class=\"card\">" + goneSc + "</section>";
