@@ -99,9 +99,17 @@
   var lastAt = "", lastFull = 0, FULL_EVERY = 10 * 60 * 1000;
   function bump(at) { if (at && at > lastAt) lastAt = at; }
   function scoped(q) { return APP.colls ? q.filter("coll", "in", inList(APP.colls)) : q.not("coll", "in", inList(OTHER)); }
-  function loadAll() {
-    return scoped(sb.from("docs").select("path,data,updated_at")).then(function (r) {
+  // 서버는 한 번에 1000줄까지만 준다 — 넘으면 뒤쪽 문서가 말없이 빠진다 (2026-11-28 단어장 1108줄 → 궁전이 안 뜸). path 순서로 1000줄씩 끝까지 받는다
+  var PAGE = 1000;
+  function pageAll(make, from, acc) {
+    return make().order("path").range(from, from + PAGE - 1).then(function (r) {
       if (r.error) throw r.error;
+      acc = acc.concat(r.data || []);
+      return (r.data || []).length < PAGE ? { data: acc } : pageAll(make, from + PAGE, acc);
+    });
+  }
+  function loadAll() {
+    return pageAll(function () { return scoped(sb.from("docs").select("path,data,updated_at")); }, 0, []).then(function (r) {
       var next = {};
       (r.data || []).forEach(function (x) { next[x.path] = x.data; bump(x.updated_at); });
       Object.keys(pending).forEach(function (p) { if (pending[p] > 0 && docs[p] !== undefined) next[p] = docs[p]; });
@@ -110,8 +118,7 @@
   }
   function loadDelta() {
     if (!lastAt || Date.now() - lastFull > FULL_EVERY) return loadAll();
-    return scoped(sb.from("docs").select("path,data,updated_at").gt("updated_at", lastAt)).then(function (r) {
-      if (r.error) throw r.error;
+    return pageAll(function () { return scoped(sb.from("docs").select("path,data,updated_at").gt("updated_at", lastAt)); }, 0, []).then(function (r) {
       var changed = [];
       (r.data || []).forEach(function (x) {
         bump(x.updated_at);
