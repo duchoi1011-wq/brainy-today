@@ -29,8 +29,10 @@ function likedCount(){ return likedRows().length }
 function likedBusy(){ var r = (SETS[cur] || {}).cmtReq, d = part("cmts"); return !!(r && r.what === "search" && (!d || Date.parse(d.updatedAt) < Date.parse(r.at) - 5000)) }
 /* 안 푼 댓글 수 — 맥 cmtx-todo 와 같은 범위(공감 상위 40 + 키워드마다 5) */
 function cmtxTodo(){
-  var all = likedRows(), kws = {}, seen = {}, n = 0, pick = all.slice(0, 40);
-  all.forEach(function(r){ kws[r.kw] = (kws[r.kw] || 0) + 1; if(kws[r.kw] <= 5) pick.push(r) });
+  var rel = ui.lkRel, fit = ui.lkFit; ui.lkRel = ui.lkFit = false;   // 거르기와 상관없이 맥과 같은 범위
+  var pick = likedRows().slice(0, 40), kws = {}, seen = {}, n = 0;
+  (((part("search") || {}).items) || []).forEach(function(v){ if(kws[v.kw]) return; kws[v.kw] = 1; pick = pick.concat(likedRows(v.kw).slice(0, 5)) });   // 키워드마다 따로 센 상위 5 (맥 cmtx_todo 와 같게, 11-28 검증)
+  ui.lkRel = rel; ui.lkFit = fit;
   pick.forEach(function(r){ var k = lkKey(r); if(seen[k]) return; seen[k] = 1; if(!cmtxOf(r).ann) n++ });
   return n;
 }
