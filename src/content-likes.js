@@ -6,7 +6,7 @@
    줄 세우기는 댓글 좋아요 수 하나뿐. 맥 쪽 같은 규칙: content_app.py liked · cmtx-todo · cmtx-put (에이전트·자동 진행이 씀) — 규칙·key 를 바꾸면 둘 다.
    ＋로 고른 댓글(ct.set lkPick) → 맥 cmd build(콘텐츠 기획 = 구축 문서) / script / ideas (params.comments) · 🚀 = autoReq route "liked".
    앱 밖에서는 `content_app.py auto-start <브랜드> liked [편 수]` · `cmtx-send <브랜드>` 로 같은 흐름. */
-function lkKey(r){ return r.vid + ":" + String(r.text).replace(/\s+/g, " ").slice(0, 40) }   // 맥 content_app.py cmt_key 와 같은 규칙
+function lkKey(r){ return r.vid + ":" + Array.from(String(r.text).replace(/\s+/g, " ")).slice(0, 40).join("") }   // 맥 content_app.py cmt_key 와 같은 규칙 — 글자(코드포인트) 40개. slice 는 UTF-16 단위라 이모지 든 댓글 키가 달라 풀이가 안 붙었다 (2026-11-28 검증)
 function cmtxOf(r){ var cx = part("cmtx") || {}; return { ctx: (((cx.videos || {})[r.vid]) || {}).ctx || "", ann: ((cx.comments || {})[lkKey(r)]) || null } }
 /* kw 를 주면 그 키워드로 찾은 영상만 — 같은 글은 그 범위 안에서 한 번 (전체에서 한 번만 남긴 뒤 나누면 여러 키워드에 걸린 영상 댓글이 첫 키워드에만 갔다, 11-28 검증) */
 function likedRows(kw){
