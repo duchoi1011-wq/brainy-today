@@ -6,6 +6,7 @@
   src/vocab.html       → vocab/index.html      (체화 단어장)
   src/course.html      → course/index.html     (강의 실습)
   src/ad.html          → ad/index.html         (광고 실습)
+  src/ads.html         → ads/index.html        (광고 한눈에)
   src/content.html     → content/index.html    (콘텐츠 기획)
 
 원본이 그대로 앱이다 — 여기선 머리말(로그인 화면·받침 shim.js·아이콘)을 붙이고 /*@include 파일*/ 자리에 src/ 의 파일을 끼울 뿐이다.
@@ -154,7 +155,8 @@ SC_BRAINY = "\n" + (root / "src" / "sc-brainy.js").read_text(encoding="utf-8")
 VO_BRAINY = "\n" + (root / "src" / "vo-brainy.js").read_text(encoding="utf-8")
 CT_BRAINY = "\n" + (root / "src" / "content-brainy.js").read_text(encoding="utf-8")
 CR_BRAINY = "\n" + (root / "src" / "course-brainy.js").read_text(encoding="utf-8")
-AD_BRAINY = "\n" + (root / "src" / "ad-brainy.js").read_text(encoding="utf-8")   # 광고 실습 — 교과서 과를 Brainy 에게 묻기
+AD_BRAINY = "\n" + (root / "src" / "ad-brainy.js").read_text(encoding="utf-8")
+ADS_BRAINY = "\n" + (root / "src" / "ads-brainy.js").read_text(encoding="utf-8")   # 광고 한눈에 — 지금 브랜드·조율할 일을 Brainy 에게   # 광고 실습 — 교과서 과를 Brainy 에게 묻기
 
 # ═════════════════════════ 맥 단축키 ═════════════════════════
 load("shortcuts.html")
@@ -198,6 +200,18 @@ emit("ad", "광고 실습", "광고 실습", ("#f4f6f2", "#141814"),
      '{key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]}',
      '{"id":"/brainy-today/ad/","name":"광고 실습","short_name":"광고 실습","start_url":"./","scope":"./","display":"standalone","background_color":"#f4f6f2","theme_color":"#f4f6f2","icons":[{"src":"ad-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ad-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
      "", AD_BRAINY + BRAINY_CHAT)
+
+# ═════════════════════════ 광고 한눈에 ═════════════════════════
+# 모든 브랜드 × 네이버·메타·구글 광고를 한 화면에서 파악하고 조율한다 (2026-11-28 동욱 「강의 실습 앱을 기반해서 … 간략하지만 정확히」 — 틀은 강의 실습과 같다).
+# 데이터 ah.data/main 은 맥 동기화(adhub_app.py)가 볼트 「광고 한눈에.json」 + 네이버 검색광고·스토어 API(읽기만)로 올린다. 광고 태스크는 ad.data/main 을 같이 읽는다. 앱은 아무것도 쓰지 않는다. 아이콘은 ads/ 에 그대로 둔다.
+load("ads.html")
+include()
+emit("ads", "광고 한눈에", "광고 한눈에", ("#F1F3F2", "#0F1413"),
+     "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--s-stop);--g-ok:var(--s-run)",
+     '<link rel="apple-touch-icon" href="ah-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="ah-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="ah-icon-64.png">',
+     '{key: "ads", name: "광고 한눈에", icon: "ah-icon-192.png", sub: "모든 브랜드의 광고를 한 화면에서 보고 조율", colls: ["ah.data", "ad.data", "bchat"]}',
+     '{"id":"/brainy-today/ads/","name":"광고 한눈에","short_name":"광고 한눈에","start_url":"./","scope":"./","display":"standalone","background_color":"#F1F3F2","theme_color":"#F1F3F2","icons":[{"src":"ah-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ah-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
+     "", ADS_BRAINY + BRAINY_CHAT)
 
 # ═════════════════════════ 콘텐츠 기획 ═════════════════════════
 # 브랜드 → 키워드 → 콘텐츠 → 대본 (편집 믹서 바로 앞 단계). 조종판 — 실행은 맥의 Claude(콘텐츠 스킬 셋).

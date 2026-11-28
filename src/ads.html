@@ -1,0 +1,268 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>광고 한눈에</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* 틀은 강의 실습과 같다 — 한 줄 칸(640px) · 고정 머리말(브랜드 고르기 + 숫자 5개) · 카드 · 아래 탭 막대.
+   상태 색 4개(집행 중·멈춤·준비·없음)와 급함 색 3개(높음·중간·참고)는 모든 탭이 같이 쓴다 — 여기 한 곳에서만 정한다 */
+:root{
+  --bg:#F1F3F2; --surface:#FFFFFF; --surface-2:#F5F7F6; --ink:#141A18; --muted:#5B6662; --line:#D8DEDB;
+  --accent:#0F6E5E; --accent-ink:#FFFFFF; --now-bg:#E3F1EE;
+  --s-run:#1C9467; --s-stop:#B97F00; --s-prep:#3A78D4; --s-none:#A3A6B3; --s-bad:#C23B2C;
+  --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1413; --surface:#171E1C; --surface-2:#1C2422; --ink:#E5ECE9; --muted:#97A39F; --line:#29332F;
+  --accent:#5CC3AE; --accent-ink:#0B1F1A; --now-bg:#17302B;
+  --s-run:#38C18A; --s-stop:#F0B52A; --s-prep:#5C9BF0; --s-none:#5E6272; --s-bad:#F07A6A;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1413; --surface:#171E1C; --surface-2:#1C2422; --ink:#E5ECE9; --muted:#97A39F; --line:#29332F;
+  --accent:#5CC3AE; --accent-ink:#0B1F1A; --now-bg:#17302B;
+  --s-run:#38C18A; --s-stop:#F0B52A; --s-prep:#5C9BF0; --s-none:#5E6272; --s-bad:#F07A6A;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 calc(84px + env(safe-area-inset-bottom, 0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--bg)}
+html{overflow-y:scroll}
+.wrap{max-width:640px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:var(--bg);padding-block:14px 10px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:20px;font-weight:700;margin:0;letter-spacing:-.01em}
+.brand small{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.brand #sub{font-family:var(--f-body);flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .out{font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
+.brand .links a,.brand .links .out{display:inline-flex;align-items:center;min-height:44px;margin-block:-13px;padding-inline:2px}
+main{display:flex;flex-direction:column;gap:16px;padding-top:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+h2{font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--muted);margin:0 0 12px}
+h3{font-size:18px;font-weight:700;margin:0;text-wrap:balance;line-height:1.4}
+p{margin:0}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.empty{padding:22px 4px;text-align:center;color:var(--muted)}
+button{font:inherit}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 16px;border-radius:10px;font-weight:600;cursor:pointer;min-height:44px;text-align:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns .btn{flex:1 1 160px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;min-height:44px}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip b{font-family:var(--f-mono);font-weight:500;font-size:12px;margin-left:4px;opacity:.8}
+.filt{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.filt::-webkit-scrollbar{display:none}.filt .chip{flex:none;white-space:nowrap}
+/* 브랜드 고르기 — 강의 실습의 강의 고르기와 같은 띠 */
+.seg{display:flex;gap:0;margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow-x:auto;background:var(--surface);scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:1 0 auto;border:0;background:transparent;color:var(--muted);padding:8px 12px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;min-height:44px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.seg button span{font-family:var(--f-mono);font-weight:500;font-size:11px;margin-left:5px;opacity:.8}
+.segwrap{position:relative}
+.segwrap.more::after{content:"›";position:absolute;right:1px;top:11px;bottom:1px;width:36px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:20px;font-weight:700;color:var(--accent);background:linear-gradient(90deg,transparent,var(--surface) 60%);border-radius:0 10px 10px 0;pointer-events:none}
+/* 머리말 숫자 — 누르면 그 숫자가 나온 탭으로 */
+.sum{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:10px}
+.sum button{all:unset;cursor:pointer;display:flex;flex-direction:column;padding:6px 8px;border-radius:10px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.sum button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sum b{font-size:16px;font-variant-numeric:tabular-nums;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum b small{font-size:11px;font-weight:500;color:var(--muted)}
+.sum span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum .bad b{color:var(--s-bad)}
+/* 상태 알약 · 급함 띠 */
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;color:var(--muted)}
+.pill.run{color:var(--s-run);border-color:var(--s-run)}.pill.stop{color:var(--s-stop);border-color:var(--s-stop)}.pill.prep{color:var(--s-prep);border-color:var(--s-prep)}.pill.none{border-style:dashed}
+.pill.high{color:var(--s-bad);border-color:var(--s-bad)}.pill.mid{color:var(--s-stop);border-color:var(--s-stop)}
+.pill.solid{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.row{all:unset;box-sizing:border-box;display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px 10px 10px 12px;border-top:1px solid var(--line)}
+button.row{cursor:pointer}
+.row:first-child{border-top:0}
+.row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
+.row::before{content:"";flex:none;width:4px;align-self:stretch;border-radius:2px;background:var(--s-none)}
+.row.run::before{background:var(--s-run)}.row.stop::before{background:var(--s-stop)}.row.prep::before{background:var(--s-prep)}
+.row.high::before{background:var(--s-bad)}.row.mid::before{background:var(--s-stop)}.row.low::before{background:var(--s-prep)}
+.row.none::before{background:repeating-linear-gradient(180deg,var(--s-none) 0 4px,transparent 4px 8px)}
+.row .ct{flex:1;min-width:0}
+.row .ct b{display:block;font-weight:600;line-height:1.45}
+.row .ct span{display:block;font-size:13px;color:var(--muted)}
+.row .tags{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.row .figs{display:flex;flex-wrap:wrap;gap:2px 12px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-top:2px}
+.row .figs i{font-style:normal;color:var(--ink)}
+.part{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 4px}
+.part h2{margin:0;letter-spacing:.02em;font-size:14px;color:var(--ink)}
+.part small{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--s-none)}
+.legend i.run{background:var(--s-run)}.legend i.stop{background:var(--s-stop)}.legend i.prep{background:var(--s-prep)}.legend i.high{background:var(--s-bad)}.legend i.none{background:transparent;border:1px dashed var(--s-none)}
+/* 지금 — 조율할 일 */
+.todo .act{margin-top:8px}
+.todo .act .btn{flex:0 1 auto;padding:8px 14px;font-size:14px;min-height:40px}
+.why{font-size:13.5px;color:var(--muted);margin-top:2px}
+/* 숫자 칸 */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin-top:10px}
+.stat{background:var(--surface-2);border-radius:10px;padding:8px 10px;min-width:0}
+.stat .k{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.stat .v{display:block;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:17px;overflow-wrap:anywhere}
+.stat .s{display:block;font-size:11.5px;color:var(--muted)}
+/* 매체 줄 (지도) */
+.chrow{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.chrow:first-of-type{border-top:0}
+.chrow>b{font-size:14px}
+.chrow .plan{font-size:13.5px;color:var(--muted)}
+.tasklist{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+/* 판정 막대 — 누적 클릭 · 조정·정지 눈금 */
+.meter{position:relative;height:6px;border-radius:99px;background:var(--surface-2);margin-top:6px;border:1px solid var(--line)}
+.meter i{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--accent);max-width:100%}
+.meter b{position:absolute;top:-4px;width:2px;height:12px;background:var(--muted);border-radius:1px}
+/* 14일 막대 */
+.bars{display:flex;align-items:flex-end;gap:3px;height:64px;margin-top:10px}
+.bars i{flex:1;background:var(--accent);border-radius:3px 3px 0 0;min-height:1px;opacity:.85}
+.bars i.zero{background:var(--line)}
+.barcap{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:3px}
+.back{all:unset;cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;min-height:44px;display:inline-flex;align-items:center}
+.plain{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.plain li{padding-left:14px;position:relative}.plain li::before{content:"·";position:absolute;left:2px;color:var(--muted)}
+.logline{display:grid;grid-template-columns:84px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.logline:first-child{border-top:0}
+.logline .d{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:2px}
+.more{all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:14px;min-height:44px;display:flex;align-items:center;justify-content:center;width:100%}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;gap:4px;background:var(--surface);border-top:1px solid var(--line);padding:6px max(12px, env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px))}
+#tabbar a{flex:0 1 160px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:12px;color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;min-height:44px;position:relative}
+#tabbar a span{font-size:18px;line-height:1.1}
+#tabbar a.on{color:var(--accent);background:var(--surface-2)}
+#tabbar a em{position:absolute;top:2px;right:calc(50% - 26px);font-style:normal;background:var(--s-bad);color:#fff;font-family:var(--f-mono);font-size:10px;min-width:16px;height:16px;border-radius:8px;display:grid;place-items:center;padding:0 4px}
+#toast{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 32px);background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 14px;font-size:14px;box-shadow:0 10px 28px rgba(0,0,0,.25)}
+@media (max-width:480px){.brand #sub{display:none}}
+@media (max-width:420px){.sum{gap:4px}.sum button{padding:5px 6px}.sum b{font-size:14px}.card{padding:16px}.chrow{grid-template-columns:52px 1fr}}
+@media (prefers-reduced-motion:no-preference){main>.card{animation:fade .18s ease-out}@keyframes fade{from{opacity:.5}to{opacity:1}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>광고 한눈에</h1><small id="sub">모든 브랜드 × 네이버·메타·구글</small><small class="muted links" style="font-size:12px;flex-basis:100%"><a href="../home/" style="color:inherit">← Brainy 홈</a> · <a href="../ad/" style="color:inherit">광고 실습</a> · <button type="button" class="out" data-brainy="out">로그아웃</button></small></div>
+    <div class="segwrap" id="segwrap"><div class="seg" id="brands" role="tablist" aria-label="브랜드 고르기"></div></div>
+    <div class="sum" id="sum"></div>
+  </header>
+  <main id="view"></main>
+</div>
+<!-- 아래 탭: 지금 = 오늘 조율할 일 · 지도 = 브랜드 × 매체 전부 · 판정 = 키워드별 누적 클릭 판정 · 기록 = 바꾼 것·기준·숫자 출처 -->
+<nav id="tabbar" aria-label="화면">
+  <a href="#now" data-v="now"><span aria-hidden="true">▶</span>지금</a>
+  <a href="#map" data-v="map"><span aria-hidden="true">▦</span>지도</a>
+  <a href="#judge" data-v="judge"><span aria-hidden="true">⚖</span>판정</a>
+  <a href="#log" data-v="log"><span aria-hidden="true">✎</span>기록</a>
+</nav>
+
+<script>/* Brainy 공통 부품 — 모든 앱이 같이 쓴다 */
+/*@include brainy-parts.js*/
+</script>
+<script>
+/* 광고 한눈에 — 모든 브랜드의 모든 광고(네이버·메타·구글)를 한 화면에서 파악하고, 조율은 Brainy에게 넘긴다.
+   데이터는 볼트가 정본이다: 4_Outputs/광고 한눈에 앱/광고 한눈에.json (브랜드·매체 상태·판정 기준·변경 기록)
+   + 맥 동기화(볼트 .claude/scripts/adhub_app.py)가 네이버 검색광고·스마트스토어 API 에서 받은 숫자 → Supabase ah.data/main.
+   광고 태스크 상태는 광고 실습 앱과 같은 ad.data/main 을 읽는다. 이 앱은 아무것도 쓰지 않는다 — 「Brainy와 조율」은 대화창을 채울 뿐(보내기는 동욱이 ↑).
+   숫자·목록을 코드에 넣지 않는다. 판정 기준 숫자(30·50)도 데이터의 hub.rules 에서 읽는다. */
+let D = null, AD = null, loaded = false;
+const S = { bid: lsGet("ah.bid", "all"), filt: "act", camp: "", from: "map", kwMore: false };
+
+function lsGet(k, d){ try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (e) { return d; } }
+function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const won = n => n == null || !isFinite(n) ? "—" : Math.round(n).toLocaleString("ko-KR");
+const wonK = n => n == null || !isFinite(n) ? "—" : n >= 100000 ? (n / 10000).toFixed(n >= 1000000 ? 0 : 1).replace(/\.0$/, "") + "만" : Math.round(n).toLocaleString("ko-KR");
+const ago = iso => { if (!iso) return "—"; const m = Math.round((Date.now() - new Date(iso)) / 60000); return m < 1 ? "방금" : m < 60 ? m + "분 전" : m < 1440 ? Math.round(m / 60) + "시간 전" : Math.round(m / 1440) + "일 전"; };
+function toast(msg){
+  let el = document.getElementById("toast");
+  if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 5000);
+}
+
+/*@include ads-calc.js*/
+/*@include ads-now.js*/
+/*@include ads-map.js*/
+/*@include ads-judge.js*/
+/*@include ads-log.js*/
+
+/* ── Brainy와 조율 — 대화창을 이 말로 채워 연다 (보내기는 동욱이 ↑) ── */
+function brainy(text){
+  if (window.BRAINY_CHAT && window.BRAINY_CHAT.fill) { window.BRAINY_CHAT.fill(text); return; }
+  toast("Brainy 대화창을 아직 못 불러왔어요. 로그인을 확인하고 잠시 뒤 다시 눌러 주세요.");
+}
+const ASKS = [];   // 그린 화면의 「Brainy와 조율」 문장들 — 버튼은 번호만 들고 있다 (긴 글을 속성에 넣지 않게)
+const askBtn = (text, label = "✦ Brainy와 조율", cls = "") => `<button type="button" class="btn ${cls}" data-ask="${ASKS.push(text) - 1}">${esc(label)}</button>`;
+
+/* ── 머리말: 브랜드 고르기 + 숫자 ── */
+function segMore(){ const seg = document.getElementById("brands"); document.getElementById("segwrap").classList.toggle("more", seg.scrollLeft + seg.clientWidth < seg.scrollWidth - 4); }
+window.addEventListener("resize", segMore);
+document.getElementById("brands").addEventListener("scroll", segMore, { passive: true });
+function renderHead(){
+  const seg = document.getElementById("brands"), sum = document.getElementById("sum");
+  if (!D) { seg.innerHTML = ""; sum.innerHTML = ""; return; }
+  const all = [{ id: "all", name: "전체" }].concat(brands());
+  seg.innerHTML = all.map(b => { const n = todosOf(b.id === "all" ? brands() : [b]).filter(t => t.lv === "high").length; return `<button type="button" role="tab" aria-selected="${S.bid === b.id}" class="${S.bid === b.id ? "on" : ""}" data-brand="${b.id}">${esc(b.short || b.name)}${n ? `<span>!${n}</span>` : ""}</button>`; }).join("");
+  const t = totalsOf(selBrands()), ord = storeOrders(selBrands());
+  sum.innerHTML = [
+    ["", "map", wonK(t.cost7), "광고비 7일"],
+    ["", "map", won(t.clk7), "클릭 7일"],
+    ["", "judge", wonK(t.costAll), "광고비 누적"],
+    [ord.ok && ord.n === 0 && t.clkAll >= rules().adjust ? "bad" : "", "log", ord.ok ? won(ord.n) : "—", ord.none ? "주문 (스토어 없음)" : ord.ok ? "주문 28일" : "주문 못 받음"],
+    ["", "map", `${t.on}<small>/${t.camps}</small>`, "켜진 캠페인"]
+  ].map(([k, v, val, label]) => `<button type="button" class="${k}" data-go="${v}" aria-label="${label} ${String(val).replace(/<[^>]+>/g, "")}"><b>${val}</b><span>${label}</span></button>`).join("");
+  const on = seg.querySelector(".on");
+  if (on && (on.offsetLeft < seg.scrollLeft || on.offsetLeft + on.offsetWidth > seg.scrollLeft + seg.clientWidth)) seg.scrollLeft = on.offsetLeft - 8;
+  segMore();
+  const high = todosOf(selBrands()).filter(x => x.lv === "high").length;
+  document.querySelector('#tabbar a[data-v="now"]').innerHTML = `<span aria-hidden="true">▶</span>지금${high ? `<em aria-label="급한 일 ${high}개">${high}</em>` : ""}`;
+}
+
+/* ── 화면 고르기 ── */
+const view = () => { const v = (location.hash || "#now").slice(1); return ["now", "map", "judge", "log", "camp"].includes(v) ? v : "now"; };
+function render(){
+  ASKS.length = 0;
+  let v = view();
+  if (v === "camp" && !(D && campBy(S.camp))) v = "map";
+  document.querySelectorAll("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v || (v === "camp" && a.dataset.v === S.from)));
+  renderHead();
+  const main = document.getElementById("view");
+  if (!D) { main.innerHTML = `<section class="card"><p class="empty">${loaded ? "광고 데이터가 아직 없어요.<br>맥의 동기화가 볼트 「광고 한눈에.json」과 네이버 광고 숫자를 올리면 여기에 보여요." : "광고 숫자를 불러오는 중이에요…"}</p></section>`; return; }
+  main.innerHTML = v === "map" ? renderMap() : v === "judge" ? renderJudge() : v === "log" ? renderLog() : v === "camp" ? renderCamp(campBy(S.camp)) : renderNow();
+}
+function setBrand(id){ S.bid = id; lsPut("ah.bid", id); S.kwMore = false; if (view() === "camp") location.hash = S.from || "map"; else render(); window.scrollTo(0, 0); }
+function openCamp(id){ const v = view(); if (v !== "camp") S.from = v; S.camp = id; location.hash = "camp"; }
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-brand],[data-go],[data-ask],[data-camp],[data-filt],[data-back],[data-kwmore],[data-jf]");
+  if (!t) return;
+  const d = t.dataset;
+  if (d.brand) return setBrand(d.brand);
+  if (d.ask !== undefined) { const s = ASKS[+d.ask]; if (s) brainy(s); return; }
+  if (d.camp) return openCamp(d.camp);
+  if (d.jf) { S.filt = d.jf; S.kwMore = false; if (view() === "judge") render(); else location.hash = "judge"; return; }
+  if (d.go) { if (view() === d.go) window.scrollTo(0, 0); else location.hash = d.go; return; }
+  if (d.filt) { S.filt = d.filt; S.kwMore = false; render(); return; }
+  if (d.kwmore !== undefined) { S.kwMore = true; render(); return; }
+  if (d.back !== undefined) { location.hash = S.from || "map"; return; }
+});
+window.addEventListener("hashchange", () => { window.scrollTo(0, 0); render(); });
+
+/* 다른 앱(Brainy 연결)이 쓰는 창구 */
+window.ADS_APP = { data: () => D, tasks: () => AD, view, selBrands, todosOf, rules, judgeKw, campsOf, kwsOf, brandOf, chState, totalsOf, storeOrders, setBrand, openCamp };
+
+/* ── 시작 ── */
+async function init(){
+  render();
+  const cl = window.claude;
+  if (!cl || !cl.use) { loaded = true; render(); return; }
+  const db = await cl.use("db").catch(() => null);
+  if (!db) { loaded = true; render(); return; }
+  db.doc("ah.data/main").onSnapshot(s => { loaded = true; const v = s.exists ? s.data() : null; if (v && v.hub) D = v; render(); }, () => { loaded = true; render(); });
+  db.doc("ad.data/main").onSnapshot(s => { const v = s.exists ? s.data() : null; if (v && Array.isArray(v.tasks)) { AD = v; render(); } }, () => {});
+}
+init();
+</script>
