@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "69384c64dd"; window.BRAINY_APP = {key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]};</script>
-<script src="../shim.js?v=69384c64dd"></script>
+<script>window.BRAINY_VERSION = "9f421a42cf"; window.BRAINY_APP = {key: "ad", name: "광고 실습", icon: "ad-icon-192.png", sub: "볼트 태스크와 같이 움직이는 광고 학습·집행판", colls: ["ad.data", "taskwork", "bchat"]};</script>
+<script src="../shim.js?v=9f421a42cf"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -228,9 +228,10 @@ tr:last-child td { border-bottom: 0; }
 .warn { color: var(--doing); }
 
 .trow2 .head .book-link { font-size: .8rem; text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; }
-.trow2 .head .run-btn { font: inherit; font-size: .8rem; min-height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); cursor: pointer; }
-.trow2 .head .run-btn:hover { background: var(--accent); color: var(--accent-ink); }
-@media (max-width: 760px) { .trow2 .head .book-link, .trow2 .head .run-btn { min-height: 44px; padding: 0 10px; } }
+.run-btn { font: inherit; font-size: .8rem; min-height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); cursor: pointer; }
+.run-btn:hover { background: var(--accent); color: var(--accent-ink); }
+.next .run-btn { margin-top: 8px; }
+@media (max-width: 760px) { .trow2 .head .book-link, .run-btn { min-height: 44px; padding: 0 10px; } }
 
 /* 교과서 — 노트의 「한눈에·외울 것·더보기·확인 문제」를 요약집처럼 (2026-11-27 동욱 「고등학교 교과서 요약집처럼, 더보기로 교과서 내용, 바로 Brainy한테 질문」) */
 .book { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: start; }
@@ -594,10 +595,16 @@ details.more > .prose { padding: 0 16px 16px; }
       }).join("") : '<p class="panel empty">아직 「외울 것」이 적힌 과가 없어요.</p>') + "</div>" +
       ((PLAN.glossary || []).length ? '<section class="panel box2"><h3>용어</h3><div class="glossary flat">' + PLAN.glossary.map(function (g) { return "<div><b>" + esc(g.term) + '</b><span class="muted">' + esc(g.desc) + "</span></div>"; }).join("") + "</div></section>" : "");
   }
+  function runBtn(t) { return '<button type="button" class="run-btn" data-run="' + esc(t.id) + '" title="맥의 Brainy(본계정)가 이 태스크를 따라 하기 1단계부터 직접 진행해요 — 답은 오른쪽 아래 대화창">▶ Brainy 진행</button>'; }
   var askId = "";   // 실행 화면 「▶ Brainy 진행」으로 물은 과 — 교과서 밖에서도 ctx() 가 그 과 내용을 보낸다
-  function askBrainy(q, id) {
+  function askBrainy(q, id, btn) {
     var t = id ? taskBy(id) : curLesson(); if (!q) return;
     if (!window.BRAINY_CHAT) { $("sync").textContent = "Brainy 대화창을 못 불러왔어요. 새로고침해 주세요."; return; }
+    if (window.BRAINY_CHAT.busy && window.BRAINY_CHAT.busy()) {   // 답하는 중엔 대화창이 새 질문을 안 받는다 — 지금 과를 바꾸지 않고 누른 자리에서 알린다
+      window.BRAINY_CHAT.open();
+      if (btn && !btn.getAttribute("data-was")) { btn.setAttribute("data-was", btn.textContent); btn.textContent = "답하는 중 — ■ 멈춘 뒤 다시"; setTimeout(function () { btn.textContent = btn.getAttribute("data-was"); btn.removeAttribute("data-was"); }, 3500); }
+      return;
+    }
     askId = t ? t.id : "";
     window.BRAINY_CHAT.ask((t ? "(" + t.id + " " + name(t) + ") " : "") + q);
   }
@@ -718,7 +725,7 @@ details.more > .prose { padding: 0 16px 16px; }
         '<p class="small num muted">' + esc(first.id) + " · " + first.week + "주차" + (first.estimate ? " · " + esc(first.estimate) : "") + "</p>" +
         "<p><b>" + esc(name(first)) + "</b></p>" + (k ? '<p class="small muted">다음 체크할 기준: ' + md(k.t) + "</p>" : "") +
         (commonLeft.length ? '<p class="small warn">' + esc(base.name) + "이 " + commonLeft.length + "개 남았어요: " + esc(commonLeft.slice(0, 2).map(name).join(", ")) + (commonLeft.length > 2 ? " 외 " + (commonLeft.length - 2) + "개" : "") + "</p>" : "") +
-        stateSeg(first);
+        stateSeg(first) + runBtn(first);
       return '<div class="panel" style="--c:' + color(c) + '"><span class="k">' + dot(c) + esc(PLAN.channels[c].name) + "</span>" + body + "</div>";
     }).join("");
   }
@@ -754,7 +761,7 @@ details.more > .prose { padding: 0 16px 16px; }
         return '<button type="button" data-crit="' + esc(t.id) + '" data-box="' + k.box + '" aria-pressed="false"' + off + '><span class="box" aria-hidden="true"></span><span class="ct">' + md(k.t) + "</span></button>";
       }).join("");
       return '<div class="trow2" data-row="' + esc(t.id) + '"><div class="info"><div class="head"><span class="tid">' + esc(t.id) + "</span>" + trackChip + t.products.map(prodChip).join("") +
-        '<span class="small muted num">' + esc(t.estimate || "") + (t.owner ? " · " + esc(t.owner) : "") + '</span><a class="book-link" href="#book/' + esc(t.id) + '">📖 교과서</a><button type="button" class="run-btn" data-run="' + esc(t.id) + '" title="맥의 Brainy(본계정)가 이 태스크를 따라 하기 1단계부터 직접 진행해요 — 답은 오른쪽 아래 대화창">▶ Brainy 진행</button><span class="chip pend" data-pend="' + esc(t.id) + '" hidden>볼트에 넣는 중</span></div>' +
+        '<span class="small muted num">' + esc(t.estimate || "") + (t.owner ? " · " + esc(t.owner) : "") + '</span><a class="book-link" href="#book/' + esc(t.id) + '">📖 교과서</a>' + runBtn(t) + '<span class="chip pend" data-pend="' + esc(t.id) + '" hidden>볼트에 넣는 중</span></div>' +
         '<span class="title">' + esc(name(t)) + "</span>" +
         (t.exists ? "" : '<span class="small warn">볼트에 「' + esc(t.title) + '」 노트가 없어 상태·체크·기록을 못 해요. Brainy에게 「/log 로 이 태스크 만들어」라고 하면 열려요.</span>') +
         (crit ? '<div class="crit" role="group" aria-label="' + esc(t.id) + ' 완료 기준">' + crit + "</div>" : "") +
@@ -889,9 +896,9 @@ details.more > .prose { padding: 0 16px 16px; }
     var lb = e.target.closest("[data-addlog]");
     if (lb) { addLog(lb.getAttribute("data-addlog")); return; }
     var ab = e.target.closest("[data-ask]");
-    if (ab) { askBrainy(ab.getAttribute("data-ask")); return; }
+    if (ab) { askBrainy(ab.getAttribute("data-ask"), null, ab); return; }
     var rb = e.target.closest("[data-run]");
-    if (rb) askBrainy("이 과를 Brainy가 진행해 줘 — 따라 하기 1단계부터", rb.getAttribute("data-run"));
+    if (rb) askBrainy("이 과를 Brainy가 진행해 줘 — 따라 하기 1단계부터", rb.getAttribute("data-run"), rb);
   });
   document.addEventListener("submit", function (e) {
     var f = e.target.closest("[data-askform]"); if (!f) return;
@@ -1293,7 +1300,7 @@ details.more > .prose { padding: 0 16px 16px; }
   function close() { box.hidden = true; fab.hidden = false; document.documentElement.classList.remove("bc-push"); window.dispatchEvent(new Event("resize")); paintFab(); try { localStorage.removeItem(KEY + ".open"); } catch (e) {} }
   /* 앱 안 다른 단추에서 대화를 열 때 — ask 는 바로 보내고, fill 은 입력칸만 채워 둔다(동욱이 고쳐서 ↑ — 강의 실습 「Brainy와 이 칸 하기」) */
   function fill(q) { showHist = false; viewPast = -1; open(); text.value = String(q || ""); text.dispatchEvent(new Event("input")); }
-  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, fill: fill };
+  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");

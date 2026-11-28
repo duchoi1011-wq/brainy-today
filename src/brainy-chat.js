@@ -272,7 +272,7 @@
   function close() { box.hidden = true; fab.hidden = false; document.documentElement.classList.remove("bc-push"); window.dispatchEvent(new Event("resize")); paintFab(); try { localStorage.removeItem(KEY + ".open"); } catch (e) {} }
   /* 앱 안 다른 단추에서 대화를 열 때 — ask 는 바로 보내고, fill 은 입력칸만 채워 둔다(동욱이 고쳐서 ↑ — 강의 실습 「Brainy와 이 칸 하기」) */
   function fill(q) { showHist = false; viewPast = -1; open(); text.value = String(q || ""); text.dispatchEvent(new Event("input")); }
-  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, fill: fill };
+  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");

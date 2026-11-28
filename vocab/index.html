@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "e5f5a6270d"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
-<script src="../shim.js?v=e5f5a6270d"></script>
+<script>window.BRAINY_VERSION = "5d9fd02777"; window.BRAINY_APP = {key: "vocab", name: "체화 단어장", icon: "vo-icon-192.png", sub: "위키와 단어장 표가 바뀌면 바로 따라오는 단어장", colls: ["vo.data", "vo.marks", "progress", "ctx", "bchat"]};</script>
+<script src="../shim.js?v=5d9fd02777"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="apple-touch-icon" href="vocab-icon-180.png">
@@ -1805,7 +1805,7 @@ init();
   function close() { box.hidden = true; fab.hidden = false; document.documentElement.classList.remove("bc-push"); window.dispatchEvent(new Event("resize")); paintFab(); try { localStorage.removeItem(KEY + ".open"); } catch (e) {} }
   /* 앱 안 다른 단추에서 대화를 열 때 — ask 는 바로 보내고, fill 은 입력칸만 채워 둔다(동욱이 고쳐서 ↑ — 강의 실습 「Brainy와 이 칸 하기」) */
   function fill(q) { showHist = false; viewPast = -1; open(); text.value = String(q || ""); text.dispatchEvent(new Event("input")); }
-  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, fill: fill };
+  window.BRAINY_CHAT = { open: open, close: close, ask: function (q) { open(); go(q); }, fill: fill, busy: function () { return busy; } };   // busy: 답하는 중이면 go() 가 조용히 넘기므로 앱 단추가 먼저 묻는다 (광고 실습 11-28 검증 중간)
   fab.addEventListener("click", open);
   box.addEventListener("click", function (e) {
     var up = e.target.closest("[data-bc-unpic]");
