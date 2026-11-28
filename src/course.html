@@ -106,7 +106,7 @@ button{font:inherit}
 details.fold>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px}
 details.fold>summary::-webkit-details-marker{display:none}
 details.fold>summary h2{margin:0}
-details.fold>summary::after{content:"펼치기";font-size:12px;color:var(--accent);font-weight:600}
+details.fold>summary::after{content:"펼치기";flex:none;font-size:12px;color:var(--accent);font-weight:600}
 details.fold[open]>summary::after{content:"접기"}
 details.fold[open]>summary{margin-bottom:8px}
 /* 지금 탭 */
@@ -169,6 +169,9 @@ details.more>summary .muted{font-weight:500}
 .askf{display:flex;gap:6px}
 .askf input{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0 12px;min-height:44px}
 .askf .btn{flex:none}
+.quiz details.qmore>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--accent);font-weight:600;font-size:14px;border-top:1px solid var(--line)}
+/* 폰: 실습 줄의 단추는 줄 아래로 (제목이 한 줄에 보이게) · 더보기 제목의 소제목 목록은 숨김 */
+@media (max-width:480px){.brow{flex-wrap:wrap;gap:0}.brow .cell{flex:1 1 100%}.brow .btn.mini{margin:-4px 0 10px 26px}details.more>summary .muted{display:none}}
 .lnav{display:flex;justify-content:space-between;gap:10px;padding:0 4px}
 .lnav a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;text-decoration:none;min-width:0}
 /* 칸 자세히 */

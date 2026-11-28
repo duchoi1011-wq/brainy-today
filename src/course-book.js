@@ -74,10 +74,12 @@ function chapterHtml(c, pages, i){
   if (rest.length) h += `<section class="card"><details class="fold more"><summary><b>더보기 — 교과서 본문 <span class="muted small">(${esc(rest.map(s => s.h).slice(0, 3).join(" · "))}${rest.length > 3 ? " …" : ""})</span></b></summary><div class="md">${secsHtml(rest)}</div></details></section>`;
   if (cells.length) h += `<section class="card"><h2>이 장의 실습 · ${cells.length}칸 — ▶ 를 누르면 Brainy가 맥에서 바로 진행</h2>
     <div>${cells.map(x => `<div class="brow">${cellRow(c, x, keys, x.easy ? x.easy.t : "")}${runMini(c, x)}</div>`).join("")}</div></section>`;
-  if (quiz.length) h += `<section class="card"><h2>확인 문제 ${quiz.length}개 — 눌러서 Brainy와 답 맞춰 보기</h2><div class="quiz">
-    ${quiz.map(({ x, q }, n) => `<details class="qz"><summary><span>Q${n + 1}. ${inline(q.q || q.t)}${itemOn(c, x, "chk", q) ? ` <span class="pill done">✓ 체크함</span>` : ""}</span></summary>
+  const QUIZ_FIRST = 6;   // 처음엔 6개만 — 나머지는 「N개 더」를 눌러야 (한 장에 40개 넘는 강의가 있어서)
+  const qzRow = ({ x, q }, n) => `<details class="qz"><summary><span>Q${n + 1}. ${inline(q.q || q.t)}${itemOn(c, x, "chk", q) ? ` <span class="pill done">✓ 체크함</span>` : ""}</span></summary>
       <div class="qa"><p class="small muted">「${esc(x.title)}」 칸의 확인 질문이에요. 답은 Brainy가 먼저 묻고, 내 답을 듣고 짚어 줘요.</p>
-      <div class="btns"><button type="button" class="btn primary" data-quiz="${esc(x.key)}" data-qid="${esc(q.id)}">✦ Brainy와 답 맞춰 보기</button><button type="button" class="btn" data-cell="${esc(x.key)}">칸 자세히</button></div></div></details>`).join("")}</div></section>`;
+      <div class="btns"><button type="button" class="btn primary" data-quiz="${esc(x.key)}" data-qid="${esc(q.id)}">✦ Brainy와 답 맞춰 보기</button><button type="button" class="btn" data-cell="${esc(x.key)}">칸 자세히</button></div></div></details>`;
+  if (quiz.length) h += `<section class="card"><h2>확인 문제 ${quiz.length}개 — 눌러서 Brainy와 답 맞춰 보기</h2><div class="quiz">
+    ${quiz.slice(0, QUIZ_FIRST).map(qzRow).join("")}${quiz.length > QUIZ_FIRST ? `<details class="qmore"><summary>확인 문제 ${quiz.length - QUIZ_FIRST}개 더 보기</summary>${quiz.slice(QUIZ_FIRST).map((o, n) => qzRow(o, n + QUIZ_FIRST)).join("")}</details>` : ""}</div></section>`;
   h += `<section class="card ask"><h2>Brainy에게 묻기 — 이 장 내용과 함께 바로 보내요</h2>
     <div class="chips">${["이 장을 더 쉽게 설명해 줘", "핵심만 퀴즈로 내 줘", "내 일에 옮기면 어떻게 돼?"].map(q => `<button type="button" class="chip" data-ask="${esc(q)}">${esc(q)}</button>`).join("")}</div>
     <form data-askform class="askf"><input class="ask-in" name="q" placeholder="이 장에서 궁금한 것" maxlength="500" autocomplete="off" enterkeyhint="send" aria-label="Brainy에게 물을 것"><button type="submit" class="btn primary">묻기</button></form>
