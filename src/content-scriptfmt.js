@@ -24,7 +24,7 @@ function scriptFmt(text){
     if((m = line.match(/^(\s*)[-*]\s+(.*)$/))){
       var depth = m[1].length >= 2 ? 2 : 1;
       while(list < depth){ out.push("<ul class=\"sf-ul\">"); list++ } while(list > depth){ out.push("</ul>"); list-- }
-      var kv = m[2].match(/^([^:：「」]{1,12})[:：]\s*(.*)$/);
+      var kv = depth === 1 && m[2].match(/^([^:：「」]{1,12})[:：]\s*(.*)$/);   // 「이름: 내용」은 맨 앞 줄만 — 하위 줄(말할 요점 속 「그래서 오늘 결심: …」)은 그대로
       if(kv){ var key = /꼭|핵심|한 줄/.test(kv[1]);
         out.push("<li class=\"sf-kv" + (key ? " sf-key" : "") + "\"><b class=\"sf-k\">" + esc(kv[1]) + "</b> " + (kv[2] ? (key ? "<u class=\"sf-u\">" + sfInline(kv[2]) + "</u>" : sfInline(kv[2])) : "") + "</li>") }
       else out.push("<li>" + sfInline(m[2]) + "</li>");
