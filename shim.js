@@ -255,6 +255,8 @@
           images: list.filter(Boolean)
         };
         if (opts.model) req.model = opts.model;
+        if (opts.agent) { req.agent = String(opts.agent); if (opts.agentName) req.agentName = String(opts.agentName); }   // 받는 사람 — 맥이 ~/agents/<폴더> 에서 답한다 (전체 현황 · 2026-11-28)
+        if (opts.engine) req.engine = String(opts.engine);   // 엔진 claude · gpt · gemini — 맥 ai_runner 가 고른다 (맥으로만 갈 때만 뜻이 있다)
         return new Promise(function (resolve, reject) {
           var w = aiWait[id] = { opts: opts, json: !!json, text: "", at: "", resolve: resolve, reject: reject, timers: [], seen: false };
           w.timers.push(setTimeout(function () {

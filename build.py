@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""src/ 의 원본 → Supabase 로 도는 독립 웹앱 7개 (조립만 한다).
+"""src/ 의 원본 → Supabase 로 도는 독립 웹앱 8개 (조립만 한다).
 
   src/brainy-home.html → home/index.html       (Brainy 홈)
   src/shortcuts.html   → shortcuts/index.html  (맥 단축키)
@@ -7,6 +7,7 @@
   src/course.html      → course/index.html     (강의 실습)
   src/ad.html          → ad/index.html         (광고 실습)
   src/ads.html         → ads/index.html        (광고 한눈에)
+  src/hub.html         → hub/index.html        (전체 현황)
   src/content.html     → content/index.html    (콘텐츠 기획)
 
 원본이 그대로 앱이다 — 여기선 머리말(로그인 화면·받침 shim.js·아이콘)을 붙이고 /*@include 파일*/ 자리에 src/ 의 파일을 끼울 뿐이다.
@@ -157,6 +158,7 @@ CT_BRAINY = "\n" + (root / "src" / "content-brainy.js").read_text(encoding="utf-
 CR_BRAINY = "\n" + (root / "src" / "course-brainy.js").read_text(encoding="utf-8")
 AD_BRAINY = "\n" + (root / "src" / "ad-brainy.js").read_text(encoding="utf-8")
 ADS_BRAINY = "\n" + (root / "src" / "ads-brainy.js").read_text(encoding="utf-8")   # 광고 한눈에 — 지금 브랜드·조율할 일을 Brainy 에게   # 광고 실습 — 교과서 과를 Brainy 에게 묻기
+HUB_BRAINY = "\n" + (root / "src" / "hub-brainy.js").read_text(encoding="utf-8")   # 전체 현황 — 받는 사람·엔진 단추와 모든 앱 현황을 Brainy 에게
 
 # ═════════════════════════ 맥 단축키 ═════════════════════════
 load("shortcuts.html")
@@ -213,6 +215,19 @@ emit("ads", "광고 한눈에", "광고 한눈에", ("#F1F3F2", "#0F1413"),
      '{"id":"/brainy-today/ads/","name":"광고 한눈에","short_name":"광고 한눈에","start_url":"./","scope":"./","display":"standalone","background_color":"#F1F3F2","theme_color":"#F1F3F2","icons":[{"src":"ah-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"ah-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
      "", ADS_BRAINY + BRAINY_CHAT)
 
+# ═════════════════════════ 전체 현황 ═════════════════════════
+# 내가 직접 쓰는 비즈니스·학습 앱의 현황을 한 화면에서 보고 Brainy·팀 에이전트와 바로 이야기한다 (2026-11-28 동욱 — 틀은 광고 한눈에와 같다).
+# 데이터 hub.data/main 은 맥 동기화(hub_app.py)가 볼트 「전체 현황.json」(넣을 앱·에이전트·엔진) + 각 앱 문서 요약으로 올린다. 앱은 아무것도 쓰지 않는다.
+# 대화는 맥으로만(본계정) — 받는 사람(agent)·엔진(engine: claude·gpt·gemini)을 hub-brainy.js 의 mode() 가 실어 보낸다. 아이콘은 hub/ 에 그대로 둔다.
+load("hub.html")
+include()
+emit("hub", "전체 현황", "전체 현황", ("#F2F2F5", "#101116"),
+     "--g-bg:var(--bg);--g-fg:var(--ink);--g-mut:var(--muted);--g-card:var(--surface);--g-line:var(--line);--g-acc:var(--accent);--g-acc-ink:var(--accent-ink);--g-warn:var(--s-bad);--g-ok:var(--s-ok)",
+     '<link rel="apple-touch-icon" href="hb-icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="hb-icon-192.png">\n<link rel="icon" type="image/png" sizes="64x64" href="hb-icon-64.png">',
+     '{key: "hub", name: "전체 현황", icon: "hb-icon-192.png", sub: "내가 쓰는 비즈니스·학습 앱과 에이전트를 한 화면에서", colls: ["hub.data", "bchat"]}',
+     '{"id":"/brainy-today/hub/","name":"전체 현황","short_name":"전체 현황","start_url":"./","scope":"./","display":"standalone","background_color":"#F2F2F5","theme_color":"#F2F2F5","icons":[{"src":"hb-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"hb-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}',
+     "", HUB_BRAINY + BRAINY_CHAT)
+
 # ═════════════════════════ 콘텐츠 기획 ═════════════════════════
 # 브랜드 → 키워드 → 콘텐츠 → 대본 (편집 믹서 바로 앞 단계). 조종판 — 실행은 맥의 Claude(콘텐츠 스킬 셋).
 # 2026-11-17 동욱: 맥에 앱으로 설치한 Brainy 홈(옛 범위 /brainy-today/)에 섞여 열려서 따로 웹앱으로 — 주소는 /content-plan/ (저장소 duchoi1011-wq/content-plan).
@@ -252,7 +267,7 @@ redirect = """<!doctype html>
 <title>Brainy 홈</title><meta http-equiv="refresh" content="0; url=home/">
 <script>location.replace("home/" + location.search + location.hash);</script></head>
 <body style="font-family:-apple-system,sans-serif;padding:24px">
-<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="course/">강의 실습</a> · <a href="ad/">광고 실습</a> · <a href="ads/">광고 한눈에</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
+<p><a href="home/">Brainy 홈</a> · <a href="shortcuts/">맥 단축키</a> · <a href="vocab/">체화 단어장</a> · <a href="course/">강의 실습</a> · <a href="ad/">광고 실습</a> · <a href="ads/">광고 한눈에</a> · <a href="hub/">전체 현황</a> · <a href="/content-plan/">콘텐츠 기획</a></p></body></html>
 """
 (root / "index.html").write_text(redirect, encoding="utf-8")
 # 열려 있던 옛 화면이 version.txt 를 보고 스스로 새로 고치면 → 이 넘김 페이지 → home/
