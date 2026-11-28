@@ -140,11 +140,37 @@ details.fold[open]>summary{margin-bottom:8px}
 .remain.ok{border-left-color:var(--s-done)}
 .linkbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:14px;display:inline-flex;align-items:center;min-height:44px}
 .linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
-/* 공부 */
+/* 교과서 — 광고 실습 교과서와 같은 차례: 목차 · 한눈에 · ★ 핵심 · 더보기 · 이 장의 실습 · 확인 문제 · 묻기 · 앞뒤 장 */
 .tldr{background:var(--now-bg);border-radius:10px;padding:10px 12px;font-size:14.5px;line-height:1.6;margin-bottom:6px}
-details.sfold{border-top:1px solid var(--line);padding:4px 0}
-details.sfold>summary{min-height:44px;align-items:center}
-details.sfold>summary b{font-size:15px}
+.toc>summary h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toc>summary h2 .cur{color:var(--ink);letter-spacing:0}
+.toc nav{display:flex;flex-direction:column}
+.toc nav a{display:grid;grid-template-columns:62px minmax(0,1fr);gap:2px 8px;align-items:baseline;padding:9px 10px;border-top:1px solid var(--line);color:var(--ink);text-decoration:none;min-height:44px;border-left:3px solid transparent}
+.toc nav a b{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--muted)}
+.toc nav a span{font-weight:600;font-size:14px;min-width:0}
+.toc nav a small{grid-column:2;font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.toc nav a[aria-current="page"]{background:var(--surface-2);border-left-color:var(--accent)}
+.toc nav a.corelink span{color:var(--accent)}
+.card.core{background:color-mix(in srgb,var(--s-sim) 9%,var(--surface));border-color:color-mix(in srgb,var(--s-sim) 40%,var(--line))}
+.card.core h2{color:var(--s-sim)}
+.card.core .clink{display:inline-flex;align-items:center;min-height:44px;margin-top:-10px;font-weight:700;text-decoration:none}
+details.more>summary b{font-size:15px;color:var(--accent)}
+details.more>summary .muted{font-weight:500}
+.brow{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line)}
+.brow:first-child{border-top:0}
+.brow .cell{border-top:0}
+.btn.mini{flex:none;padding:6px 12px;font-size:13.5px;min-height:44px;white-space:nowrap}
+.quiz .qz{border-top:1px solid var(--line)}
+.quiz .qz:first-child{border-top:0}
+.quiz .qz>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;padding:8px 2px;font-size:14.5px;line-height:1.5}
+.quiz .qa{padding:0 2px 12px;display:flex;flex-direction:column;gap:8px}
+.card.ask{border-left:4px solid var(--accent);display:flex;flex-direction:column;gap:10px}
+.card.ask h2{margin:0}
+.askf{display:flex;gap:6px}
+.askf input{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0 12px;min-height:44px}
+.askf .btn{flex:none}
+.lnav{display:flex;justify-content:space-between;gap:10px;padding:0 4px}
+.lnav a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;text-decoration:none;min-width:0}
 /* 칸 자세히 */
 .back{all:unset;cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;min-height:44px;display:inline-flex;align-items:center}
 .sec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
@@ -198,10 +224,10 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
   </header>
   <main id="view"></main>
 </div>
-<!-- 아래 탭: 지금 = 오늘 할 칸 · 공부 = 강의 내용 쉬운 설명(위키) · 지도 = 모든 칸 · 배운 것 = 학습 노트 · 내 메모 = 칸마다 적은 메모 -->
+<!-- 아래 탭: 지금 = 오늘 할 칸 · 교과서 = 강의 내용 장마다 한눈에·핵심·본문(위키) · 지도 = 모든 칸 · 배운 것 = 학습 노트 · 내 메모 = 칸마다 적은 메모 -->
 <nav id="tabbar" aria-label="화면">
   <a href="#now" data-v="now"><span aria-hidden="true">▶</span>지금</a>
-  <a href="#study" data-v="study"><span aria-hidden="true">📖</span>공부</a>
+  <a href="#book" data-v="book"><span aria-hidden="true">📖</span>교과서</a>
   <a href="#map" data-v="map"><span aria-hidden="true">▦</span>지도</a>
   <a href="#notes" data-v="notes"><span aria-hidden="true">✎</span>배운 것</a>
   <a href="#memo" data-v="memo"><span aria-hidden="true">✍︎</span>내 메모</a>
@@ -215,10 +241,10 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
    데이터는 볼트가 정본이다: 3_Action/33_카드/C-<강의> 수강·실습 분류.md · C-<강의> 실습 학습 노트.md · 그 지도를 잇는 32_태스크
    → 맥 동기화(볼트 .claude/scripts/course_app.py) → Supabase cr.data/main → 아래 db.doc("cr.data/main") 가 채운다. 강의 내용을 코드에 넣지 않는다.
    이 앱이 쓰는 것: cr.memo/<강의 id>-<칸 번호표> (칸마다 내 메모) · cr.tog/<번호표> (동욱이 누른 체크 — 맥이 볼트 지도 카드에 적는다, course-check.js) · taskwork/cr-<번호표> (지금 태스크 기준 줄·상태 — 맥 task_sync 가 태스크 노트에 적는다, course-task.js) · Brainy 대화(ai·bchat).
-   공부 본문은 cr.study/<강의 id> (볼트 위키 요약, course-study.js). Brainy(course-practice 스킬)는 요구 대조 + 확인 질문 뒤 같은 지도 카드에 체크를 쓴다. */
+   교과서 본문은 cr.study/<강의 id> (볼트 위키 요약, course-book.js). Brainy(course-practice 스킬)는 요구 대조 + 확인 질문 뒤 같은 지도 카드에 체크를 쓴다. */
 let DATA = { courses: [] };
 let db = null, loaded = false, pendingRender = false;
-const S = { cid: lsGet("cr.cid", ""), cell: lsGet("cr.cell", ""), from: "map", filt: "all", backTo: "" };
+const S = { cid: lsGet("cr.cid", ""), cell: lsGet("cr.cell", ""), from: "map", filt: "all", backTo: "", run: "" };   // run: ▶ 로 진행을 부탁한 칸
 
 function lsGet(k, d){ try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (e) { return d; } }
 function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -263,17 +289,22 @@ function nextCell(c){
   return (k && cellBy(c, k.cell)) || practice(c).find(x => ["similar", "doing", "todo"].includes(x.st)) || null;
 }
 
-/* ── Brainy와 같이 하기 — 대화창을 이 말로 채워 연다 (보내기는 동욱이 ↑) ── */
+/* ── Brainy와 같이 하기 — 누르면 바로 보낸다 (2026-11-28 동욱 「광고실습앱처럼 자동실습」 — 광고 실습 ▶ Brainy 진행과 같은 길)
+   진행·새 태스크는 새 대화로(BRAINY_CHAT.start — 지난 칸 대화가 같이 가지 않고, 대화 제목에 강의·칸 이름이 보임), 요약·질문은 지금 대화로(ask).
+   답하는 중엔 대화창이 새 질문을 안 받으므로 먼저 알린다. ▶ 로 부탁한 칸은 S.run — ctx 가 그 칸 내용을 같이 보낸다 (course-brainy.js) ── */
 const sayDo = (c, x) => `/course-practice ${c.name} — ${x.title} 진행하자`;
 const sayListen = (c, x) => `/course-practice ${c.name} — 듣기 칸 「${x.title}」 실습에 필요한 것만 3줄로 요약해 줘`;
 const sayTask = c => `/course-practice ${c.name} — 지도에서 다음 실습 태스크 하나 만들자`;
-function brainy(text){
-  if (window.BRAINY_CHAT && window.BRAINY_CHAT.fill) { window.BRAINY_CHAT.fill(text); return; }
-  toast("Brainy 대화창을 아직 못 불러왔어요. 로그인을 확인하고 잠시 뒤 다시 눌러 주세요.");
+function brainyGo(text, fresh){
+  const B = window.BRAINY_CHAT;
+  if (!B) { toast("Brainy 대화창을 아직 못 불러왔어요. 로그인을 확인하고 잠시 뒤 다시 눌러 주세요."); return false; }
+  if (B.busy && B.busy()) { B.open(); toast("Brainy가 아직 앞 질문에 답하는 중이에요. 답이 끝나면 다시 눌러 주세요."); return false; }
+  if (fresh) B.start(text); else B.ask(text);
+  return true;
 }
 const doBtn = (x, cls = "primary") => isListen(x)
-  ? `<button type="button" class="btn ${cls}" data-listen="${esc(x.key)}">✦ Brainy에게 3줄 요약 듣기</button>`
-  : `<button type="button" class="btn ${cls}" data-do="${esc(x.key)}">✦ Brainy와 이 칸 하기</button>`;
+  ? `<button type="button" class="btn ${cls}" data-listen="${esc(x.key)}">🎧 Brainy에게 3줄 요약 듣기</button>`
+  : `<button type="button" class="btn ${cls}" data-do="${esc(x.key)}">▶ Brainy 진행</button>`;
 
 function segMore(){ const seg = document.getElementById("courses"); document.getElementById("segwrap").classList.toggle("more", seg.scrollLeft + seg.clientWidth < seg.scrollWidth - 4); }
 window.addEventListener("resize", segMore);
@@ -309,21 +340,21 @@ function renderHead(){
 }
 
 /* ── 화면 고르기 ── */
-const view = () => { const v = (location.hash || "#now").slice(1); return ["now", "study", "map", "notes", "memo", "cell"].includes(v) ? v : "now"; };
+const view = () => { const v = (location.hash || "#now").slice(1).split("/")[0]; return ["now", "book", "map", "notes", "memo", "cell"].includes(v) ? v : "now"; };   // 교과서는 #book/<장>
 function render(){
   const ae = document.activeElement;
-  if (ae && ae.classList && ae.classList.contains("memo-in")) { pendingRender = true; return; }   // 메모를 쓰는 중에는 다시 그리지 않는다 (한글 조합·커서 보호)
+  if (ae && ae.classList && (ae.classList.contains("memo-in") || ae.classList.contains("ask-in"))) { pendingRender = true; return; }   // 메모·질문을 쓰는 중에는 다시 그리지 않는다 (한글 조합·커서 보호)
   pendingRender = false;
   let v = view();
   const c = course();
   if (v === "cell" && !(c && cellBy(c, S.cell))) v = "map";
   document.querySelectorAll("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v || (v === "cell" && a.dataset.v === S.from)));
+  const tb = document.querySelector('#tabbar a[data-v="book"]'); if (tb && v === "book") tb.setAttribute("href", location.hash);   // 교과서 탭을 다시 누르면 보던 장으로
   renderHead();
   const main = document.getElementById("view");
   if (!c) { main.innerHTML = `<section class="card"><p class="empty">${loaded ? "볼트에 강의 지도가 아직 없어요.<br>Brainy에게 「이 강의 분류해 줘」라고 하면 지도 카드를 만들어요." : "강의를 불러오는 중이에요…"}</p></section>`; return; }
-  main.innerHTML = v === "study" ? renderStudy(c) : v === "map" ? renderMap(c) : v === "notes" ? renderNotes(c) : v === "memo" ? renderMemo(c) : v === "cell" ? renderCell(c, cellBy(c, S.cell)) : renderNow(c);
+  main.innerHTML = v === "book" ? renderBook(c) : v === "map" ? renderMap(c) : v === "notes" ? renderNotes(c) : v === "memo" ? renderMemo(c) : v === "cell" ? renderCell(c, cellBy(c, S.cell)) : renderNow(c);
   if (v === "cell") { paintMemoState(); studyLoad(c); }
-  if (v === "study" && S.page != null) { const el = document.getElementById("page-" + S.page); if (el) { jumpTo(el); S.page = null; } }
   if (S.backTo) { const el = main.querySelector(`[data-cell="${CSS.escape(S.backTo)}"]`); S.backTo = ""; if (el) el.scrollIntoView({ block: "center" }); }
 }
 /* 장·단원으로 건너뛰기 — 위에 붙은 머리 칸(강의 고르기·숫자) 아래에 제목이 보이게 (11-24 검증 중간 4) */
@@ -334,7 +365,7 @@ function jumpTo(el){
 }
 function openCell(key){
   if (document.activeElement && document.activeElement.classList.contains("memo-in")) document.activeElement.blur();   // 다른 칸으로 갈 때 쓰던 메모 칸을 놓아야 화면이 바뀐다
-  const v = view(); if (v !== "cell") S.from = v;
+  const v = view(); if (v !== "cell") { S.from = v; S.fromHash = location.hash.slice(1) || v; }   // 돌아가기는 보던 교과서 장(#book/3)까지
   S.cell = key; lsPut("cr.cell", key);
   if (v === "cell") { render(); window.scrollTo(0, 0); } else location.hash = "cell";
 }
@@ -347,20 +378,20 @@ document.addEventListener("click", e => {
   if (!t) return;
   const d = t.dataset;
   if (d.course) return setCourse(d.course);
-  if (d.do !== undefined) { const x = cellBy(c, d.do); if (x) brainy(sayDo(c, x)); return; }
-  if (d.listen !== undefined) { const x = cellBy(c, d.listen); if (x) brainy(sayListen(c, x)); return; }
-  if (d.newtask !== undefined) return brainy(sayTask(c));
+  if (d.do !== undefined) { const x = cellBy(c, d.do); if (x && brainyGo(sayDo(c, x), true)) S.run = x.key; return; }
+  if (d.listen !== undefined) { const x = cellBy(c, d.listen); if (x && brainyGo(sayListen(c, x))) S.run = x.key; return; }
+  if (d.newtask !== undefined) { brainyGo(sayTask(c), true); return; }
   if (d.cell !== undefined) return openCell(d.cell);
-  if (d.back !== undefined) { S.backTo = S.cell; location.hash = S.from || "map"; return; }
+  if (d.back !== undefined) { S.backTo = S.cell; location.hash = S.fromHash || S.from || "map"; return; }
   if (d.sum) { S.filt = d.sum; if (view() === "map") render(); else location.hash = "map"; return; }
   if (d.filt) { S.filt = d.filt; render(); return; }
   if (d.unit) { const el = document.getElementById("unit-" + d.unit); if (el) { el.open = true; jumpTo(el); } return; }
 });
 window.addEventListener("hashchange", () => { const keep = !!S.backTo; if (!keep) window.scrollTo(0, 0); render(); });   // 칸에서 돌아오면 그 칸 줄로 (render 가 옮긴다)
-document.addEventListener("focusout", e => { if (e.target.classList && e.target.classList.contains("memo-in")) setTimeout(() => { if (pendingRender) render(); }, 0); });
+document.addEventListener("focusout", e => { if (e.target.classList && (e.target.classList.contains("memo-in") || e.target.classList.contains("ask-in"))) setTimeout(() => { if (pendingRender) render(); }, 0); });
 
 /*@include course-check.js*/
-/*@include course-study.js*/
+/*@include course-book.js*/
 /*@include course-task.js*/
 /*@include course-now.js*/
 /*@include course-map.js*/

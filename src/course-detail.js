@@ -6,7 +6,7 @@ function renderCell(c, x){
   const keys = nowKeys(c), memo = memoOf(c.id, x.key), listen = isListen(x), miss = missingOf(c, x), done = cellOn(c, x);
   const sec = (title, body) => body ? `<div class="sec"><span class="lbl">${title}</span>${body}</div>` : "";
   const list = L => (L || []).length ? `<ul class="plain">${L.map(r => `<li>${inline(r)}</li>`).join("")}</ul>` : "";
-  const back = { now: "지금", memo: "내 메모", notes: "배운 것", map: "지도", study: "공부" }[S.from] || "지도";
+  const back = { now: "지금", memo: "내 메모", notes: "배운 것", map: "지도", book: "교과서" }[S.from] || "지도";
   const nReq = (x.req || []).filter(it => it.id).length, nChk = (x.chk || []).filter(it => it.id && it.t).length;
   /* 빠진 것 — 항목이 있는 칸은 체크 안 된 항목 그대로, 항목이 없는 칸은 지도 카드의 「빠진 것/남은 것」 글 */
   let missHtml = "";
@@ -24,7 +24,7 @@ function renderCell(c, x){
     <div class="meta">${pill(done ? "done" : x.st)}<span>${esc(done && x.st !== "done" ? "내가 끝 표시함 · 볼트에 적는 중" : x.mine ? "내가 앱에서 끝 표시한 칸" : ST[x.st].how)}</span></div>
     ${missHtml}
     <div class="btns" style="margin-top:12px">${doBtn(x)}${cellBtn(c, x)}</div>
-    <p class="small muted" style="margin-top:8px">${listen ? "들은 뒤 「들었어요」를 누르면 볼트 지도에 체크돼요. 요약이 필요하면 Brainy에게 3줄 요약을 부탁해요." : "혼자 한 것은 직접 체크해요. Brainy와 하면 Brainy가 요구를 하나씩 대조하고 확인 질문을 한 뒤 체크해요. 체크는 모두 볼트 지도 카드에 적혀요."}</p>
+    <p class="small muted" style="margin-top:8px">${listen ? "들은 뒤 「들었어요」를 누르면 볼트 지도에 체크돼요. 요약이 필요하면 Brainy에게 3줄 요약을 부탁해요." : "혼자 한 것은 직접 체크해요. 「▶ Brainy 진행」을 누르면 맥의 Brainy가 이 칸을 바로 진행하고, 요구를 하나씩 대조하고 확인 질문을 한 뒤 체크해요. 체크는 모두 볼트 지도 카드에 적혀요."}</p>
   </section>
   <section class="card">
     ${easyBox(c, x)}

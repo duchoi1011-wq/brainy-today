@@ -51,8 +51,8 @@ header>.brand{padding-right:min(46vw,190px)}
 <body>
 <span id="rtdot" aria-hidden="true"></span>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.BRAINY_VERSION = "b78c0b3c91"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "cr.study", "cr.tog", "taskwork", "bchat"]};</script>
-<script src="../shim.js?v=b78c0b3c91"></script>
+<script>window.BRAINY_VERSION = "3aca57e7f2"; window.BRAINY_APP = {key: "course", name: "강의 실습", icon: "cr-icon-192.png", sub: "강의 지도를 보며 Brainy와 한 칸씩 실습", colls: ["cr.data", "cr.memo", "cr.study", "cr.tog", "taskwork", "bchat"]};</script>
+<script src="../shim.js?v=3aca57e7f2"></script>
 <script>document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-brainy=out]"); if (b && confirm("로그아웃할까요?")) window.BRAINY.signOut(); });</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -194,11 +194,37 @@ details.fold[open]>summary{margin-bottom:8px}
 .remain.ok{border-left-color:var(--s-done)}
 .linkbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:14px;display:inline-flex;align-items:center;min-height:44px}
 .linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
-/* 공부 */
+/* 교과서 — 광고 실습 교과서와 같은 차례: 목차 · 한눈에 · ★ 핵심 · 더보기 · 이 장의 실습 · 확인 문제 · 묻기 · 앞뒤 장 */
 .tldr{background:var(--now-bg);border-radius:10px;padding:10px 12px;font-size:14.5px;line-height:1.6;margin-bottom:6px}
-details.sfold{border-top:1px solid var(--line);padding:4px 0}
-details.sfold>summary{min-height:44px;align-items:center}
-details.sfold>summary b{font-size:15px}
+.toc>summary h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toc>summary h2 .cur{color:var(--ink);letter-spacing:0}
+.toc nav{display:flex;flex-direction:column}
+.toc nav a{display:grid;grid-template-columns:62px minmax(0,1fr);gap:2px 8px;align-items:baseline;padding:9px 10px;border-top:1px solid var(--line);color:var(--ink);text-decoration:none;min-height:44px;border-left:3px solid transparent}
+.toc nav a b{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--muted)}
+.toc nav a span{font-weight:600;font-size:14px;min-width:0}
+.toc nav a small{grid-column:2;font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.toc nav a[aria-current="page"]{background:var(--surface-2);border-left-color:var(--accent)}
+.toc nav a.corelink span{color:var(--accent)}
+.card.core{background:color-mix(in srgb,var(--s-sim) 9%,var(--surface));border-color:color-mix(in srgb,var(--s-sim) 40%,var(--line))}
+.card.core h2{color:var(--s-sim)}
+.card.core .clink{display:inline-flex;align-items:center;min-height:44px;margin-top:-10px;font-weight:700;text-decoration:none}
+details.more>summary b{font-size:15px;color:var(--accent)}
+details.more>summary .muted{font-weight:500}
+.brow{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line)}
+.brow:first-child{border-top:0}
+.brow .cell{border-top:0}
+.btn.mini{flex:none;padding:6px 12px;font-size:13.5px;min-height:44px;white-space:nowrap}
+.quiz .qz{border-top:1px solid var(--line)}
+.quiz .qz:first-child{border-top:0}
+.quiz .qz>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;padding:8px 2px;font-size:14.5px;line-height:1.5}
+.quiz .qa{padding:0 2px 12px;display:flex;flex-direction:column;gap:8px}
+.card.ask{border-left:4px solid var(--accent);display:flex;flex-direction:column;gap:10px}
+.card.ask h2{margin:0}
+.askf{display:flex;gap:6px}
+.askf input{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0 12px;min-height:44px}
+.askf .btn{flex:none}
+.lnav{display:flex;justify-content:space-between;gap:10px;padding:0 4px}
+.lnav a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;text-decoration:none;min-width:0}
 /* 칸 자세히 */
 .back{all:unset;cursor:pointer;font-weight:600;color:var(--accent);font-size:14px;min-height:44px;display:inline-flex;align-items:center}
 .sec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
@@ -252,10 +278,10 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
   </header>
   <main id="view"></main>
 </div>
-<!-- 아래 탭: 지금 = 오늘 할 칸 · 공부 = 강의 내용 쉬운 설명(위키) · 지도 = 모든 칸 · 배운 것 = 학습 노트 · 내 메모 = 칸마다 적은 메모 -->
+<!-- 아래 탭: 지금 = 오늘 할 칸 · 교과서 = 강의 내용 장마다 한눈에·핵심·본문(위키) · 지도 = 모든 칸 · 배운 것 = 학습 노트 · 내 메모 = 칸마다 적은 메모 -->
 <nav id="tabbar" aria-label="화면">
   <a href="#now" data-v="now"><span aria-hidden="true">▶</span>지금</a>
-  <a href="#study" data-v="study"><span aria-hidden="true">📖</span>공부</a>
+  <a href="#book" data-v="book"><span aria-hidden="true">📖</span>교과서</a>
   <a href="#map" data-v="map"><span aria-hidden="true">▦</span>지도</a>
   <a href="#notes" data-v="notes"><span aria-hidden="true">✎</span>배운 것</a>
   <a href="#memo" data-v="memo"><span aria-hidden="true">✍︎</span>내 메모</a>
@@ -380,10 +406,10 @@ textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid va
    데이터는 볼트가 정본이다: 3_Action/33_카드/C-<강의> 수강·실습 분류.md · C-<강의> 실습 학습 노트.md · 그 지도를 잇는 32_태스크
    → 맥 동기화(볼트 .claude/scripts/course_app.py) → Supabase cr.data/main → 아래 db.doc("cr.data/main") 가 채운다. 강의 내용을 코드에 넣지 않는다.
    이 앱이 쓰는 것: cr.memo/<강의 id>-<칸 번호표> (칸마다 내 메모) · cr.tog/<번호표> (동욱이 누른 체크 — 맥이 볼트 지도 카드에 적는다, course-check.js) · taskwork/cr-<번호표> (지금 태스크 기준 줄·상태 — 맥 task_sync 가 태스크 노트에 적는다, course-task.js) · Brainy 대화(ai·bchat).
-   공부 본문은 cr.study/<강의 id> (볼트 위키 요약, course-study.js). Brainy(course-practice 스킬)는 요구 대조 + 확인 질문 뒤 같은 지도 카드에 체크를 쓴다. */
+   교과서 본문은 cr.study/<강의 id> (볼트 위키 요약, course-book.js). Brainy(course-practice 스킬)는 요구 대조 + 확인 질문 뒤 같은 지도 카드에 체크를 쓴다. */
 let DATA = { courses: [] };
 let db = null, loaded = false, pendingRender = false;
-const S = { cid: lsGet("cr.cid", ""), cell: lsGet("cr.cell", ""), from: "map", filt: "all", backTo: "" };
+const S = { cid: lsGet("cr.cid", ""), cell: lsGet("cr.cell", ""), from: "map", filt: "all", backTo: "", run: "" };   // run: ▶ 로 진행을 부탁한 칸
 
 function lsGet(k, d){ try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (e) { return d; } }
 function lsPut(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -428,17 +454,22 @@ function nextCell(c){
   return (k && cellBy(c, k.cell)) || practice(c).find(x => ["similar", "doing", "todo"].includes(x.st)) || null;
 }
 
-/* ── Brainy와 같이 하기 — 대화창을 이 말로 채워 연다 (보내기는 동욱이 ↑) ── */
+/* ── Brainy와 같이 하기 — 누르면 바로 보낸다 (2026-11-28 동욱 「광고실습앱처럼 자동실습」 — 광고 실습 ▶ Brainy 진행과 같은 길)
+   진행·새 태스크는 새 대화로(BRAINY_CHAT.start — 지난 칸 대화가 같이 가지 않고, 대화 제목에 강의·칸 이름이 보임), 요약·질문은 지금 대화로(ask).
+   답하는 중엔 대화창이 새 질문을 안 받으므로 먼저 알린다. ▶ 로 부탁한 칸은 S.run — ctx 가 그 칸 내용을 같이 보낸다 (course-brainy.js) ── */
 const sayDo = (c, x) => `/course-practice ${c.name} — ${x.title} 진행하자`;
 const sayListen = (c, x) => `/course-practice ${c.name} — 듣기 칸 「${x.title}」 실습에 필요한 것만 3줄로 요약해 줘`;
 const sayTask = c => `/course-practice ${c.name} — 지도에서 다음 실습 태스크 하나 만들자`;
-function brainy(text){
-  if (window.BRAINY_CHAT && window.BRAINY_CHAT.fill) { window.BRAINY_CHAT.fill(text); return; }
-  toast("Brainy 대화창을 아직 못 불러왔어요. 로그인을 확인하고 잠시 뒤 다시 눌러 주세요.");
+function brainyGo(text, fresh){
+  const B = window.BRAINY_CHAT;
+  if (!B) { toast("Brainy 대화창을 아직 못 불러왔어요. 로그인을 확인하고 잠시 뒤 다시 눌러 주세요."); return false; }
+  if (B.busy && B.busy()) { B.open(); toast("Brainy가 아직 앞 질문에 답하는 중이에요. 답이 끝나면 다시 눌러 주세요."); return false; }
+  if (fresh) B.start(text); else B.ask(text);
+  return true;
 }
 const doBtn = (x, cls = "primary") => isListen(x)
-  ? `<button type="button" class="btn ${cls}" data-listen="${esc(x.key)}">✦ Brainy에게 3줄 요약 듣기</button>`
-  : `<button type="button" class="btn ${cls}" data-do="${esc(x.key)}">✦ Brainy와 이 칸 하기</button>`;
+  ? `<button type="button" class="btn ${cls}" data-listen="${esc(x.key)}">🎧 Brainy에게 3줄 요약 듣기</button>`
+  : `<button type="button" class="btn ${cls}" data-do="${esc(x.key)}">▶ Brainy 진행</button>`;
 
 function segMore(){ const seg = document.getElementById("courses"); document.getElementById("segwrap").classList.toggle("more", seg.scrollLeft + seg.clientWidth < seg.scrollWidth - 4); }
 window.addEventListener("resize", segMore);
@@ -474,21 +505,21 @@ function renderHead(){
 }
 
 /* ── 화면 고르기 ── */
-const view = () => { const v = (location.hash || "#now").slice(1); return ["now", "study", "map", "notes", "memo", "cell"].includes(v) ? v : "now"; };
+const view = () => { const v = (location.hash || "#now").slice(1).split("/")[0]; return ["now", "book", "map", "notes", "memo", "cell"].includes(v) ? v : "now"; };   // 교과서는 #book/<장>
 function render(){
   const ae = document.activeElement;
-  if (ae && ae.classList && ae.classList.contains("memo-in")) { pendingRender = true; return; }   // 메모를 쓰는 중에는 다시 그리지 않는다 (한글 조합·커서 보호)
+  if (ae && ae.classList && (ae.classList.contains("memo-in") || ae.classList.contains("ask-in"))) { pendingRender = true; return; }   // 메모·질문을 쓰는 중에는 다시 그리지 않는다 (한글 조합·커서 보호)
   pendingRender = false;
   let v = view();
   const c = course();
   if (v === "cell" && !(c && cellBy(c, S.cell))) v = "map";
   document.querySelectorAll("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.v === v || (v === "cell" && a.dataset.v === S.from)));
+  const tb = document.querySelector('#tabbar a[data-v="book"]'); if (tb && v === "book") tb.setAttribute("href", location.hash);   // 교과서 탭을 다시 누르면 보던 장으로
   renderHead();
   const main = document.getElementById("view");
   if (!c) { main.innerHTML = `<section class="card"><p class="empty">${loaded ? "볼트에 강의 지도가 아직 없어요.<br>Brainy에게 「이 강의 분류해 줘」라고 하면 지도 카드를 만들어요." : "강의를 불러오는 중이에요…"}</p></section>`; return; }
-  main.innerHTML = v === "study" ? renderStudy(c) : v === "map" ? renderMap(c) : v === "notes" ? renderNotes(c) : v === "memo" ? renderMemo(c) : v === "cell" ? renderCell(c, cellBy(c, S.cell)) : renderNow(c);
+  main.innerHTML = v === "book" ? renderBook(c) : v === "map" ? renderMap(c) : v === "notes" ? renderNotes(c) : v === "memo" ? renderMemo(c) : v === "cell" ? renderCell(c, cellBy(c, S.cell)) : renderNow(c);
   if (v === "cell") { paintMemoState(); studyLoad(c); }
-  if (v === "study" && S.page != null) { const el = document.getElementById("page-" + S.page); if (el) { jumpTo(el); S.page = null; } }
   if (S.backTo) { const el = main.querySelector(`[data-cell="${CSS.escape(S.backTo)}"]`); S.backTo = ""; if (el) el.scrollIntoView({ block: "center" }); }
 }
 /* 장·단원으로 건너뛰기 — 위에 붙은 머리 칸(강의 고르기·숫자) 아래에 제목이 보이게 (11-24 검증 중간 4) */
@@ -499,7 +530,7 @@ function jumpTo(el){
 }
 function openCell(key){
   if (document.activeElement && document.activeElement.classList.contains("memo-in")) document.activeElement.blur();   // 다른 칸으로 갈 때 쓰던 메모 칸을 놓아야 화면이 바뀐다
-  const v = view(); if (v !== "cell") S.from = v;
+  const v = view(); if (v !== "cell") { S.from = v; S.fromHash = location.hash.slice(1) || v; }   // 돌아가기는 보던 교과서 장(#book/3)까지
   S.cell = key; lsPut("cr.cell", key);
   if (v === "cell") { render(); window.scrollTo(0, 0); } else location.hash = "cell";
 }
@@ -512,17 +543,17 @@ document.addEventListener("click", e => {
   if (!t) return;
   const d = t.dataset;
   if (d.course) return setCourse(d.course);
-  if (d.do !== undefined) { const x = cellBy(c, d.do); if (x) brainy(sayDo(c, x)); return; }
-  if (d.listen !== undefined) { const x = cellBy(c, d.listen); if (x) brainy(sayListen(c, x)); return; }
-  if (d.newtask !== undefined) return brainy(sayTask(c));
+  if (d.do !== undefined) { const x = cellBy(c, d.do); if (x && brainyGo(sayDo(c, x), true)) S.run = x.key; return; }
+  if (d.listen !== undefined) { const x = cellBy(c, d.listen); if (x && brainyGo(sayListen(c, x))) S.run = x.key; return; }
+  if (d.newtask !== undefined) { brainyGo(sayTask(c), true); return; }
   if (d.cell !== undefined) return openCell(d.cell);
-  if (d.back !== undefined) { S.backTo = S.cell; location.hash = S.from || "map"; return; }
+  if (d.back !== undefined) { S.backTo = S.cell; location.hash = S.fromHash || S.from || "map"; return; }
   if (d.sum) { S.filt = d.sum; if (view() === "map") render(); else location.hash = "map"; return; }
   if (d.filt) { S.filt = d.filt; render(); return; }
   if (d.unit) { const el = document.getElementById("unit-" + d.unit); if (el) { el.open = true; jumpTo(el); } return; }
 });
 window.addEventListener("hashchange", () => { const keep = !!S.backTo; if (!keep) window.scrollTo(0, 0); render(); });   // 칸에서 돌아오면 그 칸 줄로 (render 가 옮긴다)
-document.addEventListener("focusout", e => { if (e.target.classList && e.target.classList.contains("memo-in")) setTimeout(() => { if (pendingRender) render(); }, 0); });
+document.addEventListener("focusout", e => { if (e.target.classList && (e.target.classList.contains("memo-in") || e.target.classList.contains("ask-in"))) setTimeout(() => { if (pendingRender) render(); }, 0); });
 
 /* ── 내 체크 — 동욱이 앱에서 직접 누르는 체크 (build.py 가 course.html 에 끼움 · 2026-11-24 동욱 「내가 한 건 수동으로도 체크」) ──
    정본은 볼트 지도 카드다. 앱은 누른 것 하나를 Supabase 문서 하나로 보낸다:
@@ -659,66 +690,135 @@ document.addEventListener("click", e => {
   if (it) togSend(c, x, b.dataset.tog, it, !itemOn(c, x, b.dataset.tog, it));
 });
 
-/* ── 「공부」 탭 — 강의 내용 쉬운 설명 + 그 Part 의 칸 (build.py 가 course.html 에 끼움 · 2026-11-24 동욱 「공부하면서 실습도」) ──
+/* ── 「교과서」 탭 — 광고 실습 교과서와 같은 틀 (build.py 가 course.html 에 끼움 · 2026-11-28 동욱 「강의 실습앱도 광고실습앱처럼 자동실습과 교과서와 핵심 등이 담도록」) ──
    본문 정본: 볼트 위키 요약 2_LLMWiki/wiki/<영역>/요약 - <지도 카드 study:>*.md → 맥 동기화 → Supabase cr.study/<강의 id>
    = { name, pages: [{ title, part, path, tldr, secs: [{h, body}] }] }. 목차(c.study)는 cr.data/main 에 같이 온다.
    본문(강의마다 15~45KB)은 cr.data/main 과 따로 둔다 — 위키가 바뀔 때만 다시 오고, 지도·체크가 바뀔 때는 안 온다 (전송량 — 앱 검증 지침 F17).
-   칸마다 맞는 차시 한 줄은 cell.easy = { t, code, page } — 칸 자세히에 보인다. */
+   장(위키 요약 한 장 = Part 하나) = 한눈에(tldr) → ★ 핵심(「핵심 …」 칸) → 더보기(나머지 칸) → 이 장의 실습(칸마다 쉬운 설명 + ▶ Brainy 진행)
+   → 확인 문제(그 장 실습 칸들의 확인 질문 — 칸 자세히와 같은 셈) → Brainy에게 묻기 → 이전/다음 장.
+   주소: #book (다음 칸이 든 장) · #book/<장 번호> · #book/core (★ 핵심 모음). 칸마다 맞는 차시 한 줄은 cell.easy = { t, code, page }. */
 const STUDY = {};          // 강의 id -> cr.study 문서 (받은 것)
 const studyOn = {};        // 강의 id -> 받기 시작함
 function studyLoad(c){
   if (!c || !db || studyOn[c.id]) return;
   studyOn[c.id] = true;
-  db.doc("cr.study/" + c.id).onSnapshot(s => { STUDY[c.id] = s.exists ? s.data() : { pages: [] }; if (["study", "cell"].includes(view())) render(); }, () => {});
+  db.doc("cr.study/" + c.id).onSnapshot(s => { STUDY[c.id] = s.exists ? s.data() : { pages: [] }; if (["book", "cell"].includes(view())) render(); }, () => {});
 }
-const KEEP_OPEN = /^핵심/;   // 처음부터 펼쳐 둘 칸 (나머지는 접어 둔다)
+const isCore = s => /^핵심/.test(s.h || "");   // 위키 요약의 「핵심 3가지」 칸 — 처음부터 보이는 ★ 핵심
 /* 장 이름 — Part 가 있으면 「Part N」, 없으면 제목의 차시 번호(「CH01-02 iTerm2 세팅」 같은 따로 만든 요약) 또는 「강의 전체」(전체 커리큘럼) */
 const pageName = t => t.part != null ? "Part " + t.part : ((t.title || "").match(/(?:CH|Ch)\d+-\d+\s*\S+/) || ["강의 전체"])[0];
 const partName = p => p == null ? "강의 전체" : "Part " + p;
-function renderStudy(c){
-  studyLoad(c);
-  const toc = c.study || [];
-  if (!toc.length) return `<section class="card"><h2>공부</h2><p>${esc(c.name)} 강의는 아직 공부할 요약이 이어져 있지 않아요.</p>
-    <p class="small muted" style="margin-top:6px">볼트 지도 카드 머리말(frontmatter)에 <code>study:</code> 로 위키 요약 이름 앞부분을 적으면 여기에 강의 내용 쉬운 설명이 보여요.</p></section>`;
-  const doc = STUDY[c.id];
-  let h = `<section class="card"><h2>공부 · 요약 ${toc.length}장</h2><p class="small muted" style="margin-bottom:8px">볼트 위키에 Part마다 정리한 강의 내용이에요. 읽고, 그 아래 칸으로 바로 실습하거나 들은 칸을 체크해요.</p>
-    <div class="chips">${toc.map((t, i) => `<button type="button" class="chip" data-page="${i}">${esc(pageName(t))}</button>`).join("")}</div></section>`;
-  if (!doc) return h + `<section class="card"><p class="empty">공부 내용을 불러오는 중이에요…</p></section>`;
-  (doc.pages || []).forEach((pg, i) => {
-    const cells = pg.part == null ? [] : cellsOf(c).filter(x => partNo(c, x) === pg.part);
-    /* 숫자는 지도와 같은 셈 — 실습 「끝 x/N」의 N은 합친 칸·건너뛴 칸을 뺀 수, 듣기도 건너뛴 칸을 뺀다 (COUNT_RULE 한 곳) */
-    const pr = cells.filter(x => !isListen(x) && !["merged", "skip"].includes(x.st)), ls = cells.filter(x => isListen(x) && x.st !== "skip");
-    const cnt = [pr.length ? `실습 끝 ${pr.filter(x => cellOn(c, x)).length}/${pr.length}` : "", ls.length ? `듣기 끝 ${ls.filter(x => cellOn(c, x)).length}/${ls.length}` : ""].filter(Boolean).join(" · ");
-    h += `<section class="card" id="page-${i}"><div class="part"><h2>${esc(pageName(pg))}</h2>${cnt ? `<small>${cnt}</small>` : ""}</div>
-      <h3 style="font-size:17px;margin:2px 0 8px">${inline(pg.title)}</h3>
-      ${pg.tldr ? `<div class="tldr">${inline(pg.tldr)}</div>` : ""}
-      ${(pg.secs || []).map(s => `<details class="fold sfold"${KEEP_OPEN.test(s.h) ? " open" : ""}><summary><b>${inline(s.h)}</b></summary><div class="md">${mdHtml(s.body)}</div></details>`).join("")}
-      ${cells.length ? `<div class="sec"><span class="lbl">이 Part의 칸 — 누르면 자세히·체크</span>${cells.map(x => cellRow(c, x, nowKeys(c))).join("")}</div>` : ""}
-      <p class="small muted sec">정본: 볼트 「${esc(pg.title)}」</p></section>`;
-  });
-  return h;
-}
+/* 장 제목에서 강의 이름·Part 번호를 뗀 것 (「클로드 코드 24시간 가동 Part1 개발 환경 세팅」 → 「개발 환경 세팅」) */
+const pageShort = t => (t.part != null ? String(t.title || "").replace(/^.*?Part\s*0*\d+\s*/, "") : "") || t.title || "";
 /* 칸의 Part 번호 — 실습은 지도의 Part, 듣기는 「P1 …」 */
 const partNo = (c, x) => x.part != null ? x.part : (x.easy && (c.study[x.easy.page] || {}).part) ?? null;
+const pageCells = (c, pg) => pg.part == null ? [] : cellsOf(c).filter(x => partNo(c, x) === pg.part);
+/* 숫자는 지도와 같은 셈 — 실습 「끝 x/N」의 N은 합친 칸·건너뛴 칸을 뺀 수, 듣기도 건너뛴 칸을 뺀다 (COUNT_RULE 한 곳) */
+function pageCount(c, cells){
+  const pr = cells.filter(x => !isListen(x) && !["merged", "skip"].includes(x.st)), ls = cells.filter(x => isListen(x) && x.st !== "skip");
+  return [pr.length ? `실습 끝 ${pr.filter(x => cellOn(c, x)).length}/${pr.length}` : "", ls.length ? `듣기 끝 ${ls.filter(x => cellOn(c, x)).length}/${ls.length}` : ""].filter(Boolean).join(" · ");
+}
+/* 확인 문제 — 그 장 실습 칸들의 확인 질문 (안내 줄은 문제가 아님 — 칸 자세히 「확인 질문 N개」와 같은 셈) */
+const quizOf = (c, cells) => cells.filter(x => !isListen(x)).flatMap(x => (x.chk || []).filter(q => q.id && q.t).map(q => ({ x, q })));
+/* 지금 보는 장 — 주소의 번호, 없으면 다음 칸이 든 장, 그것도 없으면 첫 장 */
+function bookSel(c){
+  const a = location.hash.split("/")[1] || "", toc = (c && c.study) || [];
+  if (a === "core") return "core";
+  if (a !== "" && toc[+a]) return +a;
+  const x = nextCell(c), p = x ? partNo(c, x) : null, i = toc.findIndex(t => t.part != null && t.part === p);
+  return i >= 0 ? i : 0;
+}
+/* Brainy ctx 가 쓰는 지금 장 (course-brainy.js) — 교과서를 보고 있을 때만 */
+function bookNow(c){
+  if (view() !== "book" || !c) return null;
+  const sel = bookSel(c), doc = STUDY[c.id];
+  if (sel === "core" || !doc) return { core: sel === "core" };
+  const pg = (doc.pages || [])[sel]; if (!pg) return null;
+  const cells = pageCells(c, pg);
+  return { pg, name: pageName(pg) + " " + pageShort(pg), cells, quiz: quizOf(c, cells) };
+}
+
+function renderBook(c){
+  studyLoad(c);
+  const toc = c.study || [];
+  if (!toc.length) return `<section class="card"><h2>교과서</h2><p>${esc(c.name)} 강의는 아직 교과서로 쓸 위키 요약이 이어져 있지 않아요.</p>
+    <p class="small muted" style="margin-top:6px">볼트 지도 카드 머리말(frontmatter)에 <code>study:</code> 로 위키 요약 이름 앞부분을 적으면 여기에 장마다 한눈에·핵심·본문이 보여요.</p></section>`;
+  const sel = bookSel(c), doc = STUDY[c.id];
+  const cur = sel === "core" ? "★ 핵심 모음" : pageName(toc[sel]) + " · " + pageShort(toc[sel]);
+  let h = `<details class="card fold toc"><summary><h2>목차 · <span class="cur">${inline(cur)}</span></h2></summary><nav aria-label="교과서 목차">
+    ${toc.map((t, i) => { const n = pageCount(c, pageCells(c, t)); return `<a href="#book/${i}"${sel === i ? ' aria-current="page"' : ""}><b>${esc(pageName(t))}</b><span>${inline(pageShort(t))}</span>${n ? `<small>${esc(n)}</small>` : ""}</a>`; }).join("")}
+    <a href="#book/core" class="corelink"${sel === "core" ? ' aria-current="page"' : ""}><b>★</b><span>핵심 모음 — 장마다 핵심을 한 화면에</span></a></nav></details>`;
+  if (!doc) return h + `<section class="card"><p class="empty">교과서를 불러오는 중이에요…</p></section>`;
+  const pages = doc.pages || [];
+  return h + (sel === "core" ? coreAllHtml(c, pages) : chapterHtml(c, pages, sel));
+}
+function secsHtml(L){ return L.map(s => `<h4>${inline(s.h)}</h4>${mdHtml(s.body)}`).join(""); }
+function chapterHtml(c, pages, i){
+  const pg = pages[i];
+  if (!pg) return `<section class="card"><p class="empty">이 장을 못 찾았어요. 목차에서 다시 골라 주세요.</p></section>`;
+  const cells = pageCells(c, pg), keys = nowKeys(c), cnt = pageCount(c, cells), quiz = quizOf(c, cells);
+  const core = (pg.secs || []).filter(isCore), rest = (pg.secs || []).filter(s => !isCore(s));
+  const prev = pages[i - 1], next = pages[i + 1];
+  let h = `<section class="card"><div class="part"><h2>${esc(pageName(pg))}</h2>${cnt ? `<small>${esc(cnt)}</small>` : ""}</div>
+    <h3 style="margin:2px 0 10px">${inline(pageShort(pg))}</h3>
+    ${pg.tldr ? `<span class="lbl">한눈에</span><div class="tldr">${inline(pg.tldr)}</div>` : ""}</section>`;
+  if (core.length) h += `<section class="card core"><h2>★ 핵심 — 이것만은 기억</h2><div class="md">${core.length === 1 ? mdHtml(core[0].body) : secsHtml(core)}</div></section>`;
+  if (rest.length) h += `<section class="card"><details class="fold more"><summary><b>더보기 — 교과서 본문 <span class="muted small">(${esc(rest.map(s => s.h).slice(0, 3).join(" · "))}${rest.length > 3 ? " …" : ""})</span></b></summary><div class="md">${secsHtml(rest)}</div></details></section>`;
+  if (cells.length) h += `<section class="card"><h2>이 장의 실습 · ${cells.length}칸 — ▶ 를 누르면 Brainy가 맥에서 바로 진행</h2>
+    <div>${cells.map(x => `<div class="brow">${cellRow(c, x, keys, x.easy ? x.easy.t : "")}${runMini(c, x)}</div>`).join("")}</div></section>`;
+  if (quiz.length) h += `<section class="card"><h2>확인 문제 ${quiz.length}개 — 눌러서 Brainy와 답 맞춰 보기</h2><div class="quiz">
+    ${quiz.map(({ x, q }, n) => `<details class="qz"><summary><span>Q${n + 1}. ${inline(q.q || q.t)}${itemOn(c, x, "chk", q) ? ` <span class="pill done">✓ 체크함</span>` : ""}</span></summary>
+      <div class="qa"><p class="small muted">「${esc(x.title)}」 칸의 확인 질문이에요. 답은 Brainy가 먼저 묻고, 내 답을 듣고 짚어 줘요.</p>
+      <div class="btns"><button type="button" class="btn primary" data-quiz="${esc(x.key)}" data-qid="${esc(q.id)}">✦ Brainy와 답 맞춰 보기</button><button type="button" class="btn" data-cell="${esc(x.key)}">칸 자세히</button></div></div></details>`).join("")}</div></section>`;
+  h += `<section class="card ask"><h2>Brainy에게 묻기 — 이 장 내용과 함께 바로 보내요</h2>
+    <div class="chips">${["이 장을 더 쉽게 설명해 줘", "핵심만 퀴즈로 내 줘", "내 일에 옮기면 어떻게 돼?"].map(q => `<button type="button" class="chip" data-ask="${esc(q)}">${esc(q)}</button>`).join("")}</div>
+    <form data-askform class="askf"><input class="ask-in" name="q" placeholder="이 장에서 궁금한 것" maxlength="500" autocomplete="off" enterkeyhint="send" aria-label="Brainy에게 물을 것"><button type="submit" class="btn primary">묻기</button></form>
+    <p class="small muted">맥의 Brainy(본계정)가 답해요. 맥이 꺼져 있으면 답하지 않아요.</p></section>`;
+  h += `<nav class="lnav" aria-label="앞뒤 장">${prev ? `<a href="#book/${i - 1}">← ${esc(pageName(prev))} ${inline(pageShort(prev))}</a>` : "<span></span>"}${next ? `<a href="#book/${i + 1}">${esc(pageName(next))} ${inline(pageShort(next))} →</a>` : `<a href="#book/core">★ 핵심 모음 →</a>`}</nav>
+    <p class="small muted" style="text-align:center">정본: 볼트 위키 「${esc(pg.title)}」</p>`;
+  return h;
+}
+function coreAllHtml(c, pages){
+  const L = pages.map((pg, i) => ({ pg, i, core: (pg.secs || []).filter(isCore) })).filter(o => o.core.length);
+  return `<section class="card"><h2>★ 핵심 모음</h2><p class="small muted">장마다 「핵심」을 한데 모았어요. 장 이름을 누르면 그 장으로 가요.</p></section>` +
+    (L.length ? L.map(o => `<section class="card core"><a class="clink" href="#book/${o.i}">${esc(pageName(o.pg))} · ${inline(pageShort(o.pg))} →</a><div class="md">${o.core.length === 1 ? mdHtml(o.core[0].body) : secsHtml(o.core)}</div></section>`).join("")
+      : `<section class="card"><p class="empty">위키 요약에 「핵심」 칸이 아직 없어요.</p></section>`);
+}
+/* 교과서 실습 줄 옆 단추 — 끝난 칸은 없음, 실습은 ▶ 진행, 듣기는 3줄 요약 */
+function runMini(c, x){
+  if (cellOn(c, x) || ["merged", "skip"].includes(x.st)) return "";
+  return isListen(x) ? `<button type="button" class="btn mini" data-listen="${esc(x.key)}" aria-label="${esc(x.title)} — Brainy에게 3줄 요약 듣기">🎧 요약</button>`
+    : `<button type="button" class="btn mini primary" data-do="${esc(x.key)}" aria-label="${esc(x.title)} — Brainy가 진행">▶ 진행</button>`;
+}
 /* 칸 자세히의 「쉬운 설명」 칸 */
 function easyBox(c, x){
-  if (!x.easy) return (c.study || []).length ? `<div class="sec"><span class="lbl">쉬운 설명</span><p class="small muted">위키 요약에 이 차시만의 줄이 없어요. ${partNo(c, x) != null ? `<button type="button" class="linkbtn" data-studypart="${partNo(c, x)}">${esc(partName(partNo(c, x)))} 공부 보기 →</button>` : ""}</p></div>` : "";
+  if (!x.easy) return (c.study || []).length ? `<div class="sec"><span class="lbl">쉬운 설명</span><p class="small muted">위키 요약에 이 차시만의 줄이 없어요. ${partNo(c, x) != null ? `<button type="button" class="linkbtn" data-studypart="${partNo(c, x)}">${esc(partName(partNo(c, x)))} 교과서 보기 →</button>` : ""}</p></div>` : "";
   const t = c.study[x.easy.page] || {};
   return `<div class="sec"><span class="lbl">쉬운 설명 — 위키 「${esc(t.title || "")}」 ${esc(x.easy.code)}</span><p>${inline(x.easy.t)}</p>
-    <button type="button" class="linkbtn" data-page="${x.easy.page}">${esc(pageName(t))} 공부 전체 보기 →</button></div>`;
+    <button type="button" class="linkbtn" data-page="${x.easy.page}">${esc(pageName(t))} 교과서 보기 →</button></div>`;
 }
-function goPage(i){
-  S.page = +i;
-  if (view() !== "study") { location.hash = "study"; return; }
-  jumpTo(document.getElementById("page-" + i)); S.page = null;
+/* 교과서에서 Brainy에게 — 지금 장 이름을 앞에 붙여 바로 보낸다 (지금 장 내용은 ctx 가 같이 간다) */
+function askBook(q){
+  const c = course(), b = bookNow(c);
+  brainyGo(`(교과서 ${c.name}${b && b.name ? " · " + b.name : ""}) ${q}`);
 }
 document.addEventListener("click", e => {
-  const b = e.target.closest("[data-page],[data-studypart]");
+  const b = e.target.closest("[data-page],[data-studypart],[data-quiz],[data-ask]");
   if (!b) return;
   const c = course(); if (!c) return;
-  if (b.dataset.page !== undefined) return goPage(b.dataset.page);
-  const i = (c.study || []).findIndex(t => String(t.part) === b.dataset.studypart);
-  if (i >= 0) goPage(i);
+  if (b.dataset.page !== undefined) { location.hash = "book/" + b.dataset.page; return; }
+  if (b.dataset.studypart !== undefined) { const i = (c.study || []).findIndex(t => String(t.part) === b.dataset.studypart); location.hash = "book/" + (i >= 0 ? i : ""); return; }
+  if (b.dataset.ask) return askBook(b.dataset.ask);
+  if (b.dataset.quiz) {
+    const x = cellBy(c, b.dataset.quiz), q = x && (x.chk || []).find(it => it.id === b.dataset.qid);
+    if (x && q) brainyGo(`(교과서 ${c.name} · ${x.title}) 확인 문제 「${q.q || q.t}」 — 답을 먼저 알려 주지 말고 나에게 물어본 뒤, 내 답을 듣고 맞는지 짚어 줘.`);
+  }
+});
+document.addEventListener("submit", e => {
+  const f = e.target.closest("[data-askform]"); if (!f) return;
+  e.preventDefault();
+  const inp = f.querySelector("input"), q = inp.value.trim(); if (!q) return;
+  inp.value = ""; inp.blur(); askBook(q);
 });
 
 /* ── 지금 태스크 — 완료 기준 체크·상태 바꾸기 (build.py 가 course.html 에 끼움 · 2026-11-24 동욱 「볼트의 액션(3_Action 태스크)과 연동돼서 움직이도록」) ──
@@ -803,7 +903,7 @@ function renderNow(c){
       <h3>${esc(x.title)}</h3>
       ${(() => { const m = missingOf(c, x); return m.has && m.n ? `<div class="remain"><span class="lbl">빠진 것 — ${missWord(m)}</span>${m.req.concat(m.chk).slice(0, 3).map(it => inline(it.t)).join("<br>")}${m.n > 3 ? `<br><span class="muted">… 외 ${m.n - 3}개 — 요구사항 보기에서 전부</span>` : ""}</div>` : ""; })() || (x.remain ? `<div class="remain"><span class="lbl">남은 것</span>${remainHtml(x.remain)}</div>` : "") || (x.desc ? `<p class="small muted" style="margin-bottom:12px">${inline(x.desc)}</p>` : "")}
       <div class="btns">${doBtn(x)}<button type="button" class="btn" data-cell="${esc(x.key)}">요구사항 보기</button></div>
-      <p class="small muted" style="margin-top:10px">누르면 Brainy 대화창에 「${esc(sayDo(c, x))}」가 채워져요. ↑ 로 보내면 맥의 Brainy(본계정)가 이 칸을 한 단계씩 직접 진행하고, 단계마다 결과를 보여 주며 확인 질문을 해요. 맥이 꺼져 있으면 답하지 않아요.</p>
+      <p class="small muted" style="margin-top:10px">▶ 를 누르면 맥의 Brainy(본계정)가 새 대화에서 이 칸을 바로 시작해 한 단계씩 직접 진행하고, 단계마다 결과를 보여 주며 확인 질문을 해요. 맥이 꺼져 있으면 답하지 않아요.</p>
     </section>`;
   } else {
     h += `<section class="card"><h2>지금 할 칸</h2><p class="empty">남은 실습 칸이 없어요. 이 강의는 실습을 다 끝냈어요.</p></section>`;
@@ -848,9 +948,9 @@ const keepCell = x => {
   if (isListen(x)) return false;
   return f === "left" ? ["similar", "doing", "todo"].includes(x.st) : x.st === f;
 };
-function cellRow(c, x, keys){
+function cellRow(c, x, keys, easy){   // easy: 교과서 실습 줄은 빠진 것 대신 쉬운 설명 한 줄
   const memo = memoOf(c.id, x.key), miss = missingOf(c, x), done = cellOn(c, x);
-  const sub = !done && miss.has && miss.n ? `빠진 것 ${missWord(miss)}: ` + miss.req.concat(miss.chk).map(it => it.t.replace(/\*\*/g, "")).slice(0, 2).join(" · ") + (miss.n > 2 ? " …" : "") : x.remain && !done ? "남은 것: " + x.remain : x.desc;
+  const sub = easy ? easy : !done && miss.has && miss.n ? `빠진 것 ${missWord(miss)}: ` + miss.req.concat(miss.chk).map(it => it.t.replace(/\*\*/g, "")).slice(0, 2).join(" · ") + (miss.n > 2 ? " …" : "") : x.remain && !done ? "남은 것: " + x.remain : x.desc;
   const tags = [keys.has(x.key) ? `<span class="pill now">지금</span>` : "", x.need ? `<span class="pill" title="계정·열쇠가 필요해요">🔑</span>` : "", memo ? `<span class="pill" title="내 메모 있음">✍︎</span>` : ""].join("");
   return `<button type="button" class="cell ${done ? "done" : x.st}${keys.has(x.key) ? " isnow" : ""}" data-cell="${esc(x.key)}" aria-label="${esc(x.title)} — ${ST[x.st].name}">
     <span class="ct"><b>${esc(x.title)}</b>${sub ? `<span>${inline(sub)}</span>` : ""}</span>
@@ -890,7 +990,7 @@ function renderCell(c, x){
   const keys = nowKeys(c), memo = memoOf(c.id, x.key), listen = isListen(x), miss = missingOf(c, x), done = cellOn(c, x);
   const sec = (title, body) => body ? `<div class="sec"><span class="lbl">${title}</span>${body}</div>` : "";
   const list = L => (L || []).length ? `<ul class="plain">${L.map(r => `<li>${inline(r)}</li>`).join("")}</ul>` : "";
-  const back = { now: "지금", memo: "내 메모", notes: "배운 것", map: "지도", study: "공부" }[S.from] || "지도";
+  const back = { now: "지금", memo: "내 메모", notes: "배운 것", map: "지도", book: "교과서" }[S.from] || "지도";
   const nReq = (x.req || []).filter(it => it.id).length, nChk = (x.chk || []).filter(it => it.id && it.t).length;
   /* 빠진 것 — 항목이 있는 칸은 체크 안 된 항목 그대로, 항목이 없는 칸은 지도 카드의 「빠진 것/남은 것」 글 */
   let missHtml = "";
@@ -908,7 +1008,7 @@ function renderCell(c, x){
     <div class="meta">${pill(done ? "done" : x.st)}<span>${esc(done && x.st !== "done" ? "내가 끝 표시함 · 볼트에 적는 중" : x.mine ? "내가 앱에서 끝 표시한 칸" : ST[x.st].how)}</span></div>
     ${missHtml}
     <div class="btns" style="margin-top:12px">${doBtn(x)}${cellBtn(c, x)}</div>
-    <p class="small muted" style="margin-top:8px">${listen ? "들은 뒤 「들었어요」를 누르면 볼트 지도에 체크돼요. 요약이 필요하면 Brainy에게 3줄 요약을 부탁해요." : "혼자 한 것은 직접 체크해요. Brainy와 하면 Brainy가 요구를 하나씩 대조하고 확인 질문을 한 뒤 체크해요. 체크는 모두 볼트 지도 카드에 적혀요."}</p>
+    <p class="small muted" style="margin-top:8px">${listen ? "들은 뒤 「들었어요」를 누르면 볼트 지도에 체크돼요. 요약이 필요하면 Brainy에게 3줄 요약을 부탁해요." : "혼자 한 것은 직접 체크해요. 「▶ Brainy 진행」을 누르면 맥의 Brainy가 이 칸을 바로 진행하고, 요구를 하나씩 대조하고 확인 질문을 한 뒤 체크해요. 체크는 모두 볼트 지도 카드에 적혀요."}</p>
   </section>
   <section class="card">
     ${easyBox(c, x)}
@@ -1100,8 +1200,8 @@ init();
 <script>
 /* 강의 실습 — Brainy 연결 (build.py 가 brainy-chat.js 앞에 붙인다)
    mode(): 맥에서만 답한다 — 볼트 폴더에서 도는 Claude Code(본계정 구독)가 course-practice 스킬·지도 카드·교안 원문을 읽고 칸을 직접 진행한다. 맥이 꺼져 있어도 클라우드(콘솔 API 키)로 넘기지 않는다 (cloud:false · 2026-11-28 동욱 「원격으로 너가 대신해 주는 방식 … 클로드 콘솔 말고 내 본계정 사용으로」).
-   ctx(): 지금 고른 강의·칸·태스크를 알려 준다 · tools: 이 화면에서 강의·탭·칸 열기.
-   「Brainy와 이 칸 하기」는 BRAINY_CHAT.fill 로 대화창을 채워 연다 — 보내기는 동욱이 ↑. */
+   ctx(): 지금 고른 강의·칸·태스크 + 교과서에서 보는 장(한눈에·핵심·확인 문제) + ▶ 로 부탁한 칸 · tools: 이 화면에서 강의·탭·칸·교과서 장 열기.
+   「▶ Brainy 진행」은 새 대화로 바로 보낸다(BRAINY_CHAT.start — course.html brainyGo, 2026-11-28 동욱 「광고실습앱처럼 자동실습과 교과서와 핵심」). */
 (function () {
   function norm(s) { return String(s || "").toLowerCase().replace(/\s+/g, ""); }
   function findCourse(q) { var n = norm(q); return !n ? course() : DATA.courses.filter(function (c) { return c.id === q || norm(c.name).indexOf(n) >= 0 || n.indexOf(norm(c.name)) >= 0; })[0] || null; }
@@ -1120,7 +1220,7 @@ init();
   }
   window.BRAINY_HOOK = {
     mode: function () { return { where: "mac", cloud: false }; },
-    chips: ["지금 할 칸 Brainy가 진행해 줘", "이 강의 다음에 뭐 하면 돼?", "이 앱에서 ○○ 고쳐 줘"],
+    chips: ["이 장 핵심만 퀴즈로 내 줘", "이 강의 다음에 뭐 하면 돼?", "이 앱에서 ○○ 고쳐 줘"],
     editNote: "고친 판은 5~15분 뒤 준비되고, 「적용해 줘」 하면 앱에 들어가요.",
     rules: function () {
       var ex = DATA.courses.filter(function (c) { return c.note && c.note.units.length; })[0];   // 학습 노트 모양 본보기
@@ -1131,6 +1231,7 @@ init();
         "- 동욱의 생각이 답인 단계(워크시트·기획·고르기)는 답 후보와 근거를 보여 주고 동욱이 고르게 한다. 🔑 로그인·비밀번호·결제·계정 만들기는 그 직전까지 준비하고 동욱에게 넘긴다. 되돌리기 어려운 것(푸시·발송·게시·삭제)은 한 줄로 보여 주고 승인받은 뒤에만.",
         "- 끝낼 때 요구 대조표(충족 근거 / 미충족 / 확인 불가) + 확인 질문 2~3개. ✅ 는 요구가 전부 충족이고 동욱이 확인 질문에 답했을 때만, 볼트 지도 카드(아래 [지금 앱 상태]의 지도 카드 경로)에 쓴다 — 「(Brainy 진행)」을 근거에 붙인다. 쓰기 전에 바꿀 줄을 보여 주고 확인받는다. 이 앱 화면에는 끝 표시 도구가 없다 — 맥 동기화가 몇 초 뒤 앱에 보여 준다.",
         "- 칸을 끝내면 그 강의 학습 노트(경로는 [지금 앱 상태])에 단원 하나를 더한다 — 단원 목록 표 한 줄 + 「### 단원 N. 칸 이름」 본문. 노트가 없으면 같은 폴더에 「C-<강의> 실습 학습 노트.md」를 " + (ex ? "`" + ex.note.path + "` 와" : "다른 강의 학습 노트와") + " 같은 모양으로 만든다 (만들기 전에 묻는다).",
+        "- 「(교과서 <강의> · Part N …)」로 오면 [지금 앱 상태]의 「교과서에서 보는 장」(한눈에·핵심·확인 문제)을 근거로 짧게 답한다. 확인 문제는 답을 먼저 말하지 말고 동욱에게 묻고, 답을 들은 뒤 짚는다 — 맞으면 그 칸 지도 카드의 그 확인 항목에 ☑ 를 붙일지 묻는다.",
         "- 듣기 칸 요약은 볼트 교안·위키 요약에서 실습에 필요한 것만 3줄. 동욱이 「들었어」 하면 지도 카드의 그 줄을 [x] 로.",
         "- 「보여 줘·정리해 줘」는 보여 주기까지. 볼트 쓰기는 「넣어·해·반영해」를 들은 뒤."].join("\n");
     },
@@ -1138,7 +1239,7 @@ init();
       var c = course(); if (!c) return "[지금 앱 상태 — 강의 실습] 강의 데이터를 아직 못 받았어요.";
       var n = counts(c), t = taskOf(c), x = nextCell(c), v = view(), sel = v === "cell" ? cellBy(c, S.cell) : null;
       var L = ["[지금 앱 상태 — 강의 실습]",
-        "- 보고 있는 탭: " + v + " (now 지금 · map 지도 · notes 배운 것 · memo 내 메모 · cell 칸 자세히)",
+        "- 보고 있는 탭: " + v + " (now 지금 · book 교과서 · map 지도 · notes 배운 것 · memo 내 메모 · cell 칸 자세히)",
         "- 강의들: " + DATA.courses.map(function (o) { var m = counts(o); return o.name + " [" + o.id + "] 실습 끝 " + m.done + "/" + m.goal; }).join(" / "),
         "- 고른 강의: " + c.name + (c.full ? " (" + c.full + ")" : "") + " · 실습 " + n.all + "칸 = ✅ " + n.done + " · 🔁 " + n.similar + " · ⏳ " + n.doing + " · 아직 " + n.todo + " · ↪ " + n.merged + " · ⏭ " + n.skip + " · 듣기 끝 " + n.lDone + "/" + n.lAll,
         "- 볼트 파일: 지도 카드 `" + c.map + "`" + (c.note ? " · 학습 노트 `" + c.note.path + "` (단원 " + c.note.units.length + "개)" : " · 학습 노트 없음") + (t ? " · 지금 태스크 `" + t.path + "`" : " · 지금 태스크 없음"),
@@ -1146,16 +1247,28 @@ init();
       if (t) L.push("- 지금 태스크 「" + t.name + "」 (" + t.status + ") 완료 기준:\n" + t.crit.map(function (k) { return "  " + (k.done ? "[x] " : "[ ] ") + k.text; }).join("\n"));
       if (x) L.push("- 앱이 고른 다음 칸:\n" + cellText(c, x));
       if (sel && sel !== x) L.push("- 동욱이 지금 열어 본 칸:\n" + cellText(c, sel));
+      var run = S.run && cellBy(c, S.run);
+      if (run && run !== x && run !== sel) L.push("- ▶ 로 진행·요약을 부탁한 칸:\n" + cellText(c, run));
+      var b = bookNow(c);
+      if (b && b.core) L.push("- 교과서: ★ 핵심 모음을 보고 있음");
+      else if (b && b.pg) {
+        L.push("- 교과서에서 보는 장: " + b.name + " (볼트 위키 「" + b.pg.title + "」" + (b.pg.path ? " `" + b.pg.path + "`" : "") + ")");
+        if (b.pg.tldr) L.push("  · 한눈에: " + b.pg.tldr);
+        (b.pg.secs || []).filter(function (s) { return isCore(s); }).forEach(function (s) { L.push("  · " + s.h + ":\n" + s.body.split("\n").map(function (l) { return "    " + l; }).join("\n")); });
+        if (b.quiz.length) L.push("  · 확인 문제: " + b.quiz.map(function (o) { return "「" + o.x.title + "」 " + (o.q.q || o.q.t); }).join(" / "));
+        if (b.cells.length) L.push("  · 이 장의 칸: " + b.cells.map(function (o) { return o.title + " [" + ST[o.st].name + "]"; }).join(" / "));
+      }
       L.push("- 앱 저장소(app_doc): cr.data/main(강의·칸·학습 노트·태스크 — 볼트에서 맥 동기화가 올림, 직접 쓰지 않는다) · cr.memo/<강의 id>-<칸 번호표>(동욱의 칸 메모, 칸마다 문서 하나 {cid, key, title, t, at})");
       return L.filter(Boolean).join("\n");
     },
     tools: [
-      { name: "course_open", description: "강의 실습 앱에서 강의·탭·칸을 연다. course 는 강의 이름(비우면 지금 강의), view 는 now(지금)·map(지도)·notes(배운 것)·memo(내 메모)·cell(칸 자세히 — cell 에 칸 제목), cell 은 칸 제목 일부.",
-        inputSchema: { type: "object", properties: { course: { type: "string" }, view: { type: "string", enum: ["now", "map", "notes", "memo", "cell"] }, cell: { type: "string" } }, required: ["view"] },
+      { name: "course_open", description: "강의 실습 앱에서 강의·탭·칸을 연다. course 는 강의 이름(비우면 지금 강의), view 는 now(지금)·book(교과서 — part 에 Part 번호, 「core」면 핵심 모음)·map(지도)·notes(배운 것)·memo(내 메모)·cell(칸 자세히 — cell 에 칸 제목), cell 은 칸 제목 일부.",
+        inputSchema: { type: "object", properties: { course: { type: "string" }, view: { type: "string", enum: ["now", "book", "map", "notes", "memo", "cell"] }, part: { type: "string" }, cell: { type: "string" } }, required: ["view"] },
         execute: function (i) {
           var c = findCourse(i.course); if (!c) throw new Error("「" + i.course + "」 강의를 못 찾았어요");
           if (c.id !== S.cid) { S.cid = c.id; lsPut("cr.cid", c.id); }
           if (i.view === "cell" || i.cell) { var x = findCell(c, i.cell); if (!x) throw new Error("「" + i.cell + "」 칸을 못 찾았어요"); openCell(x.key); return c.name + " · " + x.title; }
+          if (i.view === "book" && i.part) { var k = i.part === "core" ? "core" : (c.study || []).findIndex(function (t) { return String(t.part) === String(i.part).replace(/\D/g, ""); }); location.hash = "book/" + (k === -1 ? "" : k); return c.name + " · 교과서 " + i.part; }
           location.hash = i.view; render(); return c.name + " · " + i.view;
         } }
     ]
