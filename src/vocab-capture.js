@@ -1,11 +1,17 @@
-/* ───────── 암기 사진 (2026-11-28 동욱 「단어장의 단어들을 넣거나 영어 회화를 사진으로 찍으면 자동으로 올라가게 · 영단어는 V표로 표시한 부분만」) — build.py 가 단어장 스크립트 끝(init 앞)에 끼운다 ─────────
-   1. 「📷 암기 사진 올리기」 → 사진마다 긴 변 2000px JPEG 로 줄여 vo.cap/<id> {status "올림", img, name, at} 로 보낸다 (db.send — 이 기기에 남기지 않음)
+/* ───────── 암기 사진·PDF (2026-11-28 동욱 「단어장의 단어들을 넣거나 영어 회화를 사진으로 찍으면 자동으로 올라가게 · 영단어는 V표로 표시한 부분만」
+   · 「한번에 넣을 수 있도록 앱에서도 pdf나 사진을 넣으면 그걸 인식해서 단어장 등과 회화로」) — build.py 가 단어장 스크립트 끝(init 앞)에 끼운다 ─────────
+   1. 「📷 사진·PDF 올리기」(한 번에 CAP_MAX 개) → 사진은 긴 변 2000px JPEG 로 줄여 vo.cap/<id> {status "올림", img, name, at},
+      PDF 는 줄이지 않고 원본을 CAP_PART 글자씩 나눠 vo.cap/<묶음id>-<n> {status "올림", group, part, parts, b64, name, at} 로 보낸다 (db.send — 이 기기에 남기지 않음).
+      맥 memcap.py 가 조각을 모아 PDF 로 되살린다.
    2. cmd 하나 {from: "vocab", kind: "capture", params: {caps, via: "앱"}} — 맥 cmd_runner 가 Claude 를 깨운다
    3. 맥 Brainy(볼트 .claude/routines/cmd.md 「암기 사진」 · memcap.py)가 사진을 볼트 「외국어 암기/캡처/」로 꺼내고, V 표시한 영어 단어 · 회화 문장을 표에 넣고,
       단어마다 발음매개 초안을 그 cmd 의 mnem 에 적는다 → 맥 동기화가 단어장에 올리면 단어 카드에 초안이 뜬다 (vocab-mnem.js)
    폰에서 볼트 「외국어 암기/캡처/」에 바로 넣은 사진도 맥 동기화(app_data.py _capture_watch)가 같은 cmd 를 만든다 — 아래 목록에 같이 뜬다. */
 const CAP = { busy: false, msg: "", ok: true };
-const CAP_MAX = 5, CAP_EDGE = 2000;
+const CAP_MAX = 20, CAP_EDGE = 2000, CAP_PART = 900000, CAP_PDF_MB = 30;   // 한 번에 20개 · PDF 조각 약 0.9MB · PDF 한 개 30MB까지
+const isPdf = f => f.type === "application/pdf" || /\.pdf$/i.test(f.name || "");
+const isImg = f => /^image\//.test(f.type) || /\.(heic|jpe?g|png|webp)$/i.test(f.name || "");
+function capB64(file){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).replace(/^data:[^,]*,/, "")); r.onerror = () => rej({ code: "read" }); r.readAsDataURL(file); }); }
 const capCmds = () => MN_CMDS.filter(c => c.kind === "capture");
 const capWhen = iso => { const t = Date.parse(iso || ""); return isFinite(t) ? new Date(t + 9 * 3600e3).toISOString().slice(5, 16).replace("T", " ") : ""; };   // 한국 시간 MM-DD HH:MM
 function capShrink(file){
@@ -22,27 +28,44 @@ function capShrink(file){
   });
 }
 async function capUpload(files){
-  const list = Array.from(files || []).filter(f => /^image\//.test(f.type) || /\.(heic|jpe?g|png|webp)$/i.test(f.name)).slice(0, CAP_MAX);
-  if (!list.length || CAP.busy) return;
+  const all = Array.from(files || []), pick = all.filter(f => isImg(f) || isPdf(f));
+  const big = pick.filter(f => isPdf(f) && f.size > CAP_PDF_MB * 1048576), list = pick.filter(f => !big.includes(f)).slice(0, CAP_MAX);
+  const skipped = all.length - list.length;
+  if (CAP.busy) return;
+  if (!list.length) { CAP.ok = false; CAP.msg = big.length ? `PDF는 ${CAP_PDF_MB}MB까지 올릴 수 있어요. 쪽을 나눠 올려 주세요.` : "사진(JPEG·PNG·HEIC)이나 PDF를 골라 주세요."; render(); return; }
   if (!db || mode !== "db" || !db.send) { CAP.ok = false; CAP.msg = "기록 저장소에 연결된 뒤 올릴 수 있어요. 새로고침해 주세요."; render(); return; }
-  CAP.busy = true; CAP.ok = true; CAP.msg = `사진 ${list.length}장을 올리는 중이에요…`; render();
+  const nImg = list.filter(isImg).length, nPdf = list.length - nImg;
+  const what = [nImg ? `사진 ${nImg}장` : "", nPdf ? `PDF ${nPdf}개` : ""].filter(Boolean).join(" · ");
+  CAP.busy = true; CAP.ok = true; render();
+  const at = nowIso(), base = Date.now().toString(36), caps = [];
   try {
-    const at = nowIso(), base = Date.now().toString(36), caps = [];
     for (let i = 0; i < list.length; i++) {
-      const img = await capShrink(list[i]);
-      if (!img) throw { code: "image" };
-      const id = "k" + base + i;
-      await db.send("vo.cap/" + id, { status: "올림", img, name: String(list[i].name || "").slice(0, 80), at });
+      const f = list[i], name = String(f.name || "").slice(0, 80), id = "k" + base + i;
+      CAP.msg = `${what} 보내는 중 — ${i + 1}/${list.length}${isPdf(f) ? ` · ${name}` : ""}`; render();
+      if (isPdf(f)) {
+        const b = await capB64(f), parts = Math.max(1, Math.ceil(b.length / CAP_PART));
+        for (let k = 0; k < parts; k++) {
+          if (parts > 3) { CAP.msg = `${what} 보내는 중 — ${i + 1}/${list.length} · ${name} ${Math.round((k + 1) / parts * 100)}%`; render(); }
+          await db.send("vo.cap/" + id + "-" + k, { status: "올림", kind: "pdf", group: id, part: k, parts, b64: b.slice(k * CAP_PART, (k + 1) * CAP_PART), name, size: f.size, at });
+        }
+      } else {
+        const img = await capShrink(f);
+        if (!img) throw { code: "image", name };
+        await db.send("vo.cap/" + id, { status: "올림", img, name, at });
+      }
       caps.push(id);
     }
-    const cid = "c" + base;
-    const data = { text: `🔤 체화 단어장 — 암기 사진 ${caps.length}장 넣기`, from: "vocab", app: "vocab", kind: "capture",
-      params: { caps, via: "앱" }, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
-    await db.doc("cmd/" + cid).set(data);
-    CAP.msg = `사진 ${caps.length}장을 맥에 보냈어요 — 맥이 켜져 있으면 몇 분 안에 V 표시한 단어·문장이 들어와요.`;
+    const data = { text: `🔤 체화 단어장 — 암기 ${what} 넣기`, from: "vocab", app: "vocab", kind: "capture",
+      params: { caps, via: "앱", pdf: nPdf, img: nImg }, createdAt: at, sentAt: at, status: "보내는 중", result: "" };
+    await db.doc("cmd/c" + base).set(data);
+    CAP.msg = `${what}를 맥에 보냈어요 — 맥이 켜져 있으면 V 표시한 단어·회화 문장이 들어와요 (PDF는 쪽이 많으면 몇 번에 나눠 넣어요).`
+      + (skipped ? ` 고른 것 중 ${skipped}개는 빼고 보냈어요(사진·PDF가 아니거나 ${CAP_MAX}개를 넘거나 PDF ${CAP_PDF_MB}MB 초과).` : "");
   } catch (e) {
     CAP.ok = false;
-    CAP.msg = e?.code === "image" ? "이 사진을 읽지 못했어요. 다른 사진(JPEG·PNG)으로 올려 주세요." : "사진을 보내지 못했어요 — 인터넷을 확인하고 다시 올려 주세요.";
+    CAP.msg = e?.code === "image" ? `「${e.name}」를 읽지 못했어요. JPEG·PNG로 바꿔 올려 주세요.` : e?.code === "read" ? "파일을 읽지 못했어요. 다시 골라 주세요."
+      : "보내지 못했어요 — 인터넷을 확인하고 다시 올려 주세요." + (caps.length ? ` (${caps.length}개는 이미 보내졌어요 — 맥이 다음에 같이 넣어요)` : "");
+    if (caps.length) db.doc("cmd/c" + base).set({ text: `🔤 체화 단어장 — 암기 ${caps.length}개 넣기 (보내다 끊김)`, from: "vocab", app: "vocab", kind: "capture",
+      params: { caps, via: "앱" }, createdAt: at, sentAt: at, status: "보내는 중", result: "" }).catch(() => {});
   }
   CAP.busy = false; render();
 }
@@ -62,13 +85,13 @@ function capHtml(){
   /* 맥이 넣는 중인 것 + 가장 최근 결과 하나만 — 쌓여도 「오늘 할 일」을 밀어내지 않게 (검증 F14) */
   const all = capCmds(), last = all.find(c => !mnOpenSt(c)), cs = all.filter(mnOpenSt).concat(last ? [last] : []).slice(0, 3);
   return `<section class="card stack cap">
-    <div class="meta"><h2 style="margin:0">📷 암기 사진</h2><span class="small muted">한 번에 ${CAP_MAX}장</span></div>
-    <p class="small muted">교재·단어 화면을 찍어 올리면 맥 Brainy가 넣어요. <b>영어 단어는 V 표시한 것만</b>, 회화는 V 표시한 줄(없으면 그날 대표 문장)을 다음 빈 면에. 단어마다 발음매개 초안이 같이 와요 — 단어 카드에서 골라요.</p>
-    <label class="btn primary cap-b${CAP.busy || mode !== "db" ? " off" : ""}" for="capFile">${CAP.busy ? "올리는 중…" : "📷 암기 사진 올리기"}</label>
-    <input type="file" id="capFile" accept="image/*" multiple hidden ${CAP.busy || mode !== "db" ? "disabled" : ""}>
+    <div class="meta"><h2 style="margin:0">📷 암기 사진·PDF</h2><span class="small muted">한 번에 ${CAP_MAX}개 · PDF ${CAP_PDF_MB}MB까지</span></div>
+    <p class="small muted">교재 사진이나 PDF를 여러 개 한 번에 올리면 맥 Brainy가 알아보고 넣어요. <b>영어 단어는 V 표시한 것만</b> 단어장에, 회화는 V 표시한 줄(없으면 그날 대표 문장)을 궁전의 다음 빈 자리에. 단어마다 발음매개 초안이 같이 와요 — 단어 카드에서 골라요.</p>
+    <label class="btn primary cap-b${CAP.busy || mode !== "db" ? " off" : ""}" for="capFile">${CAP.busy ? "보내는 중…" : "📷 사진·PDF 올리기"}</label>
+    <input type="file" id="capFile" accept="image/*,application/pdf,.pdf" multiple hidden ${CAP.busy || mode !== "db" ? "disabled" : ""}>
     ${CAP.msg ? `<p class="${CAP.ok ? "small" : "note"}" role="status">${esc(CAP.msg)}</p>` : ""}
     ${cs.length ? `<div class="stack" style="gap:8px">${cs.map(capRow).join("")}</div>` : ""}
-    <p class="small muted">폰에서는 볼트 「1_MyBrain/학습/외국어 암기/캡처」 폴더에 바로 저장해도 같은 길로 들어와요.</p>
+    <p class="small muted">볼트의 외국어 암기 「캡처」 폴더에 사진·PDF를 바로 넣어도 같은 길로 들어와요.</p>
   </section>`;
 }
 document.addEventListener("change", e => { if (e.target?.id === "capFile") { const f = e.target.files; capUpload(f); e.target.value = ""; } });
