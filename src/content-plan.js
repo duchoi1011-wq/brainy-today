@@ -160,12 +160,12 @@ function viewScript(){
     if(isGone("script", sid(x))) return;
     h += "<section class=\"card\"><div class=\"card-h\"><h3>" + txt(x.title) + "</h3><span class=\"n\">" + esc(recNo(x.rec || "")) + " · " + esc(x.status || "") + " " + impBtn("script", x.title, x.title, recNo(x.rec || "")) + "</span></div>" +
       (x.meta ? "<p class=\"lead\">" + md(x.meta) + "</p>" : "") +
-      (x.summary ? "<h4>스크립트 요약</h4><div class=\"pre\">" + md(x.summary) + "</div>" : "") +
-      (x.shoot ? "<details><summary>촬영 요약</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.shoot) + "</div></details>" : "") +
-      (x.script ? "<details open><summary>대본 뼈대</summary><div class=\"pre\" id=\"sc-" + i + "\" style=\"margin-top:6px\">" + md(x.script) + "</div></details>" : "") +
+      (x.summary ? "<h4>스크립트 요약</h4>" + summaryFmt(x.summary) : "") +   // 제목·밑줄·번호로 (content-scriptfmt.js)
+      (x.shoot ? "<details><summary>촬영 요약</summary><div style=\"margin-top:6px\">" + scriptFmt(x.shoot) + "</div></details>" : "") +
+      (x.script ? "<details open><summary>대본 뼈대</summary><div id=\"sc-" + i + "\" style=\"margin-top:6px\">" + scriptFmt(x.script) + "</div></details>" : "") +
       sourceHtml(x.rec) +
       "<details class=\"prbar\"" + (prDraft("script:" + x.rec) ? " open" : "") + "><summary>✍️ 이 대본 고치기 · 첨삭</summary>" + promptBoxHtml("script:" + x.rec, "무엇을 고칠까요?", "예: 도입 3초를 시청자에게 던지는 질문으로 바꾸고, 두 번째 소주제를 실제 사례로 바꿔 줘", "scriptedit") + "</details>" +
-      (x.todo ? "<details><summary>아직 정해야 할 것</summary><div class=\"pre\" style=\"margin-top:6px\">" + md(x.todo) + "</div></details>" : "") +
+      (x.todo ? "<details><summary>아직 정해야 할 것</summary><div style=\"margin-top:6px\">" + scriptFmt(x.todo) + "</div></details>" : "") +
       "<div class=\"acts\">" + (conf[sid(x)] ? "<span class=\"tag ok\">✅ 컨펌 " + esc(String(conf[sid(x)].at || "").slice(5, 10).replace("-", "/")) + " — 촬영실에 떠요</span><button class=\"btn sm\" data-act=\"unconfirm\" data-key=\"" + esc(sid(x)) + "\">컨펌 취소</button>"
         : "<button class=\"btn sm primary\" data-act=\"confirm\" data-key=\"" + esc(sid(x)) + "\" data-label=\"" + esc(x.title) + "\" title=\"이 대본으로 찍어요 — 편집 믹서 촬영실에 뜹니다\">✅ 컨펌 — 촬영실로</button>") +
       (x.script ? "<button class=\"btn sm\" data-copy=\"sc-" + i + "\">대본 복사</button>" : "") + delBtn("script", sid(x), x.title, "btn sm") + "<span class=\"lead\" style=\"margin:0\">카드 · " + esc(String(x.card || "").split("/").pop().replace(/\.md$/, "")) + "</span></div></section>";
